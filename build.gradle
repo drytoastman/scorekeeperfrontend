@@ -1,0 +1,53 @@
+import org.gradle.plugins.ide.eclipse.model.AccessRule
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'application'
+apply plugin: 'eclipse'
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+            	// remove warnings about non-API class use
+            	// these are javafx API, I don't know why it complains about those classes
+                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
+                jre.accessRules.add(new AccessRule('0', 'javafx/**'))
+            }
+        }
+    }
+}
+
+sourceCompatibility = 1.8
+version = '2.0'
+mainClassName = 'org.wwscc.util.Launcher'
+
+
+shadowJar {
+   baseName = 'scorekeeper'
+   version = version
+}
+
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'com.miglayout:miglayout-swing:5.0'
+    compile 'com.neuronrobotics:nrjavaserial:3.12.1'
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile 'org.postgresql:postgresql:42.1.4'
+    compile 'org.jmdns:jmdns:3.5.2'
+
+    testRuntime 'junit:junit:4.12'    
+}
+
