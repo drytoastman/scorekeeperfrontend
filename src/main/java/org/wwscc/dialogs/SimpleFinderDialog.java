@@ -73,9 +73,9 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 
 		// some defaults
 		Map<String, Icon> iconMap = new HashMap<String, Icon>();
-		iconMap.put(BWTIMER_TYPE, new ImageIcon(Resources.loadImage("/images/timer.gif")));
-		iconMap.put(PROTIMER_TYPE, new ImageIcon(Resources.loadImage("/images/draglight.gif")));
-		iconMap.put(DATABASE_TYPE, new ImageIcon(Resources.loadImage("/images/server.gif")));
+		iconMap.put(BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
+		iconMap.put(PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
+		iconMap.put(DATABASE_TYPE, new ImageIcon(Resources.loadImage("server.gif")));
 		
 		list = new JServiceList(iconMap);
 		list.addListSelectionListener(this);

@@ -35,9 +35,9 @@ public class IconButton extends JButton
 		super();
 		if (buttonIcon == null)
 		{
-			buttonIcon = new ImageIcon(Resources.loadImage("/images/close.png"));
-			rolloverIcon = new ImageIcon(Resources.loadImage("/images/close-hover.png"));
-			pressedIcon = new ImageIcon(Resources.loadImage("/images/close-press.png"));
+			buttonIcon = new ImageIcon(Resources.loadImage("close.png"));
+			rolloverIcon = new ImageIcon(Resources.loadImage("close-hover.png"));
+			pressedIcon = new ImageIcon(Resources.loadImage("close-press.png"));
 		}
 		setBorder(new EmptyBorder(0,0,0,0));
 		setContentAreaFilled(false);

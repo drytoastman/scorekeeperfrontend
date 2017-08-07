@@ -11,12 +11,13 @@ public class Resources
 {	
 	private static final Logger log = Logger.getLogger(TrayMonitor.class.getName());
 	
-	public static Image loadImage(String s)
+	public static Image loadImage(String name)
 	{
-		try {
-			return Toolkit.getDefaultToolkit().getImage(Resources.class.getResource(s));
+		String path = "/images/"+name;
+		try {			
+			return Toolkit.getDefaultToolkit().getImage(Resources.class.getResource(path));
 		} catch (Exception e) {
-			log.warning("Failed to load " + s);
+			log.warning("Failed to load " + path);
 			return new BufferedImage(64, 64, BufferedImage.TYPE_INT_RGB);
 		}
 	}

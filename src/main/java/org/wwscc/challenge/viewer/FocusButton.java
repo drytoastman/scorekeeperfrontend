@@ -98,8 +98,8 @@ class FocusButton extends JButton
 		{ // lazy loading of timerIcon if we don't have one
 			if (timerOn == null)
 			{
-				timerOn = new ImageIcon(Resources.loadImage("/images/smalltimer.png"));
-				timerOff = new ImageIcon(Resources.loadImage("/images/smalltimernot.png"));
+				timerOn = new ImageIcon(Resources.loadImage("smalltimer.png"));
+				timerOff = new ImageIcon(Resources.loadImage("smalltimernot.png"));
 			}
 		} catch (Exception e) {} // try our best but failure is just fine
 		

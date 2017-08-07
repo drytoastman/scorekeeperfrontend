@@ -21,10 +21,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
@@ -33,12 +37,23 @@ import org.wwscc.util.Logging;
 import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+
+
 public class TrayMonitor implements ActionListener
 {
 	private static final Logger log = Logger.getLogger(TrayMonitor.class.getName());
 	
-    MenuItem mWebserver, mDatabase, mQuit;
-    DockerMonitor monitor;
+	JSch jsch;
+	Session portforward;
+	
+    MenuItem mBackendStatus, mMachineStatus;
+    MachineController mmonitor;
+    ComposeController cmonitor;
+    boolean readyforcompose, applicationdone;
+
     Image coneok, conewarn;
     TrayIcon trayIcon;
     PopupMenu trayPopup;
@@ -54,32 +69,32 @@ public class TrayMonitor implements ActionListener
 	    	    
 	    cmdline = args;
         trayPopup   = new PopupMenu();
-        Menu launch = new Menu("Launch");
-        trayPopup.add(launch);
-
-        mWebserver = new MenuItem("Web Off");
-        mDatabase  = new MenuItem("Database Off");
-
-        newMenuItem("DataEntry",     "DataEntry",    launch);
-        newMenuItem("Registration",  "Registration", launch);
-        newMenuItem("Syncronizer",   "Synchronizer", launch);
-        newMenuItem("ProTimer",      "ProTimer",     launch);
-        newMenuItem("BWTimer",       "BWTimer",      launch);
-        newMenuItem("ChallengeGUI",  "ChallengeGUI", launch);
         
-        mWebserver = newMenuItem("Web",      "web",  trayPopup);
-        mDatabase  = newMenuItem("Database", "db",   trayPopup);                
-        mQuit      = newMenuItem("Quit",     "quit", trayPopup);
+        newMenuItem("DataEntry",     "DataEntry",    trayPopup);
+        newMenuItem("Registration",  "Registration", trayPopup);
+        newMenuItem("Syncronizer",   "Synchronizer", trayPopup);
+        newMenuItem("ProTimer",      "ProTimer",     trayPopup);
+        newMenuItem("BWTimer",       "BWTimer",      trayPopup);
+        newMenuItem("ChallengeGUI",  "ChallengeGUI", trayPopup);
+        
+        trayPopup.addSeparator();
+        mBackendStatus = new MenuItem("Backend:");
+        trayPopup.add(mBackendStatus);
+        mMachineStatus = new MenuItem("Machine:");
+        trayPopup.add(mMachineStatus);
+        
+        trayPopup.addSeparator();
+        newMenuItem("Quit", "quit", trayPopup);
 
-        coneok   = Resources.loadImage("/images/conesmall.png");
-        conewarn = Resources.loadImage("/images/conewarn.png");
+        coneok   = Resources.loadImage("conesmall.png");
+        conewarn = Resources.loadImage("conewarn.png");
         
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
         
         // Do a check when opening the context menu
         trayIcon.addMouseListener(new MouseAdapter() {
-    	    private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { synchronized (monitor) { monitor.notify(); }}}
+    	    private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { synchronized (cmonitor) { cmonitor.notify(); }}}
     	    @Override
     	    public void mouseReleased(MouseEvent e) { docheck(e); }
     	    @Override
@@ -93,8 +108,15 @@ public class TrayMonitor implements ActionListener
 	    	System.exit(-2);
         }
 
-        monitor = new DockerMonitor();
-        monitor.start();
+        jsch = new JSch();
+        //JSch.setLogger(new JSchDebugLogger());
+        
+        readyforcompose = false;
+        applicationdone = false;
+        mmonitor = new MachineController();
+        mmonitor.start();
+        cmonitor = new ComposeController();
+        cmonitor.start();
 	}
 
 	private MenuItem newMenuItem(String initial, String cmd, Menu parent)
@@ -112,19 +134,13 @@ public class TrayMonitor implements ActionListener
 		String cmd = e.getActionCommand();
 		switch (cmd)
 		{
-			case "web":
-				break;
-			case "db":
-				break;
 			case "quit":
 				if (JOptionPane.showConfirmDialog(null, "This will stop the datbase server and web server.  Is that ok?", 
 					"Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
 				{
-                    synchronized (monitor)
-                    {
-                        monitor.done = true;
-                        monitor.notify();
-                    }
+                    applicationdone = true;
+                    synchronized (mmonitor) { mmonitor.notify(); }
+                    synchronized (cmonitor) { cmonitor.notify(); }
 				}
 				break;
 				
@@ -160,95 +176,187 @@ public class TrayMonitor implements ActionListener
 		}
 	}
 	
+	
 	/**
-	 * Thread to keep pinging our services to check their status.  It pauses for 3 seconds but can
+	 * Thread to start machine and monitor port forwarding
+	 */
+	class MachineController extends Thread
+	{
+    	Map<String,String> machineenv;
+
+		public MachineController()
+		{
+			super("MachineController");
+			machineenv = null;
+			readyforcompose = false;
+		}
+		
+    	@Override
+    	public void run()
+    	{
+    		if (!DockerInterface.machinepresent())
+    		{
+    			readyforcompose = true;
+    			mMachineStatus.setLabel("Machine: Not needed");
+    			mMachineStatus.setEnabled(false);
+    			return;
+    		}
+
+    		while (!applicationdone) 
+    		{
+    			try 
+    			{
+    				checkmachine();
+        			synchronized (this) { this.wait(5000); }    				
+    			} 
+    			catch (InterruptedException e) {}
+    		}
+    	}
+    	
+    	private boolean checkmachine()
+    	{
+			if (!DockerInterface.machinecreated())
+			{
+				log.info("Creating a new docker machine.");
+				mMachineStatus.setLabel("Machine: Creating VM");
+				if (!DockerInterface.createmachine())
+				{
+					log.info("Unable to create a docker machine.  See logs.");
+					return false;
+				}
+			}
+					
+			if (!DockerInterface.machinerunning())
+			{
+				log.info("Starting the docker machine.");
+				mMachineStatus.setLabel("Machine: Starting VM");
+				if (!DockerInterface.startmachine())
+				{
+					log.info("Unable to start docker machine. See logs.");
+					return false;
+				}
+
+			}
+			
+			// stay up to date just in case, compose can start before port forwarding is up
+			readyforcompose = true;
+			machineenv = DockerInterface.machineenv();
+			log.finest("dockerenv = " + machineenv);
+			
+			try 
+			{
+    			if (jsch.getIdentityNames().size() == 0)
+    			{
+    				jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());
+    			}
+    			
+    			if ((portforward == null) || (!portforward.isConnected()))
+    			{
+    				mMachineStatus.setLabel("Machine: Starting port forwarding ...");
+    				
+    				String host = "192.168.99.100";
+    				Matcher m = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)").matcher(machineenv.get("DOCKER_HOST"));
+    				if (m.find()) { host = m.group(1); }
+    		
+    				portforward = jsch.getSession("docker", host);
+    				portforward.setConfig("StrictHostKeyChecking", "no");
+    				portforward.setConfig("GSSAPIAuthentication", "no");
+    				portforward.setConfig("PreferredAuthentications", "publickey");
+    				portforward.setPortForwardingL("0.0.0.0",    80, "127.0.0.1",    80);
+    				portforward.setPortForwardingL("0.0.0.0", 54329, "127.0.0.1", 54329);
+    				portforward.connect();
+    			}
+			} 
+			catch (JSchException jse) 
+			{
+				log.log(Level.INFO, "Error setting up portforwarding: " + jse, jse);
+				return false;
+			}
+
+			mMachineStatus.setLabel("Machine: Up");
+    		return true;
+    	}
+	}
+	
+
+	/**
+	 * Thread to keep checking our services for status.  It pauses for 5 seconds but can
 	 * be woken by anyone calling notify on the class object.
 	 */
-    class DockerMonitor extends Thread
+    class ComposeController extends Thread
     {
         Image currentIcon;
-    	boolean done;        
         
-    	public DockerMonitor()
+    	public ComposeController()
     	{
-    		super("Docker Monitor");
+    		super("ComposeController");
             currentIcon = null;
-            done = false;
     	}
     	
     	@Override
     	public void run()
     	{
-    		if (initialization())
-    			loop();
-            System.exit(0);
-    	}
-    	
-    	public boolean initialization()
-    	{
-    		if (DockerInterface.machinepresent())
+    		while (!applicationdone) 
     		{
-    			log.info("dockerenv = " + DockerInterface.machineenv());
-    			if (!DockerInterface.machinecreated())
+    			try 
     			{
-    				log.info("Creating a new docker machine.");
-    				if (!DockerInterface.createmachine())
-    				{
-    					log.severe("Unable to create a docker machine.  See logs.");
-    					return false;
-    				}
-    			}
-    					
-    			if (!DockerInterface.machinerunning())
-    			{
-    				log.info("Starting the docker machine.");
-    				
-    				if (!DockerInterface.startmachine())
-    				{
-    					log.severe("Unable to start docker machine. See logs.");
-    					return false;
-    				}
-    			}
+    				checkcompose();
+        			synchronized (this) { this.wait(5000); }    				
+    			} 
+    			catch (InterruptedException e) {}
     		}
     		
-    		if (!DockerInterface.up()) 
-    		{
-    			log.severe("Unable to start the web and database services. See logs.");
-    			return false;
-    		}
-    		
-    		return true;
-    	}
-
-    	public void loop()
-    	{
-    		while (!done)
-    		{
-    			try {
-    				boolean res[] = DockerInterface.ps();
-                
-    				mWebserver.setLabel("Web " +     (res[0]?"On":"Off"));
-    				mDatabase.setLabel("Database " + (res[1]?"On":"Off"));
-                    Image next = (res[0] && res[1]) ? coneok : conewarn;
-                    
-                    if (next != currentIcon) {
-    					trayIcon.setImage(next); 
-                        currentIcon = next;
-                    }
-
-    				synchronized (this) { this.wait(5000); }
-
-				} catch (InterruptedException e) {
-                }
-    		}
-
     		if (!DockerInterface.down())
     		{
     			log.severe("Unable to stop the web and database services. See logs.");
     			return;
     		}
+    		
+            System.exit(0);
+    	}
+    	
+    	public void checkcompose()
+    	{
+			boolean ok = false;
+			
+			if (readyforcompose)
+			{
+				boolean res[] = DockerInterface.ps();
+            
+				if (res[0] && res[1]) 
+				{
+					ok = true;
+					mBackendStatus.setLabel("Backend: Up");
+				} 
+				else 
+				{
+					mBackendStatus.setLabel("Backend: Attempting to (re)start");
+		    		if (!DockerInterface.up()) 
+		    			log.info("Unable to start the web and database services. See logs.");
+				}
+			}
+			else
+			{
+				mBackendStatus.setLabel("Backend: Waiting for machine");
+			}
+
+            Image next =  ok ? coneok : conewarn;                    
+            if (next != currentIcon) 
+            {
+				trayIcon.setImage(next); 
+                currentIcon = next;
+            }
         }
     }
+	
+    
+	class JSchDebugLogger implements com.jcraft.jsch.Logger 
+	{
+	    @Override
+	    public boolean isEnabled(int pLevel) { return true; }
+	    @Override
+	    public void log(int pLevel, String pMessage) { log.log(Level.INFO, pMessage); }
+	}
 	
 
     /**

@@ -15,17 +15,20 @@ import java.util.logging.Logger;
 import org.wwscc.util.Prefs;
 
 /**
- * Thread to keep pinging our services to check their stlatus.  It pauses for 3 seconds but can
- * be woken by anyone calling notify on the class object.
+ * Interface for calling docker related functions to start, stop and check status.
  */
 public class DockerInterface
 {
 	private static final Logger log = Logger.getLogger(DockerInterface.class.getName());
-	private static String[] compose = { "docker-compose", "-p", "nwrsc", "-f", "docker-compose.yaml" };
+	private static String[] compose = { "docker-compose", "-p", "scorekeeper", "-f", "docker-compose.yaml" };
 	private static String[] machine = { "docker-machine" };
 	private static File basedir = new File(Prefs.getDocRoot());
 	private static Map<String,String> dockerenv = new HashMap<String, String>();
-			
+
+	/**
+	 * Sets and returns the environment variables used by docker-compose if docker-machine is present
+	 * @return a map of the environment variables that were set
+	 */
 	public static Map<String,String> machineenv()
 	{
 		byte buf[] = new byte[4096];
@@ -53,11 +56,17 @@ public class DockerInterface
 		return dockerenv;
 	}
 	
+	/**
+	 * @return true if docker-machine is installed
+	 */
 	public static boolean machinepresent()
 	{
 		return testit(build(basedir, machine, "-h"));
 	}
 	
+	/**
+	 * @return true if docker-machine has created a virtualbox node
+	 */
 	public static boolean machinecreated()
 	{
 		byte buf[] = new byte[1024];
@@ -70,31 +79,55 @@ public class DockerInterface
 		}
 	}
 	
+	/**
+	 * Create a new virtualbox node with name 'default'.  Normally should be done
+	 * on installation.
+	 * @return true if creation suceeded
+	 */
 	public static boolean createmachine()
 	{
 		return execit(build(basedir, machine, "create", "-d", "virtualbox", "default"), null) == 0;
 	}
 	
+	/**
+	 * @return true if virtualbox node is running
+	 */
 	public static boolean machinerunning()
 	{
 		return execit(build(basedir, machine, "ip"), null) == 0;		
 	}
 	
+	/**
+	 * Try to start virtual box node
+	 * @return true if command returns success
+	 */
 	public static boolean startmachine()
 	{
 		return execit(build(basedir, machine, "start"), null) == 0;
 	}
 
+	/**
+	 * Call docker-compose to bring up the backend
+	 * @return true if compose succeeded
+	 */
 	public static boolean up()
 	{
 		return execit(build(basedir, compose, "up", "-d"), null) == 0;		
 	}
 
+	/**
+	 * Call docker-compose to bring the backend down
+	 * @return true if compose succeeded
+	 */
 	public static boolean down()
 	{
 		return execit(build(basedir, compose, "down"), null) == 0;		
 	}
 	
+	/**
+	 * Returns the status of the backend componets as an array of boolean
+	 * @return [ true if web running, true if db running ]
+	 */
 	public static boolean[] ps()
 	{
 		boolean ret[] = new boolean[] { false, false };
@@ -112,9 +145,9 @@ public class DockerInterface
 			{
 				String name = scan.next();
 				boolean up  = scan.nextLine().contains("Up");
-				if (name.contains("nwrsc_web")) {
+				if (name.contains("scorekeeper_web")) {
 					ret[0] = up;
-				} else if (name.contains("nwrsc_db")) {
+				} else if (name.contains("scorekeeper_db")) {
 					ret[1] = up;
 				}
 			}
@@ -125,6 +158,13 @@ public class DockerInterface
 		return ret;		
 	}
 
+	/**
+	 * Create a processbuilder object from components and environment
+	 * @param root the base directory to run in
+	 * @param cmd the initial array of arguments
+	 * @param additional a varargs list of additional arguments
+	 * @return a new ProcessBuilder object
+	 */
 	private static ProcessBuilder build(File root, String[] cmd, String ... additional)
 	{
 		List<String> cmdlist = new ArrayList<String>();
@@ -140,7 +180,7 @@ public class DockerInterface
         return p;
 	}
 	
-	/*
+	/**
 	 * Exec a process builder and collect the output.
 	 */
 	private static int execit(ProcessBuilder in, byte[] buffer)
