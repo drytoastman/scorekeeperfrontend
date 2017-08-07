@@ -27,8 +27,6 @@ import java.util.logging.SimpleFormatter;
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 
-//import sun.util.logging.PlatformLogger;
-
 /**
  */
 public class Logging
@@ -45,38 +43,35 @@ public class Logging
 	{
 		try
 		{
-			LogManager lm = LogManager.getLogManager();
-			Logger root = lm.getLogger("");
+			boolean isdebug = (System.getenv("DEBUG") != null);
+			
+			// Start with a fresh root set at warning
+			Logger root = LogManager.getLogManager().getLogger("");
+			root.setLevel(Level.WARNING);
 
 			Handler[] handlers = root.getHandlers();
 			for(Handler handler : handlers) {
 				root.removeHandler(handler);
 			}
-
-			// Get dialog alerts up first
-			AlertHandler ah = new AlertHandler();
-			ah.setLevel(Level.WARNING);
-			root.addHandler(ah);
 			
-			// Then console handler if desired (generally only when debugging)
-			if (System.getenv("CONSOLELOG") != null) {
+			// Add console handler if running in DEBUG 
+			if (isdebug) {
 				ConsoleHandler ch = new ConsoleHandler();
 				ch.setLevel(Level.ALL);
 				root.addHandler(ch);
 			}
+			
+			// For our own logs, we can set super fine level or info depdending on DEBUG and attach dialogs to those
+			Logger applog = Logger.getLogger("org.wwscc");
+			applog.setLevel(isdebug ? Level.FINEST : Level.INFO);
+			applog.addHandler(new AlertHandler(Level.WARNING));
 
-			// Set levels before windows preference load barfs useless data on the user
-			Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
-
-			// Then try to setup file logging (this might cause errors if we can't figure out where our logdir is)
+			// Try to setup file logging (this might cause errors if we can't figure out where our logdir is)
 			File logdir = getLogDir();
 			FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 1000000, 10, true);
 			fh.setFormatter(new SingleLineFormatter());
 			fh.setLevel(Level.ALL);
 			root.addHandler(fh);
-			
-			root.setLevel(Level.WARNING);
-			Logger.getLogger("org.wwscc").setLevel(Level.FINEST);			
 		}
 		catch (IOException ioe)
 		{
@@ -86,19 +81,8 @@ public class Logging
 
 	public static class AlertHandler extends Handler
 	{
-		public AlertHandler()
+		public AlertHandler(Level l)
 		{
-			LogManager manager = LogManager.getLogManager();
-			Level l;
-			try
-			{
-				String val = manager.getProperty(getClass().getName() + ".level");
-				l = Level.parse(val.trim());
-			}
-			catch (Exception e)
-			{
-				l = Level.SEVERE;
-			}
 			setLevel(l);
 			setFormatter(new SimpleFormatter());
 		}
