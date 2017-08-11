@@ -280,7 +280,7 @@ public class TrayMonitor implements ActionListener
                     portforward.setConfig("PreferredAuthentications", "publickey");
                     portforward.setPortForwardingL("*",           80, "127.0.0.1",    80);
                     portforward.setPortForwardingL("*",        54329, "127.0.0.1", 54329);
-                    portforward.setPortForwardingL("127.0.0.1", 5432, "127.0.0.1",  5432);
+                    portforward.setPortForwardingL("127.0.0.1", 6432, "127.0.0.1",  6432);
                     portforward.connect();
                 }
             } 

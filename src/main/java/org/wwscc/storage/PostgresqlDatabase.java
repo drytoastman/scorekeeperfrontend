@@ -85,7 +85,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 		if (series != null)
 			props.setProperty("currentSchema", series+",public");
 
-		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1/scorekeeper", props);
+		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:6432/scorekeeper", props);
 	}
 	
 	@Override
