@@ -41,34 +41,34 @@ public interface DataInterface
 	 * @param runs the number of runs to set to
 	 * @return true if update succeeded
 	 */
-	public boolean updateEventRuns(int eventid, int runs);
+	public boolean updateEventRuns(UUID eventid, int runs);
 
 	/** 
 	 * @param eventid TODO
 	 * @return a list of all entrants participating in the current event  
 	 */
-	public List<Entrant> getEntrantsByEvent(int eventid);
+	public List<Entrant> getEntrantsByEvent(UUID eventid);
 	
 	/** 
 	 * @param eventid TODO
 	 * @return a list of all entrants registered for an event 
 	 */
-	public List<Entrant> getRegisteredEntrants(int eventid);
+	public List<Entrant> getRegisteredEntrants(UUID eventid);
 	
 	/** 
 	 * @param driverid the driver id of the cars to search for
 	 * @param eventid TODO
 	 * @return a list of all registered car ids for a driver
 	 */
-	public List<Car> getRegisteredCars(UUID driverid, int eventid);
+	public List<Car> getRegisteredCars(UUID driverid, UUID eventid);
 	
 	/* Entrants w/ runs */
-	public List<Entrant> getEntrantsByRunOrder(int eventid, int course, int rungroup); // get all entrants in a particular event/course/rungroup and loads their runs
-	public Entrant loadEntrant(int eventid, UUID carid, int course, boolean loadruns); // load an entrant by carid and all of the associated runs if desired
+	public List<Entrant> getEntrantsByRunOrder(UUID eventid, int course, int rungroup); // get all entrants in a particular event/course/rungroup and loads their runs
+	public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns); // load an entrant by carid and all of the associated runs if desired
 
-	public List<UUID> getCarIdsForRunGroup(int eventid, int course, int rungroup); // get the carids based on the current run group
-	public Set<UUID> getCarIdsForCourse(int eventid, int course); // get the participating cardids based on the course
-	public void setRunOrder(int eventid, int course, int rungroup, List<UUID> carids); // set the run order of the current rungroup to carids
+	public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup); // get the carids based on the current run group
+	public Set<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
+	public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids); // set the run order of the current rungroup to carids
 
 	public void newDriver(Driver d) throws SQLException; // create a new driver from data in d and set the id variable
 	public void updateDriver(Driver d) throws SQLException; // update the driver values in the database
@@ -92,27 +92,27 @@ public interface DataInterface
 	 * @throws SQLException 
 	 * @throws IOException
 	 */
-	public void registerCar(int eventid, UUID carid, boolean paid, boolean overwrite) throws SQLException;
+	public void registerCar(UUID eventid, UUID carid, boolean paid, boolean overwrite) throws SQLException;
 	
-	public void unregisterCar(int eventid, UUID carid) throws SQLException; // remove this car from the current event registration
+	public void unregisterCar(UUID eventid, UUID carid) throws SQLException; // remove this car from the current event registration
 	public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
 	public void updateCar(Car d) throws SQLException; // update the car values in the database
 	public void deleteCar(Car d) throws SQLException;
 	public void deleteCars(Collection<Car> d) throws SQLException;
 	public boolean isRegistered(UUID eventid, UUID carid);
-	public MetaCar loadMetaCar(Car c, int eventid, int course);
+	public MetaCar loadMetaCar(Car c, UUID eventid, int course);
 
 	public void setRun(Run r);
-	public void deleteRun(int eventid, UUID carid, int course, int run);
+	public void deleteRun(UUID eventid, UUID carid, int course, int run);
 
 	/* Challenge */
-	public Set<UUID> getCarIdsByChallenge(int challengeid);
-	public int newChallenge(int eventid, String name, int size);
-	public void deleteChallenge(int challengeid);
-	public List<Challenge> getChallengesForEvent(int eventid);
-	public List<ChallengeRound> getRoundsForChallenge(int challengeid);
-	public List<ChallengeRun> getRunsForChallenge(int challengeid);
-	public Dialins loadDialins(int eventid);
+	public Set<UUID> getCarIdsByChallenge(UUID challengeid);
+	public UUID newChallenge(UUID eventid, String name, int size);
+	public void deleteChallenge(UUID challengeid);
+	public List<Challenge> getChallengesForEvent(UUID eventid);
+	public List<ChallengeRound> getRoundsForChallenge(UUID challengeid);
+	public List<ChallengeRun> getRunsForChallenge(UUID challengeid);
+	public Dialins loadDialins(UUID eventid);
 	public void updateChallenge(Challenge c);
 	public void updateChallengeRound(ChallengeRound r);
 	public void updateChallengeRounds(List<ChallengeRound> rounds);
@@ -127,7 +127,7 @@ public interface DataInterface
 	 * @param course TODO
 	 * @return true if the carid is present in any rungroup for the current event/course
 	 */
-	public boolean isInOrder(int eventid, UUID carid, int course);
+	public boolean isInOrder(UUID eventid, UUID carid, int course);
 	
 	/**
 	 * Uses currentEvent, currentCourse, currentRunGroup
@@ -137,7 +137,7 @@ public interface DataInterface
 	 * @param rungroup TODO
 	 * @return true if the carid is present in the current event/course/rungroup
 	 */
-	public boolean isInCurrentOrder(int eventid, UUID carid, int course, int rungroup);
+	public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup);
 	
 	public ClassData getClassData();
 	public String getEffectiveIndexStr(Car c);

@@ -10,13 +10,7 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-
 
 /**
  *
@@ -24,7 +18,7 @@ import java.util.prefs.Preferences;
  */
 public class Prefs
 {
-	private static final Logger log = Logger.getLogger(Prefs.class.getCanonicalName());
+	//private static final Logger log = Logger.getLogger(Prefs.class.getCanonicalName());
 	
 	private static Preferences prefs;
 	
@@ -43,6 +37,7 @@ public class Prefs
 		prefs = Preferences.userRoot().node(name);
 	}
 	
+	/*
 	public static Map<String,String> getPasswords() 
 	{
 		Map<String,String> ret = new HashMap<String,String>();
@@ -57,26 +52,17 @@ public class Prefs
 		}
 		
 		return ret;
-	}
+	}*/
 	
-	public static boolean isWindows()
-	{
-		return System.getProperty("os.name").split("\\s")[0].equals("Windows");
-	}
-	
-	public static boolean isLinux()
-	{
-		return System.getProperty("os.name").split("\\s")[0].equals("Linux");
-	}
-	
-	public static boolean isMac()
-	{
-		return System.getProperty("os.name").split("\\s")[0].equals("Mac");
-	}
+	public static boolean isWindows() { return System.getProperty("os.name").split("\\s")[0].equals("Windows"); }
+	//public static boolean isLinux() { return System.getProperty("os.name").split("\\s")[0].equals("Linux"); }
+	//public static boolean isMac() { return System.getProperty("os.name").split("\\s")[0].equals("Mac"); }
 	
     public static String getDocRoot() 
     {
-        return Paths.get(System.getProperty("user.home"), "nwrsc").toString();
+    	if (System.getenv("DEBUG") != null)
+    		return Paths.get("..", "ScorekeeperBackend").toString();
+    	return Paths.get(System.getProperty("user.home"), "scorekeeper").toString();
     }
 
 	public static String getLogDirectory()
@@ -84,8 +70,8 @@ public class Prefs
 		return FileSystems.getDefault().getPath(getDocRoot(), "logs").toString();
 	}
 
-	public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
-	public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
+	//public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
+	//public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
 	public static String getSeries(String def) { return prefs.get("series", def); }
 	public static int getEventId(int def) { return prefs.getInt("eventid", def); }
 	public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
@@ -104,8 +90,8 @@ public class Prefs
 		return r;
 	}
 
-	public static void setHomeServer(String s) { prefs.put("hostname", s); }
-	public static void setPasswordFor(String series, String s) { prefs.put("password-"+series, s); }
+	//public static void setHomeServer(String s) { prefs.put("hostname", s); }
+	//public static void setPasswordFor(String series, String s) { prefs.put("password-"+series, s); }
 	public static void setSeries(String s) { prefs.put("series", s); }
 	public static void setEventId(int i) { prefs.putInt("eventid", i); }
 	public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }

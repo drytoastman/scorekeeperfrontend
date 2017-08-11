@@ -22,6 +22,7 @@ import org.wwscc.components.CarTreeRenderer;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Dialins;
 import org.wwscc.storage.Entrant;
+import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -56,10 +57,10 @@ public class EntrantTree extends CarTree implements MessageListener
 		{
 			case CHALLENGE_CHANGED:
 			case ENTRANTS_CHANGED:
-				int challengeid = ChallengeGUI.state.getCurrentChallengeId();
+				UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
 				Collection<UUID> exclude;
 				Collection<Entrant> reg;
-				if (challengeid > 0)
+				if (challengeid != IdGenerator.nullid)
 				{
 					reg = Database.d.getEntrantsByEvent(ChallengeGUI.state.getCurrentEventId());
 					exclude = Database.d.getCarIdsByChallenge(challengeid);

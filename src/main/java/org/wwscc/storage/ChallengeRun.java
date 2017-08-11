@@ -21,7 +21,7 @@ import org.wwscc.util.IdGenerator;
  */
 public class ChallengeRun
 {
-	protected int    challengeid; 
+	protected UUID   challengeid; 
 	protected UUID   carid; 
 	protected double reaction, sixty, raw;
 	protected int    round, course, cones, gates;
@@ -29,7 +29,7 @@ public class ChallengeRun
 
 	public ChallengeRun()
 	{
-		challengeid = -1;
+		challengeid = IdGenerator.generateId();
 		carid = IdGenerator.nullid;
 		reaction = -1;
 		sixty = -1;
@@ -56,7 +56,7 @@ public class ChallengeRun
 	
 	public ChallengeRun(ResultSet rs) throws SQLException
 	{
-		challengeid  = rs.getInt("challengeid");
+		challengeid  = (UUID)rs.getObject("challengeid");
 		carid        = (UUID)rs.getObject("carid");
 		reaction     = rs.getDouble("reaction");
 		sixty        = rs.getDouble("sixty");
@@ -87,7 +87,7 @@ public class ChallengeRun
 		course = id.isLeft() ? Run.LEFT : Run.RIGHT;
 	}
 	
-	public int getChallengeId() { return challengeid; }
+	public UUID getChallengeId(){ return challengeid; }
 	public int getRound()       { return round; }
 	public int getCones()       { return cones; }
 	public int getGates()       { return gates; }

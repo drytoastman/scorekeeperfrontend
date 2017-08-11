@@ -34,7 +34,7 @@ public class Run extends AttrBase implements Serial, Cloneable
 	public static final int LEFT = 1;
 	public static final int RIGHT = 2;
 
-	protected int eventid;
+	protected UUID eventid;
 	protected UUID carid;
 	protected int course, run; 
 	protected int cones, gates;
@@ -94,7 +94,7 @@ public class Run extends AttrBase implements Serial, Cloneable
 		this.status	= status;
 
 		this.carid   = IdGenerator.nullid;
-		this.eventid = -1;
+		this.eventid = IdGenerator.nullid;
 		this.course  = -1;
 		this.run     = -1;
 	}
@@ -117,7 +117,7 @@ public class Run extends AttrBase implements Serial, Cloneable
 	public Run(ResultSet rs) throws SQLException
 	{
 		super(rs);
-		eventid = rs.getInt("eventid");
+		eventid = (UUID)rs.getObject("eventid");
 		carid   = (UUID)rs.getObject("carid");
 		course  = rs.getInt("course");
 		run     = rs.getInt("run");
@@ -157,14 +157,14 @@ public class Run extends AttrBase implements Serial, Cloneable
 	public void setStatus(String s)         { status = s; }
 	public void setCarId(UUID cid)          { carid = cid; }
 
-	public void setId(int eventid, int course, int run)
+	public void setId(UUID eventid, int course, int run)
 	{
 		this.eventid = eventid;
 		this.course = course;
 		this.run = run;
 	}
 
-	public void updateTo(int inEventid, UUID inCarid, int inCourse, int inRun)
+	public void updateTo(UUID inEventid, UUID inCarid, int inCourse, int inRun)
 	{
 		this.eventid = inEventid;
 		this.carid = inCarid;

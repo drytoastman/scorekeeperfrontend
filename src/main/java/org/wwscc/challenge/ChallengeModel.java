@@ -40,8 +40,8 @@ public class ChallengeModel implements MessageListener
 {
 	private static final Logger log = Logger.getLogger(ChallengeModel.class.getCanonicalName());
 
-	Map<Integer, Map<Integer, ChallengeRound>> rounds;
-	Map<Integer, Challenge> challenges;
+	Map<UUID, Map<Integer, ChallengeRound>> rounds;
+	Map<UUID, Challenge> challenges;
 	Map<UUID, Entrant> entrantcache;
 	LinkedList<Id.Run> leftTargets;
 	LinkedList<Id.Run> rightTargets;
@@ -53,8 +53,8 @@ public class ChallengeModel implements MessageListener
 	public ChallengeModel()
 	{
 		entrantcache = new HashMap<UUID,Entrant>();
-		challenges = new HashMap<Integer, Challenge>();
-		rounds = new HashMap<Integer, Map<Integer,ChallengeRound>>();
+		challenges = new HashMap<UUID, Challenge>();
+		rounds = new HashMap<UUID, Map<Integer,ChallengeRound>>();
 		leftTargets = new LinkedList<Id.Run>();
 		rightTargets = new LinkedList<Id.Run>();
 		client = null;

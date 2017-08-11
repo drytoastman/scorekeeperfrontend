@@ -33,7 +33,6 @@ public class Launcher
 
 		try
 		{
-			System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
 			if (args.length > 0) {
 				app = args[0];
                 startarg = 1;
@@ -41,6 +40,9 @@ public class Launcher
 				app = "TrayMonitor";
 			}
 
+			System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+			System.setProperty("program.name", app);
+			
 			// Check if we are using a special prefs node, only used for testing
             passthru = new ArrayList<String>();
 			for (int ii = startarg; ii < args.length; ii++) {

@@ -11,6 +11,9 @@ package org.wwscc.storage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.UUID;
+
+import org.wwscc.util.IdGenerator;
 
 /**
  */
@@ -18,20 +21,14 @@ public class Challenge
 {
 	//private static final Logger log = Logger.getLogger("org.wwscc.storage.Challenge");
 
-	protected int challengeid;
-	protected int eventid;
+	protected UUID challengeid;
+	protected UUID eventid;
 	protected String name;
 	protected int depth;
 
-	public Challenge()
+	public Challenge(UUID inEvent, String inName, int inDepth)
 	{
-		challengeid = -1;
-		eventid = -1;
-	}
-
-	public Challenge(int inEvent, String inName, int inDepth)
-	{
-		challengeid = -1;
+		challengeid = IdGenerator.generateId();;
 		eventid = inEvent;
 		name = inName;
 		depth = inDepth;
@@ -39,8 +36,8 @@ public class Challenge
 	
 	public Challenge(ResultSet rs) throws SQLException
 	{
-		challengeid = rs.getInt("challengeid");
-		eventid     = rs.getInt("eventid");
+		challengeid = (UUID)rs.getObject("challengeid");
+		eventid     = (UUID)rs.getObject("eventid");
 		name        = rs.getString("name");
 		depth       = rs.getShort("depth");
 	}
@@ -55,8 +52,8 @@ public class Challenge
 		return ret;
 	}
 
-	public int getChallengeId() { return challengeid; }
-	public int getEventId() { return eventid; }
+	public UUID getChallengeId() { return challengeid; }
+	public UUID getEventId() { return eventid; }
 	public String getName() { return name; }
 	public int getDepth() { return depth; }
 

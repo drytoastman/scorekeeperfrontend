@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 import org.postgresql.util.PGobject;
-import org.wwscc.util.Prefs;
 
 public class PostgresqlDatabase extends SQLDataInterface 
 {
@@ -81,22 +80,12 @@ public class PostgresqlDatabase extends SQLDataInterface
 	private static Connection getConnection(String series) throws SQLException
 	{
 		Properties props = new Properties();
-		props.setProperty("ssl", "true");
-		props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
-		props.setProperty("ApplicationName", "JavaNameHere");
+		props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
+		props.setProperty("user", "localuser");
 		if (series != null)
-		{
 			props.setProperty("currentSchema", series+",public");
-			props.setProperty("user", series);
-			props.setProperty("password", Prefs.getPasswordFor(series));
-		}
-		else
-		{
-			props.setProperty("user", "nulluser");
-			props.setProperty("password", "nulluser");
-		}
 
-		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:54329/scorekeeper", props);
+		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1/scorekeeper", props);
 	}
 	
 	@Override

@@ -13,6 +13,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 /**
  * Represents a single event from the database.
@@ -21,7 +22,7 @@ public class Event extends AttrBase implements Serializable
 {
 	private static final long serialVersionUID = 3721488283732959966L;
 
-	protected int       eventid;
+	protected UUID      eventid;
 	protected String    name;
 	protected Date      date;
 	protected Timestamp regopened;
@@ -51,7 +52,7 @@ public class Event extends AttrBase implements Serializable
 	public Event(ResultSet rs) throws SQLException
 	{
 		super(rs);
-		eventid     = rs.getInt("eventid");
+		eventid     = (UUID)rs.getObject("eventid");
 		name        = rs.getString("name");
 		date        = rs.getDate("date");
 		regopened   = rs.getTimestamp("regopened");
@@ -68,7 +69,7 @@ public class Event extends AttrBase implements Serializable
 		ispractice  = rs.getBoolean("ispractice");
 	}
 
-	public int getEventId() { return eventid; }
+	public UUID getEventId() { return eventid; }
 	public int getRuns() { return runs; }
 	public int getCourses() { return courses; }
 	public boolean isPro() { return ispro; }
