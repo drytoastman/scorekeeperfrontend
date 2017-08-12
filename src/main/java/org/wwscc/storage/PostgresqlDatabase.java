@@ -40,6 +40,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 		conn = null;
 		leftovers = new HashMap<ResultSet, PreparedStatement>();
 		conn = getConnection(series);
+		conn.createStatement().execute("set time zone 'UTC'");
 	}
 
 	/**
