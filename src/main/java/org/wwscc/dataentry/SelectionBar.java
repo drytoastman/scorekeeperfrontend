@@ -12,6 +12,7 @@ package org.wwscc.dataentry;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -19,6 +20,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import net.miginfocom.swing.MigLayout;
+
+import org.wwscc.components.CurrentSeriesLabel;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
 import org.wwscc.util.BrowserControl;
@@ -33,6 +36,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 	//private static Logger log = Logger.getLogger(SelectionBar.class.getCanonicalName());
 
 	JButton resultsButton;
+	CurrentSeriesLabel seriesLabel;
 
 	JComboBox<Event> eventSelect;
 	JComboBox<Integer> courseSelect;
@@ -40,7 +44,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
 	public SelectionBar()
 	{
-		super(new MigLayout("fill, ins 3", "[grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow][grow 0][grow 0]"));
+		super(new MigLayout("fill, ins 3", "[grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow][grow 0][grow 0]"));
 
 		Messenger.register(MT.SERIES_CHANGED, this);
 		setBorder(new BevelBorder(0));
@@ -51,12 +55,18 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 		resultsButton.addActionListener(this);
 		resultsButton.setActionCommand("resultsPrint");
 
+		seriesLabel = new CurrentSeriesLabel();
+	    seriesLabel.setFont(f.deriveFont(Font.PLAIN));
+	        
 		courseSelect = createCombo("courseChange");
 		groupSelect  = createCombo("groupChange");
 		eventSelect = createCombo("eventChange");
 
 		groupSelect.setModel(new DefaultComboBoxModel<Integer>(new Integer[] { 1, 2, 3, 4, 5, 6 }));
 
+	    add(createLabel("Series:", f), "gapleft 10");
+	    add(seriesLabel, "gapright 20");
+	        
 		add(createLabel("Event:", f), "gapleft 10");
 		add(eventSelect, "gapright 20");
 
@@ -104,6 +114,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 		switch (type)
 		{
 			case SERIES_CHANGED:
+			    DataEntry.state.setCurrentSeries((String)o);
 				eventSelect.setModel(new DefaultComboBoxModel<Event>(Database.d.getEvents().toArray(new Event[0])));
 				int select = Prefs.getEventId(0);
 				if (select < eventSelect.getItemCount())

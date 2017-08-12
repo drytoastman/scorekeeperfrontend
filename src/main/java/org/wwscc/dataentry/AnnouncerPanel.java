@@ -10,6 +10,8 @@ package org.wwscc.dataentry;
 
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
+import org.wwscc.util.Messenger;
+
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -25,20 +27,29 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
 	WebEngine engine;
 	
 	public AnnouncerPanel()
-	{		
-		// uncomment to reload on run change Messenger.register(MT.RUN_CHANGED, this);		
-		Platform.runLater(new Runnable() {
-            @Override
-            public void run() { init(); }
-		});
+	{
+	    Messenger.register(MT.SERIES_CHANGED, this);
+	    Messenger.register(MT.EVENT_CHANGED, this);  
 	}
 	
-	private void init()
+	private void setURL()
 	{
-		WebView view = new WebView();
-		engine = view.getEngine();
-		engine.load("http://google.com");
-		setScene(new Scene(view));
+	    if (engine == null)
+	    {
+	        WebView view = new WebView();
+	        setScene(new Scene(view));
+	        engine = view.getEngine();
+	    }
+	    
+        String url = String.format("http://127.0.0.1/announcer/%s/event/%s/?mini=1", 
+                DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId());
+        engine.load(url);
+	}
+	
+	private void reload()
+	{
+	    if (engine != null) 
+	        engine.reload();
 	}
 
 	@Override
@@ -46,13 +57,13 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
 	{
 		switch (type)
 		{
+		    case SERIES_CHANGED:
+		    case EVENT_CHANGED:
+		        Platform.runLater(new Runnable () { public void run() { setURL(); }});
+		        break;
+		        
 			case RUN_CHANGED:
-				if (engine != null) {
-					Platform.runLater(new Runnable () {
-						@Override
-						public void run() { engine.reload(); }
-					});
-				}
+			    Platform.runLater(new Runnable () { public void run() { reload(); }});
 				break;
 		}
 	}

@@ -31,7 +31,7 @@ public class BrowserControl
 
 	public static void openResults(ApplicationState state, String selection)
 	{
-		openURL(String.format("http://127.0.0.1/results/%s/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
+		openURL(String.format("http://127.0.0.1/results/%s/event/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
 	}
 
 	public static void openAdmin(ApplicationState state, String selection)
@@ -43,7 +43,6 @@ public class BrowserControl
 	{
 		try{
 			log.info("openURL request: " + url);
-			System.out.println("is supported = " + Desktop.isDesktopSupported());
 			Desktop.getDesktop().browse(new URI(url));
 		} catch (Exception ex) {
 			log.severe("Couldn't open default web browser:" + ex);
@@ -61,7 +60,7 @@ public class BrowserControl
 			g += groups[ii]+",";
 		g += groups[ii];
 
-		printURL(String.format("http://127.0.0.1/results/%s/%s/bygroup?course=%s&list=%s", state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), g));
+		printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s", state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), g));
 	}
 	
 	public static void printURL(String url)

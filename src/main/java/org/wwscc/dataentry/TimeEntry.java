@@ -65,7 +65,6 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.NF;
-import org.wwscc.util.StupidSimpleDataService;
 import org.wwscc.util.TimeTextField;
 
 
@@ -113,8 +112,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 
 	JLabel connectionStatus;
 	ModeButtonGroup modeGroup;
-	
-	StupidSimpleDataService server;
+
 	
 	/**
 	 * Special focus listener for cones and gates entry
@@ -257,10 +255,6 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		reaction.addKeyListener(this);
 		sixty.addKeyListener(this);
 		enter.addKeyListener(this);
-		
-		server = new StupidSimpleDataService(9090);
-		new Thread(server).start();
-		server.setData("timer", "0.000");
 	}
 	/**
 
@@ -532,10 +526,10 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 			}
 		}
 		
-		// regardless, put the last value in the timer data service
+		// regardless, note the last timer data as the announcer panel wants it
 		if (s.getFinishedCount() > 0) // should always be true but just in case
 		{
-			server.setData("timer",  NF.format(s.getRun(s.getFinishedCount()-1).getRaw()));
+		    Messenger.sendEvent(MT.TIME_RECEIVED, s.getRun(s.getFinishedCount()-1).getRaw());
 		}
 	}
 

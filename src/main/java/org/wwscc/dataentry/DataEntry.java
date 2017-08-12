@@ -22,7 +22,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
-import org.wwscc.components.CurrentSeriesLabel;
 import org.wwscc.components.MyIpLabel;
 import org.wwscc.dataentry.tables.DoubleTableContainer;
 import org.wwscc.storage.Database;
@@ -106,15 +105,12 @@ public class DataEntry extends JFrame implements MessageListener
 		timeEntry = new TimeEntry();
 		menus.add(timeEntry.getTimerMenu());
 
-		CurrentSeriesLabel curdb = new CurrentSeriesLabel();
 		HelpPanel help = new HelpPanel();
 		MyIpLabel myip = new MyIpLabel();
-		curdb.setBorder(BorderFactory.createLoweredBevelBorder());
 		help.setBorder(BorderFactory.createLoweredBevelBorder());
 		myip.setBorder(BorderFactory.createLoweredBevelBorder());
 
-		JPanel infoBoxes = new JPanel(new MigLayout("fill, ins 0", "[18%]0[64%]0[18%]"));
-		infoBoxes.add(curdb, "grow");
+		JPanel infoBoxes = new JPanel(new MigLayout("fill, ins 0", "[75%]0[25%]"));
 		infoBoxes.add(help, "grow, hmin 20");
 		infoBoxes.add(myip, "grow");
 

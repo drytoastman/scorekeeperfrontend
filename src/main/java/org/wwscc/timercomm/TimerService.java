@@ -52,7 +52,6 @@ public class TimerService implements RunServiceInterface, ThreadedClass
 		servicename = UUID.randomUUID().toString();
 		log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{servicename, serversock.getLocalPort()});
 		
-        jmdns = JmmDNS.Factory.getInstance();
 		clients = new Vector<RunServiceInterface>();
 		marked = new Vector<RunServiceInterface>();
 		done = true;
@@ -139,6 +138,8 @@ public class TimerService implements RunServiceInterface, ThreadedClass
 		@Override
 		public void run()
 		{
+		    jmdns = JmmDNS.Factory.getInstance();
+
 			String ip;
 			try { ip = InetAddress.getLocalHost().getHostAddress(); }
 			catch (UnknownHostException ex) { ip = "unknown"; }

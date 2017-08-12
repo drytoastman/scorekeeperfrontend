@@ -61,7 +61,7 @@ public class Prefs
     public static String getDocRoot() 
     {
     	if (System.getenv("DEBUG") != null)
-    		return Paths.get("..", "ScorekeeperBackend").toString();
+    		return Paths.get(".").toString();
     	return Paths.get(System.getProperty("user.home"), "scorekeeper").toString();
     }
 
