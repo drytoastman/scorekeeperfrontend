@@ -20,6 +20,7 @@ import org.wwscc.util.Prefs;
 public class DockerInterface
 {
 	private static final Logger log = Logger.getLogger(DockerInterface.class.getName());
+    private static final Logger sublog = Logger.getLogger("docker.subprocess");
 	private static String[] compose = { "docker-compose", "-p", "scorekeeper", "-f", "docker-compose.yaml" };
 	private static String[] machine = { "docker-machine" };
 	private static File basedir = new File(Prefs.getDocRoot());
@@ -112,7 +113,7 @@ public class DockerInterface
 	 */
 	public static boolean up()
 	{
-		return execit(build(basedir, compose, "up", "-d"), null) == 0;		
+		return execit(build(basedir, compose, "up", "-d", "--no-color"), null) == 0;		
 	}
 
 	/**
@@ -188,7 +189,7 @@ public class DockerInterface
 		try {
             Process p = in.start();
             int ret = p.waitFor();
-            log.log(Level.FINE, "{0} returns {1}", new Object [] { in.command().toString(), ret });
+            log.log(Level.FINER, "{0} returns {1}", new Object [] { in.command().toString(), ret });
             
             if ((buffer == null) && ret != 0) // create buffer for errors if not present
             {
@@ -200,7 +201,11 @@ public class DockerInterface
 	            InputStream is = p.getInputStream();
 	            int len = is.read(buffer);
 	            is.close();
-            	log.log((ret != 0) ? Level.INFO : Level.FINEST, "Execution Output:\n " + new String(buffer, 0, len));
+	            if (ret != 0) {
+	                log.log(Level.INFO, "Docker Error:\n " + new String(buffer, 0, len));
+	            } else {
+	                sublog.log(Level.FINEST, "Execution Output:\n " + new String(buffer, 0, len));
+	            }
             }
             
             p.destroy();            

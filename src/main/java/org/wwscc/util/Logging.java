@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.logging.ConsoleHandler;
@@ -23,7 +24,6 @@ import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 
@@ -31,162 +31,160 @@ import javax.swing.JOptionPane;
  */
 public class Logging
 {
-	public static File getLogDir()
-	{
-		File dir = new File(Prefs.getLogDirectory());
-		if (!dir.exists())
-			dir.mkdirs();
-		return dir;
-	}
-	
-	public static void logSetup(String name)
-	{
-		try
-		{
-			boolean isdebug = (System.getenv("DEBUG") != null);
-			
-			// Start with a fresh root set at warning
-			Logger root = LogManager.getLogManager().getLogger("");
-			root.setLevel(Level.WARNING);
+    public static void logSetup(String name)
+    {
+        boolean isdebug = (System.getenv("DEBUG") != null);
 
-			Handler[] handlers = root.getHandlers();
-			for(Handler handler : handlers) {
-				root.removeHandler(handler);
-			}
-			
-			// Add console handler if running in DEBUG 
-			if (isdebug) {
-				ConsoleHandler ch = new ConsoleHandler();
-				ch.setLevel(Level.ALL);
-				root.addHandler(ch);
-			}
-			
-			// For our own logs, we can set super fine level or info depdending on DEBUG and attach dialogs to those
-			Logger applog = Logger.getLogger("org.wwscc");
-			applog.setLevel(isdebug ? Level.FINEST : Level.INFO);
-			applog.addHandler(new AlertHandler(Level.WARNING));
+        // Start with a fresh root set at warning
+        Logger root = LogManager.getLogManager().getLogger("");
+        Formatter format = new SingleLineFormatter();
 
-			// Try to setup file logging (this might cause errors if we can't figure out where our logdir is)
-			File logdir = getLogDir();
-			FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 1000000, 10, true);
-			fh.setFormatter(new SingleLineFormatter());
-			fh.setLevel(Level.ALL);
-			root.addHandler(fh);
-		}
-		catch (IOException ioe)
-		{
-			JOptionPane.showConfirmDialog(null, "Unable to enable standard file logging");
-		}
-	}
+        root.setLevel(Level.WARNING);
+        for(Handler handler : root.getHandlers()) {
+            root.removeHandler(handler);
+        }
 
-	public static class AlertHandler extends Handler
-	{
-		public AlertHandler(Level l)
-		{
-			setLevel(l);
-			setFormatter(new SimpleFormatter());
-		}
+        // Set prefs levels before windows preference load barfs useless data on the user
+        Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
 
-		public void publish(LogRecord logRecord)
-		{
-			if (isLoggable(logRecord))
-			{
-				int type;
-				String title;
+        // Add console handler if running in DEBUG
+        if (isdebug) {
+            ConsoleHandler ch = new ConsoleHandler();
+            ch.setLevel(Level.ALL);
+            ch.setFormatter(format);
+            root.addHandler(ch);
+        }
 
-				int val = logRecord.getLevel().intValue();
-				if (val >= Level.SEVERE.intValue())
-				{
-					title = "Error";
-					type = JOptionPane.ERROR_MESSAGE;
-				}
-				else if (val >= Level.WARNING.intValue())
-				{
-					title = "Warning";
-					type = JOptionPane.WARNING_MESSAGE;
-				}
-				else
-				{
-					title = "Note";
-					type = JOptionPane.INFORMATION_MESSAGE;
-				}
+        // For our own logs, we can set super fine level or info depending on DEBUG and attach dialogs to those
+        Logger applog = Logger.getLogger("org.wwscc");
+        applog.setLevel(isdebug ? Level.FINEST : Level.INFO);
+        applog.addHandler(new AlertHandler(Level.WARNING));
 
-				String record = getFormatter().formatMessage(logRecord);
-				if (record.contains("\n"))
-					record = "<HTML>" + record.replace("\n", "<br>") + "</HTML>";
-				JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), record, title, type);
-			}
-		}
+        Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                applog.log(Level.WARNING, String.format("UncaughtException in %s: %s", t, e), e);
+            }});
 
-		public void flush() {}
-		public void close() {}
-	}
+        try {
+            File logdir = new File(Prefs.getLogDirectory());
+            if (!logdir.exists())
+                logdir.mkdirs();
+            FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 1000000, 10, true);
+            fh.setFormatter(format);
+            fh.setLevel(Level.ALL);
+            root.addHandler(fh);
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                    "Unable to enable logging to files.", "Log Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-	public static class SingleLineFormatter extends Formatter
-	{
-		Date dat = new Date();
-		private final static String format = "{0,time}";
-		private MessageFormat formatter;
+    public static class AlertHandler extends Handler
+    {
+        public AlertHandler(Level l)
+        {
+            setLevel(l);
+            setFormatter(new SimpleFormatter());
+        }
 
-		private Object args[] = new Object[1];
+        public void publish(LogRecord logRecord)
+        {
+            if (isLoggable(logRecord))
+            {
+                int type;
+                String title;
 
-		/**
-		 * Format the given LogRecord.
-		 * @param record the log record to be formatted.
-		 * @return a formatted log record
-		 */
-		@Override
-		public synchronized String format(LogRecord record)
-		{
-			StringBuffer sb = new StringBuffer();
+                int val = logRecord.getLevel().intValue();
+                if (val >= Level.SEVERE.intValue())
+                {
+                    title = "Error";
+                    type = JOptionPane.ERROR_MESSAGE;
+                }
+                else if (val >= Level.WARNING.intValue())
+                {
+                    title = "Warning";
+                    type = JOptionPane.WARNING_MESSAGE;
+                }
+                else
+                {
+                    title = "Note";
+                    type = JOptionPane.INFORMATION_MESSAGE;
+                }
 
-			// Minimize memory allocations here.
-			dat.setTime(record.getMillis());
-			args[0] = dat;
-			StringBuffer text = new StringBuffer();
-			if (formatter == null) {
-				formatter = new MessageFormat(format);
-			}
-			formatter.format(args, text, null);
-			sb.append(text + " ");
+                String record = getFormatter().formatMessage(logRecord);
+                if (record.contains("\n"))
+                    record = "<HTML>" + record.replace("\n", "<br>") + "</HTML>";
+                JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), record, title, type);
+            }
+        }
 
-			String className = record.getSourceClassName();
-			if ((className == null) || !className.equals("Storage.DebugPrepared"))
-			{
-				if (className != null)
-					sb.append(className);
-				else
-					sb.append(record.getLoggerName());
+        public void flush() {}
+        public void close() {}
+    }
 
-				if (record.getSourceMethodName() != null)
-					sb.append(" " + record.getSourceMethodName() + " ");
+    public static class SingleLineFormatter extends Formatter
+    {
+        Date dat = new Date();
+        private final static String format = "{0,time}";
+        private MessageFormat formatter;
 
-				sb.append(record.getLevel().getLocalizedName());
-				sb.append(": ");
-			}
+        private Object args[] = new Object[1];
 
-			sb.append(formatMessage(record));
-			sb.append("\n");
+        /**
+         * Format the given LogRecord.
+         * @param record the log record to be formatted.
+         * @return a formatted log record
+         */
+        @Override
+        public synchronized String format(LogRecord record)
+        {
+            StringBuffer sb = new StringBuffer();
 
-			if (record.getThrown() != null)
-			{
-				try
-				{
-					StringWriter sw = new StringWriter();
-					PrintWriter pw = new PrintWriter(sw);
-					record.getThrown().printStackTrace(pw);
-					pw.close();
-					sb.append(sw.toString());
-				}
-				catch (Exception ex)
-				{
-				}
-			}
+            // Minimize memory allocations here.
+            dat.setTime(record.getMillis());
+            args[0] = dat;
+            StringBuffer text = new StringBuffer();
+            if (formatter == null) {
+                formatter = new MessageFormat(format);
+            }
+            formatter.format(args, text, null);
+            sb.append(text + " ");
 
-			return sb.toString();
-		}
-	}
+            String className = record.getSourceClassName();
+            if ((className == null) || !className.equals("Storage.DebugPrepared"))
+            {
+                if (className != null)
+                    sb.append(className);
+                else
+                    sb.append(record.getLoggerName());
 
+                if (record.getSourceMethodName() != null)
+                    sb.append(" " + record.getSourceMethodName() + " ");
 
+                sb.append(record.getLevel().getLocalizedName());
+                sb.append(": ");
+            }
 
+            sb.append(formatMessage(record));
+            sb.append("\n");
+
+            if (record.getThrown() != null)
+            {
+                try
+                {
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    record.getThrown().printStackTrace(pw);
+                    pw.close();
+                    sb.append(sw.toString());
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            return sb.toString();
+        }
+    }
 }

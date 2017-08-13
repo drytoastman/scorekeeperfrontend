@@ -125,6 +125,16 @@ public class TrayMonitor implements ActionListener
         cmonitor = new ComposeController();
         cmonitor.start();
     }
+    
+    public void waitforthreads()
+    {
+        try {
+            mmonitor.join();
+            cmonitor.join();
+        } catch (InterruptedException ie) {
+            log.warning("Exiting due to interuption: " + ie);
+        }
+    }
 
     private MenuItem newMenuItem(String initial, String cmd, Menu parent)
     {
@@ -142,6 +152,10 @@ public class TrayMonitor implements ActionListener
         switch (cmd)
         {
             case "quit":
+                if (applicationdone) {
+                    // Force quiting as something else isn't dying properly
+                    System.exit(-1);
+                }
                 if (JOptionPane.showConfirmDialog(null, "This will stop the datbase server and web server.  Is that ok?", 
                     "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
                 {
@@ -214,10 +228,13 @@ public class TrayMonitor implements ActionListener
                 try 
                 {
                     checkmachine();
-                    synchronized (this) { this.wait(5000); }                    
+                    synchronized (this) { this.wait(10000); }                    
                 } 
                 catch (InterruptedException e) {}
             }
+            
+            if (portforward != null)
+                portforward.disconnect();
         }
         
         private void signalready(boolean ready)
@@ -326,10 +343,9 @@ public class TrayMonitor implements ActionListener
             if (!DockerInterface.down())
             {
                 log.severe("Unable to stop the web and database services. See logs.");
-                return;
             }
             
-            System.exit(0);
+            //System.exit(0);
         }
         
         public void checkcompose()
@@ -386,6 +402,8 @@ public class TrayMonitor implements ActionListener
     {
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         Logging.logSetup("traymonitor");
-        new TrayMonitor(args);
+        TrayMonitor tm = new TrayMonitor(args);
+        tm.waitforthreads();
+        System.exit(0);
     }
 }
