@@ -31,6 +31,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
+
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.components.MyServerLabel;
 import org.wwscc.dialogs.SimpleFinderDialog;
@@ -241,8 +243,11 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 	{
 		try
 		{
-			Logging.logSetup("prointerface");
-			final ProSoloInterface frame = new ProSoloInterface();
+	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+	        System.setProperty("program.name", "ProSoloInterface");
+	        Logging.logSetup("prointerface");
+
+	        final ProSoloInterface frame = new ProSoloInterface();
 			frame.addWindowListener(new WindowAdapter() {
 				public void windowOpened(WindowEvent e) {
 					frame.actionPerformed(new ActionEvent(frame, 1, "Open Comm"));

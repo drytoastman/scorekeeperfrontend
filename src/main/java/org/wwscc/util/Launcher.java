@@ -8,75 +8,74 @@
 
 package org.wwscc.util;
 
+import java.io.File;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
-import org.wwscc.bwtimer.Timer;
-import org.wwscc.challenge.ChallengeGUI;
-import org.wwscc.dataentry.DataEntry;
-import org.wwscc.protimer.ProSoloInterface;
-import org.wwscc.registration.Registration;
-import org.wwscc.tray.TrayMonitor;
 
 /**
  */
 public class Launcher
 {
-	static String[] apps = new String[] {"DataEntry", "Registration", "ChallengeGUI", "ProTimer", "BWTimer", "TrayMonitor"};
-
+    private static final Logger log = Logger.getLogger(Launcher.class.getName());
+	
+	/**
+	 * Called from other Java code to launch an application as a new process
+	 * @param args
+	 */
+    public static void launchExternal(String app, String[] args)
+    {
+        try {
+            ArrayList<String> cmd = new ArrayList<String>();
+            if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
+                cmd.add("javaw");
+            else
+                cmd.add("java");
+            cmd.add("-cp");
+            cmd.add(System.getProperty("java.class.path"));
+            cmd.add(app);
+            cmd.addAll(Arrays.asList(args));
+            log.info(String.format("Running %s", cmd));
+            ProcessBuilder starter = new ProcessBuilder(cmd);
+            starter.redirectErrorStream(true);
+            starter.redirectOutput(Redirect.appendTo(new File(Prefs.getLogDirectory(), "jvmlaunches.log")));
+            Process p = starter.start();
+            Thread.sleep(1000);
+            if (!p.isAlive()) {
+                throw new Exception("Process not alive after 1 second");
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("Failed to launch %s",  app), e);
+        }
+    }
+    
+    /**
+     * Called as the main entry point for the jar to launch an applications in this process
+     * @param args passed in on command line, first one is application name, default is TrayMonitor
+     */
 	public static void main(String args[])
 	{
-		String app = "";
-        List<String> passthru;
-        int startarg = 0;
+		String app = "org.wwscc.tray.TrayMonitor";
+		if (args.length > 0)
+			app = args[0];
 
-		try
-		{
-			if (args.length > 0) {
-				app = args[0];
-                startarg = 1;
-			} else {
-				app = "TrayMonitor";
-			}
-
-			System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-			System.setProperty("program.name", app);
-			
-			// Check if we are using a special prefs node, only used for testing
-            passthru = new ArrayList<String>();
-			for (int ii = startarg; ii < args.length; ii++) {
-				if (args[ii].startsWith("prefs=")) {
-					String node = args[ii].substring(args[ii].indexOf('=')+1);
-					Prefs.setPrefsNode(node);
-				} else {
-                    passthru.add(args[ii]);
-                }
-			}			
-			
-			// Repurpose the args and launch the application
-            args = new String[passthru.size()];
-            for (int ii = 0; ii < args.length; ii++)
-                args[ii] = passthru.get(ii);
-
-			if (app.equals("DataEntry"))
-				DataEntry.main(args);
-			else if (app.equals("ChallengeGUI"))
-				ChallengeGUI.main(args);
-			else if (app.equals("ProTimer"))
-				ProSoloInterface.main(args);
-			else if (app.equals("BWTimer"))
-				Timer.main(args);
-			else if (app.equals("Registration"))
-				Registration.main(args);
-			else if (app.equals("TrayMonitor"))
-				TrayMonitor.main(args);
-            else
-			    JOptionPane.showMessageDialog(null, "Unknown application " + app, "Error", JOptionPane.ERROR_MESSAGE);
-		}
-		catch (Throwable e)
-		{
-			JOptionPane.showMessageDialog(null, "Launcher catches Throwable: " + e, "Error", JOptionPane.ERROR_MESSAGE);
-		}
+		System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName()); // for error dialogs below
+		Class<?> appclass = null;
+        try {
+            appclass = Class.forName(app);
+        } catch (Throwable e) {
+            JOptionPane.showMessageDialog(null, "Unknown application " + app, "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+			appclass.getMethod("main", String[].class).invoke(null, new Object[] { new String[] {}});
+        } catch (Throwable e) {
+            JOptionPane.showMessageDialog(null, "Unable to launch " + app + ": " + e, "Error", JOptionPane.ERROR_MESSAGE);
+        }
 	}
 }

@@ -1,3 +1,6 @@
 bin
 build
+logs
+*.log
 .gradle
+docker-compose.yaml

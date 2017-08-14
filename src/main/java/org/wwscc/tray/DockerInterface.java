@@ -3,6 +3,8 @@ package org.wwscc.tray;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +23,10 @@ public class DockerInterface
 {
 	private static final Logger log = Logger.getLogger(DockerInterface.class.getName());
     private static final Logger sublog = Logger.getLogger("docker.subprocess");
-	private static String[] compose = { "docker-compose", "-p", "scorekeeper", "-f", "docker-compose.yaml" };
+    
+    private static final String project = "scorekeeper";
+    private static String[] docker  = { "docker" };
+	private static String[] compose = { "docker-compose", "-p", project, "-f", "docker-compose.yaml" };
 	private static String[] machine = { "docker-machine" };
 	private static File basedir = new File(Prefs.getDocRoot());
 	private static Map<String,String> dockerenv = new HashMap<String, String>();
@@ -146,9 +151,9 @@ public class DockerInterface
 			{
 				String name = scan.next();
 				boolean up  = scan.nextLine().contains("Up");
-				if (name.contains("scorekeeper_web")) {
+				if (name.contains(project+"_web")) {
 					ret[0] = up;
-				} else if (name.contains("scorekeeper_db")) {
+				} else if (name.contains(project+"_db")) {
 					ret[1] = up;
 				}
 			}
@@ -159,6 +164,38 @@ public class DockerInterface
 		return ret;		
 	}
 
+	/**
+	 * Find the running id of the database container
+	 * @return a string hash id
+	 */
+	public static String dbcontainerid()
+	{
+        byte buf[] = new byte[1024];
+        execit(build(basedir, compose, "ps", "-q", "db"), buf);
+        return new String(buf).split("\r\n|\r|\n", 2)[0];
+	}
+
+    /**
+     * Call docker to copy log files from container to host
+     * @return true if succeeded
+     */
+    public static boolean copyLogs(String container, Path dir)
+    {
+        return execit(build(basedir, docker, "cp", container+":/var/log", dir.toString()), null) == 0;      
+    }
+
+    /**
+     * Call docker to run pg_dump and pipe the output to file
+     * @return true if succeeded
+     */
+    public static boolean dumpdatabase(String container, Path file)
+    {
+        ProcessBuilder p = build(basedir, docker, "exec", container, "pg_dump", "-U", "postgres", "-d", "scorekeeper");
+        p.redirectOutput(Redirect.appendTo(file.toFile()));
+        return execit(p, null) == 0;      
+    }
+
+    
 	/**
 	 * Create a processbuilder object from components and environment
 	 * @param root the base directory to run in
@@ -191,7 +228,7 @@ public class DockerInterface
             int ret = p.waitFor();
             log.log(Level.FINER, "{0} returns {1}", new Object [] { in.command().toString(), ret });
             
-            if ((buffer == null) && ret != 0) // create buffer for errors if not present
+            if ((buffer == null) && ret != 0) // create buffer if there are errors but one not present
             {
             	buffer = new byte[8192];
             }

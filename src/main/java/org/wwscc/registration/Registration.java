@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.wwscc.actions.BarcodeScannerOptionsAction;
 import org.wwscc.actions.OpenSeriesAction;
@@ -47,9 +48,9 @@ public class Registration extends JFrame
 	EntryPanel driverEntry;
 	AttendancePanel attendanceDisplay;
 
-	public Registration(String name) throws IOException
+	public Registration() throws IOException
 	{
-		super(name);
+		super("Registration");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
 
@@ -179,11 +180,13 @@ public class Registration extends JFrame
 	{
 		try
 		{
-			Logging.logSetup("registration");
-			final String name = "Registration " + ((args.length>1)?args[1]:"");
+	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+	        System.setProperty("program.name", "Registration");
+	        Logging.logSetup("registration");
+	            
 			SwingUtilities.invokeLater(new Runnable() { public void run() {
 				try {
-					new Registration(name);
+					new Registration();
 				} catch (Throwable ioe) {
 					log.log(Level.SEVERE, "Registration failed to start: " + ioe, ioe);
 				}

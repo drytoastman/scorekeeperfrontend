@@ -20,6 +20,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
@@ -105,7 +107,9 @@ public class ChallengeGUI extends JFrame
 	{
 		try
 		{
-			Logging.logSetup("challenge");
+	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+	        System.setProperty("program.name", "Challenge");
+	        Logging.logSetup("challenge");
 			SwingUtilities.invokeLater(new Runnable() { public void run() {
 				try {
 					new ChallengeGUI();

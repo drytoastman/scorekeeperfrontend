@@ -37,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -386,7 +387,10 @@ public class Timer extends JPanel implements ActionListener
 	{
 		try
 		{
-			Logging.logSetup("bwtimer");
+	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+	        System.setProperty("program.name", "BWTimer");
+	        Logging.logSetup("bwtimer");
+	            
 			final Timer t = new Timer();
 			final JFrame f = new JFrame("Timer");
 			f.setJMenuBar(t.getMenuBar());

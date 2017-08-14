@@ -20,6 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.components.MyIpLabel;
@@ -156,9 +158,12 @@ public class DataEntry extends JFrame implements MessageListener
 	{
 		try
 		{
-			Class.forName("org.wwscc.dataentry.Sounds");
-			Logging.logSetup("dataentry");
-			
+	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+	        System.setProperty("program.name", "DataEntry");
+            Logging.logSetup("dataentry");
+            Class.forName("org.wwscc.dataentry.Sounds");
+
+            // BMW: Why did I do this?  What needs to be done in event thread?
 			final String title = "DataEntry";
 			SwingUtilities.invokeLater(new Runnable() { public void run() {
 				try {

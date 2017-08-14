@@ -20,11 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,8 +30,8 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import org.wwscc.util.Launcher;
 import org.wwscc.util.Logging;
-import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 
 import com.jcraft.jsch.JSch;
@@ -71,19 +67,18 @@ public class TrayMonitor implements ActionListener
         cmdline = args;
         trayPopup   = new PopupMenu();
         
-        newMenuItem("DataEntry",     "DataEntry",    trayPopup);
-        newMenuItem("Registration",  "Registration", trayPopup);
-        newMenuItem("Syncronizer",   "Synchronizer", trayPopup);
-        newMenuItem("ProTimer",      "ProTimer",     trayPopup);
-        newMenuItem("BWTimer",       "BWTimer",      trayPopup);
-        newMenuItem("ChallengeGUI",  "ChallengeGUI", trayPopup);
+        newMenuItem("DataEntry",       "org.wwscc.dataentry.DataEntry",       trayPopup);
+        newMenuItem("Registration",    "org.wwscc.registration.Registration", trayPopup);
+        newMenuItem("ProTimer",        "org.wwscc.protimer.ProSoloInterface", trayPopup);
+        newMenuItem("BWTimer",         "org.wwscc.bwtimer.Timer",             trayPopup);
+        newMenuItem("ChallengeGUI",    "org.wwscc.challenge.ChallengeGUI",    trayPopup);
+        newMenuItem("Syncronizer",     "org.wwscc.datasync.Synchronizer",     trayPopup);
+        newMenuItem("Debug Collector", "debugcollect",  trayPopup);
         
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");
-        //mBackendStatus.setEnabled(false);
         trayPopup.add(mBackendStatus);
         mMachineStatus = new MenuItem("Machine:");
-        //mMachineStatus.setEnabled(false);
         trayPopup.add(mMachineStatus);
         
         trayPopup.addSeparator();
@@ -99,7 +94,7 @@ public class TrayMonitor implements ActionListener
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
         
-        // Do a check when opening the context menu
+        // Force an update check when opening the context menu
         trayIcon.addMouseListener(new MouseAdapter() {
             private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { synchronized (cmonitor) { cmonitor.notify(); }}}
             @Override
@@ -115,9 +110,7 @@ public class TrayMonitor implements ActionListener
             System.exit(-2);
         }
 
-        jsch = new JSch();
-        //JSch.setLogger(new JSchDebugLogger());
-        
+        jsch = new JSch();        
         readyforcompose = false;
         applicationdone = false;
         mmonitor = new MachineController();
@@ -151,6 +144,10 @@ public class TrayMonitor implements ActionListener
         String cmd = e.getActionCommand();
         switch (cmd)
         {
+            case "debugcollect":
+                new DebugCollector().start();
+                break;
+                
             case "quit":
                 if (applicationdone) {
                     // Force quiting as something else isn't dying properly
@@ -166,37 +163,9 @@ public class TrayMonitor implements ActionListener
                 break;
                 
             default:
-                launch(cmd);
+                Launcher.launchExternal(cmd, cmdline);
         }
-    }
-    
-    protected void launch(String app)
-    {
-        try {
-            ArrayList<String> cmd = new ArrayList<String>();
-            if (Prefs.isWindows())
-                cmd.add("javaw");
-            else
-                cmd.add("java");
-            cmd.add("-cp");
-            cmd.add(System.getProperty("java.class.path"));
-            cmd.add("org.wwscc.util.Launcher");
-            cmd.add(app);
-            cmd.addAll(Arrays.asList(cmdline));
-            log.info(String.format("Running %s", cmd));
-            ProcessBuilder starter = new ProcessBuilder(cmd);
-            starter.redirectErrorStream(true);
-            starter.redirectOutput(Redirect.appendTo(new File(Prefs.getLogDirectory(), "jvmlaunches.log")));
-            Process p = starter.start();
-            Thread.sleep(1000);
-            if (!p.isAlive()) {
-                throw new Exception("Process not alive after 1 second, see jvmlaunched.log");
-            }
-        } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Failed to launch %s",  app), e);
-        }
-    }
-    
+    }    
     
     /**
      * Thread to start machine and monitor port forwarding
@@ -344,8 +313,6 @@ public class TrayMonitor implements ActionListener
             {
                 log.severe("Unable to stop the web and database services. See logs.");
             }
-            
-            //System.exit(0);
         }
         
         public void checkcompose()
@@ -382,17 +349,7 @@ public class TrayMonitor implements ActionListener
                 currentIcon = next;
             }
         }
-    }
-    
-    
-    class JSchDebugLogger implements com.jcraft.jsch.Logger 
-    {
-        @Override
-        public boolean isEnabled(int pLevel) { return true; }
-        @Override
-        public void log(int pLevel, String pMessage) { log.log(Level.INFO, pMessage); }
-    }
-    
+    }    
 
     /**
      * Main entry point.
@@ -401,6 +358,7 @@ public class TrayMonitor implements ActionListener
     public static void main(String args[])
     {
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
+        System.setProperty("program.name", "TrayMonitor");
         Logging.logSetup("traymonitor");
         TrayMonitor tm = new TrayMonitor(args);
         tm.waitforthreads();

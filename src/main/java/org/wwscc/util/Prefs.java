@@ -18,8 +18,7 @@ import java.util.prefs.Preferences;
  */
 public class Prefs
 {
-	//private static final Logger log = Logger.getLogger(Prefs.class.getCanonicalName());
-	
+	//private static final Logger log = Logger.getLogger(Prefs.class.getCanonicalName());	
 	private static Preferences prefs;
 	
 	static
@@ -36,27 +35,6 @@ public class Prefs
 	{
 		prefs = Preferences.userRoot().node(name);
 	}
-	
-	/*
-	public static Map<String,String> getPasswords() 
-	{
-		Map<String,String> ret = new HashMap<String,String>();
-		try {
-			for (String k : prefs.keys())
-			{
-				if (k.startsWith("password-"))
-					ret.put(k.substring(9), prefs.get(k, ""));
-			}
-		} catch (BackingStoreException bse) {
-			log.log(Level.WARNING, "Failed to load passwords from prefs: {0}", bse.getMessage());
-		}
-		
-		return ret;
-	}*/
-	
-	public static boolean isWindows() { return System.getProperty("os.name").split("\\s")[0].equals("Windows"); }
-	//public static boolean isLinux() { return System.getProperty("os.name").split("\\s")[0].equals("Linux"); }
-	//public static boolean isMac() { return System.getProperty("os.name").split("\\s")[0].equals("Mac"); }
 	
     public static String getDocRoot() 
     {
