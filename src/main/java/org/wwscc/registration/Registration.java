@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -31,7 +30,6 @@ import org.wwscc.actions.BarcodeScannerOptionsAction;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
-import org.wwscc.registration.attendance.AttendancePanel;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.Logging;
@@ -46,7 +44,6 @@ public class Registration extends JFrame
 
 	SelectionBar setupBar;
 	EntryPanel driverEntry;
-	AttendancePanel attendanceDisplay;
 
 	public Registration() throws IOException
 	{
@@ -55,8 +52,7 @@ public class Registration extends JFrame
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
 
 		setupBar = new SelectionBar();
-		attendanceDisplay = new AttendancePanel();
-		driverEntry = new EntryPanel(attendanceDisplay);
+		driverEntry = new EntryPanel();
 
 		BorderLayout layout = new BorderLayout();
 		JPanel content = new JPanel(layout);
@@ -79,22 +75,14 @@ public class Registration extends JFrame
 		JMenu options = new JMenu("Options");
 		options.add(new BarcodeScannerOptionsAction());
 		
-//		JMenu attendance = new JMenu("Attendance");
-//		attendance.add(new AttendanceConfigureAction());
-//		attendance.add(new JCheckBoxMenuItem(new AttendanceShowAction()));
-		
-		JMenu tools = new JMenu("Tools");
+//		JMenu tools = new JMenu("Tools");
 //		tools.add(new DriverMergingAction());
-
-		JMenu merge = new JMenu("Database Merging");
 		
 		JMenuBar bar = new JMenuBar();
 		bar.add(file);
 		bar.add(find);
 		bar.add(options);
-//		bar.add(attendance);
-		bar.add(tools);
-		bar.add(merge);
+//		bar.add(tools);
 		setJMenuBar(bar);
 
 		Database.openDefault();
@@ -131,45 +119,6 @@ public class Registration extends JFrame
 		public void actionPerformed(ActionEvent e) {  new DriverMerger(); }
 	}
 */
-	
-	/* FINISH ME IF WE NEED THIS AGAIN
-	final static class AttendanceConfigureAction extends AbstractAction
-	{
-		public AttendanceConfigureAction() { super("Configure Attendance Values"); }
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			JTextPane p = new JTextPane();
-			p.setText(Prefs.getAttendanceCalculations());
-			p.setPreferredSize(new Dimension(600,400));
-			if (JOptionPane.showConfirmDialog(null, new JScrollPane(p), "Enter Requested Attendance Calculations", JOptionPane.OK_CANCEL_OPTION)
-						== JOptionPane.OK_OPTION) {
-				Prefs.setAttendanceCalculations(p.getText());
-				Messenger.sendEvent(MT.ATTENDANCE_SETUP_CHANGE, null);
-			}
-		}
-	}
-	*/
-	
-	class AttendanceShowAction extends AbstractAction
-	{
-		public AttendanceShowAction() { super("Show Attendance Values"); }
-		@Override
-		public void actionPerformed(ActionEvent e)
-		{
-			if (((JCheckBoxMenuItem)e.getSource()).isSelected())
-			{
-				getContentPane().add(attendanceDisplay, BorderLayout.EAST);
-				pack();
-				Messenger.sendEvent(MT.ATTENDANCE_SETUP_CHANGE, null);
-			}
-			else
-			{
-				getContentPane().remove(attendanceDisplay);
-				pack();
-			}
-		}
-	}
 				
 	/**
 	 * Main

@@ -72,8 +72,8 @@ public class TrayMonitor implements ActionListener
         newMenuItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup);
         newMenuItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup);
         newMenuItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup);
-        newMenuItem("Data Sync",        "org.wwscc.datasync.Synchronizer",     trayPopup);
-        newMenuItem("Debug Collection", "debugcollect",  trayPopup);
+        newMenuItem("Data Sync",        "datasync",     trayPopup);
+        newMenuItem("Debug Collection", "debugcollect", trayPopup);
         
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");

@@ -9,33 +9,31 @@
 package org.wwscc.timercomm;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.jmdns.JmmDNS;
+import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.ThreadedClass;
+import org.wwscc.util.Network;
 
 /**
  * A server that create TimerClients for each connection as well as running a
  * TimerService to advertise our location.
  */
-public class TimerService implements RunServiceInterface, ThreadedClass
+public class TimerService implements RunServiceInterface
 {
 	private static final Logger log = Logger.getLogger(TimerService.class.getName());
 
-    JmmDNS jmdns; 
+    JmDNS jmdns; 
 	Thread autocloser;
 	String servicetype;
 	String servicename;
@@ -57,7 +55,6 @@ public class TimerService implements RunServiceInterface, ThreadedClass
 		done = true;
 	}
 
-	@Override
 	public void start()
 	{
 		if (!done) return;
@@ -65,7 +62,6 @@ public class TimerService implements RunServiceInterface, ThreadedClass
 		new Thread(new ServiceThread()).start();
 	}
 	
-	@Override
 	public void stop()
 	{
 		done = true;
@@ -138,15 +134,10 @@ public class TimerService implements RunServiceInterface, ThreadedClass
 		@Override
 		public void run()
 		{
-		    jmdns = JmmDNS.Factory.getInstance();
-
-			String ip;
-			try { ip = InetAddress.getLocalHost().getHostAddress(); }
-			catch (UnknownHostException ex) { ip = "unknown"; }
-			
-			Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, ip, serversock.getLocalPort() } );
 			try {
+	            jmdns = JmDNS.create(Network.getPrimaryAddress());                
 				jmdns.registerService(ServiceInfo.create(servicetype, servicename, serversock.getLocalPort(), ""));
+                Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, jmdns.getInetAddress().getHostAddress(), serversock.getLocalPort() } );
 				autocloser = new AutoCloseHook();
 				Runtime.getRuntime().addShutdownHook(autocloser);
 			} catch (IOException ioe) {

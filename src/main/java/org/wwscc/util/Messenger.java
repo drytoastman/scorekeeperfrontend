@@ -52,7 +52,7 @@ public class Messenger
 			try {
 				sendEventNow(type, data); 
 			} catch (Exception e) {
-				log.log(Level.WARNING, "Event error: " + e.getMessage(), e);
+				log.log(Level.WARNING, "Error sending " + type.toString() + ": " + e.getMessage(), e);
 			}
 		}});
 	}

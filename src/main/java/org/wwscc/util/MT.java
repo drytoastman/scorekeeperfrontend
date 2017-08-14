@@ -38,6 +38,7 @@ public enum MT {
 	OPEN_BARCODE_ENTRY,
 	OPEN_CARID_ENTRY,
 	OPEN_FIND,
+	SHOW_ADD_PANE,
 
 	// Timer Net Service
 	TIMER_SERVICE_CONNECTION,
@@ -120,12 +121,6 @@ public enum MT {
 	INPUT_RESET_HARD,
 	INPUT_TEXT,
 
-	
-	// Registration,
-	SHOW_ADD_PANE, 
-	ATTENDANCE_SETUP_CHANGE, 
-	DRIVER_SELECTED,
-	
 	// Database events
 	CAR_CREATED, 
 }

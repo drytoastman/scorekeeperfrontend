@@ -15,10 +15,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,8 +49,6 @@ import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
-import org.wwscc.registration.attendance.Name;
-import org.wwscc.registration.attendance.NameStorage;
 import org.wwscc.storage.BarcodeLookup;
 import org.wwscc.storage.BarcodeLookup.LookupException;
 import org.wwscc.storage.Car;
@@ -82,18 +78,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
 	SearchDrivers2 searchDrivers2;
-	NameStorage extraNames;
 	
-	public EntryPanel(NameStorage names)
+	public EntryPanel()
 	{
 		super(Registration.state);
 		setLayout(new MigLayout("fill", "[400, grow 25][:150:200, grow 25][:150:200, grow 25]"));
 		Messenger.register(MT.EVENT_CHANGED, this);
-		Messenger.register(MT.ATTENDANCE_SETUP_CHANGE, this);
 		Messenger.register(MT.BARCODE_SCANNED, this);
 		Messenger.register(MT.CAR_CREATED, this);
-
-		extraNames = names;
 		
 		printers = new JComboBox<PrintService>();
 		printers.setRenderer(new DefaultListCellRenderer() {
@@ -433,15 +425,12 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 					noteswarning.setText(notes);
 					noteswarning.setOpaque(true);
 				}
-				
-				Messenger.sendEvent(MT.DRIVER_SELECTED, new Name(selectedDriver.getFirstName(), selectedDriver.getLastName()));
 			}
 			else
 			{
 				editdriver.setEnabled(false);
 				activeLabel.setValue("", "");
 				activeLabel.repaint();
-				Messenger.sendEvent(MT.DRIVER_SELECTED, drivers.getSelectedValue());
 			}
 		}
 	
@@ -478,11 +467,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		{
 			case EVENT_CHANGED:
 				reloadCars(selectedCar);
-				break;
-				
-			case ATTENDANCE_SETUP_CHANGE:
-				if (selectedDriver != null)
-					Messenger.sendEvent(MT.DRIVER_SELECTED, new Name(selectedDriver.getFirstName(), selectedDriver.getLastName()));
 				break;
 			
 			case BARCODE_SCANNED:
@@ -533,21 +517,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 			if (firstSearch.getDocument().getLength() > 0)
 				first = firstSearch.getText();
 			
-			List<Object> display = new ArrayList<Object>();
-			HashSet<Name> used = new HashSet<Name>();
-			for (Driver d : Database.d.getDriversLike(first, last))
-			{
-				display.add(d);
-				used.add(new Name(d.getFirstName(), d.getLastName()));
-			}
-			
-			for (Name n : extraNames.getNamesLike(first, last))
-			{
-				if (!used.contains(n))
-					display.add(n);
-			}
-			
-
+			List<Driver> display = Database.d.getDriversLike(first, last);
 			Collections.sort(display, new NameDriverComparator());			
 			drivers.setListData(display.toArray());
 			drivers.setSelectedIndex(0);
@@ -555,24 +525,11 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	}
 	
 	
-	final static class NameDriverComparator implements Comparator<Object> 
+	final static class NameDriverComparator implements Comparator<Driver> 
 	{
-		public int compare(Object o1, Object o2)
+		public int compare(Driver d1, Driver d2)
 		{
-			String c1 = "", c2 = "";
-			
-			if (o1 instanceof Driver)
-				c1 = ((Driver)o1).getFullName();
-			else if (o1 instanceof Name)
-				c1 = ((Name)o1).toString();
-
-			if (o2 instanceof Driver)
-				c2 = ((Driver)o2).getFullName();
-			else if (o2 instanceof Name)
-				c2 = ((Name)o2).toString();
-						
-			return c1.compareTo(c2);
-
+			return d1.getFullName().compareTo(d2.getFullName());
 		}
 	}
 }

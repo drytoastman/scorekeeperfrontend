@@ -22,13 +22,12 @@ import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.ThreadedClass;
 
 /**
  *
  * @author bwilson
  */
-public final class TimerClient implements RunServiceInterface, ThreadedClass
+public final class TimerClient implements RunServiceInterface
 {
 	private static final Logger log = Logger.getLogger(TimerClient.class.getName());
 
@@ -59,7 +58,6 @@ public final class TimerClient implements RunServiceInterface, ThreadedClass
 		done = true;
 	}
 
-	@Override
 	public void start()
 	{
 		if (!done) return;
@@ -67,7 +65,6 @@ public final class TimerClient implements RunServiceInterface, ThreadedClass
 		new Thread(new ReceiverThread()).start();
 	}
 	
-	@Override
 	public void stop()
 	{
 		done = true;
