@@ -51,7 +51,7 @@ public class Database
 			d.close();
 		
 		try {
-			if (series.equals(""))
+			if (series.equals("") || !PostgresqlDatabase.getSeriesList().contains(series))
 			{
 				d = new FakeDatabase();
 				Messenger.sendEvent(MT.SERIES_CHANGED, "<none>");
