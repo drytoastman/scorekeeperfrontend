@@ -13,9 +13,6 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -31,67 +28,56 @@ import org.wwscc.util.Messenger;
 
 public class DebugPane extends JPanel implements ActionListener, MessageListener
 {
-	private static final Logger log = Logger.getLogger(DebugPane.class.getCanonicalName());
-	
-	JTextArea text;
-	JTextField input;
-	JButton enter;
-	OutputStreamWriter file;
+    private static final Logger log = Logger.getLogger(DebugPane.class.getCanonicalName());
+    
+    JTextArea text;
+    JTextField input;
+    JButton enter;
 
-	public DebugPane() throws FileNotFoundException
-	{
-		super(new BorderLayout());
+    public DebugPane() throws FileNotFoundException
+    {
+        super(new BorderLayout());
 
-		text = new JTextArea();
-		input = new JTextField(40);
-		enter = new JButton("Send");
-		enter.addActionListener(this);
+        text = new JTextArea();
+        input = new JTextField(40);
+        enter = new JButton("Send");
+        enter.addActionListener(this);
 
-		try {
-			file = new FileWriter("debug.log", true);
-		} catch (IOException ioe) {
-			log.severe("Can't open debug log");
-		}
+        JScrollPane sp = new JScrollPane(text);
+        sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
-		JScrollPane sp = new JScrollPane(text);
-		sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        JPanel p = new JPanel();
+        p.add(input);
+        p.add(enter);
 
-		JPanel p = new JPanel();
-		p.add(input);
-		p.add(enter);
+        add(p, BorderLayout.NORTH);
+        add(sp, BorderLayout.CENTER);
+        
+        Messenger.register(MT.SERIAL_GENERIC_DATA, this);
+    }
 
-		add(p, BorderLayout.NORTH);
-		add(sp, BorderLayout.CENTER);
-		
-		Messenger.register(MT.SERIAL_GENERIC_DATA, this);
-	}
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        String s = input.getText();
+        if (!s.equals(""))
+            Messenger.sendEvent(MT.INPUT_TEXT, s);
+        input.setText("");
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		String s = input.getText();
-		if (!s.equals(""))
-			Messenger.sendEvent(MT.INPUT_TEXT, s);
-		input.setText("");
-	}
-
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-			case SERIAL_GENERIC_DATA:
-				log(new String((byte[])o));
-				break;
-		}
-	}
-	
-	public void log(String s)
-	{
-		try { file.write(s); file.flush(); } catch (Exception e) { log.info("Failed to write log: " + e.getMessage()); }
-		text.append(s);
-		text.setCaretPosition(text.getDocument().getLength());
-	}
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case SERIAL_GENERIC_DATA:
+                String str = new String((byte[])o);
+                log.finer("serial: " + str);
+                text.append(str);
+                text.setCaretPosition(text.getDocument().getLength());
+                break;
+        }
+    }    
 }
 
 

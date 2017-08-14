@@ -126,7 +126,7 @@ public class Logging
 
     public static class SingleLineFormatter extends Formatter
     {
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
+        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
 
         /**
@@ -139,12 +139,11 @@ public class Logging
         {
             date.setTime(record.getMillis());
             StringBuffer sb = new StringBuffer(dformat.format(date));
-            sb.append(record.getLoggerName());
+            if (record.getLoggerName() != null)
+                sb.append(" " + record.getLoggerName());
             if (record.getSourceMethodName() != null)
-                sb.append(" " + record.getSourceMethodName() + " ");
-            sb.append(record.getLevel().getLocalizedName());
-            sb.append(": ");
-
+                sb.append(" " + record.getSourceMethodName());
+            sb.append(" " + record.getLevel().getLocalizedName() + ": ");
             sb.append(formatMessage(record));
             sb.append("\n");
 
