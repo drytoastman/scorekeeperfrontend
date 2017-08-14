@@ -69,7 +69,8 @@ public class Logging
         try {
             File logdir = new File(Prefs.getLogDirectory());
             if (!logdir.exists())
-                logdir.mkdirs();
+                if (!logdir.mkdirs())
+                    throw new IOException("Can't create log directory " + logdir);
             FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 1000000, 10, true);
             fh.setFormatter(format);
             fh.setLevel(Level.ALL);

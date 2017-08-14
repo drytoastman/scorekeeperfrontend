@@ -776,7 +776,7 @@ public abstract class SQLDataInterface implements DataInterface
 			}
 				
 			// 4. order and set class dialins
-			ret.finalize();
+			ret.finalizedialins();
 			closeLeftOvers();
 			return ret;
 		}

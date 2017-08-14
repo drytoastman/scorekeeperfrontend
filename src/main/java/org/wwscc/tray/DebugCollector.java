@@ -136,8 +136,11 @@ public class DebugCollector extends Thread
         ZipOutputStream zos = new ZipOutputStream(fos);
         for (Path p : files) {
             try {
-                zos.putNextEntry(new ZipEntry(p.getFileName().toString()));
-                Files.copy(p, zos);
+                Path file = p.getFileName();
+                if (file != null) {
+                    zos.putNextEntry(new ZipEntry(file.toString()));
+                    Files.copy(p, zos);
+                }
             } catch (IOException ioe) {
                 log.warning("Unable to archive " + p);
             }

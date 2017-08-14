@@ -69,7 +69,7 @@ public class Dialins
 		}
 	}
 	
-	public void finalize()
+	public void finalizedialins()
 	{
 		for (CarInfo info : carmap.values())
 		{

@@ -138,10 +138,19 @@ public class Id
 
 		public boolean equals(Object o)
 		{
-			if (o == null) return false;
+			if ((o == null) || (!(o instanceof Entry))) return false;
 			Entry e = (Entry)o;
 			return ((e.level == level) && super.equals(o));
 		}
+		
+	    @Override
+	    public int hashCode() 
+	    {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((level == null) ? 0 : level.hashCode());
+            return result;
+	    }
 		
 		public String toString()
 		{
@@ -183,11 +192,20 @@ public class Id
 		@Override
 		public boolean equals(Object o)
 		{
-			if (o == null) return false;
+			if ((o == null) || (!(o instanceof Run))) return false;
 			Run r = (Run)o;
 			return ((r.runType == runType) && super.equals(o));
 		}
 		
+        @Override
+        public int hashCode() 
+        {
+            final int prime = 31;
+            int result = super.hashCode();
+            result = prime * result + ((runType == null) ? 0 : runType.hashCode());
+            return result;
+        }
+        
 		public String toString()
 		{
 			return String.format("Run %s/%s/%s", round, level, runType);

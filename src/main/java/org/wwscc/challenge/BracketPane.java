@@ -127,7 +127,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 						public void internalFrameClosed(InternalFrameEvent ife) {
 							requestFocus();
 					}});
-					add(v, new Integer(10));
+					add(v, Integer.valueOf(10));
 					v.moveToFront();
 				}
 			});
@@ -335,19 +335,19 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 				rg = rounds.get(ii);
 				rg.upper.updateEntrant();
 				rg.lower.updateEntrant();
-				add(rg.upper, new Integer(5));
-				add(rg.lower, new Integer(5));
-				add(rg.open, new Integer(5));
+				add(rg.upper, Integer.valueOf(5));
+				add(rg.lower, Integer.valueOf(5));
+				add(rg.open, Integer.valueOf(5));
 			}
 			
 			thirdPRound.upper.updateEntrant();
 			thirdPRound.lower.updateEntrant();
-			add(thirdPRound.upper, new Integer(5));
-			add(thirdPRound.lower, new Integer(5));
-			add(thirdPRound.open, new Integer(5));
+			add(thirdPRound.upper, Integer.valueOf(5));
+			add(thirdPRound.lower, Integer.valueOf(5));
+			add(thirdPRound.open, Integer.valueOf(5));
 			
-			add(winner1, new Integer(5));
-			add(winner3, new Integer(5));
+			add(winner1, Integer.valueOf(5));
+			add(winner3, Integer.valueOf(5));
 			winner1.updateEntrant();
 			winner3.updateEntrant();
 		}

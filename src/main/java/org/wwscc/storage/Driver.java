@@ -97,7 +97,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	@Override
 	public boolean equals(Object o)
 	{
-		return ((o instanceof Driver) && ((Driver)o).driverid == driverid);
+		return ((o instanceof Driver) && ((Driver)o).driverid.equals(driverid));
 	}
 
 	@Override

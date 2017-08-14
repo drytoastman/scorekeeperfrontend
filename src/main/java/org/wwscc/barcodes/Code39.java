@@ -25,7 +25,7 @@ import javax.swing.JComponent;
 public class Code39 extends JComponent implements Printable
 {
 	//private static final Logger log = Logger.getLogger(Code39.class.getCanonicalName());
-	static public final Map<Character, String> barChar = new HashMap<Character, String>();
+	static protected final Map<Character, String> barChar = new HashMap<Character, String>();
 	static 
 	{
 		barChar.put('0', "nnnwwnwnn");

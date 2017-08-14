@@ -64,7 +64,7 @@ public class TrayMonitor implements ActionListener
             System.exit(-1);
         }
                 
-        cmdline = args;
+        cmdline = args.clone();
         trayPopup   = new PopupMenu();
         
         newMenuItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
@@ -113,14 +113,16 @@ public class TrayMonitor implements ActionListener
         jsch = new JSch();        
         readyforcompose = false;
         applicationdone = false;
+
+    }
+    
+    public void startAndWaitForThreads()
+    {
         mmonitor = new MachineController();
         mmonitor.start();
         cmonitor = new ComposeController();
         cmonitor.start();
-    }
-    
-    public void waitforthreads()
-    {
+        
         try {
             mmonitor.join();
             cmonitor.join();
@@ -368,7 +370,7 @@ public class TrayMonitor implements ActionListener
         System.setProperty("program.name", "TrayMonitor");
         Logging.logSetup("traymonitor");
         TrayMonitor tm = new TrayMonitor(args);
-        tm.waitforthreads();
+        tm.startAndWaitForThreads();
         System.exit(0);
     }
 }

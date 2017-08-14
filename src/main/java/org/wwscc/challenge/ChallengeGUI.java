@@ -34,7 +34,7 @@ import org.wwscc.util.Logging;
 public class ChallengeGUI extends JFrame
 {
 	private static Logger log = Logger.getLogger(BracketPane.class.getCanonicalName());
-	public static ApplicationState state = new ApplicationState();
+	public static final ApplicationState state = new ApplicationState();
 
 	ChallengeModel model;
 	JScrollPane bracketScroll;

@@ -300,7 +300,7 @@ public class CarDialog extends BaseDialog<Car>
 				result.setUseClsMult(false);
 
 			
-			result.setNumber(Integer.valueOf(getEntryText("number")));
+			result.setNumber(Integer.parseInt(getEntryText("number")));
 			return result;
 		}
 		catch (Exception e)
