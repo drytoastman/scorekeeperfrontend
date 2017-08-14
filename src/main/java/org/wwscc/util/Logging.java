@@ -14,6 +14,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
@@ -125,11 +126,8 @@ public class Logging
 
     public static class SingleLineFormatter extends Formatter
     {
-        Date dat = new Date();
-        private final static String format = "{0,time}";
-        private MessageFormat formatter;
-
-        private Object args[] = new Object[1];
+        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss ");
+        Date date = new Date();
 
         /**
          * Format the given LogRecord.
@@ -139,32 +137,13 @@ public class Logging
         @Override
         public synchronized String format(LogRecord record)
         {
-            StringBuffer sb = new StringBuffer();
-
-            // Minimize memory allocations here.
-            dat.setTime(record.getMillis());
-            args[0] = dat;
-            StringBuffer text = new StringBuffer();
-            if (formatter == null) {
-                formatter = new MessageFormat(format);
-            }
-            formatter.format(args, text, null);
-            sb.append(text + " ");
-
-            String className = record.getSourceClassName();
-            if ((className == null) || !className.equals("Storage.DebugPrepared"))
-            {
-                if (className != null)
-                    sb.append(className);
-                else
-                    sb.append(record.getLoggerName());
-
-                if (record.getSourceMethodName() != null)
-                    sb.append(" " + record.getSourceMethodName() + " ");
-
-                sb.append(record.getLevel().getLocalizedName());
-                sb.append(": ");
-            }
+            date.setTime(record.getMillis());
+            StringBuffer sb = new StringBuffer(dformat.format(date));
+            sb.append(record.getLoggerName());
+            if (record.getSourceMethodName() != null)
+                sb.append(" " + record.getSourceMethodName() + " ");
+            sb.append(record.getLevel().getLocalizedName());
+            sb.append(": ");
 
             sb.append(formatMessage(record));
             sb.append("\n");

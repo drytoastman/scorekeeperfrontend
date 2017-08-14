@@ -67,13 +67,13 @@ public class TrayMonitor implements ActionListener
         cmdline = args;
         trayPopup   = new PopupMenu();
         
-        newMenuItem("DataEntry",       "org.wwscc.dataentry.DataEntry",       trayPopup);
-        newMenuItem("Registration",    "org.wwscc.registration.Registration", trayPopup);
-        newMenuItem("ProTimer",        "org.wwscc.protimer.ProSoloInterface", trayPopup);
-        newMenuItem("BWTimer",         "org.wwscc.bwtimer.Timer",             trayPopup);
-        newMenuItem("ChallengeGUI",    "org.wwscc.challenge.ChallengeGUI",    trayPopup);
-        newMenuItem("Syncronizer",     "org.wwscc.datasync.Synchronizer",     trayPopup);
-        newMenuItem("Debug Collector", "debugcollect",  trayPopup);
+        newMenuItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
+        newMenuItem("Registration",     "org.wwscc.registration.Registration", trayPopup);
+        newMenuItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup);
+        newMenuItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup);
+        newMenuItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup);
+        newMenuItem("Data Sync",        "org.wwscc.datasync.Synchronizer",     trayPopup);
+        newMenuItem("Debug Collection", "debugcollect",  trayPopup);
         
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");
@@ -149,8 +149,9 @@ public class TrayMonitor implements ActionListener
                 break;
                 
             case "quit":
-                if (applicationdone) {
-                    // Force quiting as something else isn't dying properly
+                if (applicationdone) 
+                {
+                    log.info("User force quiting.");
                     System.exit(-1);
                 }
                 if (JOptionPane.showConfirmDialog(null, "This will stop the datbase server and web server.  Is that ok?", 
@@ -201,9 +202,12 @@ public class TrayMonitor implements ActionListener
                 } 
                 catch (InterruptedException e) {}
             }
-            
+
+            mMachineStatus.setLabel("Machine: Disconnecting");
             if (portforward != null)
                 portforward.disconnect();
+            
+            mMachineStatus.setLabel("Machine: Disconnected");
         }
         
         private void signalready(boolean ready)
@@ -276,7 +280,7 @@ public class TrayMonitor implements ActionListener
                 return false;
             }
 
-            mMachineStatus.setLabel("Machine: Up");
+            mMachineStatus.setLabel("Machine: Running");
             return true;
         }
     }
@@ -309,10 +313,13 @@ public class TrayMonitor implements ActionListener
                 catch (InterruptedException e) {}
             }
             
+            mBackendStatus.setLabel("Backend: Shutting down");
             if (!DockerInterface.down())
             {
                 log.severe("Unable to stop the web and database services. See logs.");
             }
+            
+            mBackendStatus.setLabel("Backend: Stopped");
         }
         
         public void checkcompose()
@@ -334,7 +341,7 @@ public class TrayMonitor implements ActionListener
                 if (res[0] && res[1]) 
                 {
                     ok = true;
-                    mBackendStatus.setLabel("Backend: Up");
+                    mBackendStatus.setLabel("Backend: Running");
                 }
             }
             else

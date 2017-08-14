@@ -17,8 +17,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -33,26 +36,55 @@ import org.wwscc.util.Prefs;
 
 public class DebugCollector extends Thread
 {
+    private static final Logger log = Logger.getLogger(DebugCollector.class.getName());
+
     List<Path> files;
     
     public DebugCollector()
     {
+        files = new ArrayList<Path>();
     }
     
     public void run()
     {
-        files = new ArrayList<Path>();
+        final JFileChooser fc = new JFileChooser() {
+            @Override
+            public void approveSelection(){
+                File f = getSelectedFile();
+                if(f.exists()) {
+                    int result = JOptionPane.showConfirmDialog(this,"The file exists, overwrite?", "Existing file", JOptionPane.YES_NO_CANCEL_OPTION);
+                    switch(result){
+                        case JOptionPane.YES_OPTION:
+                            super.approveSelection();
+                            return;
+                        case JOptionPane.CANCEL_OPTION:
+                            cancelSelection();
+                            return;
+                        case JOptionPane.NO_OPTION:
+                        case JOptionPane.CLOSED_OPTION:
+                            return;
+                    }
+                }
+                super.approveSelection();
+            }    
+        };
         
-        final JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Specify a location to save the zip file");
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fc.setDialogTitle("Specify a zip file to save files in");
+        fc.setSelectedFile(new File("debug-" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".zip"));
         int returnVal = fc.showOpenDialog(null);
         if (returnVal != JFileChooser.APPROVE_OPTION)
             return;
         
+        File zipfile = fc.getSelectedFile();
+        if (zipfile.exists() && !zipfile.canWrite())
+        {
+            JOptionPane.showMessageDialog(null, zipfile + " is not writable", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         ProgressMonitor monitor = new ProgressMonitor(null, "Extracting and compressing files", "initializing", 0, 100);
-        monitor.setMillisToDecideToPopup(100);
-        monitor.setMillisToPopup(100);
+        monitor.setMillisToDecideToPopup(0);
+        monitor.setMillisToPopup(10);
         monitor.setProgress(5);
         try 
         {
@@ -75,7 +107,7 @@ public class DebugCollector extends Thread
             addLogs(Paths.get(Prefs.getLogDirectory()));
             monitor.setProgress(80);
             monitor.setNote("saving zipfile to disk");
-            zipfiles(new File(fc.getSelectedFile(), "debug.zip"));
+            zipfiles(zipfile);
             
             // Just me being worried, make sure someone doesn't hand us "/", "/tmp/asdf" is count == 2
             monitor.setProgress(90);
@@ -93,25 +125,38 @@ public class DebugCollector extends Thread
         monitor.close();
     }
     
+    /**
+     *  Zip all the files in our 
+     * @param dest
+     * @throws IOException
+     */
     private void zipfiles(File dest) throws IOException
     {
         FileOutputStream fos = new FileOutputStream(dest);
         ZipOutputStream zos = new ZipOutputStream(fos);
         for (Path p : files) {
-            zos.putNextEntry(new ZipEntry(p.getFileName().toString()));
-            Files.copy(p, zos);
+            try {
+                zos.putNextEntry(new ZipEntry(p.getFileName().toString()));
+                Files.copy(p, zos);
+            } catch (IOException ioe) {
+                log.warning("Unable to archive " + p);
+            }
             zos.closeEntry();
         }
         zos.close();
         fos.close();        
     }
     
+    /**
+     * Collects all file names in the directory and puts in our files list.
+     */
     private void addLogs(Path directory) throws IOException 
     {        
         Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (file.toString().endsWith(".log") || file.toString().endsWith(".sql"))
+                if (!file.toString().endsWith(".lck")) {
                     files.add(file);
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -128,5 +173,4 @@ public class DebugCollector extends Thread
         DockerInterface.machineenv(); // for testing on windows
         new DebugCollector().start();
     }
-
 }
