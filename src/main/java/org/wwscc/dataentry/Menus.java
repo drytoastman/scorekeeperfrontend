@@ -46,6 +46,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 	private static final Logger log = Logger.getLogger("org.wwscc.dataentry.Menus");
 
 	Map <String,JMenuItem> items;
+	JMenu edit, event, results;
 	JCheckBoxMenuItem paidInfoMode;
 	JCheckBoxMenuItem reorderMode;
 	JFileChooser chooser;
@@ -54,6 +55,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 	public Menus()
 	{
 		items = new HashMap <String,JMenuItem>();
+	    Messenger.register(MT.SERIES_CHANGED, this);
 		Messenger.register(MT.EVENT_CHANGED, this);
 
 		/* File Menu */
@@ -64,14 +66,14 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 		file.add(new QuitAction());
 
 		/* Edit Menu */
-		JMenu edit = new JMenu("Edit");
+		edit = new JMenu("Edit");
 		add(edit);
 		edit.add(new EventSendAction("Find", MT.OPEN_FIND, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK)));
 		edit.add(new EventSendAction("Quick Add By CarId", MT.OPEN_CARID_ENTRY, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK)));
 		edit.add(new EventSendAction("Manual Barcode Entry", MT.OPEN_BARCODE_ENTRY, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.CTRL_MASK)));
 
 		/* Event Menu */
-		JMenu event = new JMenu("Event Options");
+		event = new JMenu("Event Options");
 		add(event);	
 
 		/* Runs Submenu */
@@ -98,7 +100,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 
 
 		/* Results Menu */
-		JMenu results = new JMenu("Reports");
+		results = new JMenu("Reports");
 		add(results);
 
 		JMenu audit = new JMenu("Current Group Audit");
@@ -144,6 +146,12 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 		else if (cmd.startsWith("Admin Page")) BrowserControl.openAdmin(DataEntry.state, "");
 		else if (cmd.endsWith("Runs"))
 		{
+		    if (DataEntry.state.getCurrentEvent() == null)
+		    {
+		        log.warning("Can't set runs when there is no series/event open");
+		        return;
+		    }
+		    
 			int runs = Integer.parseInt(cmd.split(" ")[0]);
 			if ((runs > 1) && (runs < 100))
 			{
@@ -177,6 +185,13 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 	{
 		switch (type)
 		{
+	        case SERIES_CHANGED:
+	            boolean blank = ((data == null) || (data.equals("<none>")));
+                edit.setEnabled(!blank);
+                event.setEnabled(!blank);
+                results.setEnabled(!blank);
+                break;
+
 			case EVENT_CHANGED:
 				/* when we first start or the a new event is selected, will also double when selecting via menu */
 				Enumeration<AbstractButton> e = runGrouping.getElements();
@@ -187,6 +202,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 					if (run == DataEntry.state.getCurrentEvent().getRuns())
 						b.setSelected(true);
 				}
+			    break;
 		}
 	}
 }

@@ -42,19 +42,21 @@ import com.jcraft.jsch.Session;
 public class TrayMonitor implements ActionListener
 {
     private static final Logger log = Logger.getLogger(TrayMonitor.class.getName());
+    private static final Image coneok, conewarn;    
+    static 
+    {
+        coneok   = Resources.loadImage("conesmall.png");
+        conewarn = Resources.loadImage("conewarn.png");
+    }
     
-    JSch jsch;
-    Session portforward;
+    // Threads to run/monitor docker-machine and docker-compose
+    volatile MachineMonitor mmonitor;
+    volatile ComposeMonitor cmonitor;
     
-    MenuItem mBackendStatus, mMachineStatus;
-    MachineController mmonitor;
-    ComposeController cmonitor;
-    boolean readyforcompose, applicationdone;
-
-    Image coneok, conewarn;
-    TrayIcon trayIcon;
-    PopupMenu trayPopup;
-    String cmdline[];
+    // shared state between threads
+    volatile TrayIcon trayIcon;
+    volatile boolean readyforcompose, portsforwarded, applicationdone;
+    volatile MenuItem mBackendStatus, mMachineStatus;
     
     public TrayMonitor(String args[])
     {
@@ -64,9 +66,7 @@ public class TrayMonitor implements ActionListener
             System.exit(-1);
         }
                 
-        cmdline = args.clone();
-        trayPopup   = new PopupMenu();
-        
+        PopupMenu trayPopup   = new PopupMenu();        
         newMenuItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
         newMenuItem("Registration",     "org.wwscc.registration.Registration", trayPopup);
         newMenuItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup);
@@ -88,15 +88,12 @@ public class TrayMonitor implements ActionListener
         mMachineStatus.setFont(f);
         mBackendStatus.setFont(f);
 
-        coneok   = Resources.loadImage("conesmall.png");
-        conewarn = Resources.loadImage("conewarn.png");
-        
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
         
         // Force an update check when opening the context menu
         trayIcon.addMouseListener(new MouseAdapter() {
-            private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { synchronized (cmonitor) { cmonitor.notify(); }}}
+            private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { cmonitor.poke(); }}
             @Override
             public void mouseReleased(MouseEvent e) { docheck(e); }
             @Override
@@ -110,22 +107,21 @@ public class TrayMonitor implements ActionListener
             System.exit(-2);
         }
 
-        jsch = new JSch();        
         readyforcompose = false;
+        portsforwarded = false;
         applicationdone = false;
-
     }
     
     public void startAndWaitForThreads()
     {
-        mmonitor = new MachineController();
+        mmonitor = new MachineMonitor();
         mmonitor.start();
-        cmonitor = new ComposeController();
+        cmonitor = new ComposeMonitor();
         cmonitor.start();
         
         try {
-            mmonitor.join();
-            cmonitor.join();
+            while (mmonitor.isAlive() || cmonitor.isAlive())
+                Thread.sleep(300);
         } catch (InterruptedException ie) {
             log.warning("Exiting due to interuption: " + ie);
         }
@@ -150,6 +146,9 @@ public class TrayMonitor implements ActionListener
                 new DebugCollector().start();
                 break;
                 
+            case "datasync":
+                break;
+                
             case "quit":
                 if (applicationdone) 
                 {
@@ -160,80 +159,93 @@ public class TrayMonitor implements ActionListener
                     "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
                 {
                     applicationdone = true;
-                    synchronized (mmonitor) { mmonitor.notify(); }
-                    synchronized (cmonitor) { cmonitor.notify(); }
+                    mmonitor.poke();
+                    cmonitor.poke();
                 }
                 break;
                 
             default:
-                Launcher.launchExternal(cmd, cmdline);
+                Launcher.launchExternal(cmd, null);
         }
-    }    
-    
+    }
+
+    abstract class Monitor extends Thread
+    {
+        protected final Long ms;
+        public Monitor(String name, long ms) { super(name); this.ms = ms; } 
+        protected abstract boolean minit();
+        protected abstract boolean mloop();
+        protected abstract void mshutdown();
+        public synchronized void poke() { notify(); }
+        @Override
+        public void run() {
+            if (!minit())
+                return;
+            while (!applicationdone) {
+                try {
+                    mloop();
+                    synchronized (this) { this.wait(ms); }                    
+                } catch (InterruptedException e) {}
+            }
+            mshutdown();
+        }
+    }
+       
     /**
      * Thread to start machine and monitor port forwarding
      */
-    class MachineController extends Thread
+    class MachineMonitor extends Monitor
     {
         Map<String,String> machineenv;
+        JSch jsch;
+        Session portforward;
 
-        public MachineController()
+        public MachineMonitor()
         {
-            super("MachineController");
+            super("MachineMonitor", 10000);
             machineenv = null;
-            readyforcompose = false;
+        }
+        
+        protected void signalready(boolean ready)
+        {
+            if (ready != readyforcompose)
+            {
+                readyforcompose = ready;
+                cmonitor.poke();
+            }
         }
         
         @Override
-        public void run()
+        protected boolean minit()
         {
             if (!DockerInterface.machinepresent())
             {
                 signalready(true);
                 mMachineStatus.setLabel("Machine: Not needed");
                 mMachineStatus.setEnabled(false);
-                return;
+                return false;
             }
 
-            while (!applicationdone) 
-            {
-                try 
-                {
-                    checkmachine();
-                    synchronized (this) { this.wait(10000); }                    
-                } 
-                catch (InterruptedException e) {}
-            }
-
-            mMachineStatus.setLabel("Machine: Disconnecting");
-            if (portforward != null)
-                portforward.disconnect();
-            
-            mMachineStatus.setLabel("Machine: Disconnected");
-        }
-        
-        private void signalready(boolean ready)
-        {
-            if (ready != readyforcompose)
-            {
-                readyforcompose = ready;
-                synchronized (cmonitor) { cmonitor.notify(); }
-            }
-        }
-        
-        private boolean checkmachine()
-        {
             if (!DockerInterface.machinecreated())
             {
                 log.info("Creating a new docker machine.");
                 mMachineStatus.setLabel("Machine: Creating VM");
                 if (!DockerInterface.createmachine())
                 {
-                    log.info("Unable to create a docker machine.  See logs.");
+                    log.severe("Unable to create a docker machine.  See logs.");
                     return false;
                 }
             }
-                    
+            
+            jsch = new JSch();
+            machineenv = DockerInterface.machineenv();
+            log.finest("dockerenv = " + machineenv);
+            return true;
+        }
+        
+        @Override
+        protected boolean mloop()
+        {
             if (!DockerInterface.machinerunning())
             {
                 log.info("Starting the docker machine.");
@@ -243,37 +255,35 @@ public class TrayMonitor implements ActionListener
                     log.info("Unable to start docker machine. See logs.");
                     return false;
                 }
-
+                machineenv = DockerInterface.machineenv();
+                log.finest("dockerenv = " + machineenv);
             }
             
-            // stay up to date just in case, compose can start before port forwarding is up
-            machineenv = DockerInterface.machineenv();
-            log.finest("dockerenv = " + machineenv);
             signalready(true);
             
             try 
             {
-                if (jsch.getIdentityNames().size() == 0)
-                {
-                    jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());
-                }
-                
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
+                    portsforwarded = false;
                     mMachineStatus.setLabel("Machine: Starting port forwarding ...");
-                    
+
                     String host = "192.168.99.100";
                     Matcher m = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)").matcher(machineenv.get("DOCKER_HOST"));
                     if (m.find()) { host = m.group(1); }
+                    
+                    if (jsch.getIdentityNames().size() == 0)
+                        jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());            
             
                     portforward = jsch.getSession("docker", host);
                     portforward.setConfig("StrictHostKeyChecking", "no");
-                    portforward.setConfig("GSSAPIAuthentication", "no");
+                    portforward.setConfig("GSSAPIAuthentication",  "no");
                     portforward.setConfig("PreferredAuthentications", "publickey");
                     portforward.setPortForwardingL("*",           80, "127.0.0.1",    80);
                     portforward.setPortForwardingL("*",        54329, "127.0.0.1", 54329);
                     portforward.setPortForwardingL("127.0.0.1", 6432, "127.0.0.1",  6432);
                     portforward.connect();
+                    portsforwarded = true;
                 }
             } 
             catch (JSchException jse) 
@@ -285,6 +295,15 @@ public class TrayMonitor implements ActionListener
             mMachineStatus.setLabel("Machine: Running");
             return true;
         }
+        
+        @Override
+        protected void mshutdown()
+        {
+            mMachineStatus.setLabel("Machine: Disconnecting");
+            if (portforward != null)
+                portforward.disconnect();
+            mMachineStatus.setLabel("Machine: Disconnected");
+        }
     }
     
 
@@ -292,42 +311,24 @@ public class TrayMonitor implements ActionListener
      * Thread to keep checking our services for status.  It pauses for 5 seconds but can
      * be woken by anyone calling notify on the class object.
      */
-    class ComposeController extends Thread
+    class ComposeMonitor extends Monitor
     {
         Image currentIcon;
         
-        public ComposeController()
+        public ComposeMonitor()
         {
-            super("ComposeController");
+            super("ComposeController", 5000);
             currentIcon = null;
         }
         
-        @Override
-        public void run()
-        {
-            while (!applicationdone) 
-            {
-                try 
-                {
-                    checkcompose();
-                    synchronized (this) { this.wait(5000); }                    
-                } 
-                catch (InterruptedException e) {}
-            }
-            
-            mBackendStatus.setLabel("Backend: Shutting down");
-            if (!DockerInterface.down())
-            {
-                log.severe("Unable to stop the web and database services. See logs.");
-            }
-            
-            mBackendStatus.setLabel("Backend: Stopped");
+        public boolean minit() 
+        { 
+            return true; 
         }
         
-        public void checkcompose()
+        public boolean mloop()
         {
             boolean ok = false;
-            
             if (readyforcompose)
             {
                 boolean res[] = DockerInterface.ps();
@@ -340,11 +341,11 @@ public class TrayMonitor implements ActionListener
                         res = DockerInterface.ps();
                 }
             
-                if (res[0] && res[1]) 
-                {
-                    ok = true;
+                if (res[0] && res[0])
                     mBackendStatus.setLabel("Backend: Running");
-                }
+                
+                if (res[0] && res[1] && portsforwarded) 
+                    ok = true;
             }
             else
             {
@@ -357,9 +358,19 @@ public class TrayMonitor implements ActionListener
                 trayIcon.setImage(next); 
                 currentIcon = next;
             }
+            return ok;
+        }
+        
+        public void mshutdown()
+        {
+            mBackendStatus.setLabel("Backend: Shutting down");
+            if (!DockerInterface.down())
+                log.severe("Unable to stop the web and database services. See logs.");
+            mBackendStatus.setLabel("Backend: Stopped");
         }
     }    
 
+    
     /**
      * Main entry point.
      * @param args passed to any launched application, ignored otherwise

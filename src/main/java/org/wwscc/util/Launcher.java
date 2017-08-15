@@ -39,7 +39,8 @@ public class Launcher
             cmd.add("-cp");
             cmd.add(System.getProperty("java.class.path"));
             cmd.add(app);
-            cmd.addAll(Arrays.asList(args));
+            if (args != null)
+                cmd.addAll(Arrays.asList(args));
             log.info(String.format("Running %s", cmd));
             ProcessBuilder starter = new ProcessBuilder(cmd);
             starter.redirectErrorStream(true);

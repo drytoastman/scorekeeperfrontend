@@ -61,7 +61,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 	static void logError(String f, Exception e)
 	{
-		log.log(Level.SEVERE, f + " failed: " + e.getMessage() + "\nRefresh screen and try again", e);
+		log.log(Level.SEVERE, f + " failed: " + e.getMessage(), e);
 	}
 
 		
