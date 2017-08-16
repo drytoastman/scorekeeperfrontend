@@ -48,7 +48,7 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 	private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
 	public static final String BWTIMER_TYPE  = "_bwtimer._tcp.local.";
 	public static final String PROTIMER_TYPE = "_protimer._tcp.local.";
-	public static final String DATABASE_TYPE = "_scorekeeperdb._tcp.local.";
+	public static final String DATABASE_TYPE = "_postgresql._tcp.local.";
 			
 	private JServiceList list;
 	private JmmDNS jmdns;

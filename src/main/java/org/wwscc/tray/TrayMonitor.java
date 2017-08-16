@@ -50,8 +50,9 @@ public class TrayMonitor implements ActionListener
     }
     
     // Threads to run/monitor docker-machine and docker-compose
-    volatile MachineMonitor mmonitor;
-    volatile ComposeMonitor cmonitor;
+    MachineMonitor mmonitor;
+    ComposeMonitor cmonitor;
+    DataSyncInterface syncviewer = null;
     
     // shared state between threads
     volatile TrayIcon trayIcon;
@@ -147,6 +148,9 @@ public class TrayMonitor implements ActionListener
                 break;
                 
             case "datasync":
+                if (syncviewer == null)
+                    syncviewer = new DataSyncInterface();
+                syncviewer.setVisible(true);
                 break;
                 
             case "quit":

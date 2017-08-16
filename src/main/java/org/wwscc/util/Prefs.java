@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2009 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
  * All rights reserved.
  */
 package org.wwscc.util;
@@ -10,15 +10,11 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.prefs.Preferences;
 
-/**
- *
- * @author bwilson
- */
 public class Prefs
 {
-	//private static final Logger log = Logger.getLogger(Prefs.class.getCanonicalName());	
 	private static Preferences prefs;
 	
 	static
@@ -48,8 +44,22 @@ public class Prefs
 		return FileSystems.getDefault().getPath(getDocRoot(), "logs").toString();
 	}
 
-	//public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
-	//public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
+	public static UUID getServerId() 
+	{
+	    UUID ret = IdGenerator.nullid;
+	    String s = prefs.get("serverid", "");
+	    if (s.equals("")) {
+	        ret = IdGenerator.generateId();
+	        prefs.put("serverid", ret.toString());
+	    } else {
+	        ret = UUID.fromString(s);
+	    }
+
+	    return ret;
+	}
+
+	public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
+	public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
 	public static String getSeries(String def) { return prefs.get("series", def); }
 	public static int getEventId(int def) { return prefs.getInt("eventid", def); }
 	public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
@@ -68,8 +78,8 @@ public class Prefs
 		return r;
 	}
 
-	//public static void setHomeServer(String s) { prefs.put("hostname", s); }
-	//public static void setPasswordFor(String series, String s) { prefs.put("password-"+series, s); }
+	public static void setHomeServer(String s) { prefs.put("hostname", s); }
+	public static void setPasswordFor(String series, String s) { prefs.put("password-"+series, s); }
 	public static void setSeries(String s) { prefs.put("series", s); }
 	public static void setEventId(int i) { prefs.putInt("eventid", i); }
 	public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }
