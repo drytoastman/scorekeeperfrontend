@@ -104,6 +104,8 @@ public interface DataInterface
 
 	public void setRun(Run r);
 	public void deleteRun(UUID eventid, UUID carid, int course, int run);
+	public void addTimerTime(UUID serverid, Run r);
+
 
 	/* Challenge */
 	public Set<UUID> getCarIdsByChallenge(UUID challengeid);

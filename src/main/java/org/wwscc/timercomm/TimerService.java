@@ -21,6 +21,7 @@ import javax.jmdns.ServiceInfo;
 
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
+import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
@@ -135,7 +136,7 @@ public class TimerService implements RunServiceInterface
 		public void run()
 		{
 			try {
-	            jmdns = JmDNS.create(Network.getPrimaryAddress());                
+	            jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());                
 				jmdns.registerService(ServiceInfo.create(servicetype, servicename, serversock.getLocalPort(), ""));
                 Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, jmdns.getInetAddress().getHostAddress(), serversock.getLocalPort() } );
 				autocloser = new AutoCloseHook();

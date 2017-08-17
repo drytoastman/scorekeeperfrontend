@@ -45,12 +45,6 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
                 DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId());
         engine.load(url);
 	}
-	
-	private void reload()
-	{
-	    if (engine != null) 
-	        engine.reload();
-	}
 
 	@Override
 	public void event(MT type, Object o)
@@ -61,10 +55,6 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
 		    case EVENT_CHANGED:
 		        Platform.runLater(new Runnable () { public void run() { setURL(); }});
 		        break;
-		        
-			case RUN_CHANGED:
-			    Platform.runLater(new Runnable () { public void run() { reload(); }});
-				break;
 		}
 	}
 }

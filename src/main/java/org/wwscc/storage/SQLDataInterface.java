@@ -603,6 +603,16 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 	
+	@Override
+	public void addTimerTime(UUID serverid, Run r)
+	{
+        try {
+            executeUpdate("INSERT INTO timertimes (serverid, raw, modified) VALUES (?, ?, now())", newList(serverid, r.raw));
+        } catch (Exception ioe){
+            logError("addTimerTime", ioe);
+        }	    
+	}
+
 
 	@Override
 	public Set<UUID> getCarIdsByChallenge(UUID challengeid)

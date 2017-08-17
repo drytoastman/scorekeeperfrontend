@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.jmdns.JmmDNS;
+import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceEvent;
 import javax.jmdns.ServiceInfo;
 import javax.jmdns.ServiceListener;
@@ -36,6 +36,8 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.wwscc.util.IdGenerator;
+import org.wwscc.util.Network;
 import org.wwscc.util.Resources;
 
 import net.miginfocom.swing.MigLayout;
@@ -51,7 +53,7 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 	public static final String DATABASE_TYPE = "_postgresql._tcp.local.";
 			
 	private JServiceList list;
-	private JmmDNS jmdns;
+	private JmDNS jmdns;
 	
 	/**
 	 * shortcut when only looking for a single name
@@ -91,10 +93,15 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 		result = null;
 
         new Thread(new Runnable() { public void run() {
-            jmdns = JmmDNS.Factory.getInstance();
-            for (String service : serviceNames) {
-                jmdns.addServiceListener(service, list);
+            try {
+                jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());
+                for (String service : serviceNames) {
+                    jmdns.addServiceListener(service, list);
+                }
+            } catch (IOException ioe) {
+                log.log(Level.WARNING, "Failed to start listening with JmDNS: " + ioe, ioe);
             }
+          
         }}).start();
     }
 
@@ -103,7 +110,13 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 	{
 		new Thread(new Runnable() {
 			@Override
-			public void run() { try { jmdns.close(); } catch (IOException e) { log.log(Level.INFO, "JMDns did not close successfully: " + e, e);}}
+			public void run() { 
+			    try { 
+			        jmdns.close(); 
+			    } catch (IOException e) { 
+			        log.log(Level.INFO, "JMDns did not close successfully: " + e, e);
+			    }
+			}
 		}).start();
 		super.close();
 	}

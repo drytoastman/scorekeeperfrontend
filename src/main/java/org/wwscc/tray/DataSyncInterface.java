@@ -22,6 +22,7 @@ import javax.swing.tree.DefaultTreeModel;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Logging;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
@@ -70,7 +71,7 @@ public class DataSyncInterface extends JFrame implements ServiceListener
     public void openConnections()
     {
         try {
-            jmdns = JmDNS.create(Network.getPrimaryAddress());
+            jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());
             jmdns.registerService(ServiceInfo.create("_postgresql._tcp.local.", Prefs.getServerId().toString(), 54329, ""));
             jmdns.addServiceListener("_postgresql._tcp._local.", this);
             Runtime.getRuntime().addShutdownHook(new AutoCloseHook());
@@ -82,7 +83,6 @@ public class DataSyncInterface extends JFrame implements ServiceListener
     private JSONObject doExchange()
     {
         JSONObject ret = null;
-        
         try 
         {
             HttpURLConnection con = (HttpURLConnection)new URL("http://127.0.0.1").openConnection();
@@ -135,8 +135,8 @@ public class DataSyncInterface extends JFrame implements ServiceListener
         v.openConnections();
         while (true)
         {
-            Thread.sleep(1000);
             System.err.println("ret = " + v.doExchange());
+            Thread.sleep(1000);
         }
     }
     

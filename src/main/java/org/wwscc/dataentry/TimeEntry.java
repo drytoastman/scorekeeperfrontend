@@ -529,7 +529,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		// regardless, note the last timer data as the announcer panel wants it
 		if (s.getFinishedCount() > 0) // should always be true but just in case
 		{
-		    Messenger.sendEvent(MT.TIME_RECEIVED, s.getRun(s.getFinishedCount()-1).getRaw());
+		    Messenger.sendEvent(MT.TIME_RECEIVED, s.getRun(s.getFinishedCount()-1));
 		}
 	}
 
