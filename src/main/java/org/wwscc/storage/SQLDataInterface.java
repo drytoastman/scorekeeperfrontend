@@ -973,5 +973,34 @@ public abstract class SQLDataInterface implements DataInterface
 	public String getEffectiveIndexStr(Car c)
 	{
 		return getClassData().getIndexStr(c.classcode, c.indexcode, c.useClsMult());
-	}	
+	}
+
+	@Override
+	public void clearMergeServers()
+	{
+        try
+        {
+            executeUpdate("UPDATE mergeservers SET address='', discovered='epoch'", null);
+        }
+        catch (Exception ioe)
+        {
+            logError("clearMergeServers", ioe);
+        }
+	}
+
+	@Override
+	public void updateMergeServer(UUID serverid, String name, String ip, boolean up)
+    {
+        try
+        {
+            String time = up ? "now()" : "'epoch'";
+            executeUpdate(String.format("INSERT INTO mergeservers (serverid, name, address, discovered) VALUES (?, ?, ?, %s)" +
+                          "ON CONFLICT (serverid) DO UPDATE SET name=?, address=?, discovered=%s", time, time),
+                          newList(serverid, name, ip, name, ip));
+        }
+        catch (Exception ioe)
+        {
+            logError("updateMergeServer", ioe);
+        }
+    }
 }

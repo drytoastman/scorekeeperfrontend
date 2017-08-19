@@ -11,7 +11,6 @@ package org.wwscc.timercomm;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,7 +47,7 @@ public class TimerService implements RunServiceInterface
 	{
 		serversock = new ServerSocket(0);
 		servicetype = type;
-		servicename = UUID.randomUUID().toString();
+		servicename = IdGenerator.generateId().toString();
 		log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{servicename, serversock.getLocalPort()});
 		
 		clients = new Vector<RunServiceInterface>();

@@ -3,12 +3,19 @@ package org.wwscc.util;
 import java.math.BigInteger;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class IdGenerator 
 {
+    private static final Logger log = Logger.getLogger(IdGenerator.class.getName());
 	public static final UUID nullid = new UUID(0,0);
+	public static final UUID namespaceDNS = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 	
 	// Upper long
 	public static final long TIME_LOW_MASK = 0xFFFFFFFF00000000L;
@@ -68,5 +75,25 @@ public class IdGenerator
 		long timever = ((nstime << 32) & TIME_LOW_MASK) | ((nstime >> 16) & TIME_MID_MASK) | (VERSION1 & VERSION_MASK) | ((nstime >> 48) & TIME_HI_MASK);
 
 		return new UUID(timever, hwseq);
+	}
+	
+	public static UUID generateV5DNSId(String hostname)
+	{
+        try {
+            ByteBuffer in = ByteBuffer.allocate(16 + hostname.length());
+            in.putLong(namespaceDNS.getMostSignificantBits());
+            in.putLong(namespaceDNS.getLeastSignificantBits());
+            in.put(hostname.getBytes());        
+            MessageDigest md = MessageDigest.getInstance("SHA1");
+            ByteBuffer out = ByteBuffer.wrap(md.digest(in.array()));
+            out.put(6, (byte)((out.get(6) & 0x0F) | 0x50));
+            out.put(8, (byte)((out.get(8) & 0x3F) | 0x80));
+            long hibyte = out.getLong();
+            long lobyte = out.getLong();
+            return new UUID(hibyte, lobyte);
+        } catch (NoSuchAlgorithmException e) {
+            log.log(Level.SEVERE, "Failed to load SHA1 for generating V5 DNS UUID", e);
+            return nullid;
+        }
 	}
 }

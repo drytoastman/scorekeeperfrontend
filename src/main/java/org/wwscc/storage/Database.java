@@ -39,6 +39,28 @@ public class Database
 		}
 	}
 	
+   /**
+     * Used when the user wants to select a new specific series
+     * @param series
+     * @param password
+     * @return true if the series was opened, false otherwise
+     */
+    public static boolean openPublic()
+    {
+        if (d != null)
+            d.close();
+        
+        try {
+            d = new PostgresqlDatabase(null);
+            Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
+            return true;
+        } catch (SQLException sqle) {
+            log.severe(String.format("Unable to open database (public-only) due to error %s", sqle));
+            return false;
+        }
+    }
+    
+    
 	/**
 	 * Used when the user wants to select a new specific series
 	 * @param series

@@ -143,5 +143,8 @@ public interface DataInterface
 	
 	public ClassData getClassData();
 	public String getEffectiveIndexStr(Car c);
+	
+	public void clearMergeServers();
+	public void updateMergeServer(UUID serverid, String name, String ip, boolean up);
 }
 
