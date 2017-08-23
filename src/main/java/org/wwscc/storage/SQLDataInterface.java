@@ -9,6 +9,7 @@
 package org.wwscc.storage;
 
 import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -361,10 +362,10 @@ public abstract class SQLDataInterface implements DataInterface
 		{
 			MetaCar mc = new MetaCar(c);
 			ResultSet cr = executeSelect("select paid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-			mc.isPaid = false;
+			mc.paid = new BigDecimal(0);
 			mc.isRegistered = cr.next();
 			if (mc.isRegistered)
-				mc.isPaid = cr.getBoolean("paid");
+			    mc.paid = cr.getBigDecimal("paid");
 			
 			ResultSet ar = executeSelect("select raw from runs where carid=? limit 1", newList(c.getCarId()));
 			mc.hasActivity = ar.next();

@@ -24,19 +24,7 @@ import java.util.regex.Pattern;
 public class ClassData
 {
 	private static Logger log = Logger.getLogger(ClassData.class.getCanonicalName());
-	private static ClassData.Class placeHolder;
-	
-	static 
-	{
-		placeHolder = new Class();
-		placeHolder.classcode = "UKNWN";
-		placeHolder.descrip = "Missing Driver Class";
-		placeHolder.indexcode = "";
-		placeHolder.classmultiplier = 1.0;
-		placeHolder.secondruns  = false;
-		placeHolder.countedruns  = 0;
-		placeHolder.caridxrestrict = "";
-	}
+	public static String PLACEHOLDER_CLASS = "HOLD";
 	
 	HashMap <String, ClassData.Class> classes;
 	HashMap <String, ClassData.Index> indexes;
@@ -56,17 +44,10 @@ public class ClassData
 	{
 		indexes.put(i.getCode(), i);
 	}
-
-	public static ClassData.Class getMissing()
-	{
-		return placeHolder;
-	}
 	
 	public ClassData.Class getClass(String code)
 	{
-		if (classes.containsKey(code))
-			return classes.get(code);
-		return getMissing();
+		return classes.get(code);
 	}
 
 	public ClassData.Index getIndex(String code)

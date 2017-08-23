@@ -328,7 +328,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		for (int ii = 0; ii < m.getSize(); ii++)
 		{
 			MetaCar c = (MetaCar)m.getElementAt(ii);
-			if (!c.isInRunOrder() && c.isPaid()) return;
+			if (!c.isInRunOrder() && c.hasPaid()) return;
 		}
 		
 		paidwarning.setText("No unused paid cars are present");
@@ -443,8 +443,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 				newcarfrom.setEnabled(selectedCar != null);
 				editcar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasActivity());
 				deletecar.setEnabled(!selectedCar.isRegistered() && !selectedCar.isInRunOrder() && !selectedCar.hasActivity());
-				registeredandpaid.setEnabled((!selectedCar.isRegistered() || !selectedCar.isPaid()) && !selectedCar.isInRunOrder());
-				registerit.setEnabled((!selectedCar.isRegistered() || selectedCar.isPaid()) && !selectedCar.isInRunOrder());
+				registeredandpaid.setEnabled((!selectedCar.isRegistered() || !selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
+				registerit.setEnabled((!selectedCar.isRegistered() || selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
 				unregisterit.setEnabled(selectedCar.isRegistered() && !selectedCar.isInRunOrder());
 			}
 			else

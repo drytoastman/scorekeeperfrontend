@@ -94,6 +94,7 @@ public class CarDialog extends BaseDialog<Car>
 		mainPanel.add(ientry("number", (car.getNumber()>0)?car.getNumber():null), "wrap");
 
 		List<ClassData.Class> classlist = cd.getClasses();
+		classlist.removeIf(item -> item.getCode().equals("HOLD"));
 		indexlist = cd.getIndexes();
 		Collections.sort(classlist, new ClassData.Class.StringOrder());
 		Collections.sort(indexlist, new ClassData.Index.StringOrder());
@@ -107,7 +108,7 @@ public class CarDialog extends BaseDialog<Car>
 		mainPanel.add(select("indexcode", cd.getIndex(car.getIndexCode()), indexlist, indexChange), "wrap");
 
 		mainPanel.add(label("Use Class Mult", true), "");
-		mainPanel.add(checkbox("useclsmlt", car.useClsMult()), "wrap");
+		mainPanel.add(checkbox("useclsmult", car.useClsMult()), "wrap");
 		
 		override = new JCheckBox("Override Index Restrictions (rare)");
 		override.addActionListener(this);
