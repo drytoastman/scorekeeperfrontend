@@ -975,32 +975,72 @@ public abstract class SQLDataInterface implements DataInterface
 		return getClassData().getIndexStr(c.classcode, c.indexcode, c.useClsMult());
 	}
 
+	
 	@Override
-	public void clearMergeServers()
-	{
-        try
-        {
-            executeUpdate("UPDATE mergeservers SET address='', discovered='epoch'", null);
-        }
-        catch (Exception ioe)
-        {
-            logError("clearMergeServers", ioe);
-        }
-	}
-
-	@Override
-	public void updateMergeServer(UUID serverid, String name, String ip, boolean up)
+	public void setLocalHost(UUID myid, String name)
     {
         try
         {
-            String time = up ? "now()" : "'epoch'";
-            executeUpdate(String.format("INSERT INTO mergeservers (serverid, name, address, discovered) VALUES (?, ?, ?, %s)" +
-                          "ON CONFLICT (serverid) DO UPDATE SET name=?, address=?, discovered=%s", time, time),
+        	executeUpdate("DELETE FROM mergeservers WHERE hosttype='localhost'", null);
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, hosttype) VALUES (?, ?, 'localhost')", newList(myid, name));
+        }
+        catch (Exception ioe)
+        {
+            logError("setLocalHost", ioe);
+        }
+    }
+	
+	
+	@Override
+	public void clearLocalServers()
+	{
+        try
+        {
+            executeUpdate("UPDATE mergeservers SET active=false where hosttype='discovered'", null);
+        }
+        catch (Exception ioe)
+        {
+            logError("clearLocalServers", ioe);
+        }
+	}
+	
+	/*
+    serverid   UUID       PRIMARY KEY,
+    hostname   TEXT       NOT NULL DEFAULT '',
+    address    TEXT       NOT NULL DEFAULT '',
+    hosttype   TEXT       NOT NULL DEFAULT 'discovered',
+    discovered TIMESTAMP  NOT NULL DEFAULT 'epoch',
+    lastcheck  TIMESTAMP  NOT NULL DEFAULT 'epoch',
+    active     BOOLEAN    NOT NULL DEFAULT False,
+    mergenow   BOOLEAN    NOT NULL DEFAULT False,
+    mergestate JSONB      NOT NULL DEFAULT '{}'
+	*/
+
+	@Override
+	public void localServerUp(UUID serverid, String name, String ip)
+	{
+        try
+        {
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, hosttype, discovered, active) VALUES (?, ?, ?, 'discovered', now(), true) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, discovered=now(), active=true",
                           newList(serverid, name, ip, name, ip));
         }
         catch (Exception ioe)
         {
-            logError("updateMergeServer", ioe);
+            logError("localServerUp", ioe);
         }
-    }
+	}
+	
+	@Override
+	public void localServerDown(UUID serverid)
+	{
+        try
+        {
+            executeUpdate("UPDATE mergeservers SET active=false WHERE serverid=?", newList(serverid));
+        }
+        catch (Exception ioe)
+        {
+            logError("localServerDown", ioe);
+        }
+	}
 }

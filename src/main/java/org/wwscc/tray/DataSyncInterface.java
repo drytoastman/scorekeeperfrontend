@@ -45,8 +45,8 @@ public class DataSyncInterface extends JFrame implements ServiceListener
         pack();
         
         Database.openPublic();
-        Database.d.clearMergeServers();
-        Database.d.updateMergeServer(Prefs.getServerId(), Network.getLocalHostName(), "localhost", false);
+        Database.d.clearLocalServers();
+        Database.d.setLocalHost(Prefs.getServerId(), Network.getLocalHostName());
     }
     
     class AutoCloseHook extends Thread
@@ -75,24 +75,16 @@ public class DataSyncInterface extends JFrame implements ServiceListener
         }    
     }
     
-    /*
-    class ServerInfo
-    {
-        UUID   serverid;
-        String name;
-        String ip;
-        Date   time;
-        String hash;
-    }
-    */
-    
     private void updateDatabase(ServiceEvent event, boolean up)
     {
         ServiceInfo info = event.getInfo();
         byte[] bytes = info.getTextBytes();
         String hostname = new String(bytes, 1, bytes[0]); // weird jmdns encoding
-        String ip = up ? info.getInet4Addresses()[0].getHostAddress() : "";
-        Database.d.updateMergeServer(UUID.fromString(info.getName()), hostname, ip, true);
+        if (up) {        	
+            Database.d.localServerUp(UUID.fromString(info.getName()), hostname, info.getInet4Addresses()[0].getHostAddress());
+        } else {
+        	Database.d.localServerDown(UUID.fromString(info.getName()));
+        }
     }
     
     @Override

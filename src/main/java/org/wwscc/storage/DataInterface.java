@@ -144,7 +144,9 @@ public interface DataInterface
 	public ClassData getClassData();
 	public String getEffectiveIndexStr(Car c);
 	
-	public void clearMergeServers();
-	public void updateMergeServer(UUID serverid, String name, String ip, boolean up);
+	public void setLocalHost(UUID myid, String name);
+	public void clearLocalServers();
+	public void localServerUp(UUID serverid, String name, String ip);
+	public void localServerDown(UUID serverid);
 }
 
