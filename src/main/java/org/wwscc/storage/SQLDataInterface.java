@@ -27,8 +27,6 @@ import java.util.logging.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.wwscc.util.IdGenerator;
-import org.wwscc.util.MT;
-import org.wwscc.util.Messenger;
 
 /** */
 public abstract class SQLDataInterface implements DataInterface
@@ -41,7 +39,7 @@ public abstract class SQLDataInterface implements DataInterface
 	public abstract void start() throws SQLException;
 	public abstract void commit() throws SQLException;
 	public abstract void rollback();
-	public abstract Object executeUpdate(String sql, List<Object> args) throws SQLException;
+	public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
 	public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
 	public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
 	public abstract void closeLeftOvers();
@@ -65,7 +63,18 @@ public abstract class SQLDataInterface implements DataInterface
 		log.log(Level.SEVERE, f + " failed: " + e.getMessage(), e);
 	}
 
-		
+	
+	@Override
+	public void ping()
+	{
+	    try {
+            executeSelect("select 1", null);
+        } catch (SQLException sqle) {
+            log.log(Level.INFO, "Ping failed? " + sqle, sqle);
+        }
+	}
+	
+	
 	@Override
 	public String getSetting(String key)
 	{
@@ -528,7 +537,6 @@ public abstract class SQLDataInterface implements DataInterface
 	public void newCar(Car c) throws SQLException
 	{
 		executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
-		Messenger.sendEvent(MT.CAR_CREATED, c);
 	}
 
 	@Override
@@ -978,52 +986,41 @@ public abstract class SQLDataInterface implements DataInterface
 
 	
 	@Override
-	public void setLocalHost(UUID myid, String name)
+	public void mergeServerSetLocal(String name, String address)
     {
         try
         {
-        	executeUpdate("DELETE FROM mergeservers WHERE hosttype='localhost'", null);
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, hosttype) VALUES (?, ?, 'localhost')", newList(myid, name));
+            UUID serverid = IdGenerator.nullid;
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address) VALUES (?, ?, ?) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?", newList(serverid, name, address, name, address));
         }
         catch (Exception ioe)
         {
-            logError("setLocalHost", ioe);
+            logError("localhostServerSet", ioe);
         }
     }
 	
 	
 	@Override
-	public void clearLocalServers()
+	public void mergeServerInactivateAll()
 	{
         try
         {
-            executeUpdate("UPDATE mergeservers SET active=false where hosttype='discovered'", null);
+            executeUpdate("UPDATE mergeservers SET active=false", null);
         }
         catch (Exception ioe)
         {
-            logError("clearLocalServers", ioe);
+            logError("mergeServerInactivateAll", ioe);
         }
 	}
-	
-	/*
-    serverid   UUID       PRIMARY KEY,
-    hostname   TEXT       NOT NULL DEFAULT '',
-    address    TEXT       NOT NULL DEFAULT '',
-    hosttype   TEXT       NOT NULL DEFAULT 'discovered',
-    discovered TIMESTAMP  NOT NULL DEFAULT 'epoch',
-    lastcheck  TIMESTAMP  NOT NULL DEFAULT 'epoch',
-    active     BOOLEAN    NOT NULL DEFAULT False,
-    mergenow   BOOLEAN    NOT NULL DEFAULT False,
-    mergestate JSONB      NOT NULL DEFAULT '{}'
-	*/
 
 	@Override
-	public void localServerUp(UUID serverid, String name, String ip)
+	public void mergeServerActivate(UUID serverid, String name, String ip)
 	{
         try
         {
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, hosttype, discovered, active) VALUES (?, ?, ?, 'discovered', now(), true) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, discovered=now(), active=true",
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, active) VALUES (?, ?, ?, true) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, active=true",
                           newList(serverid, name, ip, name, ip));
         }
         catch (Exception ioe)
@@ -1033,15 +1030,49 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 	
 	@Override
-	public void localServerDown(UUID serverid)
+	public void mergeServerDeactivate(UUID serverid)
 	{
         try
         {
-            executeUpdate("UPDATE mergeservers SET active=false WHERE serverid=?", newList(serverid));
+            executeUpdate("UPDATE mergeservers SET active=false, nextcheck='epoch' WHERE serverid=?", newList(serverid));
         }
         catch (Exception ioe)
         {
             logError("localServerDown", ioe);
+        }
+	}
+	
+	@Override
+	public void mergeServerSet(UUID serverid, String name, boolean active, boolean mergenow)
+	{
+        try
+        {
+            String when = mergenow ? "now" : "epoch";
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, active, nextcheck) VALUES (?, ?, ?, ?::timestamp) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, active=?, nextcheck=?::timestamp",
+                          newList(serverid, name, active, when, name, active, when));
+        }
+        catch (Exception ioe)
+        {
+            logError("remoteServerSet", ioe);
+        }
+	    
+	}
+	
+	@Override
+	public List<MergeServer> getMergeServers()
+	{
+        try
+        {
+            List<MergeServer> ret = new ArrayList<MergeServer>();
+            for (MergeServer cls : executeSelect("select * from mergeservers", null, MergeServer.class.getConstructor(ResultSet.class)))
+                ret.add(cls);
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getMergeServers", ioe);
+            return null;
         }
 	}
 }

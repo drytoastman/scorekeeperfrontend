@@ -12,14 +12,21 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
+import org.postgresql.PGConnection;
+import org.postgresql.PGNotification;
 import org.postgresql.util.PGobject;
+import org.wwscc.util.MT;
+import org.wwscc.util.Messenger;
 
 public class PostgresqlDatabase extends SQLDataInterface 
 {
@@ -42,6 +49,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 		conn = getConnection(series);
 		Statement s = conn.createStatement();
 		s.execute("set time zone 'UTC'");
+		s.execute("LISTEN datachange");
 		s.close();
 	}
 
@@ -120,6 +128,22 @@ public class PostgresqlDatabase extends SQLDataInterface
 		conn.setAutoCommit(true);
 	}
 
+	public void checkNotifications()
+	{
+	    try {
+            PGNotification notifications[] = ((PGConnection)conn).getNotifications();
+            if (notifications != null) {
+                Set<String> changes = new HashSet<String>();
+                for (PGNotification n : notifications) {
+                    changes.add(n.getParameter());
+                }
+                Messenger.sendEvent(MT.DATABASE_NOTIFICATION, changes);
+            }
+        } catch (SQLException e) {
+            log.log(Level.INFO, "Failed to process pg notifications: " + e, e);
+        }
+	}
+	
 	@Override
 	public void rollback() {
 		try {
@@ -163,20 +187,13 @@ public class PostgresqlDatabase extends SQLDataInterface
 	}	
 	
 	@Override
-	public Object executeUpdate(String sql, List<Object> args) throws SQLException 
+	public void executeUpdate(String sql, List<Object> args) throws SQLException 
 	{
-		Object ret = null;
-		PreparedStatement p = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+		PreparedStatement p = conn.prepareStatement(sql);
 		bindParam(p, args);
 		p.executeUpdate();
-		
-		ResultSet gen = p.getGeneratedKeys();
-		if (gen.next())
-			ret = gen.getObject(1);
-		
-		gen.close();
 		p.close();
-		return ret;
+		checkNotifications();		
 	}
 
 	@Override
@@ -188,6 +205,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 			p.executeUpdate();
 		}
 		p.close();
+		checkNotifications();
 	}
 
 
@@ -201,10 +219,15 @@ public class PostgresqlDatabase extends SQLDataInterface
 		synchronized(leftovers) {
 			leftovers.put(s,  p);
 		}
+		checkNotifications();
 		return s;
 	}
 
 	
+	/**
+	 * executeSelect(String,List<Object>) cannot close its result sets as they are returned to the caller.  The caller
+	 * can call this method to close those 'leftover' cursors.
+	 */
 	@Override
 	public void closeLeftOvers()
 	{
@@ -225,6 +248,10 @@ public class PostgresqlDatabase extends SQLDataInterface
 	}
 
 
+	/**
+	 * Run a SELECT statement and create objects with the results using the given constructor that takes a 
+	 * ResultSet as an argument.
+	 */
 	@Override
 	public <T> List<T> executeSelect(String sql, List<Object> args, Constructor<T> objc) throws SQLException 
 	{
@@ -240,6 +267,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 			}
 			s.close();
 			p.close();
+			checkNotifications();
 			return result;
 		} 
 		catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)

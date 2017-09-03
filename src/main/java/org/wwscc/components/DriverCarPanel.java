@@ -271,6 +271,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 						{
 							c.setDriverId(selectedDriver.getDriverId());
 							Database.d.newCar(c);
+							Messenger.sendEvent(MT.CAR_CREATED, c);
 							reloadCars(c);
 							if (cd.getAddToRunOrder())
 								Messenger.sendEvent(MT.CAR_ADD, c.getCarId());

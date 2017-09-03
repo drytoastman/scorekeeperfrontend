@@ -8,10 +8,14 @@
 package org.wwscc.util;
 
 import java.awt.Rectangle;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.nio.file.FileSystems;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.prefs.Preferences;
+
+import javax.swing.JFrame;
 
 public class Prefs
 {
@@ -68,13 +72,13 @@ public class Prefs
 	public static String getScannerConfig() { return prefs.get("scannerconfig", ""); }
 	public static String getDefaultPrinter() { return prefs.get("defaultprinter", ""); }
 	public static boolean usePaidFlag() { return prefs.getBoolean("paidflag", false); }
-	public static Rectangle getTimerWindow()
+	public static Rectangle getWindowBounds(String p)
 	{
 		Rectangle r = new Rectangle();
-		r.x = prefs.getInt("timer.x", 0);
-		r.y = prefs.getInt("timer.y", 0);
-		r.width = prefs.getInt("timer.width", 610);
-		r.height = prefs.getInt("timer.height", 600);
+		r.x = prefs.getInt(p+".x", 0);
+		r.y = prefs.getInt(p+".y", 0);
+		r.width = prefs.getInt(p+".width", 1080);
+		r.height = prefs.getInt(p+".height", 600);
 		return r;
 	}
 
@@ -88,11 +92,23 @@ public class Prefs
 	public static void setScannerConfig(String s) { prefs.put("scannerconfig", s); }
 	public static void setDefaultPrinter(String s) { prefs.put("defaultprinter", s); }
 	public static void setUsePaidFlag(boolean b) { prefs.putBoolean("paidflag", b); }
-	public static void setTimerWindow(Rectangle r)
+	public static void setWindowBounds(String p, Rectangle r)
 	{
-		prefs.putInt("timer.x", r.x);
-		prefs.putInt("timer.y", r.y);
-		prefs.putInt("timer.width", r.width);
-		prefs.putInt("timer.height", r.height);
+		prefs.putInt(p + ".x", r.x);
+		prefs.putInt(p + ".y", r.y);
+		prefs.putInt(p + ".width", r.width);
+		prefs.putInt(p + ".height", r.height);
+	}
+	
+	public static void trackWindowBounds(JFrame frame, String prefix)
+	{
+        frame.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                setWindowBounds(prefix, e.getComponent().getBounds());
+            }
+            public void componentMoved(ComponentEvent e) {
+                setWindowBounds(prefix, e.getComponent().getBounds());
+            }
+        });
 	}
 }

@@ -9,6 +9,8 @@
 package org.wwscc.storage;
 
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import org.wwscc.util.MT;
@@ -20,6 +22,7 @@ import org.wwscc.util.Prefs;
 public class Database
 {
 	private static final Logger log = Logger.getLogger(Database.class.getCanonicalName());
+	public static Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 	public static DataInterface d;
 
 	static

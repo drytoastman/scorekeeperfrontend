@@ -19,6 +19,11 @@ import java.util.UUID;
 /** */
 public interface DataInterface
 {	
+    /**
+     * Ping the server (primarly for check for notifications)
+     */
+    public void ping();
+    
 	/**
 	 * Closes the currently open series connection if open.
 	 */
@@ -144,9 +149,12 @@ public interface DataInterface
 	public ClassData getClassData();
 	public String getEffectiveIndexStr(Car c);
 	
-	public void setLocalHost(UUID myid, String name);
-	public void clearLocalServers();
-	public void localServerUp(UUID serverid, String name, String ip);
-	public void localServerDown(UUID serverid);
+	/* MergeServers interface */
+	public void mergeServerSetLocal(String name, String address);
+	public void mergeServerInactivateAll();
+	public void mergeServerActivate(UUID serverid, String name, String ip);
+	public void mergeServerDeactivate(UUID serverid);
+	public void mergeServerSet(UUID serverid, String name, boolean active, boolean mergenow);
+	public List<MergeServer> getMergeServers();
 }
 

@@ -1,124 +1,110 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.tray;
 
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceEvent;
-import javax.jmdns.ServiceInfo;
-import javax.jmdns.ServiceListener;
 import javax.swing.JFrame;
-import javax.swing.JTree;
+import javax.swing.JScrollPane;
 import javax.swing.UIManager;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-
 import org.wwscc.storage.Database;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Logging;
+import org.wwscc.util.MT;
+import org.wwscc.util.MessageListener;
+import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 import net.miginfocom.swing.MigLayout;
 
-public class DataSyncInterface extends JFrame implements ServiceListener 
+public class DataSyncInterface extends JFrame implements MessageListener
 {
     private static final Logger log = Logger.getLogger(DataSyncInterface.class.getName());
-    public static final String DATABASE_TYPE = "_postgresql._tcp.local.";
-    public static final int DATABASE_PORT = 54329;
 
-    JmDNS jmdns;
+    MergeStatusTable table;
+    
     public DataSyncInterface()
     {
-        super("Data Synchronization");
-        setLayout(new MigLayout());
+        super("Data Synchronization");        
+        setLayout(new MigLayout("fill", "fill", "fill"));
         
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
-        DefaultTreeModel model = new DefaultTreeModel(root);
-        root.add(new DefaultMutableTreeNode("nwr2017"));
-        root.add(new DefaultMutableTreeNode("ww2017"));
-        
-        add(new JTree(model));
-        pack();
-        
-        Database.openPublic();
-        Database.d.clearLocalServers();
-        Database.d.setLocalHost(Prefs.getServerId(), Network.getLocalHostName());
+        table = new MergeStatusTable();
+        getContentPane().add(new JScrollPane(table), "grow");
+        setBounds(Prefs.getWindowBounds("datasync"));
+        setVisible(true);
+
+        Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
+        Messenger.register(MT.DATABASE_NOTIFICATION, this);
+        new UpdaterThread().start();
+        Prefs.trackWindowBounds(this, "datasync");
     }
     
-    class AutoCloseHook extends Thread
+    class UpdaterThread extends Thread
     {
+        boolean done = false;
+
         @Override
         public void run()
         {
-            try {
-                jmdns.unregisterAllServices();
-                jmdns.close();
-            } catch (Exception ioe) {
-                log.info("Error shutting down database announcements");
+            int counter = 0;
+            Set<String> tables = new HashSet<String>();
+            tables.add("mergeservers");
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, tables);
+            
+            while (!done) {
+                try {
+                    Database.d.ping();
+                    Thread.sleep(1000);
+                    if (counter++ % 10 == 0)
+                        Messenger.sendEvent(MT.DATABASE_NOTIFICATION, tables);
+                } catch (Exception e) {
+                    log.log(Level.WARNING, e.toString(), e);
+                }
             }
         }
     }
     
-    public void openConnections()
-    {
-        try {
-            jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());
-            jmdns.registerService(ServiceInfo.create(DATABASE_TYPE, Prefs.getServerId().toString(), DATABASE_PORT, Network.getLocalHostName()));
-            jmdns.addServiceListener(DATABASE_TYPE, this);
-            Runtime.getRuntime().addShutdownHook(new AutoCloseHook());
-        } catch (IOException ioe) {
-            log.log(Level.WARNING, "Failed to start database info broadcaster.  Local sync will not work. " + ioe, ioe);
-        }    
-    }
     
-    private void updateDatabase(ServiceEvent event, boolean up)
+    @SuppressWarnings("unchecked")
+    @Override
+    public void event(MT type, Object data) 
     {
-        ServiceInfo info = event.getInfo();
-        byte[] bytes = info.getTextBytes();
-        String hostname = new String(bytes, 1, bytes[0]); // weird jmdns encoding
-        if (up) {        	
-            Database.d.localServerUp(UUID.fromString(info.getName()), hostname, info.getInet4Addresses()[0].getHostAddress());
-        } else {
-        	Database.d.localServerDown(UUID.fromString(info.getName()));
+        System.out.println("type = " + type + ", data = " + data);
+        if (type == MT.DATABASE_NOTIFICATION)
+        {
+            Set<String> tables = (Set<String>)data;
+            if (tables.contains("mergeservers")) {
+                table.setData(Database.d.getMergeServers());
+            }
         }
     }
     
-    @Override
-    public void serviceAdded(ServiceEvent event) {}
-    @Override
-    public void serviceRemoved(ServiceEvent event) { updateDatabase(event, false); }
-    @Override
-    public void serviceResolved(ServiceEvent event) { updateDatabase(event, true); }
-    
+        
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         System.setProperty("program.name", "DataSyncTestMain");
         Logging.logSetup("datasync");
-        
-        System.out.println(IdGenerator.generateV5DNSId("scorekeeper.wwscc.org"));
+                
+        Database.openPublic();
+        //Database.d.mergeServerSet(IdGenerator.generateV5DNSId("scorekeeper.wwscc.org"), "scorekeeper.wwscc.org", false, true);
         
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
-        
-        try {
-            String fakeid = "9a8a4620-83b2-11e7-bd70-111111111111";
-            JmDNS fake = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());                
-            fake.registerService(ServiceInfo.create(DATABASE_TYPE, fakeid, DATABASE_PORT, Network.getLocalHostName()));
-        } catch (IOException ioe) {
-            log.log(Level.SEVERE, "Error", ioe);
-        }
-
-        v.openConnections();
         while (true)
         {
             Thread.sleep(2000);
         }
-    }
-    
+    }    
 }

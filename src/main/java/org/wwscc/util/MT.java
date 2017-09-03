@@ -18,6 +18,10 @@ public enum MT {
 	RUNGROUP_CHANGED,
 	SCANNER_OPTIONS,
 	BARCODE_SCANNED,
+	CAR_CREATED,
+	
+	// Database events
+	DATABASE_NOTIFICATION,
 
 	// Admin
 	//DELETE_SELECTED,
@@ -120,7 +124,4 @@ public enum MT {
 	INPUT_RESET_SOFT,
 	INPUT_RESET_HARD,
 	INPUT_TEXT,
-
-	// Database events
-	CAR_CREATED, 
 }

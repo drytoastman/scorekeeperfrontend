@@ -15,8 +15,6 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -396,16 +394,9 @@ public class Timer extends JPanel implements ActionListener
 			f.setJMenuBar(t.getMenuBar());
 			f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			f.getContentPane().add(t);
-			f.setBounds(Prefs.getTimerWindow());
+			f.setBounds(Prefs.getWindowBounds("timer"));
 			f.setVisible(true);
-			f.addComponentListener(new ComponentAdapter() {
-				public void componentResized(ComponentEvent e) {
-					Prefs.setTimerWindow(e.getComponent().getBounds());
-				}
-				public void componentMoved(ComponentEvent e) {
-					Prefs.setTimerWindow(e.getComponent().getBounds());
-				}
-			});
+			Prefs.trackWindowBounds(f, "timer");
 			f.addWindowListener(new WindowAdapter() {
 				 public void windowOpened(WindowEvent e) {					 
 					 t.openPort();

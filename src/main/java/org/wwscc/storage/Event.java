@@ -55,8 +55,8 @@ public class Event extends AttrBase implements Serializable
 		eventid     = (UUID)rs.getObject("eventid");
 		name        = rs.getString("name");
 		date        = rs.getDate("date");
-		regopened   = rs.getTimestamp("regopened");
-		regclosed   = rs.getTimestamp("regclosed");
+		regopened   = rs.getTimestamp("regopened", Database.utc);
+		regclosed   = rs.getTimestamp("regclosed", Database.utc);
 		courses     = rs.getInt("courses");
 		runs		= rs.getInt("runs");
 		countedruns = rs.getInt("countedruns");
