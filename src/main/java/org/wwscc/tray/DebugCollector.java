@@ -167,6 +167,8 @@ public class DebugCollector extends Thread
     
     /**
      * Test entry point.
+     * @param args the command line args, ignored
+     * @throws IOException if collection fails
      */
     public static void main(String args[]) throws IOException
     {

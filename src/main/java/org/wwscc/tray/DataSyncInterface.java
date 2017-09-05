@@ -8,6 +8,7 @@
 
 package org.wwscc.tray;
 
+import java.awt.Font;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +16,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 import org.wwscc.storage.Database;
@@ -35,18 +38,25 @@ public class DataSyncInterface extends JFrame implements MessageListener
     
     public DataSyncInterface()
     {
-        super("Data Synchronization");        
-        setLayout(new MigLayout("fill", "fill", "fill"));
+        super("Data Synchronization");
+        
+        JPanel content = new JPanel(new MigLayout("fill", "fill", "fill"));
         
         table = new MergeStatusTable();
-        getContentPane().add(new JScrollPane(table), "grow");
+        
+        JLabel header = new JLabel("Merge Status");
+        header.setFont(header.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
+        content.add(header, "wrap");
+        content.add(new JScrollPane(table), "grow");
+        setContentPane(content);
+        setJMenuBar(new Controls());
         setBounds(Prefs.getWindowBounds("datasync"));
         setVisible(true);
 
         Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         new UpdaterThread().start();
-        Prefs.trackWindowBounds(this, "datasync");
+        Prefs.trackWindowBounds(this, "datasync");        
     }
     
     class UpdaterThread extends Thread
@@ -79,7 +89,6 @@ public class DataSyncInterface extends JFrame implements MessageListener
     @Override
     public void event(MT type, Object data) 
     {
-        System.out.println("type = " + type + ", data = " + data);
         if (type == MT.DATABASE_NOTIFICATION)
         {
             Set<String> tables = (Set<String>)data;
@@ -96,9 +105,10 @@ public class DataSyncInterface extends JFrame implements MessageListener
         System.setProperty("program.name", "DataSyncTestMain");
         Logging.logSetup("datasync");
                 
-        Database.openPublic();
+        Database.openPublic(true);
         //Database.d.mergeServerSet(IdGenerator.generateV5DNSId("scorekeeper.wwscc.org"), "scorekeeper.wwscc.org", false, true);
         
+        DockerInterface.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);

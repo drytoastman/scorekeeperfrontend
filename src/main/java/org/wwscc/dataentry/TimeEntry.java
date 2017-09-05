@@ -23,7 +23,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
@@ -134,9 +133,8 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 	
 	/**
 	 * Create a new timer entry widget
-	 * @throws IOException 
 	 */
-	public TimeEntry() throws IOException
+	public TimeEntry() 
 	{
 		super();
 		Messenger.register(MT.TIMER_TAKES_FOCUS, this);

@@ -51,7 +51,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 	protected JButton defaultButton;
 	protected boolean floating;
 
-	JDialog currentDialog;
+	protected JDialog currentDialog;
 	DialogFinisher<E> finisher;
 	
 	protected JButton ok;
@@ -69,8 +69,8 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 	/**
 	 * Create the dialog.
 	 *
-	 * @param lm
-	 * @param floatme 
+	 * @param lm the layout manager to use for the mainPanel
+	 * @param floatme true to create a non-modal dialog that floats on top of other windows
 	 */
     public BaseDialog(LayoutManager lm, boolean floatme)
 	{
@@ -296,10 +296,10 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 		return result;
 	}
 
-	public void doDialog(String title, DialogFinisher<E> finish)
+	public boolean doDialog(String title, DialogFinisher<E> finish)
 	{
 		if (currentDialog != null)
-			return;
+			return false;
 
 		finisher = finish;
 		
@@ -320,6 +320,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 		currentDialog.setTitle(title);
 		currentDialog.setLocationRelativeTo(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
 		currentDialog.setVisible(true);
+		return isValid();
 	}
 }
 

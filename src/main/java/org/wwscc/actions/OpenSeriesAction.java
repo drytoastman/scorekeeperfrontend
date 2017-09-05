@@ -21,7 +21,7 @@ public class OpenSeriesAction extends AbstractAction
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
-		String options[] = PostgresqlDatabase.getSeriesList().toArray(new String[0]);
+		String options[] = PostgresqlDatabase.getSeriesList(null).toArray(new String[0]);
 		String series = (String)JOptionPane.showInputDialog(null, "Select the series", "Series Selection", JOptionPane.QUESTION_MESSAGE, null, options, null);
 		if (series == null)
 			return;

@@ -39,14 +39,14 @@ public class PostgresqlDatabase extends SQLDataInterface
 	/**
 	 * Open a connection to the local scorekeeper database  
 	 * @param series we are interested in
-	 * @param password the password for the series access
-	 * @throws SQLException
+	 * @param superuser true if we should connect as the postgres superuser
+	 * @throws SQLException if connection fails
 	 */
-	public PostgresqlDatabase(String series) throws SQLException
+	public PostgresqlDatabase(String series, boolean superuser) throws SQLException
 	{
 		conn = null;
 		leftovers = new HashMap<ResultSet, PreparedStatement>();
-		conn = getConnection(series);
+		conn = getConnection(series, superuser);
 		Statement s = conn.createStatement();
 		s.execute("set time zone 'UTC'");
 		s.execute("LISTEN datachange");
@@ -56,14 +56,15 @@ public class PostgresqlDatabase extends SQLDataInterface
 	/**
 	 * Static function to get the list of series from a database.  Gets the schema list
 	 * from the Postgresql connection metadata using the base scorekeeper user.
+	 * @param host a remote host to connect to or null for local database
 	 * @return a list of series string names
 	 */
-	static public List<String> getSeriesList()
+	static public List<String> getSeriesList(String host)
 	{
 	    List<String> ret = new ArrayList<String>();
 		try
 		{
-			Connection sconn = getConnection(null);
+			Connection sconn = getRemoteConnection(host, "nulluser", "nulluser");
 			DatabaseMetaData meta = sconn.getMetaData();
 		    ResultSet rs = meta.getSchemas();
 		    while (rs.next()) {
@@ -85,20 +86,47 @@ public class PostgresqlDatabase extends SQLDataInterface
 	/**
 	 * Wrap the properties and url pieces to get a PG connection
 	 * @param series the series we are interested in
+	 * @param superuser true if we should connect as the postgres superuser
 	 * @return a java.sql.Connection object
 	 * @throws SQLException
 	 */
-	private static Connection getConnection(String series) throws SQLException
+	private static Connection getConnection(String series, boolean superuser) throws SQLException
 	{
 		Properties props = new Properties();
 		props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
-		props.setProperty("user", "localuser");
+		if (superuser)
+		    props.setProperty("user", "postgres");
+		else
+		    props.setProperty("user", "localuser");
 		if (series != null)
 			props.setProperty("currentSchema", series+",public");
 
 		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:6432/scorekeeper", props);
 	}
-	
+
+	/**
+     * Wrap the properties and url pieces to get a null user connection
+     * @param host the host to connect to (null is replaced with 127.0.0.1)
+	 * @param user the username to use
+	 * @param password the password to use
+     * @return a java.sql.Connection object
+     * @throws SQLException if connection fails
+     */
+    public static Connection getRemoteConnection(String host, String user, String password) throws SQLException
+    {
+        Properties props = new Properties();
+        props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
+        props.setProperty("user", user);
+        props.setProperty("password", password);
+        props.setProperty("ssl", "true");
+        props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
+        if (host == null)
+            host = "127.0.0.1";
+
+        return DriverManager.getConnection("jdbc:postgresql://"+host+":54329/scorekeeper", props);
+    }
+    
+    
 	@Override
 	public void close() 
 	{

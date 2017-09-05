@@ -27,8 +27,7 @@ public class RunGroupDialog extends BaseDialog<Map<String,Integer>>
 
 	/**
 	 * Create the dialog.
-	 *
-	 * @param current
+	 * @param current the current mapping of classcode to run group
 	 */
     public RunGroupDialog(Map<String,Integer> current)
 	{

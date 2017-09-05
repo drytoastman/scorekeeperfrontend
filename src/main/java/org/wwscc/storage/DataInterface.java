@@ -8,7 +8,6 @@
 
 package org.wwscc.storage;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -90,12 +89,11 @@ public interface DataInterface
 	 * Upon successful return, the provided car will be in the registered table for the current event.  If overwrite
 	 * is true, then the paid value will overwrite the current value in the database if already present, otherwise, the
 	 * value in the database already will stay.  If nothing is already present, overwrite is irrelevant.
-	 * @param eventid TODO
-	 * @param carid the carid to register in the current event
+	 * @param eventid the eventid to register the car in
+	 * @param carid the carid to register
 	 * @param paid true if the paid flag should be set
 	 * @param overwrite true if we should overwrite a current registration entry (i.e. paid flag)
-	 * @throws SQLException 
-	 * @throws IOException
+	 * @throws SQLException if an error occurs into the SQL execution 
 	 */
 	public void registerCar(UUID eventid, UUID carid, boolean paid, boolean overwrite) throws SQLException;
 	
@@ -129,20 +127,20 @@ public interface DataInterface
 	
 	/**
 	 * Uses currentEvent, currentCourse
-	 * @param eventid TODO
-	 * @param carid
-	 * @param course TODO
-	 * @return true if the carid is present in any rungroup for the current event/course
+	 * @param eventid the eventid to check
+	 * @param carid the carid to check for
+	 * @param course the course to check
+	 * @return true if the carid is present in any rungroup for the event/course
 	 */
 	public boolean isInOrder(UUID eventid, UUID carid, int course);
 	
 	/**
 	 * Uses currentEvent, currentCourse, currentRunGroup
-	 * @param eventid TODO
-	 * @param carid
-	 * @param course TODO
-	 * @param rungroup TODO
-	 * @return true if the carid is present in the current event/course/rungroup
+	 * @param eventid the event id to check
+	 * @param carid the carid to check for
+	 * @param course the course to check
+	 * @param rungroup the rungroupo to check
+	 * @return true if the carid is present in the event/course/rungroup
 	 */
 	public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup);
 	
@@ -154,7 +152,9 @@ public interface DataInterface
 	public void mergeServerInactivateAll();
 	public void mergeServerActivate(UUID serverid, String name, String ip);
 	public void mergeServerDeactivate(UUID serverid);
-	public void mergeServerSet(UUID serverid, String name, boolean active, boolean mergenow);
+	public void mergeServerSet(String name, boolean active, boolean oneshot, boolean mergenow);
+	public void mergeServerResetAll();
 	public List<MergeServer> getMergeServers();
+	public boolean verifyUserAndSeries(String seriesname, String password);
 }
 

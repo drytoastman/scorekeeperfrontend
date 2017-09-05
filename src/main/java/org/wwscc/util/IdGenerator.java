@@ -83,7 +83,7 @@ public class IdGenerator
             ByteBuffer in = ByteBuffer.allocate(16 + hostname.length());
             in.putLong(namespaceDNS.getMostSignificantBits());
             in.putLong(namespaceDNS.getLeastSignificantBits());
-            in.put(hostname.getBytes());        
+            in.put(hostname.toLowerCase().getBytes());        
             MessageDigest md = MessageDigest.getInstance("SHA1");
             ByteBuffer out = ByteBuffer.wrap(md.digest(in.array()));
             out.put(6, (byte)((out.get(6) & 0x0F) | 0x50));

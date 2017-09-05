@@ -174,25 +174,62 @@ public class DockerInterface
         execit(build(basedir, compose, "ps", "-q", "db"), buf);
         return new String(buf).split("\r\n|\r|\n", 2)[0];
 	}
+	
+	/**
+     * Find the running id of the sync daemon container
+     * @return a string hash id
+     */
+    public static String synccontainerid()
+    {
+        byte buf[] = new byte[1024];
+        execit(build(basedir, compose, "ps", "-q", "sync"), buf);
+        return new String(buf).split("\r\n|\r|\n", 2)[0];
+    }
 
     /**
      * Call docker to copy log files from container to host
+     * @param container the container name to copy from
+     * @param dir the directory to copy the logs to
      * @return true if succeeded
      */
     public static boolean copyLogs(String container, Path dir)
     {
+        if ((container == null) || (!container.trim().equals("")))
+            return false;
         return execit(build(basedir, docker, "cp", container+":/var/log", dir.toString()), null) == 0;      
     }
 
     /**
      * Call docker to run pg_dump and pipe the output to file
+     * @param container the container name where the database is located
+     * @param file the file to write the backup data to
      * @return true if succeeded
      */
     public static boolean dumpdatabase(String container, Path file)
     {
+        if ((container == null) || (!container.trim().equals("")))
+            return false;
         ProcessBuilder p = build(basedir, docker, "exec", container, "pg_dump", "-U", "postgres", "-d", "scorekeeper");
         p.redirectOutput(Redirect.appendTo(file.toFile()));
         return execit(p, null) == 0;      
+    }
+    
+    /**
+     * Send a SIGHUP to all running containers (faster than using compose to single out one)
+     * @return true if succeeded
+     */
+    public static boolean pokecontainers()
+    {
+        byte buf[] = new byte[128];
+        if (execit(build(basedir, docker, "ps", "-q"), buf) != 0)
+            return false;
+        List<String> cmd = new ArrayList<String>();
+        cmd.add("docker");
+        cmd.add("kill");
+        cmd.add("--signal=HUP");
+        for (String s : new String(buf).trim().split("\n"))
+            cmd.add(s);
+        return execit(build(basedir, cmd), null) == 0;
     }
 
     
@@ -210,13 +247,18 @@ public class DockerInterface
 			cmdlist.add(s);
 		for (String s : additional)
 			cmdlist.add(s);
-		ProcessBuilder p = new ProcessBuilder(cmdlist);
+		return build(root, cmdlist);
+	}
+
+    private static ProcessBuilder build(File root, List<String> cmdlist)
+    {
+        ProcessBuilder p = new ProcessBuilder(cmdlist);
         p.directory(root);
         p.redirectErrorStream(true);
         Map <String,String> env = p.environment();
         env.putAll(dockerenv);
         return p;
-	}
+    }
 	
 	/**
 	 * Exec a process builder and collect the output.
@@ -238,10 +280,14 @@ public class DockerInterface
 	            InputStream is = p.getInputStream();
 	            int len = is.read(buffer);
 	            is.close();
-	            if (ret != 0) {
-	                log.log(Level.INFO, "Docker Error:\n " + new String(buffer, 0, len));
+	            if (len > 0) {
+    	            if (ret != 0) {
+    	                log.log(Level.INFO, "Docker Error:\n " + new String(buffer, 0, len));
+    	            } else {
+    	                sublog.log(Level.FINEST, "Execution Output:\n " + new String(buffer, 0, len));
+    	            }
 	            } else {
-	                sublog.log(Level.FINEST, "Execution Output:\n " + new String(buffer, 0, len));
+	                log.log(Level.INFO, "No output from docker command");
 	            }
             }
             

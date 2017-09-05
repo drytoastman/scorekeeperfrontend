@@ -24,7 +24,7 @@ public class BarcodeLookup
 	 * Otherwise, the barcode is treated as a membership value.
 	 * @param barcode the barcode string
 	 * @return an Entrant object for a matching car id, a Driver for a matching driver id or membership, or null for unmatched membership
-	 * @throws LookupException 
+	 * @throws LookupException if we are unable to find a matching entry
 	 */
 	public static Object findObjectByBarcode(String barcode) throws LookupException
 	{

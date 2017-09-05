@@ -57,7 +57,7 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 	
 	/**
 	 * shortcut when only looking for a single name
-	 * @param serviceName
+	 * @param serviceName the name of the servers to discover
 	 */
 	public SimpleFinderDialog(String serviceName)
 	{

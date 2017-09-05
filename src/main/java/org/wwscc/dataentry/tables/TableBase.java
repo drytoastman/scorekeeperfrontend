@@ -137,7 +137,7 @@ public class TableBase extends JTable
 	
 	/***
 	 * Intercept changes to model so we can re-add our columns
-	 * @param e 
+	 * @param e the table event
 	 */
 	@Override
 	public void tableChanged(TableModelEvent e)

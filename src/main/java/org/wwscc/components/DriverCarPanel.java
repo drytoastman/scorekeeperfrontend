@@ -175,7 +175,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 
 	/**
 	 * Reload the carlist based on the selected driver, and optionally select one.
-	 * @param select
+	 * @param select the car to set as initial selection after loading
 	 */
 	public void reloadCars(Car select)
 	{
@@ -200,8 +200,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 
 	/**
 	 * Process events from the various buttons
-	 *
-	 * @param e 
+	 * @param e the button event
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e)

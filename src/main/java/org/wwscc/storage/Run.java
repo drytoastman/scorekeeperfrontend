@@ -112,7 +112,7 @@ public class Run extends AttrBase implements Serial, Cloneable
 	/**
 	 * Extract run data from a SQL result set
 	 * @param rs the result set pointed at the row in question
-	 * @throws SQLException
+	 * @throws SQLException if an error occurs extracting run data
 	 */
 	public Run(ResultSet rs) throws SQLException
 	{

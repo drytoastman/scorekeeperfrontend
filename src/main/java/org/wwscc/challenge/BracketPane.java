@@ -274,7 +274,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 	
 	/**
 	 * Set a new data model for use.
-	 * @param m
+	 * @param m the new challenge model
 	 */
 	public void setModel(ChallengeModel m)
 	{

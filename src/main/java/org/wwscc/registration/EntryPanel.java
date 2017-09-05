@@ -338,7 +338,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	
 	/**
 	 * Process events from the various buttons
-	 * @param e 
+	 * @param e the button event
 	 */
 	@Override
 	public void actionPerformed(ActionEvent e)

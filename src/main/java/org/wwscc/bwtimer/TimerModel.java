@@ -256,7 +256,7 @@ public class TimerModel implements TableModel, TimeStorage
 	 */
 
 	 /**
-	  * @param row
+	  * @param row the row to get the run from
 	  * @return the run at the given 'row' index
 	  */
 	@Override

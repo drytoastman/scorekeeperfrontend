@@ -122,8 +122,7 @@ public class Registration extends JFrame
 				
 	/**
 	 * Main
-	 *
-	 * @param args 
+	 * @param args command line args ignored
 	 */
 	public static void main(String[] args)
 	{

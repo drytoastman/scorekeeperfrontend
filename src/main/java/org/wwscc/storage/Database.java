@@ -43,18 +43,17 @@ public class Database
 	}
 	
    /**
-     * Used when the user wants to select a new specific series
-     * @param series
-     * @param password
+     * Used when the user wants to examine the database without a series in mind
+     * @param superuser true if we want super user privileges with the connection 
      * @return true if the series was opened, false otherwise
      */
-    public static boolean openPublic()
+    public static boolean openPublic(boolean superuser)
     {
         if (d != null)
             d.close();
         
         try {
-            d = new PostgresqlDatabase(null);
+            d = new PostgresqlDatabase(null, superuser);
             Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
             return true;
         } catch (SQLException sqle) {
@@ -66,8 +65,7 @@ public class Database
     
 	/**
 	 * Used when the user wants to select a new specific series
-	 * @param series
-	 * @param password
+	 * @param series the series to connect to
 	 * @return true if the series was opened, false otherwise
 	 */
 	public static boolean openSeries(String series)
@@ -76,14 +74,14 @@ public class Database
 			d.close();
 		
 		try {
-			if (series.equals("") || !PostgresqlDatabase.getSeriesList().contains(series))
+			if (series.equals("") || !PostgresqlDatabase.getSeriesList(null).contains(series))
 			{
 				d = new FakeDatabase();
 				Messenger.sendEvent(MT.SERIES_CHANGED, "<none>");
 			}
 			else
 			{
-				d = new PostgresqlDatabase(series);
+				d = new PostgresqlDatabase(series, false);
 				Messenger.sendEvent(MT.SERIES_CHANGED, series);
 			}
 			return true;

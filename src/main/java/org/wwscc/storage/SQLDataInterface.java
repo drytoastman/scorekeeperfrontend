@@ -994,9 +994,9 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address) VALUES (?, ?, ?) " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?", newList(serverid, name, address, name, address));
         }
-        catch (Exception ioe)
+        catch (SQLException ioe)
         {
-            logError("localhostServerSet", ioe);
+            logError("mergeServerSetLocal", ioe);
         }
     }
 	
@@ -1008,7 +1008,7 @@ public abstract class SQLDataInterface implements DataInterface
         {
             executeUpdate("UPDATE mergeservers SET active=false", null);
         }
-        catch (Exception ioe)
+        catch (SQLException ioe)
         {
             logError("mergeServerInactivateAll", ioe);
         }
@@ -1019,13 +1019,13 @@ public abstract class SQLDataInterface implements DataInterface
 	{
         try
         {
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, active) VALUES (?, ?, ?, true) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, active=true",
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, active) VALUES (?, ?, ?, now(), true) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now() active=true",
                           newList(serverid, name, ip, name, ip));
         }
-        catch (Exception ioe)
+        catch (SQLException ioe)
         {
-            logError("localServerUp", ioe);
+            logError("mergeServerActivate", ioe);
         }
 	}
 	
@@ -1036,27 +1036,41 @@ public abstract class SQLDataInterface implements DataInterface
         {
             executeUpdate("UPDATE mergeservers SET active=false, nextcheck='epoch' WHERE serverid=?", newList(serverid));
         }
-        catch (Exception ioe)
+        catch (SQLException ioe)
         {
-            logError("localServerDown", ioe);
+            logError("mergeServerDeactivate", ioe);
         }
 	}
 	
 	@Override
-	public void mergeServerSet(UUID serverid, String name, boolean active, boolean mergenow)
+	public void mergeServerSet(String name, boolean active, boolean oneshot, boolean mergenow)
 	{
         try
         {
             String when = mergenow ? "now" : "epoch";
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, active, nextcheck) VALUES (?, ?, ?, ?::timestamp) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, active=?, nextcheck=?::timestamp",
-                          newList(serverid, name, active, when, name, active, when));
+            String hostname = name.toLowerCase();
+            UUID serverid = IdGenerator.generateV5DNSId(hostname);
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, active, oneshot, nextcheck) VALUES (?, ?, ?, ?, ?::timestamp) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, active=?, oneshot=?, nextcheck=?::timestamp",
+                          newList(serverid, hostname, active, oneshot, when, hostname, active, oneshot, when));
         }
         catch (Exception ioe)
         {
-            logError("remoteServerSet", ioe);
+            logError("mergeServerSet", ioe);
+        }	    
+	}
+	
+	@Override
+	public void mergeServerResetAll()
+	{
+        try
+        {
+            executeUpdate("UPDATE mergeservers set mergestate='{}'", null);
         }
-	    
+        catch (SQLException ioe)
+        {
+            logError("mergeServerResetAll", ioe);
+        }       
 	}
 	
 	@Override
@@ -1074,5 +1088,25 @@ public abstract class SQLDataInterface implements DataInterface
             logError("getMergeServers", ioe);
             return null;
         }
+	}
+
+	@Override
+	public boolean verifyUserAndSeries(String seriesname, String password)
+	{
+        try
+        {
+            ResultSet a = executeSelect("select verify_user(?, ?)", newList(seriesname, password));
+            if (a.next() && a.getBoolean(1))
+            {
+                ResultSet b = executeSelect("select verify_series(?)", newList(seriesname));
+                if (b.next() && b.getBoolean(1))
+                    return true;
+            }
+        }
+        catch (SQLException ioe)
+        {
+            logError("verifyUserAndSeries", ioe);
+        }
+        return false;
 	}
 }

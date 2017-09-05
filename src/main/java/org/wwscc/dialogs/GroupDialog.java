@@ -24,8 +24,6 @@ public class GroupDialog extends BaseDialog<int[]>
 
 	/**
 	 * Create the dialog.
-	 * @param parent	the parent Frame if any
-	 * @param d			the driver data to source initially
 	 */
     public GroupDialog()
 	{

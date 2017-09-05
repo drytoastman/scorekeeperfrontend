@@ -26,7 +26,8 @@ public class Launcher
 	
 	/**
 	 * Called from other Java code to launch an application as a new process
-	 * @param args
+	 * @param app the name of the class with a main to execute
+	 * @param args the command line args to pass through
 	 */
     public static void launchExternal(String app, String[] args)
     {

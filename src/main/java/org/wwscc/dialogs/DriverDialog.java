@@ -23,7 +23,6 @@ public class DriverDialog extends BaseDialog<Driver>
 	/**
 	 * Create the dialog.
 	 * @param d the driver data to source initially
-	 * @param f the extra driver fields for display
 	 */
     public DriverDialog(Driver d)
 	{
