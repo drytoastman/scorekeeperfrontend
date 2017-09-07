@@ -155,6 +155,9 @@ public interface DataInterface
 	public void mergeServerSet(String name, boolean active, boolean oneshot, boolean mergenow);
 	public void mergeServerResetAll();
 	public List<MergeServer> getMergeServers();
+	
+	/* things requiring superuser privileges, only obtained by merge tool */
 	public boolean verifyUserAndSeries(String seriesname, String password);
+	public boolean deleteUserAndSeries(String seriesname);
 }
 

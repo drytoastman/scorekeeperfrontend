@@ -44,7 +44,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         
         table = new MergeStatusTable();
         
-        JLabel header = new JLabel("Merge Status");
+        JLabel header = new JLabel("Sync Status");
         header.setFont(header.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
         content.add(header, "wrap");
         content.add(new JScrollPane(table), "grow");
@@ -59,6 +59,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         Prefs.trackWindowBounds(this, "datasync");        
     }
     
+    
     class UpdaterThread extends Thread
     {
         boolean done = false;
@@ -66,17 +67,13 @@ public class DataSyncInterface extends JFrame implements MessageListener
         @Override
         public void run()
         {
-            int counter = 0;
             Set<String> tables = new HashSet<String>();
             tables.add("mergeservers");
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, tables);
-            
             while (!done) {
                 try {
                     Database.d.ping();
                     Thread.sleep(1000);
-                    if (counter++ % 10 == 0)
-                        Messenger.sendEvent(MT.DATABASE_NOTIFICATION, tables);
                 } catch (Exception e) {
                     log.log(Level.WARNING, e.toString(), e);
                 }
@@ -105,9 +102,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         System.setProperty("program.name", "DataSyncTestMain");
         Logging.logSetup("datasync");
                 
-        Database.openPublic(true);
-        //Database.d.mergeServerSet(IdGenerator.generateV5DNSId("scorekeeper.wwscc.org"), "scorekeeper.wwscc.org", false, true);
-        
+        Database.openPublic(true);        
         DockerInterface.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

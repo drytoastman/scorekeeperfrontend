@@ -1109,4 +1109,22 @@ public abstract class SQLDataInterface implements DataInterface
         }
         return false;
 	}
+	
+    @Override
+    public boolean deleteUserAndSeries(String seriesname)
+    {
+        try
+        {
+            start();
+            executeUpdate("DROP SCHEMA " + seriesname + " CASCADE", null);
+            executeUpdate("DROP USER " + seriesname, null);
+            commit();
+        }
+        catch (SQLException ioe)
+        {
+            rollback();
+            logError("deleteUserAndSeries", ioe);
+        }
+        return false;
+    }	
 }

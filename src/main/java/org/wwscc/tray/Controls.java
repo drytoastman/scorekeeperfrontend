@@ -15,14 +15,16 @@ import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JSeparator;
+import javax.swing.JOptionPane;
 
 import org.wwscc.actions.QuitAction;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.tray.HostSeriesSelectionDialog.HSResult;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 public class Controls extends JMenuBar implements MessageListener
 {
@@ -36,16 +38,17 @@ public class Controls extends JMenuBar implements MessageListener
         file.add(new QuitAction());
 
 		/*  */
-		JMenu merge = new JMenu("Merging");
-		add(merge);		
-		merge.add(new DownloadNewSeriesAction());
-	    merge.add(new MergeWithAction());
+		JMenu sync = new JMenu("Sync");
+		add(sync);		
+        sync.add(new MergeWithAction());
+		sync.add(new DownloadNewSeriesAction());
 
 	    JMenu adv = new JMenu("Advanced");
 	    add(adv);
 	    adv.add(new JCheckBoxMenuItem(new LocalDiscoveryAction()));
-	    adv.add(new AddServerAction());
+	    //adv.add(new AddServerAction());
 	    adv.add(new ResetHashAction());
+	    adv.add(new DeleteLocalSeriesAction());
 		
 	    Messenger.register(MT.DATABASE_NOTIFICATION, this);
 	}
@@ -71,7 +74,7 @@ public class Controls extends JMenuBar implements MessageListener
 	static class MergeWithAction extends AbstractAction
 	{
 	    public MergeWithAction() {
-	        super("Merge With Now");
+	        super("Sync With Host Now");
 	    }
 	    public void actionPerformed(ActionEvent e) {
 	        HostSeriesSelectionDialog d = new HostSeriesSelectionDialog(false);
@@ -85,23 +88,31 @@ public class Controls extends JMenuBar implements MessageListener
 	static class LocalDiscoveryAction extends AbstractAction
 	{
 	    public LocalDiscoveryAction() {
-	        super("Local Discovery");
+	        setNewState(Prefs.getAllowDiscovery());
 	    }
         public void actionPerformed(ActionEvent e) {
-            AbstractButton aButton = (AbstractButton)e.getSource();
-            if (aButton.getModel().isSelected())
-                putValue(Action.NAME, "Local Discovery On");
-            else
-                putValue(Action.NAME, "Local Discovery Off");
+            setNewState(((AbstractButton)e.getSource()).getModel().isSelected());
+        }
+        private void setNewState(boolean on) {
+            Prefs.setAllowDiscovery(on);
+            putValue(Action.SELECTED_KEY, on);
+            putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
         }
 	}
 
-	static class AddServerAction extends AbstractAction
+	static class DeleteLocalSeriesAction extends AbstractAction
     {
-        public AddServerAction() {
-            super("Add Server");
+        public DeleteLocalSeriesAction() {
+            super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
+            Object [] options = PostgresqlDatabase.getSeriesList(null).toArray();
+            Object series = JOptionPane.showInputDialog(null, "Select the series", "Series Selection", JOptionPane.QUESTION_MESSAGE, null, options, null);
+            if (series != null)
+            {
+                Database.d.deleteUserAndSeries((String)series);
+                DockerInterface.pokecontainers();
+            }
         }
     }
 

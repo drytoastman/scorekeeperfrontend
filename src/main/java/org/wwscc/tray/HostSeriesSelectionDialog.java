@@ -9,8 +9,6 @@
 package org.wwscc.tray;
 
 import java.awt.event.ActionEvent;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -172,20 +170,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         @Override
         protected Boolean doInBackground() throws Exception 
         {
-            try {
-                Connection sconn = PostgresqlDatabase.getRemoteConnection(host, series, password);
-                sconn.close();
-                return true;
-            } catch (SQLException sqle) {
-                if (sqle.getSQLState().equals("28P01")) {
-                    log.warning("Incorrect Password");
-                } else {
-                    log.warning(sqle.getMessage());
-                }
-            } catch (Exception e) {
-                log.log(Level.WARNING, "General exception checking password: " + e, e);
-            }
-            return false;
+            return PostgresqlDatabase.checkPassword(host, series, password);
         }
         
         @Override

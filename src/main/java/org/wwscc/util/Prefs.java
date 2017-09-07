@@ -72,6 +72,7 @@ public class Prefs
 	public static String getScannerConfig() { return prefs.get("scannerconfig", ""); }
 	public static String getDefaultPrinter() { return prefs.get("defaultprinter", ""); }
 	public static boolean usePaidFlag() { return prefs.getBoolean("paidflag", false); }
+	public static boolean getAllowDiscovery() { return prefs.getBoolean("allowdiscovery", true); }
 	public static Rectangle getWindowBounds(String p)
 	{
 		Rectangle r = new Rectangle();
@@ -92,6 +93,7 @@ public class Prefs
 	public static void setScannerConfig(String s) { prefs.put("scannerconfig", s); }
 	public static void setDefaultPrinter(String s) { prefs.put("defaultprinter", s); }
 	public static void setUsePaidFlag(boolean b) { prefs.putBoolean("paidflag", b); }
+	public static void setAllowDiscovery(boolean b) { prefs.putBoolean("allowdiscovery", b); }
 	public static void setWindowBounds(String p, Rectangle r)
 	{
 		prefs.putInt(p + ".x", r.x);

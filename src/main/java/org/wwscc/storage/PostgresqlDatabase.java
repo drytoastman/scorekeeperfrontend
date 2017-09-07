@@ -32,26 +32,6 @@ public class PostgresqlDatabase extends SQLDataInterface
 {
 	private static final Logger log = Logger.getLogger(PostgresqlDatabase.class.getCanonicalName());
 	private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public"});
-	
-	private Connection conn;
-	private Map<ResultSet, PreparedStatement> leftovers;
-	
-	/**
-	 * Open a connection to the local scorekeeper database  
-	 * @param series we are interested in
-	 * @param superuser true if we should connect as the postgres superuser
-	 * @throws SQLException if connection fails
-	 */
-	public PostgresqlDatabase(String series, boolean superuser) throws SQLException
-	{
-		conn = null;
-		leftovers = new HashMap<ResultSet, PreparedStatement>();
-		conn = getConnection(series, superuser);
-		Statement s = conn.createStatement();
-		s.execute("set time zone 'UTC'");
-		s.execute("LISTEN datachange");
-		s.close();
-	}
 
 	/**
 	 * Static function to get the list of series from a database.  Gets the schema list
@@ -82,37 +62,41 @@ public class PostgresqlDatabase extends SQLDataInterface
 		
 		return ret;
 	}
-
+	
 	/**
-	 * Wrap the properties and url pieces to get a PG connection
-	 * @param series the series we are interested in
-	 * @param superuser true if we should connect as the postgres superuser
-	 * @return a java.sql.Connection object
-	 * @throws SQLException
+	 * Attempt a connection to a remote host to see if the password is valid
+	 * @param host the host to connect to
+	 * @param user the username
+	 * @param password the password
+	 * @return true if the connection was successful with the username/password
 	 */
-	private static Connection getConnection(String series, boolean superuser) throws SQLException
+	static public boolean checkPassword(String host, String user, String password)
 	{
-		Properties props = new Properties();
-		props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
-		if (superuser)
-		    props.setProperty("user", "postgres");
-		else
-		    props.setProperty("user", "localuser");
-		if (series != null)
-			props.setProperty("currentSchema", series+",public");
-
-		return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:6432/scorekeeper", props);
+        try {
+            Connection sconn = getRemoteConnection(host, user, password);
+            sconn.close();
+            return true;
+        } catch (SQLException sqle) {
+            if (sqle.getSQLState().equals("28P01")) {
+                log.warning("Incorrect Password");
+            } else {
+                log.warning(sqle.getMessage());
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "General exception checking password: " + e, e);
+        }
+        return false;
 	}
 
 	/**
-     * Wrap the properties and url pieces to get a null user connection
+     * Static function to get an SSL JDBC Connection to a remote host with a given user
      * @param host the host to connect to (null is replaced with 127.0.0.1)
 	 * @param user the username to use
 	 * @param password the password to use
      * @return a java.sql.Connection object
      * @throws SQLException if connection fails
      */
-    public static Connection getRemoteConnection(String host, String user, String password) throws SQLException
+    private static Connection getRemoteConnection(String host, String user, String password) throws SQLException
     {
         Properties props = new Properties();
         props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
@@ -120,12 +104,71 @@ public class PostgresqlDatabase extends SQLDataInterface
         props.setProperty("password", password);
         props.setProperty("ssl", "true");
         props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
+        props.setProperty("loginTimeout", "10");
         if (host == null)
             host = "127.0.0.1";
 
         return DriverManager.getConnection("jdbc:postgresql://"+host+":54329/scorekeeper", props);
     }
     
+    /**
+     * Wrap the properties and url pieces to get a local PG connection
+     * @param series the series we are interested in
+     * @param superuser true if we should connect as the postgres superuser
+     * @return a java.sql.Connection object
+     * @throws SQLException
+     */
+    private static Connection getConnection(String series, boolean superuser) throws SQLException
+    {
+        Properties props = new Properties();
+        props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
+        props.setProperty("loginTimeout", "1");
+        if (superuser)
+            props.setProperty("user", "postgres");
+        else
+            props.setProperty("user", "localuser");
+        if (series != null)
+            props.setProperty("currentSchema", series+",public");
+
+        return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:6432/scorekeeper", props);
+    }
+    
+    
+    private Connection conn;
+    private String series;
+    private boolean superuser;
+    private Map<ResultSet, PreparedStatement> leftovers;
+    
+    /**
+     * Open a connection to the local scorekeeper database  
+     * @param series we are interested in
+     * @param superuser true if we should connect as the postgres superuser
+     * @throws SQLException if connection fails
+     */
+    public PostgresqlDatabase(String series, boolean superuser) throws SQLException
+    {
+        this.conn = null;
+        this.series = series;
+        this.superuser = superuser;
+        this.leftovers = new HashMap<ResultSet, PreparedStatement>();
+        init();
+    }
+    
+    public void reconnect() throws SQLException
+    {
+        init();
+    }
+    
+    private void init() throws SQLException
+    {
+        if (conn != null)
+            conn.close();
+        conn = getConnection(series, superuser);
+        Statement s = conn.createStatement();
+        s.execute("set time zone 'UTC'");
+        s.execute("LISTEN datachange");
+        s.close();        
+    }
     
 	@Override
 	public void close() 

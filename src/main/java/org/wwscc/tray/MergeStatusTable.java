@@ -33,6 +33,8 @@ import org.wwscc.util.Resources;
 
 public class MergeStatusTable extends JTable {
 
+    public static final int BASE_COL_COUNT = 4;
+    
     public MergeStatusTable()
     {
         super(new ServerModel());
@@ -71,22 +73,27 @@ public class MergeStatusTable extends JTable {
         {
             switch (ii)
             {
-                case 0:  setColumnWidths(tcm.getColumn(ii),  20); break;
-                case 1:  setColumnWidths(tcm.getColumn(ii), 140); break;
-                case 2:  setColumnWidths(tcm.getColumn(ii), 140); break;
-                case 3:  setColumnWidths(tcm.getColumn(ii), 140); break;
-                case 4:  setColumnWidths(tcm.getColumn(ii), 140); break;
-                default: setColumnWidths(tcm.getColumn(ii), 190); break;
+                case 0:  setColumnWidthMin(tcm.getColumn(ii),  25); break;
+                case 1:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
+                case 2:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
+                case 3:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
+                default: setColumnWidthMax(tcm.getColumn(ii), 200); break;
             }
         }
     }
     
-    private void setColumnWidths(TableColumn col, int pref)
+    private void setColumnWidthMin(TableColumn col, int pref)
     {
-        if (col == null) return;
+        col.setMinWidth(pref-(int)(pref*0.05));
+        col.setPreferredWidth(pref);
+        col.setMaxWidth(pref+(int)(pref*0.15));
+    }
+
+    private void setColumnWidthMax(TableColumn col, int pref)
+    {
         col.setMinWidth(pref-(int)(pref*0.2));
         col.setPreferredWidth(pref);
-        col.setMaxWidth(pref+(int)(pref*1.2));
+        col.setMaxWidth(pref+(int)(pref*1.25));
     }
     
     static class DecoratedMergeServer extends MergeServer implements Comparable<DecoratedMergeServer>
@@ -138,18 +145,21 @@ public class MergeStatusTable extends JTable {
             series.clear();
             
             // Figure out columns
-            for (MergeServer s : data) {
-                if (s.getServerId().equals(IdGenerator.nullid)) {
-                    series.addAll(s.getSeriesSet());
-                    break;
+            if (data != null)
+            {
+                for (MergeServer s : data) {
+                    if (s.getServerId().equals(IdGenerator.nullid)) {
+                        series.addAll(s.getSeriesSet());
+                        break;
+                    }
                 }
+                Collections.sort(series);
+                
+                // Then create our decorated MergeServers
+                for (MergeServer s : data)
+                    servers.add(new DecoratedMergeServer(s, series));
+                Collections.sort(servers);
             }
-            Collections.sort(series);
-            
-            // Then create our decorated MergeServers
-            for (MergeServer s : data)
-                servers.add(new DecoratedMergeServer(s, series));
-            Collections.sort(servers);
             
             fireTableStructureChanged();
         }
@@ -158,20 +168,19 @@ public class MergeStatusTable extends JTable {
         public String getColumnName(int col) {
             switch (col) {
                 case 0:  return "";
-                case 1:  return "Hostname";
-                case 2:  return "Address";
-                case 3:  return "Last";
-                case 4:  return "Next";
+                case 1:  return "Host";
+                case 2:  return "Last";
+                case 3:  return "Next";
             }
-            if (col < series.size() + 5)
-                return series.get(col-5);
+            if (col < series.size() + BASE_COL_COUNT)
+                return series.get(col-BASE_COL_COUNT);
             return "";
         }
         
         @Override
         public int getRowCount()                    { return servers.size(); }
         @Override
-        public int getColumnCount()                 { return 5 + series.size(); }
+        public int getColumnCount()                 { return BASE_COL_COUNT + series.size(); }
         @Override
         public Class<?> getColumnClass(int col)     { return DecoratedMergeServer.class; }
         @Override
@@ -230,9 +239,9 @@ public class MergeStatusTable extends JTable {
             if (server.isLocalHost())
                 setBackground(mycolor);
 
-            if (col > 4)
+            if (col >= BASE_COL_COUNT)
             {
-                JSONObject rstatus = server.columns[col-5];
+                JSONObject rstatus = server.columns[col-BASE_COL_COUNT];
                 if (rstatus == null) { 
                     return this;
                 } else if (rstatus.containsKey("error")) {
@@ -240,30 +249,35 @@ public class MergeStatusTable extends JTable {
                     setColors(server.isActive(), true);
                 } else {
                     DecoratedMergeServer local = ((ServerModel)table.getModel()).servers.get(0);
-                    JSONObject lstatus = local.columns[col-5];                    
+                    JSONObject lstatus = local.columns[col-BASE_COL_COUNT];                    
                     String lh = (String)lstatus.get("totalhash");
                     String rh = (String)rstatus.get("totalhash");
                     if ((rh != null) && !rh.equals("")) {
                         setText(rh.substring(0, 12));
-                        if (rstatus.containsKey("syncing"))
-                            setIcon(syncing);
+
                         if (!lh.equals(rh))
                             setColors(server.isActive(), true);
                     }
+                    if (rstatus.containsKey("syncing"))
+                        setIcon(syncing);
                 }
             }
             
             switch (col) 
             {
                 case 0:  break;
-                case 1:  setText(server.getHostname());    break;
-                case 2:  setText(server.getAddress());     break;
-                case 3:  setToDate(server.getLastCheck()); break;
-                case 4:  setToDate(server.getNextCheck()); break;
+                case 1:  
+                    if (server.getAddress().equals(""))
+                        setText(server.getHostname());
+                    else
+                        setText(server.getHostname()+"/"+server.getAddress());
+                    break;
+                case 2:  setToDate(server.getLastCheck()); break;
+                case 3:  setToDate(server.getNextCheck()); break;
             }
             
             // Last check has been a long time away
-            if ((col == 3) && !server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
+            if ((col == 2) && !server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
                 setColors(server.isActive(), true);
             
             return this;
