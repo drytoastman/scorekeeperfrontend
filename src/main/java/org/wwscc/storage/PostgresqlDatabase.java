@@ -31,7 +31,7 @@ import org.wwscc.util.Messenger;
 public class PostgresqlDatabase extends SQLDataInterface 
 {
 	private static final Logger log = Logger.getLogger(PostgresqlDatabase.class.getCanonicalName());
-	private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public"});
+	private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public", "template"});
 
 	/**
 	 * Static function to get the list of series from a database.  Gets the schema list

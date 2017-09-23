@@ -1110,6 +1110,7 @@ public abstract class SQLDataInterface implements DataInterface
         return false;
 	}
 	
+	
     @Override
     public boolean deleteUserAndSeries(String seriesname)
     {
@@ -1127,4 +1128,22 @@ public abstract class SQLDataInterface implements DataInterface
         }
         return false;
     }	
+	
+    @Override
+    public boolean deleteDriversTable()
+    {
+        try
+        {
+            start();
+            executeUpdate("DELETE FROM drivers", null);
+            executeUpdate("DELETE FROM publiclog", null);
+            commit();
+        }
+        catch (SQLException ioe)
+        {
+            rollback();
+            logError("deleteDriversTable", ioe);
+        }
+        return false;
+    }   
 }

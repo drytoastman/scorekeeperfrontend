@@ -108,7 +108,7 @@ public class Registration extends JFrame
 		{
 			Object o = JOptionPane.showInputDialog("Enter " + type);
 			if (o != null)
-				Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != 'B') ? prefix+o.toString() : o);
+				Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != 'M') ? prefix+o.toString() : o);
 		}
 	}
 	

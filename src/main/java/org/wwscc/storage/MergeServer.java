@@ -81,7 +81,21 @@ public class MergeServer
     public Timestamp getNextCheck()   { return nextcheck;  }
     public int getWaitTime()          { return waittime; }
     public Set<String> getSeriesSet() { return seriesstate.keySet(); }
-    public JSONObject getSeriesState(String series) { return seriesstate.get(series); }
-    
     public boolean isLocalHost()      { return serverid.equals(IdGenerator.nullid); }
+    
+    public JSONObject getSeriesState(String series) 
+    { 
+        return seriesstate.get(series); 
+    }
+    
+    public String getDriversState()
+    {
+        for (JSONObject o : seriesstate.values()) 
+        {  // just find any active series and get the drivers table hash from there
+            JSONObject hashes = (JSONObject)o.get("hashes");
+            if (hashes.isEmpty()) continue;
+            return (String)hashes.get("drivers");
+        }
+        return "";
+    }    
 }

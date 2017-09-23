@@ -159,5 +159,6 @@ public interface DataInterface
 	/* things requiring superuser privileges, only obtained by merge tool */
 	public boolean verifyUserAndSeries(String seriesname, String password);
 	public boolean deleteUserAndSeries(String seriesname);
+	public boolean deleteDriversTable();
 }
 

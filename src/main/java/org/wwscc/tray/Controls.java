@@ -9,14 +9,14 @@
 package org.wwscc.tray;
 
 import java.awt.event.ActionEvent;
+import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
-
 import org.wwscc.actions.QuitAction;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
@@ -106,11 +106,16 @@ public class Controls extends JMenuBar implements MessageListener
             super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
-            Object [] options = PostgresqlDatabase.getSeriesList(null).toArray();
-            Object series = JOptionPane.showInputDialog(null, "Select the series", "Series Selection", JOptionPane.QUESTION_MESSAGE, null, options, null);
-            if (series != null)
+            SeriesDialog sd = new SeriesDialog(PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
+            if (!sd.doDialog("Select Series", null))
+                return;
+            List<String> selected = sd.getResult();
+            if (selected.size() > 0)
             {
-                Database.d.deleteUserAndSeries((String)series);
+                for (String s : selected)
+                    Database.d.deleteUserAndSeries(s);
+                if (sd.allSelected())
+                    Database.d.deleteDriversTable();
                 DockerInterface.pokecontainers();
             }
         }

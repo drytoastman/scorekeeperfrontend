@@ -33,7 +33,7 @@ import org.wwscc.util.Resources;
 
 public class MergeStatusTable extends JTable {
 
-    public static final int BASE_COL_COUNT = 4;
+    public static final int BASE_COL_COUNT = 5;
     
     public MergeStatusTable()
     {
@@ -171,6 +171,7 @@ public class MergeStatusTable extends JTable {
                 case 1:  return "Host";
                 case 2:  return "Last";
                 case 3:  return "Next";
+                case 4:  return "Drivers";
             }
             if (col < series.size() + BASE_COL_COUNT)
                 return series.get(col-BASE_COL_COUNT);
@@ -218,6 +219,24 @@ public class MergeStatusTable extends JTable {
             if (time.before(epoch)) setText("");
             else setText(dformat.format(time));
         }
+        
+        private void setTextLimit(String s, int limit)
+        {
+            if (s == null)
+                setText("");
+            if (s.length() > limit)
+                setText(s.substring(0, limit));
+            else
+                setText(s);
+        }
+        
+        private boolean isMismatchedWithLocal(JTable table, int col, String testhash)
+        {
+            DecoratedMergeServer local = ((ServerModel)table.getModel()).servers.get(0);
+            JSONObject lstatus = local.columns[col-BASE_COL_COUNT];                    
+            String lhash = (String)lstatus.get("totalhash");
+            return !testhash.equals(lhash);
+        }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) 
@@ -230,56 +249,51 @@ public class MergeStatusTable extends JTable {
             
             DecoratedMergeServer server = (DecoratedMergeServer)value;
             setColors(server.isActive() || server.isLocalHost(), false);
-
-            if ((col == 0) && server.isLocalHost()){
-                setIcon(home);
-                return this;
-            }
-            
             if (server.isLocalHost())
                 setBackground(mycolor);
 
-            if (col >= BASE_COL_COUNT)
-            {
-                JSONObject rstatus = server.columns[col-BASE_COL_COUNT];
-                if (rstatus == null) { 
-                    return this;
-                } else if (rstatus.containsKey("error")) {
-                    setText(rstatus.get("error").toString());
-                    setColors(server.isActive(), true);
-                } else {
-                    DecoratedMergeServer local = ((ServerModel)table.getModel()).servers.get(0);
-                    JSONObject lstatus = local.columns[col-BASE_COL_COUNT];                    
-                    String lh = (String)lstatus.get("totalhash");
-                    String rh = (String)rstatus.get("totalhash");
-                    if ((rh != null) && !rh.equals("")) {
-                        setText(rh.substring(0, 12));
-
-                        if (!lh.equals(rh))
-                            setColors(server.isActive(), true);
-                    }
-                    if (rstatus.containsKey("syncing"))
-                        setIcon(syncing);
-                }
-            }
-            
             switch (col) 
             {
-                case 0:  break;
+                case 0:
+                    if (server.isLocalHost())
+                        setIcon(home);
+                    break;
                 case 1:  
                     if (server.getAddress().equals(""))
                         setText(server.getHostname());
                     else
                         setText(server.getHostname()+"/"+server.getAddress());
                     break;
-                case 2:  setToDate(server.getLastCheck()); break;
-                case 3:  setToDate(server.getNextCheck()); break;
+                case 2:
+                    // set date but also mark colors if the last check has been too long
+                    setToDate(server.getLastCheck()); 
+                    if (!server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
+                        setColors(server.isActive(), true);
+                    break;
+                case 3: 
+                    setToDate(server.getNextCheck()); 
+                    break;
+                case 4: 
+                    setTextLimit(server.getDriversState(), 12); 
+                    break;
+                
+                default: // a series hash column
+                    JSONObject seriesstatus = server.columns[col-BASE_COL_COUNT];
+                    if (seriesstatus == null) { 
+                        return this;
+                    } else if (seriesstatus.containsKey("error")) {
+                        setText(seriesstatus.get("error").toString());
+                        setColors(server.isActive(), true);
+                    } else {
+                        String hash = (String)seriesstatus.get("totalhash");                    
+                        setTextLimit(hash, 12);
+                        if (isMismatchedWithLocal(table, col, hash))
+                            setColors(server.isActive(), true);
+                        if (seriesstatus.containsKey("syncing"))
+                            setIcon(syncing);
+                    }
+                    break;
             }
-            
-            // Last check has been a long time away
-            if ((col == 2) && !server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
-                setColors(server.isActive(), true);
-            
             return this;
         }
     }
