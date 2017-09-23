@@ -9,7 +9,7 @@ b. Verify the hostname to download from, usually scorekeeper.wwscc.org
 c. Select series you want to copy. 
 
 
-d. If the password hasn’t been cached before, it may ask for one.
+d. If the password hasn't been cached before, it may ask for one.
 
 
 
@@ -38,34 +38,34 @@ Verify that the registration app is actually tracking changes and that the corre
 You can also check the Lock checkbox to disable further event selection so that accidental event selection does not occur during registration activity.
 
 Weekend memberships (1 worker)
-* Fill out weekend member forms as usual – give driver pink copy – give new checkered wristband.
-Computers/printers (2 workers) - one line for changes and one line for no changes – adjust as necessary 
-All Drivers - Check for valid driver’s license and SCCA membership (annual or weekend)
+* Fill out weekend member forms as usual - give driver pink copy - give new checkered wristband.
+Computers/printers (2 workers) - one line for changes and one line for no changes - adjust as necessary 
+All Drivers - Check for valid driver's license and SCCA membership (annual or weekend)
 1.   Enter part of the first and/or last name.  More information produces a shorter list of drivers in the next step.
 
 
 2. Select the driver from the list of drivers.  
 
 a. If the name is grey italic or not present, you must click New Driver to create a new driver entry 
-b. If need to create New Driver – enter  name/email/member# only
+b. If need to create New Driver - enter  name/email/member# only
 
-Verify the driver’s member number for barcode
+Verify the driver's member number for barcode
 a. You can Edit Driver to update the member # information
 b. SCCA annual members
 i. verify SCCA member number is in driver profile and correct
 c. Weekend members
-i. If HAS a driver ID number in profile from previous events – Leave number as is 
-ii. If DOES NOT have driver ID number in profile – click Edit Driver – enter the last 6 digits of pink form id number as the member number – click update/submit 
-d. If a barcode is needed, click Print Label to print to the selected printer device – make sure correct printer is selected. Barcode placement – ask  driver if has own helmet:
-* if yes – explain placement (left side of helmet)
-* if no – tell driver to place on the windshield 
+i. If HAS a driver ID number in profile from previous events - Leave number as is 
+ii. If DOES NOT have driver ID number in profile - click Edit Driver - enter the last 6 digits of pink form id number as the member number - click update/submit 
+d. If a barcode is needed, click Print Label to print to the selected printer device - make sure correct printer is selected. Barcode placement - ask  driver if has own helmet:
+* if yes - explain placement (left side of helmet)
+* if no - tell driver to place on the windshield 
 
 3. Verify the correct car(s), class(es) and index are registered. 
 a. Default status for Pre-Reg drivers is Registered. 
-b. A driver should NOT have 2 cars registered in the same class – verify which car driver wishes to use and Unregister the other car.
+b. A driver should NOT have 2 cars registered in the same class - verify which car driver wishes to use and Unregister the other car.
 c. If not pre-registered, click on the car the driver wishes to register (if in system) or create a New Car 
 d. Cars can be created, edited or deleted. 
-i. New From prefills the data with the selected car – which can then be edited as needed (saves having to enter all car info if only needs a different class or car number) 
+i. New From prefills the data with the selected car - which can then be edited as needed (saves having to enter all car info if only needs a different class or car number) 
 e. To change a car entry, select it and click Registered and Paid, Registered Only or Unregister
 i. Registered means the car was registered but has not paid yet
 ii. In Event means the car already has times recorded in the event
@@ -92,7 +92,7 @@ Merging registration databases
 
 
 
-3. With the “Active” change set selected, you can see the list of changes that were made and are ready to be merged.  Click Merge Changes.
+3. With the "Active" change set selected, you can see the list of changes that were made and are ready to be merged.  Click Merge Changes.
 
 
 
@@ -113,22 +113,22 @@ Merging registration databases
 
 
 Configuring Label Printer
-By default, the label printer will use about 4” of label material for each label printed.  This can only be changed in the local printing preferences itself.  If it is not already setup:
-1. Right click on the printer and select “Printing Preferences” (Windows 7)
+By default, the label printer will use about 4" of label material for each label printed.  This can only be changed in the local printing preferences itself.  If it is not already setup:
+1. Right click on the printer and select "Printing Preferences" (Windows 7)
 
 
 
-2. In the preferences dialog, change the Length field, we currently use 2.3”.
+2. In the preferences dialog, change the Length field, we currently use 2.3".
 
 
-Tasha’s FAQ’s
-1. If an entrant is registered for two classes at the same event, <class> and TOPM, and it is the AM session where <class> is running, does registration need to do anything to make sure the entrant’s <class> entry info is used first?
+Tasha's FAQ's
+1. If an entrant is registered for two classes at the same event, <class> and TOPM, and it is the AM session where <class> is running, does registration need to do anything to make sure the entrant's <class> entry info is used first?
 No, if multiple cars are registered, TOPM is only used once all other cars have been used in other run groups.  Data Entry can also override if they need to.
 
 2. If an entrant is running <class> and also registered for TOPM, but <class> runs PM so the TOPM entry isn't allowed/needed. What does registration need to do to make sure the correct entry is used in this situation?
 Nothing is required; however, you can unregister the TOPM if you wish.
 
-3. For an entrant who is correctly pre-registered for AM and PM and has no changes, does registration need to do anything besides verify entry info and make sure the entrant has a barcode?
+3. For an entrant who is correctly pre-registered for AM and PM and has no changes, does registration need to do anything besides verify entry info and make sure the entrant has a barcode?
 No, they are ready to go
 
 
