@@ -80,7 +80,7 @@ public class TrayMonitor implements ActionListener
         newMenuItem("Debug Collection", "debugcollect", trayPopup);
         
         trayPopup.addSeparator();
-        mBackendStatus = new MenuItem("Backend: Waiting for machine");
+        mBackendStatus = new MenuItem("Backend:");
         trayPopup.add(mBackendStatus);
         mMachineStatus = new MenuItem("Machine:");
         trayPopup.add(mMachineStatus);
@@ -162,7 +162,7 @@ public class TrayMonitor implements ActionListener
                     log.info("User force quiting.");
                     System.exit(-1);
                 }
-                if (JOptionPane.showConfirmDialog(null, "This will stop the datbase server and web server.  Is that ok?", 
+                if (JOptionPane.showConfirmDialog(null, "This will stop the database and web server.  Is that ok?", 
                     "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
                 {
                     applicationdone = true;
@@ -342,15 +342,19 @@ public class TrayMonitor implements ActionListener
         
         public boolean minit() 
         {
+            mBackendStatus.setLabel("Backend: Waiting for machine");
             while (!readyforcontainers) {
                 try {
                     synchronized (this) { this.wait(ms); }
                 } catch (InterruptedException ie) {}
             }
             
+
             for (DockerContainer c : containers.values()) {
+                mBackendStatus.setLabel("Backend: Init " + c.getName());
                 c.setMachineEnv(mmonitor.machineenv);
                 c.createNetsAndVolumes();
+                c.start();
             }
             
             return true; 
@@ -368,7 +372,7 @@ public class TrayMonitor implements ActionListener
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
-                            log.info("Unable to start the web and database services. See logs.");
+                            log.info("Unable to start " + c.getName() + ". See logs.");
                         } else {
                             quickrecheck = true;
                         }

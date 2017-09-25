@@ -53,6 +53,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         setBounds(Prefs.getWindowBounds("datasync"));
         setVisible(true);
 
+        Database.openPublic(true);
         Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         new UpdaterThread().start();
@@ -102,7 +103,6 @@ public class DataSyncInterface extends JFrame implements MessageListener
         System.setProperty("program.name", "DataSyncTestMain");
         Logging.logSetup("datasync");
                 
-        Database.openPublic(true);        
         DockerMachine.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

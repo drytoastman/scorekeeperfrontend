@@ -58,7 +58,7 @@ public class Prefs
 	{
 	    Path dir = Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion());
 	    if (System.getenv("DEBUG") != null)
-	            dir = Paths.get(".");
+	            dir = Paths.get("./testlogs");
 	    return dir.toString();
 	}
 

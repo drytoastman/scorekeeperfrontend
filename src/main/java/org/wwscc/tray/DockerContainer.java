@@ -22,8 +22,8 @@ public class DockerContainer
     public static class Db extends DockerContainer {
         public Db() { 
             super("drytoastman/scdb", "scdb");
-            addVolume("scdatabase-"+Prefs.getVersion(), "/var/run/postgresql");
-            addVolume("scsocket", "/var/run/postgresl");
+            addVolume("scdatabase-"+Prefs.getVersion(), "/var/lib/postgresql/data");
+            addVolume("scsocket", "/var/run/postgresql");
             addPort("127.0.0.1:6432", "6432");
             addPort("54329", "5432");
         }
@@ -33,7 +33,7 @@ public class DockerContainer
     public static class Web extends DockerContainer {
         public Web() { 
             super("drytoastman/scweb", "scweb");
-            addVolume("scsocket", "/var/run/postgresl");
+            addVolume("scsocket", "/var/run/postgresql");
             addPort("80", "80");
         }
     }
@@ -41,7 +41,7 @@ public class DockerContainer
     public static class Sync extends DockerContainer {
         public Sync() { 
             super("drytoastman/scsync", "scsync");
-            addVolume("scsocket", "/var/run/postgresl");
+            addVolume("scsocket", "/var/run/postgresql");
         }
     }
     
@@ -111,7 +111,7 @@ public class DockerContainer
     
     public boolean stop()
     {
-        return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) != 0;
+        return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) == 0;
     }
     
     /**
