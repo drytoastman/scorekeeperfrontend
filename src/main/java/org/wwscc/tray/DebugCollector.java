@@ -39,10 +39,12 @@ public class DebugCollector extends Thread
     private static final Logger log = Logger.getLogger(DebugCollector.class.getName());
 
     List<Path> files;
+    DockerContainer dbcontainer;
     
-    public DebugCollector()
+    public DebugCollector(DockerContainer container)
     {
         files = new ArrayList<Path>();
+        dbcontainer = container;
     }
     
     public void run()
@@ -89,15 +91,12 @@ public class DebugCollector extends Thread
         try 
         {
             Path temp = Files.createTempDirectory("sc_debug_");
-            monitor.setProgress(10);
-            monitor.setNote("getting docker information");
-            String dbid = DockerInterface.dbcontainerid();
             monitor.setProgress(20);
             monitor.setNote("copying backend files");
-            DockerInterface.copyLogs(dbid, temp);
+            dbcontainer.copyLogs(temp);
             monitor.setProgress(30);
             monitor.setNote("dump database data");
-            DockerInterface.dumpdatabase(dbid, temp.resolve("database.sql"));
+            dbcontainer.dumpDatabase(temp.resolve("database.sql"));
           
             monitor.setProgress(60);
             monitor.setNote("adding backend logs to zipfile");
@@ -175,7 +174,8 @@ public class DebugCollector extends Thread
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         System.setProperty("program.name", "DebugCollector");
         Logging.logSetup("debugcollector");
-        DockerInterface.machineenv(); // for testing on windows
-        new DebugCollector().start();
+        DockerContainer.Db db = new DockerContainer.Db();
+        db.setMachineEnv(DockerMachine.machineenv());
+        new DebugCollector(db).start();
     }
 }

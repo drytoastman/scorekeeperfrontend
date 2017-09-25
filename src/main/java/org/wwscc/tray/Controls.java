@@ -67,7 +67,6 @@ public class Controls extends JMenuBar implements MessageListener
             HSResult ret = hd.getResult();
             Database.d.verifyUserAndSeries(ret.series, ret.password);
             Database.d.mergeServerSet(ret.host, true, true, true);
-            DockerInterface.pokecontainers();
         }
     }	
 	
@@ -81,7 +80,6 @@ public class Controls extends JMenuBar implements MessageListener
 	        if (!d.doDialog("Select Host", null))
 	            return;
 	        Database.d.mergeServerSet(d.getResult().host, true, true, true);
-	        DockerInterface.pokecontainers();
 	    }
 	}
 	
@@ -116,7 +114,6 @@ public class Controls extends JMenuBar implements MessageListener
                     Database.d.deleteUserAndSeries(s);
                 if (sd.allSelected())
                     Database.d.deleteDriversTable();
-                DockerInterface.pokecontainers();
             }
         }
     }
@@ -128,7 +125,6 @@ public class Controls extends JMenuBar implements MessageListener
         }
         public void actionPerformed(ActionEvent e) {
             Database.d.mergeServerResetAll();
-            DockerInterface.pokecontainers();
         }
     }
 	

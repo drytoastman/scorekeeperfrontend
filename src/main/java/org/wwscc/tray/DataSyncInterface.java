@@ -103,7 +103,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         Logging.logSetup("datasync");
                 
         Database.openPublic(true);        
-        DockerInterface.machineenv();
+        DockerMachine.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);

@@ -10,7 +10,7 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -36,16 +36,30 @@ public class Prefs
 		prefs = Preferences.userRoot().node(name);
 	}
 	
+	public static String getVersion()
+	{
+        Package p = Prefs.class.getPackage();
+        if (p == null) return "latest";
+        String v = p.getImplementationVersion();
+        if (v == null) return "latest";
+        return v;
+	}
+	
+	/*
     public static String getDocRoot() 
     {
     	if (System.getenv("DEBUG") != null)
     		return Paths.get(".").toString();
     	return Paths.get(System.getProperty("user.home"), "scorekeeper").toString();
     }
+    */
 
 	public static String getLogDirectory()
 	{
-		return FileSystems.getDefault().getPath(getDocRoot(), "logs").toString();
+	    Path dir = Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion());
+	    if (System.getenv("DEBUG") != null)
+	            dir = Paths.get(".");
+	    return dir.toString();
 	}
 
 	public static UUID getServerId() 

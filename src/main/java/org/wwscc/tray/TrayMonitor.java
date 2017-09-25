@@ -21,7 +21,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -51,12 +54,12 @@ public class TrayMonitor implements ActionListener
     
     // Threads to run/monitor docker-machine and docker-compose
     MachineMonitor mmonitor;
-    ComposeMonitor cmonitor;
+    ContainerMonitor cmonitor;
     DataSyncInterface syncviewer = null;
     
     // shared state between threads
     volatile TrayIcon trayIcon;
-    volatile boolean readyforcompose, portsforwarded, applicationdone;
+    volatile boolean readyforcontainers, portsforwarded, applicationdone;
     volatile MenuItem mBackendStatus, mMachineStatus;
     
     public TrayMonitor(String args[])
@@ -77,7 +80,7 @@ public class TrayMonitor implements ActionListener
         newMenuItem("Debug Collection", "debugcollect", trayPopup);
         
         trayPopup.addSeparator();
-        mBackendStatus = new MenuItem("Backend:");
+        mBackendStatus = new MenuItem("Backend: Waiting for machine");
         trayPopup.add(mBackendStatus);
         mMachineStatus = new MenuItem("Machine:");
         trayPopup.add(mMachineStatus);
@@ -108,18 +111,18 @@ public class TrayMonitor implements ActionListener
             System.exit(-2);
         }
 
-        readyforcompose = false;
+        readyforcontainers = false;
         portsforwarded = false;
         applicationdone = false;
     }
     
     public void startAndWaitForThreads()
     {
+        cmonitor = new ContainerMonitor();
+        cmonitor.start();
         mmonitor = new MachineMonitor();
         mmonitor.start();
-        cmonitor = new ComposeMonitor();
-        cmonitor.start();
-        
+
         try {
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
@@ -144,7 +147,7 @@ public class TrayMonitor implements ActionListener
         switch (cmd)
         {
             case "debugcollect":
-                new DebugCollector().start();
+                new DebugCollector(cmonitor.containers.get("db")).start();
                 break;
                 
             case "datasync":
@@ -176,6 +179,7 @@ public class TrayMonitor implements ActionListener
     abstract class Monitor extends Thread
     {
         protected final Long ms;
+        protected boolean quickrecheck;
         public Monitor(String name, long ms) { super(name); this.ms = ms; } 
         protected abstract boolean minit();
         protected abstract boolean mloop();
@@ -188,7 +192,9 @@ public class TrayMonitor implements ActionListener
             while (!applicationdone) {
                 try {
                     mloop();
-                    synchronized (this) { this.wait(ms); }                    
+                    if (!quickrecheck)
+                        synchronized (this) { this.wait(ms); }
+                    quickrecheck = false;
                 } catch (InterruptedException e) {}
             }
             mshutdown();
@@ -212,9 +218,9 @@ public class TrayMonitor implements ActionListener
         
         protected void signalready(boolean ready)
         {
-            if (ready != readyforcompose)
+            if (ready != readyforcontainers)
             {
-                readyforcompose = ready;
+                readyforcontainers = ready;
                 cmonitor.poke();
             }
         }
@@ -222,7 +228,7 @@ public class TrayMonitor implements ActionListener
         @Override
         protected boolean minit()
         {
-            if (!DockerInterface.machinepresent())
+            if (!DockerMachine.machinepresent())
             {
                 signalready(true);
                 mMachineStatus.setLabel("Machine: Not needed");
@@ -230,11 +236,11 @@ public class TrayMonitor implements ActionListener
                 return false;
             }
 
-            if (!DockerInterface.machinecreated())
+            if (!DockerMachine.machinecreated())
             {
                 log.info("Creating a new docker machine.");
                 mMachineStatus.setLabel("Machine: Creating VM");
-                if (!DockerInterface.createmachine())
+                if (!DockerMachine.createmachine())
                 {
                     log.severe("Unable to create a docker machine.  See logs.");
                     return false;
@@ -242,7 +248,7 @@ public class TrayMonitor implements ActionListener
             }
             
             jsch = new JSch();
-            machineenv = DockerInterface.machineenv();
+            machineenv = DockerMachine.machineenv();
             log.finest("dockerenv = " + machineenv);
             return true;
         }
@@ -250,16 +256,16 @@ public class TrayMonitor implements ActionListener
         @Override
         protected boolean mloop()
         {
-            if (!DockerInterface.machinerunning())
+            if (!DockerMachine.machinerunning())
             {
                 log.info("Starting the docker machine.");
                 mMachineStatus.setLabel("Machine: Starting VM");
-                if (!DockerInterface.startmachine())
+                if (!DockerMachine.startmachine())
                 {
                     log.info("Unable to start docker machine. See logs.");
                     return false;
                 }
-                machineenv = DockerInterface.machineenv();
+                machineenv = DockerMachine.machineenv();
                 log.finest("dockerenv = " + machineenv);
             }
             
@@ -315,48 +321,65 @@ public class TrayMonitor implements ActionListener
      * Thread to keep checking our services for status.  It pauses for 5 seconds but can
      * be woken by anyone calling notify on the class object.
      */
-    class ComposeMonitor extends Monitor
+    class ContainerMonitor extends Monitor
     {
         Image currentIcon;
+        Map<String, DockerContainer> containers;
+        Set<String> names;
         
-        public ComposeMonitor()
+        public ContainerMonitor()
         {
-            super("ComposeController", 5000);
+            super("ContainerMonitor", 5000);
+            containers = new HashMap<String, DockerContainer>();
+            containers.put("db", new DockerContainer.Db());
+            containers.put("web", new DockerContainer.Web());
+            containers.put("sync", new DockerContainer.Sync());
+            names = new HashSet<String>();
+            for (DockerContainer c : containers.values())
+                names.add(c.getName());
             currentIcon = null;
         }
         
         public boolean minit() 
-        { 
+        {
+            while (!readyforcontainers) {
+                try {
+                    synchronized (this) { this.wait(ms); }
+                } catch (InterruptedException ie) {}
+            }
+            
+            for (DockerContainer c : containers.values()) {
+                c.setMachineEnv(mmonitor.machineenv);
+                c.createNetsAndVolumes();
+            }
+            
             return true; 
         }
         
         public boolean mloop()
         {
-            boolean ok = false;
-            if (readyforcompose)
-            {
-                boolean res[] = DockerInterface.ps();
-                if (!res[0] || !res[1])
-                {
-                    mBackendStatus.setLabel("Backend: (re)starting");
-                    if (!DockerInterface.up()) 
-                        log.info("Unable to start the web and database services. See logs.");
-                    else
-                        res = DockerInterface.ps();
-                }
+            boolean ok = true;
+            Set<String> dead = DockerContainer.finddown(mmonitor.machineenv, names);
             
-                if (res[0] && res[0])
-                    mBackendStatus.setLabel("Backend: Running");
-                
-                if (res[0] && res[1] && portsforwarded) 
-                    ok = true;
-            }
-            else
-            {
-                mBackendStatus.setLabel("Backend: Waiting for machine");
+            // Something isn't running, try and start them now            
+            if (dead.size() > 0) {
+                ok = false;
+                mBackendStatus.setLabel("Backend: (re)starting " + dead);
+                for (DockerContainer c : containers.values()) {
+                    if (dead.contains(c.getName())) {
+                        if (!c.start()) {
+                            log.info("Unable to start the web and database services. See logs.");
+                        } else {
+                            quickrecheck = true;
+                        }
+                    }
+                }
             }
 
-            Image next =  ok ? coneok : conewarn;                    
+            if (ok)
+                mBackendStatus.setLabel("Backend: Running");
+            
+            Image next = (ok & portsforwarded) ? coneok : conewarn;                    
             if (next != currentIcon) 
             {
                 trayIcon.setImage(next); 
@@ -368,7 +391,10 @@ public class TrayMonitor implements ActionListener
         public void mshutdown()
         {
             mBackendStatus.setLabel("Backend: Shutting down");
-            if (!DockerInterface.down())
+            boolean ok = true;
+            for (DockerContainer c : containers.values())
+                ok = ok & c.stop();
+            if (!ok)
                 log.severe("Unable to stop the web and database services. See logs.");
             mBackendStatus.setLabel("Backend: Stopped");
         }
