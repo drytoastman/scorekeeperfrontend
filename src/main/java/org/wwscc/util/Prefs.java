@@ -44,15 +44,6 @@ public class Prefs
         if (v == null) return "latest";
         return v;
 	}
-	
-	/*
-    public static String getDocRoot() 
-    {
-    	if (System.getenv("DEBUG") != null)
-    		return Paths.get(".").toString();
-    	return Paths.get(System.getProperty("user.home"), "scorekeeper").toString();
-    }
-    */
 
 	public static String getLogDirectory()
 	{

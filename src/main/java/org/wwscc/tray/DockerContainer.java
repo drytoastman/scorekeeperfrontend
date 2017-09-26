@@ -21,7 +21,7 @@ public class DockerContainer
 
     public static class Db extends DockerContainer {
         public Db() { 
-            super("drytoastman/scdb", "scdb");
+            super("drytoastman/scdb", "db");
             addVolume("scdatabase-"+Prefs.getVersion(), "/var/lib/postgresql/data");
             addVolume("scsocket", "/var/run/postgresql");
             addPort("127.0.0.1:6432", "6432");
@@ -32,7 +32,7 @@ public class DockerContainer
 
     public static class Web extends DockerContainer {
         public Web() { 
-            super("drytoastman/scweb", "scweb");
+            super("drytoastman/scweb", "web");
             addVolume("scsocket", "/var/run/postgresql");
             addPort("80", "80");
         }
@@ -40,7 +40,7 @@ public class DockerContainer
 
     public static class Sync extends DockerContainer {
         public Sync() { 
-            super("drytoastman/scsync", "scsync");
+            super("drytoastman/scsync", "sync");
             addVolume("scsocket", "/var/run/postgresql");
         }
     }
@@ -93,9 +93,15 @@ public class DockerContainer
             Exec.execit(Exec.build(machineenv, "docker", "volume", "create", vname), null);
     }
     
+    /**
+     * Start the container with the currently set parameters.  Some default unsettable parameters are:
+     *  --net=scnet - the single user network that we create and use
+     *  -e DEBUG and -e LOG_LEVEL - pass through the DEBUG and LOG_LEVEL environment variables if present
+     * @return true if exec completed with zero return value
+     */
     public boolean start()
     {
-        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
+        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME, "-e", "DEBUG", "-e", "LOG_LEVEL"));
         for (String k : volumes.keySet()) {
             cmd.add("-v");
             cmd.add(k+":"+volumes.get(k));
