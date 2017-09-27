@@ -12,6 +12,23 @@ import java.awt.Desktop;
 import java.net.URI;
 import java.util.logging.Logger;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.concurrent.Worker.State;
+import javafx.print.JobSettings;
+import javafx.print.PageLayout;
+import javafx.print.PageOrientation;
+import javafx.print.Paper;
+import javafx.print.Printer;
+import javafx.print.PrinterJob;
+import javafx.scene.Node;
+import javafx.scene.transform.Scale;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
+
 public class BrowserControl
 {
 	private static Logger log = Logger.getLogger("org.wwscc.util.Web");
@@ -19,14 +36,6 @@ public class BrowserControl
 	public static void openAuditReport(ApplicationState state, String order)
 	{
 		openResults(state, String.format("audit?order=%s", order));
-	}
-
-	public static void openDialinReport(ApplicationState state, String filter, String order)
-	{
-		if (filter == null)
-			openResults(state, "dialins?order=" + order);
-		else
-			openResults(state, "dialins?filter=" + filter + "&order=" + order);
 	}
 
 	public static void openResults(ApplicationState state, String selection)
@@ -62,25 +71,36 @@ public class BrowserControl
 
 		printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s", state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), g));
 	}
+        
 	
-	public static void printURL(String url)
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void printURL(String url)
 	{
-		try
-		{
-			Runtime r = Runtime.getRuntime();
-			String os = System.getProperty("os.name");
-			if ((os != null) && (os.startsWith("Windows"))) {
-				log.info("PrintHTML request: " + url);
-				r.exec("rundll32.exe \"C:\\Windows\\system32\\mshtml.dll\",PrintHTML \"" + url + "\"").waitFor();
-			} else {
-				openURL(url);
-			}
-		}
-		catch (Exception ex)
-		{
-			log.severe("Couldn't open web browser:" + ex);
-		}
+	    Platform.runLater(new Runnable() {
+	        @Override public void run() {
+        		try {
+        		    WebView view = new WebView();
+        		    WebEngine engine = view.getEngine();
+                    engine.getLoadWorker().stateProperty().addListener((ChangeListener) (obsValue, oldState, newState) -> {
+                       if (newState == State.SUCCEEDED) {
+                           Document doc = engine.getDocument();
+                           Element extrastyle = doc.createElement("style");
+                           extrastyle.appendChild(doc.createTextNode(".container-fluid { font-size: 0.65rem !important; } table td span { white-space: nowrap; }"));
+                           doc.getDocumentElement().getElementsByTagName("head").item(0).appendChild(extrastyle);
+                          
+                           PrinterJob job = PrinterJob.createPrinterJob();
+                           if ((job != null) && job.showPrintDialog(null)) {
+                               engine.print(job);
+                               job.endJob();
+                           }
+                       }
+                    });
+                    engine.load(url);
+        		} catch (Exception e) {
+        		    log.severe("Couldn't print:" + e);
+                }
+	        }
+        });
 	}
-
 }
 

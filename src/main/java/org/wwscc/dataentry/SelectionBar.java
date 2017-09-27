@@ -51,7 +51,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
 		Font f = new Font(Font.DIALOG, Font.BOLD, 14);
 
-		resultsButton = new JButton("Current Group Results");
+		resultsButton = new JButton("Print Current Group Results");
 		resultsButton.addActionListener(this);
 		resultsButton.setActionCommand("resultsPrint");
 
