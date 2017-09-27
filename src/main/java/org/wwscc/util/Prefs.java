@@ -31,6 +31,12 @@ public class Prefs
 		}));
 	}
 
+	public static boolean isDebug()
+	{
+	    return true; // stick with debug while in alpha stage, eventually add a system option from the tray monitor
+	    //return (System.getenv("DEBUG") != null);
+	}
+	
 	public static void setPrefsNode(String name)
 	{
 		prefs = Preferences.userRoot().node(name);
@@ -48,7 +54,7 @@ public class Prefs
 	public static String getLogDirectory()
 	{
 	    Path dir = Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion());
-	    if (System.getenv("DEBUG") != null)
+	    if (isDebug())
 	            dir = Paths.get("./testlogs");
 	    return dir.toString();
 	}

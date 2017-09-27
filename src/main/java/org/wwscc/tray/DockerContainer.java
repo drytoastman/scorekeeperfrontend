@@ -96,12 +96,18 @@ public class DockerContainer
     /**
      * Start the container with the currently set parameters.  Some default unsettable parameters are:
      *  --net=scnet - the single user network that we create and use
-     *  -e DEBUG and -e LOG_LEVEL - pass through the DEBUG and LOG_LEVEL environment variables if present
+     *  -e DEBUG=1 and -e LOG_LEVEL=DEBUG if debug mode is set
      * @return true if exec completed with zero return value
      */
     public boolean start()
     {
-        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME, "-e", "DEBUG", "-e", "LOG_LEVEL"));
+        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
+        if (Prefs.isDebug()) {
+            cmd.add("-e");
+            cmd.add("DEBUG=1");
+            cmd.add("-e");
+            cmd.add("LOG_LEVEL=DEBUG");
+        }
         for (String k : volumes.keySet()) {
             cmd.add("-v");
             cmd.add(k+":"+volumes.get(k));

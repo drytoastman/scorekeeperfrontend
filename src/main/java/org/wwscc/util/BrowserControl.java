@@ -18,14 +18,7 @@ import org.w3c.dom.Element;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Worker.State;
-import javafx.print.JobSettings;
-import javafx.print.PageLayout;
-import javafx.print.PageOrientation;
-import javafx.print.Paper;
-import javafx.print.Printer;
 import javafx.print.PrinterJob;
-import javafx.scene.Node;
-import javafx.scene.transform.Scale;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
@@ -45,7 +38,7 @@ public class BrowserControl
 
 	public static void openAdmin(ApplicationState state, String selection)
 	{
-		openURL(String.format("http://127.0.0.1/admin/%s/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
+		openURL(String.format("http://127.0.0.1/admin/%s/event/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
 	}
 
 	public static void openURL(String url)

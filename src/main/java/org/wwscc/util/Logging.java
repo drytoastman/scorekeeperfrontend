@@ -33,8 +33,6 @@ public class Logging
 {
     public static void logSetup(String name)
     {
-        boolean isdebug = (System.getenv("DEBUG") != null);
-
         // Start with a fresh root set at warning
         Logger root = LogManager.getLogManager().getLogger("");
         Formatter format = new SingleLineFormatter();
@@ -47,17 +45,17 @@ public class Logging
         // Set prefs levels before windows preference load barfs useless data on the user
         Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
 
-        // Add console handler if running in DEBUG
-        if (isdebug) {
+        // Add console handler if running in debug mode
+        if (Prefs.isDebug()) {
             ConsoleHandler ch = new ConsoleHandler();
             ch.setLevel(Level.ALL);
             ch.setFormatter(format);
             root.addHandler(ch);
         }
 
-        // For our own logs, we can set super fine level or info depending on DEBUG and attach dialogs to those
+        // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
-        applog.setLevel(isdebug ? Level.FINEST : Level.INFO);
+        applog.setLevel(Prefs.isDebug() ? Level.FINEST : Level.INFO);
         applog.addHandler(new AlertHandler(Level.WARNING));
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
