@@ -8,7 +8,7 @@
     * Docker (Docker-Toolbox for most Windows machines)
 
 # First Time With a New Release
-1. Down the latest release jar file from https://github.com/drytoastman/scorekeeperfrontend/releases
+1. Down the latest release jar file from <https://github.com/drytoastman/scorekeeperfrontend/releases>
 2. Double Click on the Jar File and a cone icon should show up in your tray.
 3. Right click on the icon to see the available applications as well as the status of the backend.
 4. On Windows, if you haven't started the docker virtual machine since the last boot, the Machine status will say: Starting VM.  This can take about 60 seconds.
