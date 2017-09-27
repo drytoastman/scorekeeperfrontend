@@ -1,6 +1,8 @@
 
 # Scorekeeper Frontend
 
+User docs are generated from the docs/ folder and posted at https://drytoastman.github.io/scorekeeperfrontend/
+
 Building the frontend makes use of gradle for dependency downloads, compilation and jaring.  The project also
 includes project files for eclipse which makes development easier but still integrates with gradle.
 
