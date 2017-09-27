@@ -84,6 +84,7 @@ public class BrowserControl
                     engine.getLoadWorker().stateProperty().addListener((ChangeListener) (obsValue, oldState, newState) -> {
                        if (newState == State.SUCCEEDED) {
                            Document doc = engine.getDocument();
+                           // don't know why, but this was necessary to get the font-size smaller for results, prints fine under Chrome but not WebView
                            Element extrastyle = doc.createElement("style");
                            extrastyle.appendChild(doc.createTextNode(".container-fluid { font-size: 0.65rem !important; } table td span { white-space: nowrap; }"));
                            doc.getDocumentElement().getElementsByTagName("head").item(0).appendChild(extrastyle);
