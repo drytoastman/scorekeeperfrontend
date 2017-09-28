@@ -59,6 +59,8 @@ public class TrayMonitor implements ActionListener
     MachineMonitor mmonitor;
     ContainerMonitor cmonitor;
     DataSyncInterface syncviewer = null;
+    DatabaseDiscovery discovery;
+
 
     // shared state between threads
     volatile TrayIcon trayIcon;
@@ -125,6 +127,11 @@ public class TrayMonitor implements ActionListener
         cmonitor.start();
         mmonitor = new MachineMonitor();
         mmonitor.start();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                discovery = new DatabaseDiscovery();
+            }
+         }).start();
 
         try {
             while (mmonitor.isAlive() || cmonitor.isAlive())
@@ -169,6 +176,8 @@ public class TrayMonitor implements ActionListener
                     "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
                 {
                     applicationdone = true;
+                    if (discovery != null)
+                        discovery.shutdown();
                     if (syncviewer != null)
                         syncviewer.shutdown();
                     mmonitor.poke();
