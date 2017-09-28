@@ -1020,7 +1020,7 @@ public abstract class SQLDataInterface implements DataInterface
         try
         {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, active) VALUES (?, ?, ?, now(), true) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now() active=true",
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(),  active=true",
                           newList(serverid, name, ip, name, ip));
         }
         catch (SQLException ioe)

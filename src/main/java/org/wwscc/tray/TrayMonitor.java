@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import org.wwscc.storage.Database;
 import org.wwscc.util.Launcher;
 import org.wwscc.util.Logging;
 import org.wwscc.util.MT;
@@ -123,6 +124,8 @@ public class TrayMonitor implements ActionListener
 
     public void startAndWaitForThreads()
     {
+        Database.openPublic(true);
+
         cmonitor = new ContainerMonitor();
         cmonitor.start();
         mmonitor = new MachineMonitor();

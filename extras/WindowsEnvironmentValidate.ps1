@@ -11,7 +11,7 @@ try {
     $javamajor = 0
 }
 
-if ($javamajor -lt 9) {
+if ($javamajor -lt 8) {
     Write-Host "1. Java $javamajor does not meet requirements.  Opening a browser to https://java.com/download" -foregroundcolor "yellow"
     Start-Process -FilePath "https://java.com/download"
 } else {
@@ -20,7 +20,7 @@ if ($javamajor -lt 9) {
 
 ## Check for any Docker at this point
 try {
-    $dockerver = dockerx.exe -v 
+    $dockerver = docker.exe -v 
     Write-Host "2. $dockerver" -foregroundcolor "green"
 } catch {
     Write-Host "2. Docker not found.                   Opening a browser to https://docs.docker.com/docker-for-windows/install" -foregroundcolor "yellow"
