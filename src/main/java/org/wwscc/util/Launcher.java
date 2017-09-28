@@ -29,7 +29,7 @@ public class Launcher
 	 * @param app the name of the class with a main to execute
 	 * @param args the command line args to pass through
 	 */
-    public static void launchExternal(String app, String[] args)
+    public static Process launchExternal(String app, String[] args)
     {
         try {
             ArrayList<String> cmd = new ArrayList<String>();
@@ -51,8 +51,10 @@ public class Launcher
             if (!p.isAlive()) {
                 throw new Exception("Process not alive after 1 second");
             }
+            return p;
         } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("Failed to launch %s",  app), e);
+            log.log(Level.SEVERE, String.format("\bFailed to launch %s",  app), e);
+            return null;
         }
     }
     

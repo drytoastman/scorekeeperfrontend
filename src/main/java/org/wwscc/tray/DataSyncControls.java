@@ -17,7 +17,6 @@ import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import org.wwscc.actions.QuitAction;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.tray.HostSeriesSelectionDialog.HSResult;
@@ -25,18 +24,12 @@ import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 
-public class Controls extends JMenuBar
+public class DataSyncControls extends JMenuBar
 {
 	//private static final Logger log = Logger.getLogger(Controls.class.getCanonicalName());
 
-	public Controls()
+	public DataSyncControls()
 	{
-		/* File Menu */
-		JMenu file = new JMenu("File");
-        add(file);
-        file.add(new QuitAction());
-
-		/*  */
 		JMenu sync = new JMenu("Sync");
 		add(sync);		
         sync.add(new MergeWithAction());

@@ -4,6 +4,7 @@ import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +45,22 @@ public class DockerContainer
             addVolume("scsocket", "/var/run/postgresql");
         }
     }
+    
+    /**
+     * Quicker to send the stop signal all at once and let docker do the graceful
+     * wait followed by a hard kill.
+     */
+    public static boolean stopAll(Collection<DockerContainer> containers)
+    {
+    	List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "stop"));
+    	Map<String, String> env = null;
+    	for (DockerContainer c : containers) {
+    		cmd.add(c.getName());
+    		env = c.machineenv;
+    	}
+        return Exec.execit(Exec.build(env, cmd), null) == 0;
+    }
+
     
     String image;
     String name;

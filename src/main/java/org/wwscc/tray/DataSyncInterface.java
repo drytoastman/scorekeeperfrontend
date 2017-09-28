@@ -41,6 +41,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
     public DataSyncInterface()
     {
         super("Data Synchronization");
+        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         JPanel content = new JPanel(new MigLayout("fill", "fill", "fill"));
 
@@ -51,7 +52,7 @@ public class DataSyncInterface extends JFrame implements MessageListener
         content.add(header, "wrap");
         content.add(new JScrollPane(table), "grow");
         setContentPane(content);
-        setJMenuBar(new Controls());
+        setJMenuBar(new DataSyncControls());
         setBounds(Prefs.getWindowBounds("datasync"));
         setVisible(true);
         Prefs.trackWindowBounds(this, "datasync");        

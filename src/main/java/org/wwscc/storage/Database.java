@@ -11,6 +11,7 @@ package org.wwscc.storage;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.wwscc.util.MT;
@@ -44,7 +45,7 @@ public class Database
 	
    /**
      * Used when the user wants to examine the database without a series in mind
-     * @param superuser true if we want super user privileges with the connection 
+     * @param superuser true if we want super user privileges with the connection, needed to create a series
      * @return true if the series was opened, false otherwise
      */
     public static boolean openPublic(boolean superuser)
@@ -52,16 +53,20 @@ public class Database
         if (d != null)
             d.close();
         
-        try {
-            d = new PostgresqlDatabase(null, superuser);
-            Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
-            return true;
-        } catch (SQLException sqle) {
-            log.severe(String.format("Unable to open database (public-only) due to error %s", sqle));
-            return false;
+        while (true) {
+	        try {
+	            d = new PostgresqlDatabase(null, superuser);
+	            Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
+	            return true;
+	        } catch (SQLException sqle) {
+	            String ss = sqle.getSQLState();
+	            if (ss.equals("57P03") || ss.equals("08001")) // database still starting up
+	                continue;
+	            log.log(Level.SEVERE, "\bUnable to open database (public-only) due to error "+sqle+","+ss, sqle);
+	            return false;
+	        }
         }
     }
-    
     
 	/**
 	 * Used when the user wants to select a new specific series
