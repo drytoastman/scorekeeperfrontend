@@ -22,11 +22,10 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.tray.HostSeriesSelectionDialog.HSResult;
 import org.wwscc.util.MT;
-import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 
-public class Controls extends JMenuBar implements MessageListener
+public class Controls extends JMenuBar
 {
 	//private static final Logger log = Logger.getLogger(Controls.class.getCanonicalName());
 
@@ -49,8 +48,6 @@ public class Controls extends JMenuBar implements MessageListener
 	    //adv.add(new AddServerAction());
 	    adv.add(new ResetHashAction());
 	    adv.add(new DeleteLocalSeriesAction());
-		
-	    Messenger.register(MT.DATABASE_NOTIFICATION, this);
 	}
 
 	
@@ -67,6 +64,7 @@ public class Controls extends JMenuBar implements MessageListener
             HSResult ret = hd.getResult();
             Database.d.verifyUserAndSeries(ret.series, ret.password);
             Database.d.mergeServerSet(ret.host, true, true, true);
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }	
 	
@@ -80,6 +78,7 @@ public class Controls extends JMenuBar implements MessageListener
 	        if (!d.doDialog("Select Host", null))
 	            return;
 	        Database.d.mergeServerSet(d.getResult().host, true, true, true);
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
 	    }
 	}
 	
@@ -115,6 +114,7 @@ public class Controls extends JMenuBar implements MessageListener
                 if (sd.allSelected())
                     Database.d.deleteDriversTable();
             }
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
 
@@ -125,17 +125,8 @@ public class Controls extends JMenuBar implements MessageListener
         }
         public void actionPerformed(ActionEvent e) {
             Database.d.mergeServerResetAll();
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
-	
-	@Override
-	public void event(MT type, Object data)
-	{
-		switch (type)
-		{
-	        case DATABASE_NOTIFICATION:
-			    break;
-		}
-	}
 }
 

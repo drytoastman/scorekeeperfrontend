@@ -37,11 +37,6 @@ public class Prefs
 	    //return (System.getenv("DEBUG") != null);
 	}
 	
-	public static void setPrefsNode(String name)
-	{
-		prefs = Preferences.userRoot().node(name);
-	}
-	
 	public static String getVersion()
 	{
         Package p = Prefs.class.getPackage();

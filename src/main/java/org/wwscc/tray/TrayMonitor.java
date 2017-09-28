@@ -35,6 +35,9 @@ import javax.swing.UIManager;
 
 import org.wwscc.util.Launcher;
 import org.wwscc.util.Logging;
+import org.wwscc.util.MT;
+import org.wwscc.util.MessageListener;
+import org.wwscc.util.Messenger;
 import org.wwscc.util.Resources;
 
 import com.jcraft.jsch.JSch;
@@ -51,17 +54,17 @@ public class TrayMonitor implements ActionListener
         coneok   = Resources.loadImage("conesmall.png");
         conewarn = Resources.loadImage("conewarn.png");
     }
-    
+
     // Threads to run/monitor docker-machine and docker-compose
     MachineMonitor mmonitor;
     ContainerMonitor cmonitor;
     DataSyncInterface syncviewer = null;
-    
+
     // shared state between threads
     volatile TrayIcon trayIcon;
     volatile boolean readyforcontainers, portsforwarded, applicationdone;
     volatile MenuItem mBackendStatus, mMachineStatus;
-    
+
     public TrayMonitor(String args[])
     {
         if (!SystemTray.isSupported()) 
@@ -69,7 +72,7 @@ public class TrayMonitor implements ActionListener
             log.severe("TrayIcon is not supported, unable to run Scorekeeper monitor application.");
             System.exit(-1);
         }
-                
+
         PopupMenu trayPopup   = new PopupMenu();        
         newMenuItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
         newMenuItem("Registration",     "org.wwscc.registration.Registration", trayPopup);
@@ -78,13 +81,13 @@ public class TrayMonitor implements ActionListener
         newMenuItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup);
         newMenuItem("Data Sync",        "datasync",     trayPopup);
         newMenuItem("Debug Collection", "debugcollect", trayPopup);
-        
+
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");
         trayPopup.add(mBackendStatus);
         mMachineStatus = new MenuItem("Machine:");
         trayPopup.add(mMachineStatus);
-        
+
         trayPopup.addSeparator();
         newMenuItem("Quit", "quit", trayPopup);
 
@@ -94,7 +97,7 @@ public class TrayMonitor implements ActionListener
 
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
-        
+
         // Force an update check when opening the context menu
         trayIcon.addMouseListener(new MouseAdapter() {
             private void docheck(MouseEvent e) { if (e.isPopupTrigger()) { cmonitor.poke(); }}
@@ -115,7 +118,7 @@ public class TrayMonitor implements ActionListener
         portsforwarded = false;
         applicationdone = false;
     }
-    
+
     public void startAndWaitForThreads()
     {
         cmonitor = new ContainerMonitor();
@@ -149,13 +152,13 @@ public class TrayMonitor implements ActionListener
             case "debugcollect":
                 new DebugCollector(cmonitor.containers.get("db")).start();
                 break;
-                
+
             case "datasync":
                 if (syncviewer == null)
                     syncviewer = new DataSyncInterface();
                 syncviewer.setVisible(true);
                 break;
-                
+
             case "quit":
                 if (applicationdone) 
                 {
@@ -166,11 +169,13 @@ public class TrayMonitor implements ActionListener
                     "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
                 {
                     applicationdone = true;
+                    if (syncviewer != null)
+                        syncviewer.shutdown();
                     mmonitor.poke();
                     cmonitor.poke();
                 }
                 break;
-                
+
             default:
                 Launcher.launchExternal(cmd, null);
         }
@@ -200,7 +205,7 @@ public class TrayMonitor implements ActionListener
             mshutdown();
         }
     }
-       
+
     /**
      * Thread to start machine and monitor port forwarding
      */
@@ -215,7 +220,7 @@ public class TrayMonitor implements ActionListener
             super("MachineMonitor", 10000);
             machineenv = null;
         }
-        
+
         protected void signalready(boolean ready)
         {
             if (ready != readyforcontainers)
@@ -224,7 +229,7 @@ public class TrayMonitor implements ActionListener
                 cmonitor.poke();
             }
         }
-        
+
         @Override
         protected boolean minit()
         {
@@ -233,6 +238,7 @@ public class TrayMonitor implements ActionListener
                 signalready(true);
                 mMachineStatus.setLabel("Machine: Not needed");
                 mMachineStatus.setEnabled(false);
+                portsforwarded = true; // pf not needed, flag needs to be true to remove warning icon
                 return false;
             }
 
@@ -246,13 +252,13 @@ public class TrayMonitor implements ActionListener
                     return false;
                 }
             }
-            
+
             jsch = new JSch();
             machineenv = DockerMachine.machineenv();
             log.finest("dockerenv = " + machineenv);
             return true;
         }
-        
+
         @Override
         protected boolean mloop()
         {
@@ -268,9 +274,9 @@ public class TrayMonitor implements ActionListener
                 machineenv = DockerMachine.machineenv();
                 log.finest("dockerenv = " + machineenv);
             }
-            
+
             signalready(true);
-            
+
             try 
             {
                 if ((portforward == null) || (!portforward.isConnected()))
@@ -281,10 +287,10 @@ public class TrayMonitor implements ActionListener
                     String host = "192.168.99.100";
                     Matcher m = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)").matcher(machineenv.get("DOCKER_HOST"));
                     if (m.find()) { host = m.group(1); }
-                    
+
                     if (jsch.getIdentityNames().size() == 0)
                         jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());            
-            
+
                     portforward = jsch.getSession("docker", host);
                     portforward.setConfig("StrictHostKeyChecking", "no");
                     portforward.setConfig("GSSAPIAuthentication",  "no");
@@ -305,7 +311,7 @@ public class TrayMonitor implements ActionListener
             mMachineStatus.setLabel("Machine: Running");
             return true;
         }
-        
+
         @Override
         protected void mshutdown()
         {
@@ -315,18 +321,18 @@ public class TrayMonitor implements ActionListener
             mMachineStatus.setLabel("Machine: Disconnected");
         }
     }
-    
+
 
     /**
      * Thread to keep checking our services for status.  It pauses for 5 seconds but can
      * be woken by anyone calling notify on the class object.
      */
-    class ContainerMonitor extends Monitor
+    class ContainerMonitor extends Monitor implements MessageListener
     {
         Image currentIcon;
         Map<String, DockerContainer> containers;
         Set<String> names;
-        
+
         public ContainerMonitor()
         {
             super("ContainerMonitor", 5000);
@@ -338,8 +344,9 @@ public class TrayMonitor implements ActionListener
             for (DockerContainer c : containers.values())
                 names.add(c.getName());
             currentIcon = null;
+            Messenger.register(MT.POKE_SYNC_SERVER, this);
         }
-        
+
         public boolean minit() 
         {
             mBackendStatus.setLabel("Backend: Waiting for machine");
@@ -348,7 +355,7 @@ public class TrayMonitor implements ActionListener
                     synchronized (this) { this.wait(ms); }
                 } catch (InterruptedException ie) {}
             }
-            
+
 
             for (DockerContainer c : containers.values()) {
                 mBackendStatus.setLabel("Backend: Init " + c.getName());
@@ -356,15 +363,15 @@ public class TrayMonitor implements ActionListener
                 c.createNetsAndVolumes();
                 c.start();
             }
-            
+
             return true; 
         }
-        
+
         public boolean mloop()
         {
             boolean ok = true;
             Set<String> dead = DockerContainer.finddown(mmonitor.machineenv, names);
-            
+
             // Something isn't running, try and start them now            
             if (dead.size() > 0) {
                 ok = false;
@@ -382,7 +389,7 @@ public class TrayMonitor implements ActionListener
 
             if (ok)
                 mBackendStatus.setLabel("Backend: Running");
-            
+
             Image next = (ok & portsforwarded) ? coneok : conewarn;                    
             if (next != currentIcon) 
             {
@@ -391,7 +398,7 @@ public class TrayMonitor implements ActionListener
             }
             return ok;
         }
-        
+
         public void mshutdown()
         {
             mBackendStatus.setLabel("Backend: Shutting down");
@@ -402,9 +409,16 @@ public class TrayMonitor implements ActionListener
                 log.severe("Unable to stop the web and database services. See logs.");
             mBackendStatus.setLabel("Backend: Stopped");
         }
+
+		@Override
+		public void event(MT type, Object data) {
+			if (type == MT.POKE_SYNC_SERVER) {
+				containers.get("sync").poke();
+			}
+		}
     }    
 
-    
+
     /**
      * Main entry point.
      * @param args passed to any launched application, ignored otherwise

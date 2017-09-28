@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 /**
  */
@@ -56,7 +57,7 @@ public class Logging
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
         applog.setLevel(Prefs.isDebug() ? Level.FINEST : Level.INFO);
-        applog.addHandler(new AlertHandler(Level.WARNING));
+        applog.addHandler(new AlertHandler());
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
             @Override
@@ -79,11 +80,17 @@ public class Logging
         }
     }
 
+    /**
+     * Special handler that looks for the unprintable backspace '\b' character in a log record
+     * as an indicator that it should throw up a dialog with the record message.  This lets us
+     * still log warning and severe messages but only use a dialog when requested and with
+     * a very easy indicator that works inside the java logging framework.
+     */
     public static class AlertHandler extends Handler
     {
-        public AlertHandler(Level l)
+        public AlertHandler()
         {
-            setLevel(l);
+            setLevel(Level.ALL);
             setFormatter(new SimpleFormatter());
         }
 
@@ -93,6 +100,9 @@ public class Logging
             {
                 int type;
                 String title;
+                if (logRecord.getMessage().charAt(0) != '\b') {
+                    return;
+                }
 
                 int val = logRecord.getLevel().intValue();
                 if (val >= Level.SEVERE.intValue())
@@ -114,7 +124,14 @@ public class Logging
                 String record = getFormatter().formatMessage(logRecord);
                 if (record.contains("\n"))
                     record = "<HTML>" + record.replace("\n", "<br>") + "</HTML>";
-                JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), record, title, type);
+
+                // stay off FX or other problem threads
+                final String msg = record;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override public void run() {
+                        JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, type);
+                    }
+                });
             }
         }
 
@@ -142,7 +159,7 @@ public class Logging
             if (record.getSourceMethodName() != null)
                 sb.append(" " + record.getSourceMethodName());
             sb.append(" " + record.getLevel().getLocalizedName() + ": ");
-            sb.append(formatMessage(record));
+            sb.append(formatMessage(record).replaceAll("[\b]", ""));
             sb.append("\n");
 
             if (record.getThrown() != null)

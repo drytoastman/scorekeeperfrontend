@@ -10,6 +10,7 @@ package org.wwscc.tray;
 
 import java.awt.Font;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -35,15 +36,16 @@ public class DataSyncInterface extends JFrame implements MessageListener
     private static final Logger log = Logger.getLogger(DataSyncInterface.class.getName());
 
     MergeStatusTable table;
-    
+    boolean done;
+
     public DataSyncInterface()
     {
         super("Data Synchronization");
-        
+
         JPanel content = new JPanel(new MigLayout("fill", "fill", "fill"));
-        
+
         table = new MergeStatusTable();
-        
+
         JLabel header = new JLabel("Sync Status");
         header.setFont(header.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
         content.add(header, "wrap");
@@ -52,25 +54,30 @@ public class DataSyncInterface extends JFrame implements MessageListener
         setJMenuBar(new Controls());
         setBounds(Prefs.getWindowBounds("datasync"));
         setVisible(true);
-
-        Database.openPublic(true);
-        Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
-        Messenger.register(MT.DATABASE_NOTIFICATION, this);
-        new UpdaterThread().start();
         Prefs.trackWindowBounds(this, "datasync");        
+
+        new UpdaterThread().start();
     }
-    
-    
+
+    public void shutdown()
+    {
+        done = true;
+    }
+
     class UpdaterThread extends Thread
     {
-        boolean done = false;
-
         @Override
         public void run()
         {
-            Set<String> tables = new HashSet<String>();
-            tables.add("mergeservers");
-            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, tables);
+            done = false;
+            Database.openPublic(true);
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
+            Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
+
+            // force an update on start, on the event thread
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+
+            // other wise, we just ping/poke the database which is the only way to receive any NOTICE events
             while (!done) {
                 try {
                     Database.d.ping();
@@ -79,10 +86,10 @@ public class DataSyncInterface extends JFrame implements MessageListener
                     log.log(Level.WARNING, e.toString(), e);
                 }
             }
+            Database.d.close();
         }
     }
-    
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void event(MT type, Object data) 
@@ -95,14 +102,14 @@ public class DataSyncInterface extends JFrame implements MessageListener
             }
         }
     }
-    
-        
+
+
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         System.setProperty("program.name", "DataSyncTestMain");
         Logging.logSetup("datasync");
-                
+
         DockerMachine.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
