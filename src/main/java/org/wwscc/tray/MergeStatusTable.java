@@ -116,13 +116,8 @@ public class MergeStatusTable extends JTable {
                 return -1;
             if (o.serverid.equals(IdGenerator.nullid))
                 return 1;
-            if (active != o.active)
-            {
-                if (active)
-                    return -1;
-                else
-                    return 1;
-            }
+            if (hoststate != o.hoststate)
+                return hoststate.compareTo(o.hoststate);
             
             return hostname.compareTo(o.hostname);
         }

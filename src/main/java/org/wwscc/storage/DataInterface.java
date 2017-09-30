@@ -149,10 +149,11 @@ public interface DataInterface
 	
 	/* MergeServers interface */
 	public void mergeServerSetLocal(String name, String address);
+	public void mergeServerSetRemote(String hostname, String address);
 	public void mergeServerInactivateAll();
 	public void mergeServerActivate(UUID serverid, String name, String ip);
 	public void mergeServerDeactivate(UUID serverid);
-	public void mergeServerSet(String name, boolean active, boolean oneshot, boolean mergenow);
+	public void mergeServerUpdateNow(UUID serverid);
 	public void mergeServerResetAll();
 	public List<MergeServer> getMergeServers();
 	

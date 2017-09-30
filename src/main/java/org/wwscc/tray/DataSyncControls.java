@@ -56,7 +56,7 @@ public class DataSyncControls extends JMenuBar
 
             HSResult ret = hd.getResult();
             Database.d.verifyUserAndSeries(ret.series, ret.password);
-            Database.d.mergeServerSet(ret.host, true, true, true);
+            Database.d.mergeServerUpdateNow(ret.host.getServerId());
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }	
@@ -70,7 +70,7 @@ public class DataSyncControls extends JMenuBar
 	        HostSeriesSelectionDialog d = new HostSeriesSelectionDialog(false);
 	        if (!d.doDialog("Select Host", null))
 	            return;
-	        Database.d.mergeServerSet(d.getResult().host, true, true, true);
+	        Database.d.mergeServerUpdateNow(d.getResult().host.getServerId());
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
 	    }
 	}

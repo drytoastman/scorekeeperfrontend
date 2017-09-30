@@ -986,11 +986,21 @@ public abstract class SQLDataInterface implements DataInterface
 
 	
 	@Override
-	public void mergeServerSetLocal(String name, String address)
+	public void mergeServerSetLocal(String name, String address) 
+	{
+        _mergeServerSet(IdGenerator.nullid, name, address);	    
+	}
+	
+    @Override
+    public void mergeServerSetRemote(String name, String address) 
+    {
+        _mergeServerSet(IdGenerator.generateV5DNSId(name), name, address);
+    }
+	
+    private void _mergeServerSet(UUID serverid, String name, String address)
     {
         try
         {
-            UUID serverid = IdGenerator.nullid;
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address) VALUES (?, ?, ?) " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?", newList(serverid, name, address, name, address));
         }
@@ -1019,8 +1029,8 @@ public abstract class SQLDataInterface implements DataInterface
 	{
         try
         {
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, active) VALUES (?, ?, ?, now(), true) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(),  active=true",
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, hoststate) VALUES (?, ?, ?, now(), 'A') " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(), hoststate='A'",
                           newList(serverid, name, ip, name, ip));
         }
         catch (SQLException ioe)
@@ -1034,7 +1044,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
         try
         {
-            executeUpdate("UPDATE mergeservers SET active=false, nextcheck='epoch' WHERE serverid=?", newList(serverid));
+            executeUpdate("UPDATE mergeservers SET hoststate='I', nextcheck='epoch' WHERE serverid=?", newList(serverid));
         }
         catch (SQLException ioe)
         {
@@ -1043,16 +1053,11 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 	
 	@Override
-	public void mergeServerSet(String name, boolean active, boolean oneshot, boolean mergenow)
+	public void mergeServerUpdateNow(UUID serverid)
 	{
         try
         {
-            String when = mergenow ? "now" : "epoch";
-            String hostname = name.toLowerCase();
-            UUID serverid = IdGenerator.generateV5DNSId(hostname);
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, active, oneshot, nextcheck) VALUES (?, ?, ?, ?, ?::timestamp) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, active=?, oneshot=?, nextcheck=?::timestamp",
-                          newList(serverid, hostname, active, oneshot, when, hostname, active, oneshot, when));
+            executeUpdate("UPDATE mergeservers SET hoststate=(CASE hoststate WHEN 'I' THEN '1' ELSE hoststate END), nextcheck=now()::timestamp WHERE serverid=?", newList(serverid));
         }
         catch (Exception ioe)
         {

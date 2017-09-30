@@ -8,16 +8,16 @@
 
 package org.wwscc.tray;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
 import javax.swing.SwingWorker;
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.storage.Database;
@@ -34,7 +34,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     
     static public class HSResult
     {
-        public String host;
+        public MergeServer host;
         public String series;
         public String password;
     }
@@ -42,29 +42,16 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     public HostSeriesSelectionDialog(boolean doseries)
     {
         super(new MigLayout(""), false);
-        
-        Set<String> hosts = new HashSet<String>();
-        Set<String> ips = new HashSet<String>();
 
-        hosts.add("scorekeeper.wwscc.org");
-        for (MergeServer s : Database.d.getMergeServers())
-        {
-            if (s.isLocalHost())
-                continue;
-            if (!s.getHostname().contains("."))
-                ips.add(s.getAddress().toLowerCase());
-            else
-                hosts.add(s.getHostname().toLowerCase());
+        List<MergeServer> data = Database.d.getMergeServers();
+        ListIterator<MergeServer> iter = data.listIterator();
+        while (iter.hasNext()) {
+            if (iter.next().isLocalHost())
+                iter.remove();
         }
         
-        List<String> shosts = new ArrayList<String>(hosts);
-        List<String> sips = new ArrayList<String>(ips);
-        Collections.sort(shosts);
-        Collections.sort(sips);
-        shosts.addAll(sips);
-        
         mainPanel.add(label("Host", true), "");
-        mainPanel.add(select("host", null, shosts, this), "grow, wrap");
+        mainPanel.add(select("host", null, data, this), "grow, wrap");
         if (doseries) {
             mainPanel.add(label("Series", true), "");
             mainPanel.add(select("series", null, new Object[] {}, null), "grow, wrap");
@@ -72,7 +59,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
             mainPanel.add(entry("password", ""), "grow, wrap");
             ok.setText("Verify Password");
         }
-        selects.get("host").setEditable(true);
+        selects.get("host").setRenderer(new MergeServerRenderer());
     }
     
     @Override
@@ -95,12 +82,12 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         {
             if (passchecker != null)
                 passchecker.cancel(true);
-            String h = (String)getSelect("host");
+            MergeServer h = (MergeServer)getSelect("host");
             String s = (String)getSelect("series");
             String p = getEntryText("password");
             if ((h != null) && (s != null) && (p != null))
             {
-                passchecker = new CheckRemotePassword(h, s, p);
+                passchecker = new CheckRemotePassword(h.getConnectEndpoint(), s, p);
                 passchecker.execute();
             }
         }
@@ -112,31 +99,47 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     public boolean verifyData() 
     {
         HSResult s = getResult();
-        return ((s.host != null) && !s.host.equals(""));
+        return ((s.host != null) && !s.host.getHostname().equals(""));
     }
     
     @Override
     public HSResult getResult() 
     { 
         HSResult ret = new HSResult();
-        ret.host   = (String)getSelect("host");
+        ret.host   = (MergeServer)getSelect("host");
         ret.series = (String)getSelect("series");
         ret.password = getEntryText("password");
         return ret;
     }
     
+    class MergeServerRenderer extends DefaultListCellRenderer
+    {
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) 
+        {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof MergeServer) {
+                MergeServer m = (MergeServer)value;
+                if (m.getAddress().equals(""))
+                    setText(m.getHostname());
+                else
+                    setText(m.getHostname() + "/" + m.getAddress());
+            }
+            return this;
+        }
+    }
+    
     class GetRemoteSeries extends SwingWorker<List<String>, String>
     {
-        String host;
-        public GetRemoteSeries(String fromhost)
+        MergeServer server;
+        public GetRemoteSeries(MergeServer fromhost)
         {
-            host = fromhost;
+            server = fromhost;
         }
         
         @Override
         protected List<String> doInBackground() throws Exception 
         {
-            List<String> series = PostgresqlDatabase.getSeriesList(host);
+            List<String> series = PostgresqlDatabase.getSeriesList(server.getConnectEndpoint());
             series.removeAll(PostgresqlDatabase.getSeriesList(null));
             return series;
         }

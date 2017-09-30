@@ -49,6 +49,8 @@ public class DockerContainer
     /**
      * Quicker to send the stop signal all at once and let docker do the graceful
      * wait followed by a hard kill.
+     * @param containers the list of containers to stop
+     * @return true if the docker command returns ok
      */
     public static boolean stopAll(Collection<DockerContainer> containers)
     {

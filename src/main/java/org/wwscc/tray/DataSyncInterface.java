@@ -71,7 +71,10 @@ public class DataSyncInterface extends JFrame implements MessageListener
         public void run()
         {
             done = false;
+            // These two should always be there
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
+            Database.d.mergeServerSetRemote("scorekeeper.wwscc.org", "");
+
             Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
 
             // force an update on start, on the event thread

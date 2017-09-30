@@ -62,7 +62,7 @@ public class Logging
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                applog.log(Level.WARNING, String.format("UncaughtException in %s: %s", t, e), e);
+                applog.log(Level.WARNING, String.format("\bUncaughtException in %s: %s", t, e), e);
             }});
 
         try {

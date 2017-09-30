@@ -23,14 +23,22 @@ import org.wwscc.util.IdGenerator;
 
 public class MergeServer
 {
+    public static enum HostState {
+        ACTIVE,
+        ONESHOT,
+        INACTIVE,
+        UNKNOWN,
+    };
+    
     protected UUID       serverid;
     protected String     hostname;
     protected String     address;
-    protected int        waittime;
     protected Timestamp  lastcheck;
-    protected Timestamp  nextcheck;
-    protected boolean    active;
-    protected boolean    oneshot;
+    protected Timestamp  nextcheck;    
+    protected int        waittime;
+    protected int        ctimeout;
+    protected int        cfailures;
+    protected HostState  hoststate;
     protected Map<String, JSONObject> seriesstate;
         
     @Override
@@ -44,11 +52,12 @@ public class MergeServer
         serverid    = m.serverid;
         hostname    = m.hostname;
         address     = m.address;
-        waittime    = m.waittime;
         lastcheck   = m.lastcheck;
         nextcheck   = m.nextcheck;
-        active      = m.active;
-        oneshot     = m.oneshot;
+        waittime    = m.waittime;
+        ctimeout    = m.ctimeout;
+        cfailures   = m.cfailures;
+        hoststate   = m.hoststate;
         seriesstate = m.seriesstate;
     }
     
@@ -57,11 +66,18 @@ public class MergeServer
         serverid    = (UUID)rs.getObject("serverid");
         hostname    = rs.getString("hostname");
         address     = rs.getString("address");
-        waittime    = rs.getInt("waittime");
         lastcheck   = rs.getTimestamp("lastcheck", Database.utc);
         nextcheck   = rs.getTimestamp("nextcheck", Database.utc);
-        active      = rs.getBoolean("active");
-        oneshot     = rs.getBoolean("oneshot");
+        waittime    = rs.getInt("waittime");
+        ctimeout    = rs.getInt("ctimeout");
+        cfailures   = rs.getInt("cfailures");
+        String hs   = rs.getString("hoststate");
+        switch (hs) {
+            case "A": hoststate = HostState.ACTIVE; break;
+            case "1": hoststate = HostState.ONESHOT; break;
+            case "I": hoststate = HostState.INACTIVE; break;
+            default:  hoststate = HostState.UNKNOWN; break;
+        }
         seriesstate = new HashMap<String, JSONObject>();
         try {
             JSONObject mergestate = (JSONObject)new JSONParser().parse(rs.getString("mergestate"));
@@ -72,16 +88,26 @@ public class MergeServer
         }
     }
 
-    public UUID getServerId()         { return serverid; }
-    public String getHostname()       { return hostname; }
-    public String getAddress()        { return address;  }
-    public boolean isActive()         { return active;   }
-    public boolean isOneShot()        { return oneshot;    }
-    public Timestamp getLastCheck()   { return lastcheck;  }
-    public Timestamp getNextCheck()   { return nextcheck;  }
-    public int getWaitTime()          { return waittime; }
+    public UUID getServerId()         { return serverid;  }
+    public String getHostname()       { return hostname;  }
+    public String getAddress()        { return address;   }
+    public Timestamp getLastCheck()   { return lastcheck; }
+    public Timestamp getNextCheck()   { return nextcheck; }
+    public int getWaitTime()          { return waittime;  }
+    public int getConnectTimeout()    { return ctimeout;  }
+    public int getConnectFailures()   { return cfailures; }
+    public HostState getHostState()   { return hoststate; }
     public Set<String> getSeriesSet() { return seriesstate.keySet(); }
     public boolean isLocalHost()      { return serverid.equals(IdGenerator.nullid); }
+    
+    public boolean isActive()         { return ((hoststate == HostState.ACTIVE) || (hoststate == HostState.ONESHOT)); }
+    
+    public String getConnectEndpoint() 
+    {
+        if (address.equals(""))
+            return hostname;
+        return address;
+    }
     
     public JSONObject getSeriesState(String series) 
     { 
