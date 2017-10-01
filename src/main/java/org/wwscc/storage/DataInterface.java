@@ -148,8 +148,8 @@ public interface DataInterface
 	public String getEffectiveIndexStr(Car c);
 	
 	/* MergeServers interface */
-	public void mergeServerSetLocal(String name, String address);
-	public void mergeServerSetRemote(String hostname, String address);
+	public void mergeServerSetLocal(String name, String address, int ctimeout);
+	public void mergeServerSetRemote(String hostname, String address, int ctimeout);
 	public void mergeServerInactivateAll();
 	public void mergeServerActivate(UUID serverid, String name, String ip);
 	public void mergeServerDeactivate(UUID serverid);

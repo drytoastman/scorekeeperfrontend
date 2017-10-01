@@ -17,6 +17,11 @@ import org.apache.commons.collections4.map.MultiKeyMap;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/**
+ * Simple presence and info detection.  Assumes that each IP will only be hosting one 
+ * of each type of service string at this point.  Maybe more later but there doesn't
+ * seem to be any need to support that.
+ */
 @SuppressWarnings("unchecked")
 public class Discovery
 {
@@ -26,6 +31,10 @@ public class Discovery
     public static final String DISCOVERY_GROUP = "224.0.0.251";
     public static final int    DISCOVERY_PORT  = 5454;
     public static final long   TIMEOUT_MS      = 10000;
+    
+    public static final String BWTIMER_TYPE    = "BWTIMER";
+    public static final String PROTIMER_TYPE   = "PROTIMER";
+    public static final String DATABASE_TYPE   = "DATABASE";
     
     public interface DiscoveryListener 
     {

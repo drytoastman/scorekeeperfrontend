@@ -102,8 +102,8 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         {
             done = false;
             // These two should always be there
-            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress());
-            Database.d.mergeServerSetRemote("scorekeeper.wwscc.org", "");
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+            Database.d.mergeServerSetRemote("scorekeeper.wwscc.org", "", 10);
 
             Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
 
@@ -130,13 +130,13 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             JSONObject data = new JSONObject();
             data.put("serverid", Prefs.getServerId().toString());
             data.put("hostname", Network.getLocalHostName());
-            Discovery.get().addServiceListener("POSTGRES", this);
-            Discovery.get().registerService("POSTGRES", data);
+            Discovery.get().addServiceListener(Discovery.DATABASE_TYPE, this);
+            Discovery.get().registerService(Discovery.DATABASE_TYPE, data);
         }
         else
         {
-            Discovery.get().removeServiceListener("POSTGRES", this);
-            Discovery.get().unregisterService("POSTGRES");
+            Discovery.get().removeServiceListener(Discovery.DATABASE_TYPE, this);
+            Discovery.get().unregisterService(Discovery.DATABASE_TYPE);
         }
     }
     

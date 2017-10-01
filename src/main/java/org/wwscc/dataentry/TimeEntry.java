@@ -59,6 +59,7 @@ import org.wwscc.dialogs.SimpleFinderDialog;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.SerialDataInterface;
 import org.wwscc.timercomm.TimerClient;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.IntTextField;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -314,13 +315,13 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 						throw new Exception("cancel");
 					break;
 				case BWTIMER_NETWORK:
-					SimpleFinderDialog dialog = new SimpleFinderDialog(SimpleFinderDialog.BWTIMER_TYPE);
+					SimpleFinderDialog dialog = new SimpleFinderDialog(Discovery.BWTIMER_TYPE);
 					dialog.doDialog("Find BW Timers", null);
 					if ((newAddr = dialog.getResult()) == null)
 						throw new Exception("cancel");
 					break;
 				case PROTIMER_NETWORK:					
-					SimpleFinderDialog dialog2 = new SimpleFinderDialog(SimpleFinderDialog.PROTIMER_TYPE);
+					SimpleFinderDialog dialog2 = new SimpleFinderDialog(Discovery.PROTIMER_TYPE);
 					dialog2.doDialog("Find Pro Timers", null);
 					if ((newAddr = dialog2.getResult()) == null)
 						throw new Exception("cancel");

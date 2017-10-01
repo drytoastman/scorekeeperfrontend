@@ -37,15 +37,20 @@ if (-Not ($names -contains "Scorekeeper Web")) {
 }
 Write-Host "3. WebServer Firewall Rule Present" -foregroundcolor "green"
 
-if (-Not ($names -contains "Scorekeeper DB")) {
+if (-Not ($names -contains "Scorekeeper Database")) {
     netsh advfirewall firewall add rule name="Scorekeeper Database"   dir=in action=allow protocol=TCP localport=54329
 }
 Write-Host "4. Database Firewall Rule Present" -foregroundcolor "green"
 
-if (-Not ($names -contains "Scorekeeper MDNS")) {
+if (-Not ($names -contains "Scorekeeper Timers")) {
+    netsh advfirewall firewall add rule name="Scorekeeper Timers"   dir=in action=allow protocol=TCP localport=54328
+}
+Write-Host "5. Timers Firewall Rule Present" -foregroundcolor "green"
+
+if (-Not ($names -contains "Scorekeeper Discovery")) {
     netsh advfirewall firewall add rule name="Scorekeeper Discovery" dir=in action=allow protocol=UDP localport=5454
 }
-Write-Host "5. MDNS Discovery Firewall Rule Present" -foregroundcolor "green"
+Write-Host "6. Discovery Firewall Rule Present" -foregroundcolor "green"
 
 Read-Host "Press Any Key To Exit"
 

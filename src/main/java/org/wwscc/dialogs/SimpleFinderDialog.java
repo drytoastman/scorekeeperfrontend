@@ -42,10 +42,6 @@ import net.miginfocom.swing.MigLayout;
 public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements ListSelectionListener
 {
 	//private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
-	public static final String BWTIMER_TYPE  = "_bwtimer._tcp.local.";
-	public static final String PROTIMER_TYPE = "_protimer._tcp.local.";
-	public static final String DATABASE_TYPE = "_postgresql._tcp.local.";
-			
 	private JServiceList list;
 	private List<String> services;
 	
@@ -69,9 +65,9 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 
 		// some defaults
 		Map<String, Icon> iconMap = new HashMap<String, Icon>();
-		iconMap.put(BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
-		iconMap.put(PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
-		iconMap.put(DATABASE_TYPE, new ImageIcon(Resources.loadImage("server.gif")));
+		iconMap.put(Discovery.BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
+		iconMap.put(Discovery.PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
+		iconMap.put(Discovery.DATABASE_TYPE, new ImageIcon(Resources.loadImage("server.gif")));
 		
 		list = new JServiceList(iconMap);
 		list.addListSelectionListener(this);
@@ -149,7 +145,7 @@ class ServiceInfo
         if (this == obj) return true;
         if ((obj == null) || (obj.getClass() != getClass())) return false;
         ServiceInfo other = (ServiceInfo)obj;
-        return servicetype.equals(other.servicetype) && ip.equals(other.ip);
+        return servicetype.equals(other.servicetype) && ip.equals(other.ip) && serviceport == other.serviceport;
     }
 
     String servicetype;
@@ -160,7 +156,11 @@ class ServiceInfo
     {
         this.servicetype = servicetype;
         this.ip          = ip;
-        this.serviceport = ((Long)data.get("serviceport")).intValue();
+        try {
+            this.serviceport = ((Long)data.get("serviceport")).intValue();
+        } catch (Exception e) {
+            this.serviceport = 0;
+        }
     }
 }
 
@@ -192,7 +192,7 @@ class JServiceList extends JList<ServiceInfo> implements DiscoveryListener
 	public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
 	{
 	    ServiceInfo info = new ServiceInfo(service, ip, data);
-	    if (up) {
+	    if (up && !serviceModel.contains(info)) {
 	        serviceModel.addElement(info);  // FINISH ME
 	    } else {
 	        serviceModel.removeElement(info);

@@ -28,6 +28,7 @@ import org.wwscc.storage.Event;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.TimerClient;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -612,7 +613,7 @@ public class ChallengeModel implements MessageListener
 				try
 				{
 					InetSocketAddress newAddr;
-					SimpleFinderDialog dialog = new SimpleFinderDialog(SimpleFinderDialog.PROTIMER_TYPE);
+					SimpleFinderDialog dialog = new SimpleFinderDialog(Discovery.PROTIMER_TYPE);
 					dialog.doDialog("Find Pro Timers", null);
 					if ((newAddr = dialog.getResult()) != null)
 					{

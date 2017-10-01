@@ -986,23 +986,23 @@ public abstract class SQLDataInterface implements DataInterface
 
 	
 	@Override
-	public void mergeServerSetLocal(String name, String address) 
+	public void mergeServerSetLocal(String name, String address, int ctimeout) 
 	{
-        _mergeServerSet(IdGenerator.nullid, name, address);	    
+        _mergeServerSet(IdGenerator.nullid, name, address, ctimeout);	    
 	}
 	
     @Override
-    public void mergeServerSetRemote(String name, String address) 
+    public void mergeServerSetRemote(String name, String address, int ctimeout) 
     {
-        _mergeServerSet(IdGenerator.generateV5DNSId(name), name, address);
+        _mergeServerSet(IdGenerator.generateV5DNSId(name), name, address, ctimeout);
     }
 	
-    private void _mergeServerSet(UUID serverid, String name, String address)
+    private void _mergeServerSet(UUID serverid, String name, String address, int ctimeout)
     {
         try
         {
-            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address) VALUES (?, ?, ?) " +
-                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?", newList(serverid, name, address, name, address));
+            executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, ctimeout) VALUES (?, ?, ?, ?) " +
+                          "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, ctimeout=?", newList(serverid, name, address, ctimeout, name, address, ctimeout));
         }
         catch (SQLException ioe)
         {

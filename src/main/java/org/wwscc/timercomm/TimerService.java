@@ -19,7 +19,6 @@ import org.json.simple.JSONObject;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.Discovery;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
@@ -30,10 +29,10 @@ import org.wwscc.util.Messenger;
 public class TimerService implements RunServiceInterface
 {
 	private static final Logger log = Logger.getLogger(TimerService.class.getName());
+	public static final int TIMER_DEFAULT_PORT = 54328;
 
 	Thread autocloser;
 	String servicetype;
-	String servicename;
 	ServerSocket serversock;
 	Vector<RunServiceInterface> clients;
 	Vector<RunServiceInterface> marked;
@@ -41,10 +40,13 @@ public class TimerService implements RunServiceInterface
 	
 	public TimerService(String type) throws IOException
 	{
-		serversock = new ServerSocket(0);
+	    try {
+	        serversock = new ServerSocket(TIMER_DEFAULT_PORT);
+	    } catch (IOException ioe) {
+	        serversock = new ServerSocket(0);
+	    }
 		servicetype = type;
-		servicename = IdGenerator.generateId().toString();
-		log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{servicename, serversock.getLocalPort()});
+		log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{type, serversock.getLocalPort()});
 		
 		clients = new Vector<RunServiceInterface>();
 		marked = new Vector<RunServiceInterface>();
@@ -120,8 +122,6 @@ public class TimerService implements RunServiceInterface
 		{
 			try {
 		        JSONObject data = new JSONObject();
-		        data.put("servicetype", servicetype);
-		        data.put("servicename", servicename);
 		        data.put("serviceport", serversock.getLocalPort());
 		        Discovery.get().registerService(servicetype, data);
                 Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, Discovery.get().getLocalAddress(), serversock.getLocalPort() } );
