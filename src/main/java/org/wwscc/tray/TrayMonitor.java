@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
 import org.wwscc.storage.Database;
+import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.Launcher;
 import org.wwscc.util.Logging;
 import org.wwscc.util.Resources;
@@ -47,7 +48,6 @@ public class TrayMonitor implements ActionListener
 
     // not initialized or started until startAndWaitForThreads
     DataSyncInterface syncviewer = null;
-    DatabaseDiscovery discovery = null;
     DockerMonitors.MachineMonitor   mmonitor;
     DockerMonitors.ContainerMonitor cmonitor;
     
@@ -110,7 +110,7 @@ public class TrayMonitor implements ActionListener
         } catch (AWTException e) {
             log.severe("\bFailed to create TrayIcon: " + e);
             System.exit(-2);
-        }
+        }        
     }
 
     /**
@@ -124,11 +124,6 @@ public class TrayMonitor implements ActionListener
         cmonitor.start();
         mmonitor = new DockerMonitors.MachineMonitor(state);
         mmonitor.start();
-        new Thread(new Runnable() {
-            @Override public void run() {
-                discovery = new DatabaseDiscovery();
-            }
-         }).start();
 
         try {
             while (mmonitor.isAlive() || cmonitor.isAlive())
@@ -137,7 +132,7 @@ public class TrayMonitor implements ActionListener
             log.warning("Exiting due to interuption: " + ie);
         }
     }
-
+    
     private void newAppItem(String initial, String cmd, Menu parent)
     {
         MenuItem m = new MenuItem(initial);
@@ -159,9 +154,8 @@ public class TrayMonitor implements ActionListener
                 break;
 
             case "datasync":
-                if (syncviewer == null)
-                    syncviewer = new DataSyncInterface();
-                syncviewer.setVisible(true);
+                if (syncviewer != null)
+                    syncviewer.setVisible(true);
                 break;
 
             case "Quit":
@@ -219,7 +213,9 @@ public class TrayMonitor implements ActionListener
 	        if (next != _currentIcon) // the following should only occur on state change 
 	        {
 	        	if (next == coneok) {
+	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
+		            syncviewer = new DataSyncInterface();
 		        	for (MenuItem m : appMenus.values())
 		        		m.setEnabled(true);
 	        	}
@@ -240,10 +236,7 @@ public class TrayMonitor implements ActionListener
             	return;
             	
             _applicationdone = true;
-            if (discovery != null)
-                discovery.shutdown();
-            if (syncviewer != null)
-                syncviewer.shutdown();
+            syncviewer.shutdown();
             Database.d.close();
             mmonitor.poke();
             cmonitor.poke();

@@ -15,15 +15,13 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceInfo;
-
+import org.json.simple.JSONObject;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.Network;
 
 /**
  * A server that create TimerClients for each connection as well as running a
@@ -33,7 +31,6 @@ public class TimerService implements RunServiceInterface
 {
 	private static final Logger log = Logger.getLogger(TimerService.class.getName());
 
-    JmDNS jmdns; 
 	Thread autocloser;
 	String servicetype;
 	String servicename;
@@ -41,7 +38,6 @@ public class TimerService implements RunServiceInterface
 	Vector<RunServiceInterface> clients;
 	Vector<RunServiceInterface> marked;
 	boolean done;
-
 	
 	public TimerService(String type) throws IOException
 	{
@@ -115,31 +111,20 @@ public class TimerService implements RunServiceInterface
 		return ret;
 	}
 
-	class AutoCloseHook extends Thread
-	{
-		@Override
-		public void run()
-		{
-			try { 
-				jmdns.unregisterAllServices(); 
-				jmdns.close(); 
-			} catch (IOException ioe) {
-				log.warning("Error shutting down TimerService announcer");
-			}
-		}
-	}
 	
 	class ServiceThread implements Runnable
 	{
-		@Override
+		@SuppressWarnings("unchecked")
+        @Override
 		public void run()
 		{
 			try {
-	            jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());                
-				jmdns.registerService(ServiceInfo.create(servicetype, servicename, serversock.getLocalPort(), ""));
-                Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, jmdns.getInetAddress().getHostAddress(), serversock.getLocalPort() } );
-				autocloser = new AutoCloseHook();
-				Runtime.getRuntime().addShutdownHook(autocloser);
+		        JSONObject data = new JSONObject();
+		        data.put("servicetype", servicetype);
+		        data.put("servicename", servicename);
+		        data.put("serviceport", serversock.getLocalPort());
+		        Discovery.get().registerService(servicetype, data);
+                Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, Discovery.get().getLocalAddress(), serversock.getLocalPort() } );
 			} catch (IOException ioe) {
 				log.warning("Unable to register timer service for discovery: " + ioe);
 			}
@@ -164,9 +149,8 @@ public class TimerService implements RunServiceInterface
 				((TimerClient)tc).stop();
 			}
 
+			Discovery.get().unregisterService(servicetype);
 			try { serversock.close(); } catch (IOException ioe) {}
-			autocloser.start();
-			Runtime.getRuntime().removeShutdownHook(autocloser);
 			
 			Messenger.sendEvent(MT.TIMER_SERVICE_NOTLISTENING, this);
 		}

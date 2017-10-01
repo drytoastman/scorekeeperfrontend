@@ -34,6 +34,26 @@ public class PostgresqlDatabase extends SQLDataInterface
 	private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public", "template"});
 
 	/**
+	 * Static function to wait for the database to start and initialize
+	 */
+	static public void waitUntilUp() 
+	{
+        while (true) {
+            try {
+                Connection c = getConnection(null, false);
+                c.close();
+                return;
+            } catch (SQLException sqle) {
+                String ss = sqle.getSQLState();
+                if (ss.equals("57P03") || ss.equals("08001")) // database still starting up
+                    continue;
+                log.log(Level.SEVERE, "\bDatabase unavailable due to error "+sqle+","+ss, sqle);
+                return;
+            }
+        }
+	}
+	
+	/**
 	 * Static function to get the list of series from a database.  Gets the schema list
 	 * from the Postgresql connection metadata using the base scorekeeper user.
 	 * @param host a remote host to connect to or null for local database

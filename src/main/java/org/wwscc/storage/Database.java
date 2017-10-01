@@ -59,10 +59,7 @@ public class Database
 	            Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
 	            return true;
 	        } catch (SQLException sqle) {
-	            String ss = sqle.getSQLState();
-	            if (ss.equals("57P03") || ss.equals("08001")) // database still starting up
-	                continue;
-	            log.log(Level.SEVERE, "\bUnable to open database (public-only) due to error "+sqle+","+ss, sqle);
+	            log.log(Level.SEVERE, "\bUnable to open database (public-only) due to error "+sqle+","+sqle.getSQLState(), sqle);
 	            return false;
 	        }
         }

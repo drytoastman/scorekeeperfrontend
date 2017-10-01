@@ -9,7 +9,6 @@
 package org.wwscc.dialogs;
 
 import java.awt.Component;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -17,27 +16,22 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceEvent;
-import javax.jmdns.ServiceInfo;
-import javax.jmdns.ServiceListener;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.wwscc.util.IdGenerator;
-import org.wwscc.util.Network;
+import org.json.simple.JSONObject;
+import org.wwscc.util.Discovery;
+import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.Resources;
 
 import net.miginfocom.swing.MigLayout;
@@ -47,13 +41,13 @@ import net.miginfocom.swing.MigLayout;
  */
 public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements ListSelectionListener
 {
-	private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
+	//private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
 	public static final String BWTIMER_TYPE  = "_bwtimer._tcp.local.";
 	public static final String PROTIMER_TYPE = "_protimer._tcp.local.";
 	public static final String DATABASE_TYPE = "_postgresql._tcp.local.";
 			
 	private JServiceList list;
-	private JmDNS jmdns;
+	private List<String> services;
 	
 	/**
 	 * shortcut when only looking for a single name
@@ -83,7 +77,6 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 		list.addListSelectionListener(this);
 		
 		JScrollPane p = new JScrollPane(list);
-        mainPanel.add(new JLabel("Full Discovery Can Take Up To 6 Seconds"), "spanx 2, center, wrap");
         mainPanel.add(p, "w 300, h 400, growx, spanx 2, wrap");
     
 		mainPanel.add(label("Host", false), "");
@@ -92,32 +85,18 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 		mainPanel.add(ientry("port", 0), "growx, wrap");
 		result = null;
 
-        new Thread(new Runnable() { public void run() {
-            try {
-                jmdns = JmDNS.create(Network.getPrimaryAddress(), IdGenerator.generateId().toString());
-                for (String service : serviceNames) {
-                    jmdns.addServiceListener(service, list);
-                }
-            } catch (IOException ioe) {
-                log.log(Level.WARNING, "Failed to start listening with JmDNS: " + ioe, ioe);
-            }
-          
-        }}).start();
+		services = serviceNames;
+		for (String service : services) {
+		    Discovery.get().addServiceListener(service, list);
+		}
     }
 
 	@Override
 	public void close()
 	{
-		new Thread(new Runnable() {
-			@Override
-			public void run() { 
-			    try { 
-			        jmdns.close(); 
-			    } catch (IOException e) { 
-			        log.log(Level.INFO, "JMDns did not close successfully: " + e, e);
-			    }
-			}
-		}).start();
+        for (String service : services) {
+            Discovery.get().removeServiceListener(service, list);
+        }
 		super.close();
 	}
 	
@@ -138,11 +117,11 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 	@Override
 	public void valueChanged(ListSelectionEvent e) 
 	{
-		ServiceInfo f = list.getSelectedValue();
+	    ServiceInfo f = list.getSelectedValue();
 		if (f != null)
 		{
-			setEntryText("host", f.getHostAddresses()[0]);
-			setEntryText("port", String.valueOf(f.getPort()));
+			setEntryText("host", f.ip.getHostAddress());
+			setEntryText("port", String.valueOf(f.serviceport));
 		}
 		else
 		{
@@ -154,7 +133,39 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 }
 
 
-class JServiceList extends JList<ServiceInfo> implements ServiceListener 
+class ServiceInfo 
+{
+    @Override
+    public int hashCode() 
+    {
+        final int prime = 31;
+        int result = prime + ip.hashCode();
+        return prime * result + servicetype.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) 
+    {
+        if (this == obj) return true;
+        if ((obj == null) || (obj.getClass() != getClass())) return false;
+        ServiceInfo other = (ServiceInfo)obj;
+        return servicetype.equals(other.servicetype) && ip.equals(other.ip);
+    }
+
+    String servicetype;
+    InetAddress ip;
+    int serviceport;
+    
+    public ServiceInfo(String servicetype, InetAddress ip, JSONObject data)
+    {
+        this.servicetype = servicetype;
+        this.ip          = ip;
+        this.serviceport = ((Long)data.get("serviceport")).intValue();
+    }
+}
+
+
+class JServiceList extends JList<ServiceInfo> implements DiscoveryListener 
 {	
 	private static final Logger log = Logger.getLogger(JServiceList.class.getCanonicalName());
 	
@@ -177,27 +188,18 @@ class JServiceList extends JList<ServiceInfo> implements ServiceListener
 		setCellRenderer(renderer);
 	}
 
-
 	@Override
-	public void serviceAdded(ServiceEvent arg0) {}
-
-	@Override
-	public void serviceRemoved(ServiceEvent event)
+	public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
 	{
-		log.info("serviceRemoved: " + event);
-		serviceModel.removeElement(event.getInfo());
-		repaint();
+	    ServiceInfo info = new ServiceInfo(service, ip, data);
+	    if (up) {
+	        serviceModel.addElement(info);  // FINISH ME
+	    } else {
+	        serviceModel.removeElement(info);
+	    }
+        repaint();
 	}
-
-	@Override
-	public void serviceResolved(ServiceEvent event)
-	{
-		log.info("serviceResolved: " + event);
-		if (!serviceModel.contains(event.getInfo()) && event.getInfo().getInet4Addresses().length > 0) {
-			serviceModel.addElement(event.getInfo());
-		}
-		repaint();
-	}
+	
 
 	/**
 	 * Renderer for displaying Icon and service information based on FoundService objects
@@ -222,28 +224,23 @@ class JServiceList extends JList<ServiceInfo> implements ServiceListener
 			 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 			 if (value instanceof ServiceInfo)
 			 {
-				 ServiceInfo f = (ServiceInfo)value;
-				 InetAddress ip = InetAddress.getLoopbackAddress();
+			     ServiceInfo data = (ServiceInfo)value;
 				 String hostname = "";
-				 try {
-					 ip = f.getInet4Addresses()[0];
-				 } catch (Exception e) {
-				 }
 				 
-				 if (hostnames.containsKey(ip))
-					 hostname = hostnames.get(ip);
+				 if (hostnames.containsKey(data.ip))
+					 hostname = hostnames.get(data.ip);
 				 else
-					 new Lookup(ip).execute();
+					 new Lookup(data.ip).execute();
 				 
-				 if (iconMap.containsKey(f.getType()))
+				 if (iconMap.containsKey(data.servicetype))
 				 {
-					setIcon(iconMap.get(f.getType()));
-					setText(String.format("%s (%s:%s)", hostname, ip, f.getPort()));
+					setIcon(iconMap.get(data.servicetype));
+					setText(String.format("%s (%s:%s)", hostname, data.ip, data.serviceport));
 				 }
 				else
 				{
 					setIcon(null);
-					setText(String.format("%s (%s:%s) (type=%s)", hostname, ip, f.getPort(), f.getType()));
+					setText(String.format("%s (%s:%s) (type=%s)", hostname, data.ip, data.serviceport, data.servicetype));
 				}
 			 }
 			 return this;

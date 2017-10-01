@@ -19,7 +19,7 @@ import java.util.UUID;
 public interface DataInterface
 {	
     /**
-     * Ping the server (primarly for check for notifications)
+     * Ping the server (primarily for check for notifications)
      */
     public void ping();
     
