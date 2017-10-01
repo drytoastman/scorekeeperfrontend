@@ -2,8 +2,8 @@
 # Very First Time Ever On Windows
 1. Download WindowsEnvironmentValidate.ps1 from <https://github.com/drytoastman/scorekeeperfrontend/releases> to your computer
 2. Right click on the file and select "Run with PowerShell", it will ask for Administrator priveleges
-3. If all 5 reporting lines are green, you are good to go.
-4. If one of the first two items are read, a webpage will be opened for you to download and install the necessary software
+3. If all 6 reporting lines are green, you are good to go.
+4. If one of the first two items are red, a webpage will be opened for each for you to download and install the necessary software
     * Java 8
     * Docker (Docker-Toolbox for most Windows machines)
 
