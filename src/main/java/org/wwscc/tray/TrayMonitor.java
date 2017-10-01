@@ -206,22 +206,24 @@ public class TrayMonitor implements ActionListener
         
         public void signalComposeReady(boolean ready) 
         {
-            if (ready)
-                mBackendStatus.setLabel("Backend: Running");
-            
 	        Image next = (ready && _portsforwarded) ? coneok : conewarn;                    
 	        if (next != _currentIcon) // the following should only occur on state change 
 	        {
-	        	if (next == coneok) {
+	            if (next == coneok) 
+	            {
+	                mBackendStatus.setLabel("Backend: Waiting for DB");
 	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
 		            syncviewer = new DataSyncInterface();
 		        	for (MenuItem m : appMenus.values())
 		        		m.setEnabled(true);
-	        	}
+	            }
 	            trayIcon.setImage(next); 
 	            _currentIcon = next;
 	        }
+
+            if (ready)
+                mBackendStatus.setLabel("Backend: Running");
         }
                 
         public void shutdownRequest()
