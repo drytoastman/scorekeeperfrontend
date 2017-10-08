@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.tray;
 
 import java.lang.ProcessBuilder.Redirect;
@@ -18,13 +26,17 @@ import org.wwscc.util.Prefs;
 
 public class DockerContainer 
 {
-    public static final String NET_NAME = "scnet";
+    public static final String DBV_PREFIX   = "scdatabase-";
+    public static final String LOGV_PREFIX  = "sclogs-";
+    public static final String SOCKV_PREFIX = "scsocket";
+    public static final String NET_NAME     = "scnet";
 
     public static class Db extends DockerContainer {
         public Db() { 
             super("drytoastman/scdb", "db");
-            addVolume("scdatabase-"+Prefs.getVersion(), "/var/lib/postgresql/data");
-            addVolume("scsocket", "/var/run/postgresql");
+            addVolume(DBV_PREFIX+Prefs.getVersion(), "/var/lib/postgresql/data");
+            addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
+            addVolume(SOCKV_PREFIX, "/var/run/postgresql");
             addPort("127.0.0.1:6432", "6432");
             addPort("54329", "5432");
         }
@@ -34,7 +46,8 @@ public class DockerContainer
     public static class Web extends DockerContainer {
         public Web() { 
             super("drytoastman/scweb", "web");
-            addVolume("scsocket", "/var/run/postgresql");
+            addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
+            addVolume(SOCKV_PREFIX, "/var/run/postgresql");
             addPort("80", "80");
         }
     }
@@ -42,7 +55,8 @@ public class DockerContainer
     public static class Sync extends DockerContainer {
         public Sync() { 
             super("drytoastman/scsync", "sync");
-            addVolume("scsocket", "/var/run/postgresql");
+            addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
+            addVolume(SOCKV_PREFIX, "/var/run/postgresql");
         }
     }
     
@@ -77,8 +91,6 @@ public class DockerContainer
         this.volumes    = new HashMap<String, String>();
         this.ports      = new HashMap<String, String>();
         this.machineenv = new HashMap<String, String>();
-        // everybody gets the log directory
-        volumes.put("sclogs-"+Prefs.getVersion(), "/var/log");
     }
     
     public String getName()
