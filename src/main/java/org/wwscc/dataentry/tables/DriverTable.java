@@ -150,7 +150,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 		backgroundSelect = new Color(120, 120, 120);
 		backgroundFound = new Color(255, 255, 120);
 		backgroundFoundSelect = new Color(210, 210, 120);
-		backgroundError = new Color(255, 0, 0);
+		backgroundError = new Color(255, 120, 120);
 		backgroundErrorSelect = new Color(230, 100, 100);
 		topLine = null;
 		bottomLine = null;
@@ -193,12 +193,12 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 		}
 		else if (value != null)
 		{
-			setBackground(Color.red);
+			setBackground(backgroundError);
 			topLine = value.toString();
 		}
 		else
 		{
-			setBackground(Color.red);
+			setBackground(backgroundError);
 			topLine = "ERROR";
 			bottomLine = "No data for this cell";
 		}

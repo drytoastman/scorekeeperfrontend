@@ -13,15 +13,15 @@ public class MetaCar extends Car
 	protected boolean isRegistered;
 	protected boolean isInRunOrder;
 	protected boolean hasActivity;
-	protected BigDecimal paid;
+	protected boolean paid;
 	
 	public MetaCar(Car c)
 	{
 		super(c);
 	}
 	
-	public boolean hasPaid()      { return paid.compareTo(ZERO) > 0; }
-	public BigDecimal getPaid()   { return paid; }
+	public boolean hasPaid()      { return paid; }
+	//public BigDecimal getPaid()   { return paid; }
 	public boolean isRegistered() { return isRegistered; }
 	public boolean isInRunOrder() { return isInRunOrder; }
 	public boolean hasActivity()  { return hasActivity; }

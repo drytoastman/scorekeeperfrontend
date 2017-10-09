@@ -90,14 +90,14 @@ public interface DataInterface
 	 * is true, then the paid value will overwrite the current value in the database if already present, otherwise, the
 	 * value in the database already will stay.  If nothing is already present, overwrite is irrelevant.
 	 * @param eventid the eventid to register the car in
-	 * @param carid the carid to register
-	 * @param paid true if the paid flag should be set
+	 * @param car the car to register
+	 * @param paid true if this registration was paid onsite
 	 * @param overwrite true if we should overwrite a current registration entry (i.e. paid flag)
 	 * @throws SQLException if an error occurs into the SQL execution 
 	 */
-	public void registerCar(UUID eventid, UUID carid, boolean paid, boolean overwrite) throws SQLException;
+	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException;
 	
-	public void unregisterCar(UUID eventid, UUID carid) throws SQLException; // remove this car from the current event registration
+	public void unregisterCar(UUID eventid, Car car) throws SQLException; // remove this car from the current event registration
 	public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
 	public void updateCar(Car d) throws SQLException; // update the car values in the database
 	public void deleteCar(Car d) throws SQLException;

@@ -38,7 +38,7 @@ public class Entrant
 		firstname = rs.getString("firstname");
 		lastname  = rs.getString("lastname");
 		try {
-			paid  = rs.getBoolean("paid");  // some queries don't load this?
+			paid  = rs.getString("txid") != null;  // some queries don't load this?
 		} catch (SQLException pse) {
 			paid  = false;
 		}

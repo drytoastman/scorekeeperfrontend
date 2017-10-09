@@ -9,7 +9,6 @@
 package org.wwscc.storage;
 
 import java.lang.reflect.Constructor;
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -181,7 +180,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
 		try
 		{
-			return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.paid from registered as x, cars as c, drivers as d " +
+			return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.txid from registered as x, cars as c, drivers as d " +
 						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=?", newList(eventid)), null);
 		}
 		catch (Exception ioe)
@@ -220,7 +219,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
 		try
 		{
-			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,reg.paid from drivers d " +
+			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,reg.txid from drivers d " +
 						"JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid  " +
 						"where r.eventid=? AND r.course=? AND r.rungroup=? order by r.row", newList(eventid, course, rungroup));
 			if (d == null)
@@ -244,7 +243,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
 		try
 		{
-			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,r.paid from drivers as d, cars as c LEFT JOIN registered as r on r.carid=c.carid and r.eventid=?  " +
+			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,r.txid from drivers as d, cars as c LEFT JOIN registered as r on r.carid=c.carid and r.eventid=?  " +
 						"where c.driverid=d.driverid and c.carid=?", newList(eventid, carid));
 			ResultSet runs = null;
 			if (loadruns)
@@ -370,11 +369,11 @@ public abstract class SQLDataInterface implements DataInterface
 		try
 		{
 			MetaCar mc = new MetaCar(c);
-			ResultSet cr = executeSelect("select paid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-			mc.paid = new BigDecimal(0);
+			ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
+			mc.paid = false;
 			mc.isRegistered = cr.next();
 			if (mc.isRegistered)
-			    mc.paid = cr.getBigDecimal("paid");
+			    mc.paid = cr.getString("txid") != null;
 			
 			ResultSet ar = executeSelect("select raw from runs where carid=? limit 1", newList(c.getCarId()));
 			mc.hasActivity = ar.next();
@@ -509,27 +508,32 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 
 	@Override
-	public void registerCar(UUID eventid, UUID carid, boolean paid, boolean overwrite) throws SQLException
+	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
 	{
-		List<Object> vals = newList(eventid, carid, paid);
-		String sql = "INSERT INTO REGISTERED (eventid, carid, paid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
-		String upd = "UPDATE SET paid=?,modified=now()";
-		String ign = "NOTHING"; 
+	    // eventually record actual amounts here, just 1cent for now
+	    String txid = "onsite-"+car.getCarId();
+	    if (!paid)
+	        txid = null;
+		String pay  = "INSERT INTO payments (txid, accountid, driverid, eventid, amount) VALUES (?, 'onsite', ?, ?, 0.01) ON CONFLICT (txid) DO ";
+		String reg  = "INSERT INTO registered (eventid, carid, txid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
 		if (overwrite)
 		{
-			vals.add(paid);
-			executeUpdate(sql+upd, vals);
+		    if (paid)
+		        executeUpdate(pay+"UPDATE SET amount=0.01,modified=now()", newList(txid, car.getDriverId(), eventid));
+			executeUpdate(reg+"UPDATE SET txid=?,modified=now()", newList(eventid, car.getCarId(), txid, txid));
 		}
 		else
 		{
-			executeUpdate(sql+ign, vals);
+		    if (paid)
+		        executeUpdate(pay+"NOTHING", newList(txid, car.getDriverId(), eventid));
+			executeUpdate(reg+"NOTHING", newList(eventid, car.getCarId(), txid));
 		}
 	}
 
 	@Override
-	public void unregisterCar(UUID eventid, UUID carid) throws SQLException
+	public void unregisterCar(UUID eventid, Car car) throws SQLException
 	{
-		List<Object> vals = newList(eventid, carid);
+		List<Object> vals = newList(eventid, car.getCarId());
 		executeUpdate("delete from registered where eventid=? and carid=?", vals);
 	}
 
@@ -576,7 +580,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
 		try
 		{
-			ResultSet cr = executeSelect("select paid from registered where carid=? and eventid=?", newList(carid, eventid));
+			ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(carid, eventid));
 			boolean ret = cr.next();
 			closeLeftOvers();
 			return ret;
