@@ -8,7 +8,9 @@
 
 package org.wwscc.tray;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.ListIterator;
@@ -17,7 +19,9 @@ import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.storage.Database;
@@ -31,6 +35,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
 
     GetRemoteSeries seriesgetter;
     CheckRemotePassword passchecker;
+    JLabel errornote;
     
     static public class HSResult
     {
@@ -41,7 +46,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     
     public HostSeriesSelectionDialog(boolean doseries)
     {
-        super(new MigLayout("", "[][fill, 300]", "[fill,24]"), false);
+        super(new MigLayout("", "[][fill, 300]", "[fill]"), false);
 
         List<MergeServer> data = Database.d.getMergeServers();
         ListIterator<MergeServer> iter = data.listIterator();
@@ -58,8 +63,11 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
             mainPanel.add(label("Password", true), "");
             mainPanel.add(entry("password", ""), "grow, wrap");
             ok.setText("Verify Password");
+            errornote = new JLabel(" ", SwingConstants.CENTER);
+            errornote.setForeground(Color.RED);
+            mainPanel.add(errornote, "spanx 2, center, grow, wrap");
         }
-        selects.get("host").setRenderer(new MergeServerRenderer());
+        selects.get("host").setRenderer(new MergeServerRenderer(selects.get("host").getPreferredSize()));
     }
     
     @Override
@@ -114,6 +122,11 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     
     class MergeServerRenderer extends DefaultListCellRenderer
     {
+        public MergeServerRenderer(Dimension p)
+        {
+            setPreferredSize(p);
+        }
+
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) 
         {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -173,6 +186,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         @Override
         protected Boolean doInBackground() throws Exception 
         {
+            errornote.setText("");
             return PostgresqlDatabase.checkPassword(host, series, password);
         }
         
@@ -180,10 +194,14 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         protected void done() 
         {
             try {
-                if (get())
+                if (get()) {
                     ok.setText("Download");
+                } else {
+                    errornote.setText("Incorrect Password");
+                }
             } catch (Exception e) {
                 log.log(Level.INFO, "Get series execution error " + e, e);
+                errornote.setText(e.getMessage());
             }
         }
     }
