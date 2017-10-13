@@ -39,14 +39,21 @@ public class PostgresqlDatabase extends SQLDataInterface
 	static public void waitUntilUp() 
 	{
         while (true) {
+            int countdown = 10;
             try {
                 Connection c = getConnection(null, false);
                 c.close();
                 return;
             } catch (SQLException sqle) {
                 String ss = sqle.getSQLState();
-                if (ss.equals("57P03") || ss.equals("08001")) // database still starting up
+                // give time for creating user, database, etc.
+                if (--countdown > 0) {
+                    log.log(Level.INFO, "Database not available yet ("+ss+"): "+sqle);
+                    try {  Thread.sleep(1000);
+                    } catch (InterruptedException ie) {}
                     continue;
+                }
+
                 log.log(Level.SEVERE, "\bDatabase unavailable due to error "+sqle+","+ss, sqle);
                 return;
             }

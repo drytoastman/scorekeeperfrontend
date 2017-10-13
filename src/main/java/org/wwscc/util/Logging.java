@@ -45,6 +45,8 @@ public class Logging
 
         // Set prefs levels before windows preference load barfs useless data on the user
         Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
+        // postgres JDBC spits out a lot of data even though we catch the exception
+        Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
 
         // Add console handler if running in debug mode
         if (Prefs.isDebug()) {
