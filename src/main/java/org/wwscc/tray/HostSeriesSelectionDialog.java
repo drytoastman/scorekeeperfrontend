@@ -57,17 +57,21 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         
         mainPanel.add(label("Host", true), "");
         mainPanel.add(select("host", null, data, this), "grow, wrap");
+        selects.get("host").setRenderer(new MergeServerRenderer());
+
         if (doseries) {
             mainPanel.add(label("Series", true), "");
-            mainPanel.add(select("series", null, new Object[] {}, null), "grow, wrap");
+            mainPanel.add(select("series", null, new Object[] {}, this), "grow, wrap");
+            // Fix for weird sizing difference when setting a new renderer under openjdk
+            selects.get("host").setPreferredSize(selects.get("series").getPreferredSize());
+
             mainPanel.add(label("Password", true), "");
             mainPanel.add(entry("password", ""), "grow, wrap");
             ok.setText("Verify Password");
             errornote = new JLabel(" ", SwingConstants.CENTER);
             errornote.setForeground(Color.RED);
             mainPanel.add(errornote, "spanx 2, center, grow, wrap");
-        }
-        selects.get("host").setRenderer(new MergeServerRenderer(selects.get("host").getPreferredSize()));
+        }      
     }
     
     @Override
@@ -86,8 +90,14 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
                 seriesgetter.execute();
             }
         }
+        else if (e.getSource() == selects.get("series"))
+        {
+            ok.setText("Verify Password");
+            errornote.setText(" ");
+        }
         else if ((e.getSource() == ok) && (ok.getText().equals("Verify Password")))
         {
+            errornote.setText("Checking ...");
             if (passchecker != null)
                 passchecker.cancel(true);
             MergeServer h = (MergeServer)getSelect("host");
@@ -122,11 +132,6 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     
     class MergeServerRenderer extends DefaultListCellRenderer
     {
-        public MergeServerRenderer(Dimension p)
-        {
-            setPreferredSize(p);
-        }
-
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) 
         {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -186,7 +191,6 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         @Override
         protected Boolean doInBackground() throws Exception 
         {
-            errornote.setText("");
             return PostgresqlDatabase.checkPassword(host, series, password);
         }
         
@@ -195,6 +199,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         {
             try {
                 if (get()) {
+                    errornote.setText(" ");
                     ok.setText("Download");
                 } else {
                     errornote.setText("Incorrect Password");
