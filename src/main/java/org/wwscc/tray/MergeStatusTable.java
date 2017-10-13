@@ -74,9 +74,9 @@ public class MergeStatusTable extends JTable {
             switch (ii)
             {
                 case 0:  setColumnWidthMin(tcm.getColumn(ii),  25); break;
-                case 1:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
-                case 2:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
-                case 3:  setColumnWidthMin(tcm.getColumn(ii), 130); break;
+                case 1:  setColumnWidthMin(tcm.getColumn(ii), 200); break;
+                case 2:  setColumnWidthMin(tcm.getColumn(ii), 150); break;
+                case 3:  setColumnWidthMin(tcm.getColumn(ii), 150); break;
                 default: setColumnWidthMax(tcm.getColumn(ii), 200); break;
             }
         }

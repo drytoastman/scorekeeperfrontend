@@ -59,7 +59,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         super("Data Synchronization");
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        JPanel content = new JPanel(new MigLayout("fill", "fill", "fill"));
+        JPanel content = new JPanel(new MigLayout("fill", "fill", "[grow 0][fill]"));
 
         table = new MergeStatusTable();
 
@@ -253,7 +253,6 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         Logging.logSetup("datasync");
 
         Database.openPublic(true);
-        DockerMachine.machineenv();
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);

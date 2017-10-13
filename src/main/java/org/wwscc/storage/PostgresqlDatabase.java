@@ -39,7 +39,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 	static public void waitUntilUp() 
 	{
         while (true) {
-            int countdown = 10;
+            int countdown = 30;
             try {
                 Connection c = getConnection(null, false);
                 c.close();

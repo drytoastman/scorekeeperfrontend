@@ -74,8 +74,9 @@ public class TrayMonitor implements ActionListener
         newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
         newAppItem("Registration",     "org.wwscc.registration.Registration", trayPopup);
         newAppItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup);
-        newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup);
         newAppItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup);
+        newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup);
+        trayPopup.addSeparator();
         newAppItem("Data Sync",        "datasync",     trayPopup);
         newAppItem("Debug Collection", "debugcollect", trayPopup);
 

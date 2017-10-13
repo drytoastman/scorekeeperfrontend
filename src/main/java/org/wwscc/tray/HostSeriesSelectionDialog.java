@@ -41,7 +41,7 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
     
     public HostSeriesSelectionDialog(boolean doseries)
     {
-        super(new MigLayout(""), false);
+        super(new MigLayout("", "[][fill, 300]", "[fill,30]"), false);
 
         List<MergeServer> data = Database.d.getMergeServers();
         ListIterator<MergeServer> iter = data.listIterator();
