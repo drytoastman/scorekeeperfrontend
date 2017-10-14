@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
@@ -151,25 +152,30 @@ public class Discovery
                     checkSocket();
     
                     packet.setData(buf);
-                    socket.receive(packet);
-                    
-                    JSONObject data = (JSONObject)parser.parse(new String(buf, 0, packet.getLength()));
-                    long now = System.currentTimeMillis();
-                    
-                    // Note any new or changed data
-                    for (Object o : data.keySet())
-                    {
-                        String service = (String)o;
-                        MultiKey<Object> key = new MultiKey<Object>(service, packet.getAddress());
-                        InternalInfo info = new InternalInfo((JSONObject)data.get(service), now);                        
-                        InternalInfo old = registry.put(key, info);
-                        
-                        if ((old == null || !old.json.equals(info.json)) && listeners.containsKey(service))
-                            for (DiscoveryListener l : listeners.get(service))
-                                l.serviceChange(service, packet.getAddress(), info.json, true);
+                    try {
+                        socket.receive(packet);
+
+                        JSONObject data = (JSONObject)parser.parse(new String(buf, 0, packet.getLength()));
+                        long now = System.currentTimeMillis();
+
+                        // Note any new or changed data
+                        for (Object o : data.keySet())
+                        {
+                            String service = (String)o;
+                            MultiKey<Object> key = new MultiKey<Object>(service, packet.getAddress());
+                            InternalInfo info = new InternalInfo((JSONObject)data.get(service), now);
+                            InternalInfo old = registry.put(key, info);
+
+                            if ((old == null || !old.json.equals(info.json)) && listeners.containsKey(service))
+                                for (DiscoveryListener l : listeners.get(service))
+                                    l.serviceChange(service, packet.getAddress(), info.json, true);
+                        }
+                    } catch (SocketTimeoutException ste) {
+
                     }
-                    
+
                     // Check for timeouts
+                    long now = System.currentTimeMillis();
                     MapIterator<MultiKey<? extends Object>, InternalInfo> iter = registry.mapIterator();
                     while (iter.hasNext())
                     {
@@ -179,7 +185,7 @@ public class Discovery
                         if (info.time + TIMEOUT_MS < now) {
                             String service   = (String)key.getKey(0);
                             InetAddress addr = (InetAddress)key.getKey(1);
-                            
+
                             if (listeners.containsKey(service))
                                 for (DiscoveryListener l : listeners.get(service))
                                     l.serviceChange(service, addr, info.json, false);
@@ -187,8 +193,8 @@ public class Discovery
                             iter.remove();
                         }
                     }
-                } 
-                catch (Exception e) 
+                }
+                catch (Exception e)
                 {
                     log.log(Level.WARNING, "error in receiverthread: " + e, e);
                     try { Thread.sleep(1000); } catch (InterruptedException ie) {}
@@ -196,19 +202,20 @@ public class Discovery
             }
         }
     }
-    
+
     private synchronized void checkSocket() throws IOException
     {
         if ((socket == null) || (socket.isClosed()))
             openSocket();
     }
-    
-    private void openSocket() throws IOException 
+
+    private void openSocket() throws IOException
     {
         closeSocket();
         socket = new MulticastSocket(DISCOVERY_PORT);
         socket.setTimeToLive(10);
-        socket.setInterface(Network.getPrimaryAddress());        
+        socket.setSoTimeout(1);
+        socket.setInterface(Network.getPrimaryAddress());
         socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
         log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getInterface()));
     }
