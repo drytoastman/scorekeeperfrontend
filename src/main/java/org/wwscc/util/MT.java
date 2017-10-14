@@ -41,10 +41,10 @@ public enum MT {
     CAR_ADD,
     CAR_CHANGE,
     TIMER_TAKES_FOCUS,
-    FIND_ENTRANT,
+    FILTER_ENTRANT,
     OPEN_BARCODE_ENTRY,
     OPEN_CARID_ENTRY,
-    OPEN_FIND,
+    OPEN_FILTER,
     SHOW_ADD_PANE,
 
     // Timer Net Service

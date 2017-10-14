@@ -47,16 +47,13 @@ import org.wwscc.util.Prefs;
  */
 public class DriverTable extends TableBase
 {
-	String activeSearch;
-	
 	public DriverTable(EntryModel m)
 	{
 		super(m, new EntrantRenderer(), new DriverTransferHandler(), 0, 2);
-		activeSearch = "";
 
 		setDragEnabled(true);
 		setDropMode(DropMode.INSERT);
-		
+
 		InputMap im = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 		im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "cut"); // delete is same as Ctl+X
 
@@ -70,7 +67,7 @@ public class DriverTable extends TableBase
 		TableColumnModel tcm = (TableColumnModel)e.getSource();
 		int cc = tcm.getColumnCount();
 		if (cc <= 1) return;
-		
+
 		setColumnWidths(tcm.getColumn(0), 40, 60, 75);
 		setColumnWidths(tcm.getColumn(1), 80, 250, 400);
 		doLayout();
@@ -86,7 +83,7 @@ class RowHeaderTableResizer extends MouseAdapter
 	TableColumn column;
 	int columnWidth;
 	int pressedX;
-		
+
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
@@ -130,38 +127,34 @@ class RowHeaderTableResizer extends MouseAdapter
  * Render for both columns in the driver table, it differs its display based
  * column being 0 or 1.
  */
-class EntrantRenderer extends JComponent implements TableCellRenderer 
+class EntrantRenderer extends JComponent implements TableCellRenderer
 {
 	private Color background;
 	private Color backgroundSelect;
-	private Color backgroundFound;
-	private Color backgroundFoundSelect;
 	private Color backgroundError;
 	private Color backgroundErrorSelect;
 	private String topLine;
 	private String bottomLine;
 	private Font topFont;
 	private Font bottomFont;
-	
+
 	public EntrantRenderer()
 	{
 		super();
 		background = new Color(240, 240, 240);
 		backgroundSelect = new Color(120, 120, 120);
-		backgroundFound = new Color(255, 255, 120);
-		backgroundFoundSelect = new Color(210, 210, 120);
 		backgroundError = new Color(255, 120, 120);
 		backgroundErrorSelect = new Color(230, 100, 100);
 		topLine = null;
 		bottomLine = null;
-		
+
 		topFont = new Font(Font.DIALOG, Font.BOLD, 11);
 		bottomFont = new Font(Font.DIALOG, Font.PLAIN, 11);
 	}
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value,
-						boolean isSelected, boolean hasFocus, int row, int column) 
+						boolean isSelected, boolean hasFocus, int row, int column)
 	{
 		setBackground((isSelected) ?  backgroundSelect : background);
 
@@ -180,15 +173,13 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 					bottomLine = e.getCarDesc() + " " +  Database.d.getEffectiveIndexStr(e.getCar());
 					break;
 
-				default:	
+				default:
 					topLine = "What?";
 					bottomLine = null;
 					break;
 			}
 
-		 	if (matchMe(topLine, bottomLine, ((DriverTable)table).activeSearch))
-				setBackground((isSelected) ?  backgroundFoundSelect : backgroundFound);
-		 	else if (Prefs.usePaidFlag() && !e.isPaid())
+			if (Prefs.usePaidFlag() && !e.isPaid())
 		 		setBackground((isSelected) ?  backgroundErrorSelect : backgroundError);
 		}
 		else if (value != null)
@@ -205,17 +196,6 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 		return this;
 	}
 
-	protected boolean matchMe(String top, String bottom, String search)
-	{
-		if (search.equals("")) return false;
-		for (String p : search.toLowerCase().split("\\s+"))
-		{
-			if ((!top.toLowerCase().contains(p)) &&
-				(!bottom.toLowerCase().contains(p))) return false;
-		}
-		return true;
-	}
-
 	@Override
 	public void paint(Graphics g1)
 	{
@@ -225,10 +205,10 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 		g.setColor(getBackground());
 		g.fillRect(0, 0, size.width, size.height);
 		g.setColor(new Color(40,40,40));
-		
+
 		//FontMetrics tm = g.getFontMetrics(topFont);
 		FontMetrics bm = g.getFontMetrics(bottomFont);
-		
+
 		if (topLine != null)
 		{
 			g.setFont(topFont);
@@ -240,7 +220,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 			g.drawString(bottomLine, 5, size.height/2 + bm.getHeight() - 2);
 		}
 	}
-	
+
 	// The following methods override the defaults for performance reasons
 	@Override
 	public void validate() {}
@@ -277,7 +257,7 @@ class DriverTransferHandler extends TransferHandler
 		isCut = false;
 		super.exportAsDrag(comp, e, action);
 	}
-	
+
 	@Override
 	public void exportToClipboard(JComponent comp, Clipboard cb, int action)
 	{
@@ -301,7 +281,7 @@ class DriverTransferHandler extends TransferHandler
 		return new SimpleDataTransfer(flavor, store);
 	}
 
-	
+
 	@Override
 	protected void exportDone(JComponent c, Transferable data, int action)
 	{
@@ -332,13 +312,13 @@ class DriverTransferHandler extends TransferHandler
 		JTable.DropLocation dl = (JTable.DropLocation)support.getDropLocation();
 		JTable target = (JTable)support.getComponent();
 
-		if (dl.getRow() > target.getRowCount()) return false;  
+		if (dl.getRow() > target.getRowCount()) return false;
 		return true;
 	}
 
 
 	/**
-	 * Called for drop and paste operations 
+	 * Called for drop and paste operations
 	 */
 	@Override
 	public boolean importData(TransferHandler.TransferSupport support)
@@ -347,7 +327,7 @@ class DriverTransferHandler extends TransferHandler
 		{
 			JTable target = (JTable)support.getComponent();
 			EntryModel model = (EntryModel)target.getModel();
-		
+
 			if (support.isDrop())
 			{
 				JTable.DropLocation dl = (JTable.DropLocation)support.getDropLocation();

@@ -4,10 +4,10 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.logging.Logger;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -22,9 +22,11 @@ import org.wwscc.util.SearchTrigger;
 
 public abstract class MiniInput extends JPanel implements ActionListener
 {
+    private static final Logger log = Logger.getLogger(MiniInput.class.getName());
+
 	JTextField entry;
 	IconButton close;
-	
+
 	/**
 	 * Base mini input that set the layout and basic actions (Esc means hide)
 	 * @param label the string for the label portion
@@ -40,12 +42,12 @@ public abstract class MiniInput extends JPanel implements ActionListener
 
 		JLabel lbl = new JLabel(label);
 		lbl.setFont(lbl.getFont().deriveFont(Font.BOLD, 12));
-		
+
 		add(lbl, "al right");
 		add(entry, "growx");
 		add(close, "aligny top");
 		setVisible(false);
-		
+
 		Messenger.register(openevent,  new MessageListener() {
 			public void event(MT type, Object data) {
 				setVisible(true);
@@ -62,38 +64,39 @@ public abstract class MiniInput extends JPanel implements ActionListener
 	{
 		if (e.getActionCommand() == "esc")
 		{
+		    entry.setText("");
 			setVisible(false);
 		}
 	}
-	
+
 
 	/**
 	 * Mini input for entering text to find in the current table
 	 */
-	public static class FindEntry extends MiniInput
-	{		
-		public FindEntry()
+	public static class FilterEntries extends MiniInput
+	{
+		public FilterEntries()
 		{
-			super("Find", MT.OPEN_FIND);
+			super("Filter", MT.OPEN_FILTER);
 			entry.getDocument().addDocumentListener(new SearchTrigger() {
 				@Override
 				public void search(String txt) {
-					Messenger.sendEvent(MT.FIND_ENTRANT, txt);
+					Messenger.sendEvent(MT.FILTER_ENTRANT, txt);
 				}
-			}); 
+			});
 		}
 	}
-	
+
 	/**
 	 * Mini input for entering barcodes manually
 	 */
 	public static class ManualBarcodeInput extends MiniInput
-	{		
+	{
 		public ManualBarcodeInput()
 		{
 			super("Barcode", MT.OPEN_BARCODE_ENTRY);
 		}
-		
+
 		public void actionPerformed(ActionEvent e)
 		{
 			if (e.getActionCommand().equals("enter"))
@@ -105,7 +108,7 @@ public abstract class MiniInput extends JPanel implements ActionListener
 				super.actionPerformed(e);
 		}
 	}
-	
+
 	/**
 	 * Mini input for entering carids manually
 	 */
@@ -115,7 +118,7 @@ public abstract class MiniInput extends JPanel implements ActionListener
 		{
 			super("CarId", MT.OPEN_CARID_ENTRY);
 		}
-		
+
 		public void actionPerformed(ActionEvent e)
 		{
 			if (e.getActionCommand().equals("enter"))
@@ -136,9 +139,10 @@ public abstract class MiniInput extends JPanel implements ActionListener
 				{
 					if (carText.startsWith("C")) // filter out C if they put it in the carid field, used for barcode directly
 						carText = carText.substring(1);
-					
-					/** FINISH ME, need to deal with quick entry id somehow 
+
+
 					int carID = Integer.parseInt(carText);
+					/** FINISH ME, need to deal with quick entry id somehow
 					if(!Database.d.isRegistered(carID))
 					{
 						JOptionPane.showMessageDialog(
@@ -156,12 +160,8 @@ public abstract class MiniInput extends JPanel implements ActionListener
 				}
 				catch(NumberFormatException fe)
 				{
-					JOptionPane.showMessageDialog(
-						getRootPane(),
-						"The inputed registration card # was not valid ("+carText+").",
-						"User Input Error",
-						JOptionPane.ERROR_MESSAGE
-					);
+				    log.warning("\bThe provided registration card # was not valid ("+carText+").");
+				    return;
 				}
 				entry.setText("");
 			}

@@ -178,9 +178,9 @@ class TimeRenderer extends DefaultTableCellRenderer
 
 			if (!isSelected)
 			{
-				if (m.isBest(row, r))
+				if (m.isBest(t.convertRowIndexToModel(row), r))
 					setBackground(backgroundBest);
-				else if (m.rowIsFull(row))
+				else if (m.rowIsFull(t.convertRowIndexToModel(row)))
 					setBackground(backgroundDone);
 			}
 

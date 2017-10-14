@@ -53,7 +53,7 @@ public class BrowserControl
                     log.info("openURL request: " + url);
                     Desktop.getDesktop().browse(new URI(url));
                 } catch (Exception ex) {
-                    log.severe("Couldn't open default web browser:" + ex);
+                    log.severe("\bCouldn't open default web browser:" + ex);
                 }
             }
         });
@@ -71,7 +71,6 @@ public class BrowserControl
         g += groups[ii];
 
         printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s", state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), g));
-        log.finest("\bprintGroupResults done");
     }
 
 
@@ -94,7 +93,7 @@ public class BrowserControl
                            PrinterJob job = PrinterJob.createPrinterJob();
                            if (job == null) {
                                log.warning("Unable to create a print job.  Opening in a browser instead.");
-                                  openURL(url);
+                               openURL(url);
                                return;
                            }
 
@@ -106,7 +105,7 @@ public class BrowserControl
                     });
                     engine.load(url);
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, "Couldn't print:" + e, e);
+                    log.log(Level.SEVERE, "\bCouldn't print:" + e, e);
                 }
             }
         });

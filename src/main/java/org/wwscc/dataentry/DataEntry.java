@@ -124,7 +124,7 @@ public class DataEntry extends JFrame implements MessageListener
 		content.add(timeEntry, "spany 4, growx 0, growy, wrap");
 		
 		content.add(new MiniInput.ManualCarIdInput(), "growx, growy 0, hidemode 2, wrap");
-		content.add(new MiniInput.FindEntry(), "growx, growy 0, hidemode 2, wrap");
+		content.add(new MiniInput.FilterEntries(), "growx, growy 0, hidemode 2, wrap");
 		content.add(tableScroll, "grow, wrap");
 		content.add(infoBoxes, "spanx 3, growx, wrap");
 		

@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
@@ -25,6 +24,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableRowSorter;
 
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.dataentry.Sounds;
@@ -45,21 +45,26 @@ import org.wwscc.util.Messenger;
 public class DoubleTableContainer extends JScrollPane implements MessageListener
 {
 	private static final Logger log = Logger.getLogger(DoubleTableContainer.class.getCanonicalName());
-	
+
 	EntryModel dataModel;
 	DriverTable driverTable;
 	RunsTable runsTable;
-	
+	TableRowSorter<EntryModel> sorter;
+
 	public DoubleTableContainer()
 	{
 		dataModel = new EntryModel();
 		driverTable = new DriverTable(dataModel);
 		runsTable = new RunsTable(dataModel);
-		
+
+		sorter = new TableRowSorter<EntryModel>(dataModel);
+		driverTable.setRowSorter(sorter);
+		runsTable.setRowSorter(sorter);
+
 		setViewportView(runsTable);
 		setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
 		setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_ALWAYS);
-		
+
 		driverTable.setPreferredScrollableViewportSize(new Dimension(240, Integer.MAX_VALUE));
 		setRowHeaderView( driverTable );
 		setCorner(UPPER_LEFT_CORNER, driverTable.getTableHeader());
@@ -70,17 +75,17 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 				getVerticalScrollBar().setValue(_viewport.getViewPosition().y);
 			}
 		});
-				
+
 		Messenger.register(MT.CAR_ADD, this);
 		Messenger.register(MT.CAR_CHANGE, this);
-		Messenger.register(MT.FIND_ENTRANT, this);
+		Messenger.register(MT.FILTER_ENTRANT, this);
 		Messenger.register(MT.COURSE_CHANGED, this);
 		Messenger.register(MT.BARCODE_SCANNED, this);
 	}
-	
+
 	public RunsTable getRunsTable() { return runsTable; }
 	public DriverTable getDriverTable() { return driverTable; }
-	
+
 	public void processBarcode(String barcode) throws SQLException, IOException
 	{
 		Object o = BarcodeLookup.findObjectByBarcode(barcode);
@@ -90,14 +95,14 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 			event(MT.CAR_ADD, ((Entrant)o).getCarId());
 			return;
 		}
-		
+
 		if (o == null) // membership not found (D and C barcodes will throw an exception)
 		{
-			if (JOptionPane.showConfirmDialog(this, "Unable to locate a driver using membership " + barcode + 
+			if (JOptionPane.showConfirmDialog(this, "Unable to locate a driver using membership " + barcode +
 					".  Do you want to create a placeholder with this membership value?", "Missing Driver",
 					JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
 				return;
-			
+
 			Driver d = new Driver("Placeholder", barcode);
 			d.setMembership(barcode);
 			Database.d.newDriver(d);
@@ -110,11 +115,11 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 			Database.d.registerCar(DataEntry.state.getCurrentEventId(), c, false, false);
 			o = d;
 		}
-		
+
 		Driver d = (Driver)o;
 		List<Car> available = Database.d.getRegisteredCars(d.getDriverId(), DataEntry.state.getCurrentEventId());
 		Iterator<Car> iter = available.iterator();
-		
+
 		while (iter.hasNext()) {
 			Car c = iter.next();
 			if (Database.d.isInCurrentOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup())) {
@@ -124,7 +129,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 			if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
 				iter.remove(); // otherwise, remove those active in another run order (same course/event)
 		}
-		
+
 		if (available.size() == 1) { // pick only one available
 			event(MT.CAR_ADD, available.get(0).getCarId());
 			return;
@@ -140,7 +145,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 		throw new BarcodeLookup.LookupException("Unable to locate a registed car for " + d.getFullName() + " that isn't already used in this event on this course.  See left panel.");
 	}
 
-	
+
 	@Override
 	public void event(MT type, Object o)
 	{
@@ -160,27 +165,26 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 				driverTable.repaint();
 				runsTable.repaint();
 				break;
-				
+
 			case BARCODE_SCANNED:
 				try {
 					processBarcode((String)o);
 				} catch (IOException | SQLException be) {
 					log.log(Level.SEVERE, be.getMessage());
 				}
-				
+
 				break;
-				
+
 			case CAR_CHANGE:
 				int row = driverTable.getSelectedRow();
 				if ((row >= 0) && (row < driverTable.getRowCount()))
 					dataModel.replaceCar((UUID)o, row);
 				break;
 
-			case FIND_ENTRANT:
-				driverTable.activeSearch = (String)o;
-				repaint();
+			case FILTER_ENTRANT:
+                sorter.setRowFilter(new EntrantFilter((String)o));
 				break;
-				
+
 			case COURSE_CHANGED:
 				JTableHeader dh = driverTable.getTableHeader();
 				JTableHeader rh = runsTable.getTableHeader();

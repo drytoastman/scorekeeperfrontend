@@ -123,7 +123,7 @@ public class Logging
                     type = JOptionPane.INFORMATION_MESSAGE;
                 }
 
-                String record = getFormatter().formatMessage(logRecord);
+                String record = getFormatter().formatMessage(logRecord).replaceAll("[\b]","");
                 if (record.contains("\n"))
                     record = "<HTML>" + record.replace("\n", "<br>") + "</HTML>";
 
