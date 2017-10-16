@@ -20,6 +20,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	protected String firstname;
 	protected String lastname;
 	protected String email;
+	protected String username;
 	protected String password;
 	protected String membership;
 
@@ -30,6 +31,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		firstname = "";
 		lastname = "";
 		email = "";
+		username = driverid.toString();
 		password = "";
 		membership = "";
 	}
@@ -48,6 +50,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		firstname  = rs.getString("firstname");
 		lastname   = rs.getString("lastname");
 		email      = rs.getString("email");
+		username   = rs.getString("username");
 		password   = rs.getString("password");
 		membership = rs.getString("membership");
 	}
@@ -59,6 +62,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		ret.add(firstname);
 		ret.add(lastname);
 		ret.add(email);
+		ret.add(username);
 		ret.add(password);
 		ret.add(membership);
 		attrCleanup();
@@ -85,6 +89,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	public void setLastName(String s)   { lastname = s; }
 	public void setEmail(String s)      { email = s; }
 	public void setMembership(String s) { membership = s; }
+	public void setUsername(String s)   { username = s; }
 	public void setAddress(String s)    { setAttrS("address", s); }
 	public void setCity(String s)       { setAttrS("city", s); }
 	public void setState(String s)      { setAttrS("state", s); }

@@ -49,12 +49,9 @@ import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
-import org.wwscc.storage.BarcodeLookup;
-import org.wwscc.storage.BarcodeLookup.LookupException;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.Entrant;
 import org.wwscc.storage.MetaCar;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -470,21 +467,19 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 				break;
 			
 			case BARCODE_SCANNED:
-				try {
-					Object found = BarcodeLookup.findObjectByBarcode((String)o);
-					if (found instanceof Driver) {
-						Driver d = (Driver)found;
-						focusOnDriver(d.getFirstName(), d.getLastName());
-					} else if (found instanceof Entrant) {
-						Entrant e = (Entrant)found;
-						focusOnDriver(e.getFirstName(), e.getLastName());
-						focusOnCar(e.getCarId());
-					} else {
-						throw new LookupException("No object found");
-					}
-				} catch (LookupException e) {
-					log.warning("Barcode lookup exception: " + e.getMessage());
-				}
+			    String barcode = (String)o;
+			    List<Driver> found = Database.d.findDriverByMembership(barcode);
+		        if (found.size() == 0)
+		        {
+		            log.log(Level.WARNING, "\bUnable to locate a driver using barcode {0}", barcode);
+		            break;
+		        }
+		        
+		        if (found.size() > 1)
+		            log.log(Level.WARNING, "\b{0} drivers exist with the membership value {1}, using the first", new Object[] {found.size(), barcode});
+		        
+				Driver d = found.get(0);
+				focusOnDriver(d.getFirstName(), d.getLastName());
 				break;
 
 			case CAR_CREATED:

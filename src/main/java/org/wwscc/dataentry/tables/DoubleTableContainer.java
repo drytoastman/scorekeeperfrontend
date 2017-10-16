@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.border.LineBorder;
@@ -27,8 +26,6 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 
 import org.wwscc.dataentry.DataEntry;
-import org.wwscc.dataentry.Sounds;
-import org.wwscc.storage.BarcodeLookup;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.ClassData;
 import org.wwscc.storage.Database;
@@ -88,39 +85,27 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
 	public void processBarcode(String barcode) throws SQLException, IOException
 	{
-		Object o = BarcodeLookup.findObjectByBarcode(barcode);
+        List<Driver> found = Database.d.findDriverByMembership(barcode);
+        Driver d = null;
 
-		if (o instanceof Entrant)
+        if (found.size() > 0)
+        {
+            if (found.size() > 1)
+                log.log(Level.WARNING, "{0} drivers exist with the membership value {1}, using the first", new Object[] {found.size(), barcode});
+            d = found.get(0);
+        }
+        else if (found.size() == 0)
 		{
-			event(MT.CAR_ADD, ((Entrant)o).getCarId());
-			return;
-		}
-
-		if (o == null) // membership not found (D and C barcodes will throw an exception)
-		{
-			if (JOptionPane.showConfirmDialog(this, "Unable to locate a driver using membership " + barcode +
-					".  Do you want to create a placeholder with this membership value?", "Missing Driver",
-					JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
-				return;
-
-			Driver d = new Driver("Placeholder", barcode);
+            log.log(Level.WARNING, "Unable to locate a driver using membership {0}, creating a default", barcode);
+			d = new Driver("Placeholder", barcode);
 			d.setMembership(barcode);
 			Database.d.newDriver(d);
-			Car c = new Car();
-			c.setDriverId(d.getDriverId());
-			c.setModel("Placeholder " + barcode);
-			c.setClassCode(ClassData.PLACEHOLDER_CLASS);
-			c.setNumber(0);
-			Database.d.newCar(c);
-			Database.d.registerCar(DataEntry.state.getCurrentEventId(), c, false, false);
-			o = d;
 		}
 
-		Driver d = (Driver)o;
 		List<Car> available = Database.d.getRegisteredCars(d.getDriverId(), DataEntry.state.getCurrentEventId());
 		Iterator<Car> iter = available.iterator();
 
-		while (iter.hasNext()) {
+        while (iter.hasNext()) {
 			Car c = iter.next();
 			if (Database.d.isInCurrentOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup())) {
 				event(MT.CAR_ADD, c.getCarId()); // if there is something in this run order, just go with it and return
@@ -141,8 +126,18 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 			return;
 		}
 
-		Messenger.sendEvent(MT.SHOW_ADD_PANE, d);
-		throw new BarcodeLookup.LookupException("Unable to locate a registed car for " + d.getFullName() + " that isn't already used in this event on this course.  See left panel.");
+        log.warning("Unable to locate a registed car for " + d.getFullName() + " that isn't already used in this event on this course.  Creating a default");
+
+        Car c = new Car();
+        c.setDriverId(d.getDriverId());
+        c.setModel(DataEntry.state.getCurrentEvent().toString());
+        c.setColor("group=" + DataEntry.state.getCurrentRunGroup());
+        c.setClassCode(ClassData.PLACEHOLDER_CLASS);
+        c.setNumber(999);
+                
+        Database.d.newCar(c);
+        Database.d.registerCar(DataEntry.state.getCurrentEventId(), c, false, false);
+        event(MT.CAR_ADD, c.getCarId());
 	}
 
 
@@ -152,7 +147,6 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 		switch (type)
 		{
 			case CAR_ADD:
-				Sounds.playBlocked();
 				int savecol = runsTable.getSelectedColumn();
 				Entrant selected = (Entrant)dataModel.getValueAt(runsTable.getSelectedRow(), 0);
 				dataModel.addCar((UUID)o);

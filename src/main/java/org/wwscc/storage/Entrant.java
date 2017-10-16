@@ -125,7 +125,7 @@ public class Entrant
 			return false;
 		}
 		final Entrant other = (Entrant) obj;
-		if (car == null || car.carid != other.car.carid) {
+		if (car == null || !car.carid.equals(other.car.carid)) {
 			return false;
 		}
 		return true;

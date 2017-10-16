@@ -84,7 +84,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			log.log(Level.INFO, "Registration during car add failed: {0}" + ioe.getMessage(), ioe);
 		}
 		
-		int row = tableData.size();
+		int row = tableData.size() - 1;
 		fireTableRowsInserted(row, row);
     	fireEntrantsChanged();
 	}
@@ -243,11 +243,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 				}
 				
 				tableData.remove(row); // remove the row which removes from runorder upon commit
+                fireEntrantsChanged();
 				fireTableDataChanged();
 			}
-
-   			fireEntrantsChanged();
-			fireTableRowsUpdated(row, row);
+			else  // driver change
+			{
+			    fireEntrantsChanged();
+			    fireTableRowsUpdated(row, row);
+			}
 		}
 
 		// Setting a run

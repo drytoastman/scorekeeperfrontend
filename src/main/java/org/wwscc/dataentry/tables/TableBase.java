@@ -117,7 +117,7 @@ public class TableBase extends JTable
 		{
 			int row = TableBase.this.getSelectedRow();
 			int col = TableBase.this.getSelectedColumn();
-			System.out.println(row + ", " + col);
+			if ((row < 0) || (col < 0)) { return null; }
 			return getValueAt(row, col);
 		}
 
