@@ -6,11 +6,11 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.dialogs;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.wwscc.dialogs.BaseDialog;
+
 import net.miginfocom.swing.MigLayout;
 
 /**

@@ -31,7 +31,7 @@ import org.wwscc.util.Prefs;
  */
 public class EntryModel extends AbstractTableModel implements MessageListener
 {
-	private static Logger log = Logger.getLogger("org.wwscc.dataentry.EntryModel");
+	private static Logger log = Logger.getLogger(EntryModel.class.getCanonicalName());
 
 	List<Entrant> tableData;
 	Action doubleCourseMode;
@@ -53,6 +53,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 	public void addCar(UUID carid)
 	{
 		if (tableData == null) return;
+		boolean move = false;
 
 		Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (e == null)
@@ -65,14 +66,15 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		{
 			if (!Prefs.useReorderingTable())
 			{
-				log.log(Level.WARNING, "Carid {0} already in table, perhaps you want to enable constant staging mode", carid);
+				log.log(Level.WARNING, "\bCarid {0} already in table, perhaps you want to enable constant staging mode", carid);
 				return;
 			}
 			tableData.remove(e); // remove it from position and following will readd at the end
+			move = true;
 		}
 		else if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse()))
 		{
-			log.log(Level.SEVERE, "Carid {0} already in use in another rungroup", carid);
+			log.log(Level.SEVERE, "\bCarid {0} already in use in another rungroup in this event", carid);
 			return;
 		}
 		
@@ -81,11 +83,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		try {
 			Database.d.registerCar(DataEntry.state.getCurrentEventId(), e.getCar(), false, false);
 		} catch (SQLException ioe) {
-			log.log(Level.INFO, "Registration during car add failed: {0}" + ioe.getMessage(), ioe);
+			log.log(Level.WARNING, "Registration during car add failed: {0}" + ioe.getMessage(), ioe);
 		}
 		
 		int row = tableData.size() - 1;
-		fireTableRowsInserted(row, row);
+		if (move)
+            fireTableRowsUpdated(row, row);		    
+		else
+		    fireTableRowsInserted(row, row);
     	fireEntrantsChanged();
 	}
 

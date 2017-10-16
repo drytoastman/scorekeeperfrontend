@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.dialogs;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -22,7 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
-import org.wwscc.dialogs.BaseDialog;
+
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.storage.PostgresqlDatabase;

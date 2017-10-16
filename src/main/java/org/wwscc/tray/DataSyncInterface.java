@@ -33,9 +33,11 @@ import javax.swing.JScrollPane;
 import javax.swing.UIManager;
 
 import org.json.simple.JSONObject;
+import org.wwscc.dialogs.HostSeriesSelectionDialog;
+import org.wwscc.dialogs.SeriesDialog;
+import org.wwscc.dialogs.HostSeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
-import org.wwscc.tray.HostSeriesSelectionDialog.HSResult;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.Logging;

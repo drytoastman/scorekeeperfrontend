@@ -19,6 +19,7 @@ public enum MT {
     SCANNER_OPTIONS,
     BARCODE_SCANNED,
     CAR_CREATED,
+    QUICKID_SEARCH,
 
     // Database events
     DATABASE_NOTIFICATION,
@@ -43,7 +44,6 @@ public enum MT {
     TIMER_TAKES_FOCUS,
     FILTER_ENTRANT,
     OPEN_BARCODE_ENTRY,
-    OPEN_CARID_ENTRY,
     OPEN_FILTER,
     SHOW_ADD_PANE,
 

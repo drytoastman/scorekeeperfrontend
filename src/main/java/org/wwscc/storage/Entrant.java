@@ -62,6 +62,7 @@ public class Entrant
 	public String getClassCode() { return car.classcode; }
 	public int getNumber() { return car.number; }
 	public boolean isPaid() { return paid; }
+	public String getQuickEntryId() { return car.getQuickEntryId(); }
 
 
 	/*

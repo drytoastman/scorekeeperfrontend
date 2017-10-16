@@ -4,8 +4,6 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.logging.Logger;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,8 +20,6 @@ import org.wwscc.util.SearchTrigger;
 
 public abstract class MiniInput extends JPanel implements ActionListener
 {
-    private static final Logger log = Logger.getLogger(MiniInput.class.getName());
-
 	JTextField entry;
 	IconButton close;
 
@@ -106,65 +102,6 @@ public abstract class MiniInput extends JPanel implements ActionListener
 			}
 			else
 				super.actionPerformed(e);
-		}
-	}
-
-	/**
-	 * Mini input for entering carids manually
-	 */
-	public static class ManualCarIdInput extends MiniInput
-	{
-		public ManualCarIdInput()
-		{
-			super("CarId", MT.OPEN_CARID_ENTRY);
-		}
-
-		public void actionPerformed(ActionEvent e)
-		{
-			if (e.getActionCommand().equals("enter"))
-				processQuickTextField();
-			else
-				super.actionPerformed(e);
-		}
-		/**
-		 * This takes care of the processing required to validate the quickTextField
-		 * input and send out a CAR_ADD event.
-		 */
-		private void processQuickTextField()
-		{
-			String carText = entry.getText().trim();
-			if(carText.length() > 0)
-			{
-				try
-				{
-					if (carText.startsWith("C")) // filter out C if they put it in the carid field, used for barcode directly
-						carText = carText.substring(1);
-
-
-					int carID = Integer.parseInt(carText);
-					/** FINISH ME, need to deal with quick entry id somehow
-					if(!Database.d.isRegistered(carID))
-					{
-						JOptionPane.showMessageDialog(
-							getRootPane(),
-							"The inputed registration card # is not registered for this event.",
-							"User Input Error",
-							JOptionPane.ERROR_MESSAGE
-						);
-					}
-					else
-					{
-						Messenger.sendEvent(MT.CAR_ADD, carID);
-					}
-					*/
-				}
-				catch(NumberFormatException fe)
-				{
-				    log.warning("\bThe provided registration card # was not valid ("+carText+").");
-				    return;
-				}
-				entry.setText("");
-			}
 		}
 	}
 }

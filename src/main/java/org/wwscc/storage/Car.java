@@ -92,7 +92,9 @@ public class Car extends AttrBase
 	public String getMake()        { return getAttrS("make"); }
 	public String getModel()       { return getAttrS("model"); }
 	public String getColor()       { return getAttrS("color"); }
-	
+
+	public String getQuickEntryId() { return String.format("%010d", carid.getMostSignificantBits() >>> 32); }
+
 	public void setCarId(UUID id)        { carid = id; }
 	public void setDriverId(UUID id)     { driverid = id; }
 	public void setClassCode(String s)   { classcode = s; }
