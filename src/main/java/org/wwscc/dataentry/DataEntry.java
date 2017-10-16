@@ -167,7 +167,6 @@ public class DataEntry extends JFrame implements MessageListener
 	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
 	        System.setProperty("program.name", "DataEntry");
             Logging.logSetup("dataentry");
-            Class.forName("org.wwscc.dataentry.Sounds");
 
             // BMW: Why did I do this?  What needs to be done in event thread?
 			final String title = "DataEntry";
