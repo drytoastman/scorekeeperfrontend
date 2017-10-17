@@ -683,7 +683,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 
 				model.setEntrant(e.entry.source, null, 0);
 				rounds.get(e.entry.source.round).updateEntrants();
-				Messenger.sendEvent(MT.ENTRANTS_CHANGED, e.entry);
+				Messenger.sendEvent(MT.ENTRANT_CHANGED, e.entry);
 			}
 		}
 
@@ -754,7 +754,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 					}
 						
 					target.setEntry(transfer);
-					Messenger.sendEvent(MT.ENTRANTS_CHANGED, old);
+					Messenger.sendEvent(MT.ENTRANT_CHANGED, old);
 					return true;
 				}
 			}

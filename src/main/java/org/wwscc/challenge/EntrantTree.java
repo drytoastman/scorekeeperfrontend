@@ -45,7 +45,7 @@ public class EntrantTree extends CarTree implements MessageListener
 	{
 		setCellRenderer(new CarTreeRenderer());
 		Messenger.register(MT.CHALLENGE_CHANGED, this);
-		Messenger.register(MT.ENTRANTS_CHANGED, this);
+		Messenger.register(MT.ENTRANT_CHANGED, this);
 		setTransferHandler(new DriverDrag());
 		useBonusDialins = true;
 	}
@@ -56,7 +56,7 @@ public class EntrantTree extends CarTree implements MessageListener
 		switch (type)
 		{
 			case CHALLENGE_CHANGED:
-			case ENTRANTS_CHANGED:
+			case ENTRANT_CHANGED:
 				UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
 				Collection<UUID> exclude;
 				Collection<Entrant> reg;

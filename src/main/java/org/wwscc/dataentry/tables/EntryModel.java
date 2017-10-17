@@ -58,7 +58,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (e == null)
 		{
-			log.warning("Failed to fetch entrant data, perhaps try again");
+			log.warning("\bFailed to fetch entrant data, perhaps try again");
 			return;
 		}
 		
@@ -66,7 +66,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		{
 			if (!Prefs.useReorderingTable())
 			{
-				log.log(Level.WARNING, "\bCarid {0} already in table, perhaps you want to enable constant staging mode", carid);
+				log.log(Level.WARNING, "\bCarid {0} already in table, perhaps you want to enable constant staging mode under Event Options", carid);
 				return;
 			}
 			tableData.remove(e); // remove it from position and following will readd at the end
@@ -101,7 +101,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		Entrant newe = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (newe == null)
 		{
-			log.warning("Failed to fetch entrant data, perhaps try again");
+			log.warning("\bFailed to fetch entrant data, perhaps try again");
 			return;
 		}
 		
@@ -235,7 +235,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		{
 			if (aValue instanceof Entrant)
 			{
-				log.warning("How did you get here?");
+				log.warning("\bHow did you get here?");
 				Thread.dumpStack();
 			}
 			else if (aValue == null)
@@ -243,7 +243,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 				/* We are being asked to delete this entry, check if they have runs first. */
 				if (e.hasRuns())
 				{
-					log.warning("Can't remove an entrant that has runs");
+					log.warning("\bCan't remove an entrant that has runs");
 					return;
 				}
 				

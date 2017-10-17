@@ -8,11 +8,14 @@
 
 package org.wwscc.dataentry;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JComponent;
@@ -40,7 +43,7 @@ import org.wwscc.util.Messenger;
 
 import net.miginfocom.swing.MigLayout;
 
-public class QuickEntrySearch extends JPanel implements MessageListener, ActionListener, DocumentListener
+public class QuickEntrySearch extends JPanel implements MessageListener, DocumentListener
 {
     private static Logger log = Logger.getLogger(QuickEntrySearch.class.getCanonicalName());
     
@@ -57,14 +60,26 @@ public class QuickEntrySearch extends JPanel implements MessageListener, ActionL
         cars = new JTable();
         cars.setDefaultRenderer(Object.class, new EntryRenderer());
         cars.setRowHeight(25);
-        cars.setIntercellSpacing(new Dimension(10, 10));
+        cars.setIntercellSpacing(new Dimension(5, 5));
         cars.setFont(cars.getFont().deriveFont(12.0f));
         cars.setBorder(LineBorder.createGrayLineBorder());
-
-        entry.registerKeyboardAction(this, "enter", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-        cars.registerKeyboardAction(this, "enter", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
-
+        cars.setGridColor(new Color(230,230,230));
+        cars.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2)
+                    addSelected();
+            }
+        });
         
+        ActionListener add = new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+                addSelected();
+            }
+        };
+
+        entry.registerKeyboardAction(add, "enter", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+        cars.registerKeyboardAction(add, "enter", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+
         add(new JLabel("Type digits to filter, Hit Enter to add highlighted"), "growx, wrap");
         add(entry, "growx, wrap");
         add(cars, "grow");
@@ -109,7 +124,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, ActionL
         }
     }
     
-    public class QuickEntryFilter extends RowFilter<EntryModel, Integer> 
+    class QuickEntryFilter extends RowFilter<EntryModel, Integer> 
     {
         String match;
         public QuickEntryFilter(String s)
@@ -131,7 +146,6 @@ public class QuickEntrySearch extends JPanel implements MessageListener, ActionL
         }
     }
 
-    
     /**
      * This takes care of the processing required to validate the quickTextField
      * input and send out a CAR_ADD event.
@@ -158,20 +172,15 @@ public class QuickEntrySearch extends JPanel implements MessageListener, ActionL
             return;
         }
     }
-
-
-    @Override
-    public void actionPerformed(ActionEvent e) 
+    
+    private void addSelected()
     {
-        if (e.getActionCommand().equals("enter")) {
-            int idx = cars.getSelectedRow();
-            if (idx >= 0) {
-                Entrant ent = (Entrant)cars.getValueAt(idx, 0);
-                Messenger.sendEvent(MT.CAR_ADD, ent.getCarId());   
-            }
+        int idx = cars.getSelectedRow();
+        if (idx >= 0) {
+            Entrant ent = (Entrant)cars.getValueAt(idx, 0);
+            Messenger.sendEvent(MT.CAR_ADD, ent.getCarId());   
         }
     }
-    
     
     @Override
     public void event(MT type, Object data) 

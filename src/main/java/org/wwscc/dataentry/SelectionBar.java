@@ -12,6 +12,8 @@ package org.wwscc.dataentry;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.UUID;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -37,6 +39,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
 	JButton resultsButton;
 	CurrentSeriesLabel seriesLabel;
+	JLabel entrantCountLabel;
 
 	JComboBox<Event> eventSelect;
 	JComboBox<Integer> courseSelect;
@@ -44,19 +47,24 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
 	public SelectionBar()
 	{
-		super(new MigLayout("fill, ins 3", "[grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow][grow 0][grow 0]"));
+		super(new MigLayout("fill, ins 3", "[grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow 0][grow][grow 0][grow 0]"));
 
 		Messenger.register(MT.SERIES_CHANGED, this);
+	    Messenger.register(MT.RUNGROUP_CHANGED, this);
+		Messenger.register(MT.ENTRANTS_CHANGED, this);
 		setBorder(new BevelBorder(0));
 
 		Font f = new Font(Font.DIALOG, Font.BOLD, 14);
+		Font fn = f.deriveFont(Font.PLAIN);
 
 		resultsButton = new JButton("Print Current Group Results");
 		resultsButton.addActionListener(this);
 		resultsButton.setActionCommand("resultsPrint");
 
 		seriesLabel = new CurrentSeriesLabel();
-	    seriesLabel.setFont(f.deriveFont(Font.PLAIN));
+	    seriesLabel.setFont(fn);
+	    entrantCountLabel = new JLabel("0");
+	    entrantCountLabel.setFont(fn);
 	        
 		courseSelect = createCombo("courseChange");
 		groupSelect  = createCombo("groupChange");
@@ -67,18 +75,21 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 	    add(createLabel("Series:", f), "gapleft 10");
 	    add(seriesLabel, "gapright 20");
 	        
-		add(createLabel("Event:", f), "gapleft 10");
+		add(createLabel("Event:", f), "");
 		add(eventSelect, "gapright 20");
 
 		add(createLabel("Course:", f));
 		add(courseSelect, "gapright 10");
 
 		add(createLabel("RunGroup:", f));
-		add(groupSelect, "");
+		add(groupSelect, "gapright 10");
 
+		add(createLabel("Count:", f));
+		add(entrantCountLabel, "");
+		
 		add(new JLabel(""), "");
 
-		add(resultsButton, "gapright 20");
+		add(resultsButton, "gapright 20");		
 	}
 
 
@@ -122,6 +133,12 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 				else if (eventSelect.getItemCount() > 0)
 					eventSelect.setSelectedIndex(0);
 				break;
+				
+			case RUNGROUP_CHANGED:
+			case ENTRANTS_CHANGED:
+	            List<UUID> runorder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+			    entrantCountLabel.setText(""+runorder.size());
+			    break;
 		}
 	}
 
