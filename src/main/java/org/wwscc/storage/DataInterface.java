@@ -84,6 +84,7 @@ public interface DataInterface
 
 	public List<Car> getCarsForDriver(UUID driverid); // get all cars for this driverid
 	public Map<String, Set<String>> getCarAttributes(); // get a unique list of possible 'attr' for the car
+	public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid);
 	
 	/**
 	 * Upon successful return, the provided car will be in the registered table for the current event.  If overwrite

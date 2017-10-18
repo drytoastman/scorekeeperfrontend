@@ -156,7 +156,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 					runsTable.setRowSelectionInterval(newrow, newrow);
 				}
 				else
-				{   // don't scroll to bottom if there is something selected
+				{   // only scroll to bottom if there is nothing selected
 	                driverTable.scrollTable(dataModel.getRowCount(), 0);
 				}
 				driverTable.repaint();

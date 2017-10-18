@@ -71,7 +71,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JButton registeredandpaid, registerit, unregisterit;
 	JButton newdriver, editdriver, editnotes;
 	JButton newcar, newcarfrom, editcar, deletecar, print;
-	JLabel membershipwarning, noteswarning, paidwarning;
+	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
 	SearchDrivers2 searchDrivers2;
@@ -149,6 +149,11 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		noteswarning.setForeground(Color.WHITE);
 		noteswarning.setBackground(Color.RED);
 		
+		paidlabel = new JLabel("Online Payments:");
+		paidlabel.setFont(paidlabel.getFont().deriveFont(Font.BOLD, 14.0f));
+		paidreport = new JLabel("$0.00");
+		paidreport.setFont(paidreport.getFont().deriveFont(14.0f));
+
 		paidwarning = new JLabel("");
 		paidwarning.setForeground(Color.WHITE);
 		paidwarning.setBackground(Color.RED);
@@ -191,7 +196,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		
 		add(carInfo, "spanx 2, growx, top, wrap");
 		
-		add(paidwarning, "grow, h 15, wrap");
+		add(paidwarning, "grow, h 15");
+	    add(paidlabel, "spanx 2, split 2");
+	    add(paidreport, "wrap");
+	        
 		add(createTitle("4. Do it"), "spanx 3, growx, wrap");
 		add(registeredandpaid, "split 3, spanx 3, gapbottom 5");
 		add(registerit, "");
@@ -388,71 +396,80 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		super.valueChanged(e);
 		if (e.getValueIsAdjusting())
 				return;
+	    if (e.getSource() == drivers) {
+	        driverSelectionChanged();
+	    } else if (e.getSource() == cars) {
+	        carSelectionChanged();
+	    }
+	}
+	
+	protected void driverSelectionChanged()
+	{
+		membershipwarning.setText("");
+		membershipwarning.setOpaque(false);
+		noteswarning.setText("");
+		noteswarning.setOpaque(false);
+        paidreport.setText("$0.00");
 		
-		if (e.getSource() == drivers)
+		if (selectedDriver != null)
 		{
-			membershipwarning.setText("");
-			membershipwarning.setOpaque(false);
-			noteswarning.setText("");
-			noteswarning.setOpaque(false);
+			editdriver.setEnabled(true);
+			activeLabel.setValue(selectedDriver.getMembership(), String.format("%s - %s", selectedDriver.getMembership(), selectedDriver.getFullName()));
+			activeLabel.repaint();
 			
-			if (selectedDriver != null)
-			{
-				editdriver.setEnabled(true);
-				activeLabel.setValue(selectedDriver.getMembership(), String.format("%s - %s", selectedDriver.getMembership(), selectedDriver.getFullName()));
-				activeLabel.repaint();
+			List<Double> payments = Database.d.getOnlinePaymentsForEvent(selectedDriver.getDriverId(), Registration.state.getCurrentEvent().getEventId());
+	        paidreport.setText(String.format(" $%.2f", payments.stream().mapToDouble(x -> x).sum()));
 
-				if (!selectedDriver.getMembership().trim().equals(""))
+			if (!selectedDriver.getMembership().trim().equals(""))
+			{
+				List<Driver> dups = Database.d.findDriverByMembership(selectedDriver.getMembership());
+				dups.remove(selectedDriver);
+				if (dups.size() > 0)
 				{
-					List<Driver> dups = Database.d.findDriverByMembership(selectedDriver.getMembership());
-					dups.remove(selectedDriver);
-					if (dups.size() > 0)
-					{
-						StringBuffer buf = new StringBuffer(dups.get(0).getFullName());
-						for (int ii = 1; ii < dups.size(); ii++)
-							buf.append(", ").append(dups.get(ii).getFullName());
-						membershipwarning.setText("Duplicate Membership with " + buf);
-						membershipwarning.setOpaque(true);
-					}
-				}
-				
-				String notes = selectedDriver.getAttrS("notes");
-				if (!notes.trim().equals(""))
-				{
-					noteswarning.setText(notes);
-					noteswarning.setOpaque(true);
+					StringBuffer buf = new StringBuffer(dups.get(0).getFullName());
+					for (int ii = 1; ii < dups.size(); ii++)
+						buf.append(", ").append(dups.get(ii).getFullName());
+					membershipwarning.setText("Duplicate Membership with " + buf);
+					membershipwarning.setOpaque(true);
 				}
 			}
-			else
+			
+			String notes = selectedDriver.getAttrS("notes");
+			if (!notes.trim().equals(""))
 			{
-				editdriver.setEnabled(false);
-				activeLabel.setValue("", "");
-				activeLabel.repaint();
+				noteswarning.setText(notes);
+				noteswarning.setOpaque(true);
 			}
 		}
-	
-		if (e.getSource() == cars)
+		else
 		{
-			newcar.setEnabled(selectedDriver != null);
+			editdriver.setEnabled(false);
+			activeLabel.setValue("", "");
+			activeLabel.repaint();
+		}
+	}
+	
+	protected void carSelectionChanged()
+	{
+		newcar.setEnabled(selectedDriver != null);
 
-			if (selectedCar != null)
-			{
-				newcarfrom.setEnabled(selectedCar != null);
-				editcar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasActivity());
-				deletecar.setEnabled(!selectedCar.isRegistered() && !selectedCar.isInRunOrder() && !selectedCar.hasActivity());
-				registeredandpaid.setEnabled((!selectedCar.isRegistered() || !selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
-				registerit.setEnabled((!selectedCar.isRegistered() || selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
-				unregisterit.setEnabled(selectedCar.isRegistered() && !selectedCar.isInRunOrder());
-			}
-			else
-			{
-				newcarfrom.setEnabled(false);
-				editcar.setEnabled(false);
-				deletecar.setEnabled(false);
-				registeredandpaid.setEnabled(false);
-				registerit.setEnabled(false);
-				unregisterit.setEnabled(false);
-			}
+		if (selectedCar != null)
+		{
+			newcarfrom.setEnabled(selectedCar != null);
+			editcar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasActivity());
+			deletecar.setEnabled(!selectedCar.isRegistered() && !selectedCar.isInRunOrder() && !selectedCar.hasActivity());
+			registeredandpaid.setEnabled((!selectedCar.isRegistered() || !selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
+			registerit.setEnabled((!selectedCar.isRegistered() || selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
+			unregisterit.setEnabled(selectedCar.isRegistered() && !selectedCar.isInRunOrder());
+		}
+		else
+		{
+			newcarfrom.setEnabled(false);
+			editcar.setEnabled(false);
+			deletecar.setEnabled(false);
+			registeredandpaid.setEnabled(false);
+			registerit.setEnabled(false);
+			unregisterit.setEnabled(false);
 		}
 	}
 
@@ -463,6 +480,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		switch (type)
 		{
 			case EVENT_CHANGED:
+			    driverSelectionChanged();
 				reloadCars(selectedCar);
 				break;
 			

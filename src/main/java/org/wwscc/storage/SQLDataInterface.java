@@ -181,7 +181,7 @@ public abstract class SQLDataInterface implements DataInterface
 		try
 		{
 			return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.txid from registered as x, cars as c, drivers as d " +
-						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=?", newList(eventid)), null);
+						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? ORDER BY d.firstname,d.lastname", newList(eventid)), null);
 		}
 		catch (Exception ioe)
 		{
@@ -507,6 +507,20 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 
+	public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid)
+	{
+	    List<Double> ret = new ArrayList<Double>();
+	    try {
+            ResultSet s = executeSelect("select amount from payments where driverid=? and eventid=? and accountid!='onsite'", newList(driverid, eventid));
+            while (s.next())
+                ret.add(s.getDouble(1));
+	    } catch (SQLException sqle) {
+	        logError("getPaymentsForEvent", sqle);
+	    }
+        return ret;
+	}
+
+	   
 	@Override
 	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
 	{

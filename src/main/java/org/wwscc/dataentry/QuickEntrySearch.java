@@ -85,6 +85,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         add(cars, "grow");
 
         Messenger.register(MT.QUICKID_SEARCH, this);
+        Messenger.register(MT.EVENT_CHANGED, this);
     }
     
     private void setColumnWidths(TableColumn col, int min, int pref, int max)
@@ -142,7 +143,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
             if ((match == null) || (match.equals("")))
                 return true;
             Entrant e = (Entrant)entry.getValue(0);
-            return e.getQuickEntryId().trim().startsWith(match);
+            return e.getQuickEntryId().startsWith(match);
         }
     }
 
@@ -191,6 +192,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
                 if (getParent() instanceof JTabbedPane)
                     ((JTabbedPane)getParent()).setSelectedComponent(this);
                 entry.requestFocus();
+            case EVENT_CHANGED:
                 cars.setModel(new EntryModel());
                 TableColumnModel tcm = cars.getColumnModel();
                 setColumnWidths(tcm.getColumn(0), 80, 160, 320);
