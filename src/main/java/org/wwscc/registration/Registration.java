@@ -69,8 +69,6 @@ public class Registration extends JFrame
 		
 		JMenu find = new JMenu("Find By...");
 		find.add(new FindByAction("Membership", 'M'));
-		find.add(new FindByAction("DriverId", 'D'));
-		find.add(new FindByAction("CarId", 'Q'));
 		
 		JMenu options = new JMenu("Options");
 		options.add(new BarcodeScannerOptionsAction());

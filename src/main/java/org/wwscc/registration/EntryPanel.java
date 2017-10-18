@@ -418,7 +418,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 			activeLabel.repaint();
 			
 			List<Double> payments = Database.d.getOnlinePaymentsForEvent(selectedDriver.getDriverId(), Registration.state.getCurrentEvent().getEventId());
-	        paidreport.setText(String.format(" $%.2f", payments.stream().mapToDouble(x -> x).sum()));
+	        paidreport.setText(String.format("$%.2f", payments.stream().mapToDouble(x -> x).sum()));
 
 			if (!selectedDriver.getMembership().trim().equals(""))
 			{
