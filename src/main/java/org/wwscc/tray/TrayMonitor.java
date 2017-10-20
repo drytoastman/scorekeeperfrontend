@@ -239,7 +239,8 @@ public class TrayMonitor implements ActionListener
             	return;
             	
             _applicationdone = true;
-            syncviewer.shutdown();
+            if (syncviewer != null)
+                syncviewer.shutdown();
             Database.d.close();
             mmonitor.poke();
             cmonitor.poke();

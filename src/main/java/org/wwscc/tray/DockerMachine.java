@@ -56,12 +56,11 @@ public class DockerMachine
 	 */
 	public static boolean machinecreated()
 	{
-		byte buf[] = new byte[1024];
-		if (Exec.execit(Exec.build(null, "docker-machine", "ls"), buf) != 0) {
+		byte buf[] = new byte[128];
+		if (Exec.execit(Exec.build(null, "docker-machine", "ls", "-q", "--filter", "name=default"), buf) != 0) {
 			return false;
 		}
-		try (Scanner scan = new Scanner(new String(buf))) {
-			scan.nextLine();
+		try (Scanner scan = new Scanner(new String(buf).trim())) {
 			return (scan.hasNextLine());
 		}
 	}
