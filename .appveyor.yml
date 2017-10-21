@@ -1,0 +1,12 @@
+build_script:
+    - gradlew.bat shadowJar --info --no-daemon
+    - ISCC.exe \DVersion=2.0.0a20 /DVersion=$(appveyor_build_version) installers\windows.iss
+
+deploy:
+    provider: GitHub
+    auth_token:
+        secure: nFrRn+IZKPknIdICYo5wM/+sdiLjLntIBqVyM51t1yKqL4ivfE2Wn2bJsObJqsLZ
+    artifact: /installers/*\.exe
+    on:
+        appveyor_repo_tag: true
+
