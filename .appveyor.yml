@@ -5,7 +5,7 @@ build_script:
     - gradlew.bat shadowJar --info --no-daemon
 
 after_build:
-    - "C:\Program Files (x86)\Inno Setup 5\iscc.exe" /DVersion=%APPVEYOR_REPO_TAG_NAME% installers\windows.iss
+    - "C:\Program Files (x86)\Inno Setup 5\iscc.exe" /DVersion=%APPVEYOR_REPO_TAG_NAME% "installers\windows.iss"
 
 artifacts:
     - path: 'installers/*.exe'
