@@ -1,12 +1,20 @@
+install:
+    - cmd: IF "%APPVEYOR_REPO_TAG%" == "false" (set APPVEYOR_REPO_TAG_NAME=%APPVEYOR_REPO_BRANCH%)
+
 build_script:
     - gradlew.bat shadowJar --info --no-daemon
-    - ISCC.exe \DVersion=2.0.0a20 /DVersion=$(appveyor_build_version) installers\windows.iss
+
+after_build:
+    - "C:\Program Files (x86)\Inno Setup 5\iscc.exe" /DVersion=%APPVEYOR_REPO_TAG_NAME% installers\windows.iss
+
+artifacts:
+    - path: 'installers/*.exe'
+      name: Windows Installer
 
 deploy:
     provider: GitHub
     auth_token:
         secure: nFrRn+IZKPknIdICYo5wM/+sdiLjLntIBqVyM51t1yKqL4ivfE2Wn2bJsObJqsLZ
-    artifact: /installers/*\.exe
     on:
         appveyor_repo_tag: true
 
