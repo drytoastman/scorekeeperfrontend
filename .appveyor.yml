@@ -1,12 +1,12 @@
 install:
-    - cmd: IF "%APPVEYOR_REPO_TAG%" == "false" (set APPVEYOR_REPO_TAG_NAME=%APPVEYOR_REPO_BRANCH%)
     - set PATH=%PATH%;"C:\Program Files (x86)\Inno Setup 5"
+    - FOR /F "tokens=*" %F IN ('git describe --tags') DO SET suffix=%F
 
 build_script:
     - gradlew.bat shadowJar --info --no-daemon
 
 after_build:
-    - iscc.exe /DVersion=%APPVEYOR_REPO_TAG_NAME% installers\windows.iss
+    - iscc.exe /DVersion=%suffix% installers\windows.iss
 
 artifacts:
     - path: installers\*.exe
