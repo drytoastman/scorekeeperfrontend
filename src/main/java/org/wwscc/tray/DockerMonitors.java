@@ -99,8 +99,11 @@ public class DockerMonitors
             }
 
             jsch = new JSch();
-            machineenv = DockerMachine.machineenv();
-            state.setMachineEnv(machineenv);
+            // if machine is already running, load our env now as mloop only loads it if we start machine ourselves
+            if (DockerMachine.machinerunning()) {
+                machineenv = DockerMachine.machineenv();
+                state.setMachineEnv(machineenv);
+            }
             return true;
         }
 
@@ -113,9 +116,10 @@ public class DockerMonitors
                 state.setMachineStatus("Machine: Starting VM");
                 if (!DockerMachine.startmachine())
                 {
-                    log.info("Unable to start docker machine. See logs.");
+                    log.severe("\bUnable to start docker machine. See logs.");
                     return false;
                 }
+                // only load env if we restarted machine
                 machineenv = DockerMachine.machineenv();
                 state.setMachineEnv(machineenv);
             }
@@ -129,6 +133,9 @@ public class DockerMonitors
                     state.signalPortsReady(false);
                     state.setMachineStatus("Machine: Starting port forwarding ...");
 
+                    if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
+                        throw new JSchException("Missing information in machinenv");
+                    
                     String host = "192.168.99.100";
                     Matcher m = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)").matcher(machineenv.get("DOCKER_HOST"));
                     if (m.find()) { host = m.group(1); }
@@ -222,7 +229,7 @@ public class DockerMonitors
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
-                            log.info("Unable to start " + c.getName() + ". See logs.");
+                            log.severe("\bUnable to start " + c.getName() + ". See logs.");
                         } else {
                             quickrecheck = true;
                         }

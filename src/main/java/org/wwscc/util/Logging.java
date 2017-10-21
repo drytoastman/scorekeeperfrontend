@@ -78,7 +78,7 @@ public class Logging
             root.addHandler(fh);
         } catch (IOException ioe) {
             JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
-                    "Unable to enable logging to files.", "Log Error", JOptionPane.ERROR_MESSAGE);
+                    "Unable to enable logging to file: " + ioe, "Log Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

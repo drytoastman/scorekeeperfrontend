@@ -20,10 +20,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
@@ -31,8 +34,8 @@ import javax.swing.UIManager;
 
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
-import org.wwscc.util.Launcher;
 import org.wwscc.util.Logging;
+import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 
 
@@ -164,7 +167,7 @@ public class TrayMonitor implements ActionListener
                 break;
 
             default:
-                Process p = Launcher.launchExternal(cmd, null);
+                Process p = launchExternal(cmd);
                 if (p != null)
                 	launched.add(p);
         }
@@ -250,6 +253,40 @@ public class TrayMonitor implements ActionListener
             }
         }
     }
+    
+    
+    /**
+     * Called to launch an application as a new process
+     * @param app the name of the class with a main to execute
+     * @return the Process object for the launched application
+     */
+    public static Process launchExternal(String app)
+    {
+        try {
+            ArrayList<String> cmd = new ArrayList<String>();
+            if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
+                cmd.add("javaw");
+            else
+                cmd.add("java");
+            cmd.add("-cp");
+            cmd.add(System.getProperty("java.class.path"));
+            cmd.add(app);
+            log.info(String.format("Running %s", cmd));
+            ProcessBuilder starter = new ProcessBuilder(cmd);
+            starter.redirectErrorStream(true);
+            starter.redirectOutput(Redirect.appendTo(new File(Prefs.getLogDirectory(), "jvmlaunches.log")));
+            Process p = starter.start();
+            Thread.sleep(1000);
+            if (!p.isAlive()) {
+                throw new Exception("Process not alive after 1 second");
+            }
+            return p;
+        } catch (Exception e) {
+            log.log(Level.SEVERE, String.format("\bFailed to launch %s",  app), e);
+            return null;
+        }
+    }
+    
     
     /**
      * Main entry point.

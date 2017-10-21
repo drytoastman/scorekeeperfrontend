@@ -10,7 +10,6 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -33,8 +32,7 @@ public class Prefs
 
 	public static boolean isDebug()
 	{
-	    return true; // stick with debug while in alpha stage, eventually add a system option from the tray monitor
-	    //return (System.getenv("DEBUG") != null);
+	    return (System.getenv("DEBUG") != null);
 	}
 	
 	public static String getVersion()
@@ -48,10 +46,7 @@ public class Prefs
 
 	public static String getLogDirectory()
 	{
-	    Path dir = Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion());
-	    if (isDebug())
-	            dir = Paths.get("./testlogs");
-	    return dir.toString();
+	    return Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion()).toString();
 	}
 
 	public static UUID getServerId() 
@@ -67,7 +62,7 @@ public class Prefs
 
 	    return ret;
 	}
-
+	
 	public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
 	public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
 	public static String getSeries(String def) { return prefs.get("series", def); }

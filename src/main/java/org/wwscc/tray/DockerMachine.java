@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.logging.Logger;
+
 import org.wwscc.util.Exec;
 
 /**
@@ -11,6 +13,8 @@ import org.wwscc.util.Exec;
  */
 public class DockerMachine
 {
+    private static final Logger log = Logger.getLogger(DockerMachine.class.getName());
+
 	/**
 	 * Sets and returns the environment variables used by docker-compose if docker-machine is present
 	 * @return a map of the environment variables that were set
@@ -20,6 +24,7 @@ public class DockerMachine
 	    Map<String,String> dockerenv = new HashMap<String, String>();
 		byte buf[] = new byte[4096];
 		if (Exec.execit(Exec.build(null, "docker-machine", "env", "--shell", "cmd"), buf) != 0) {
+		    log.severe("\bError getting information from docker-machine.  You may need to restart the computer.\n\n" + new String(buf).trim());
 			return dockerenv;
 		}
 		try (Scanner scan = new Scanner(new String(buf))) 
