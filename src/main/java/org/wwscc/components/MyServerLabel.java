@@ -9,6 +9,7 @@ import javax.swing.JLabel;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
 
 /**
  *
@@ -31,7 +32,7 @@ public class MyServerLabel extends JLabel implements MessageListener
 		{
 			case TIMER_SERVICE_LISTENING:
 				Object a[] = (Object[])o;
-				setText("Server On: " + a[1] + ":" + a[2]);
+				setText("Server On: " + Network.getPrimaryAddress().getHostAddress() + ":" + a[1]);
 				break;
 			case TIMER_SERVICE_NOTLISTENING:
 				setText("Server Off");

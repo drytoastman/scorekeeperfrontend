@@ -371,7 +371,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
 	private Run resultToRun(Result r, int course)
 	{
-		Run run = new Run(r.finish);
+		Run run = new Run(0.0); // constructor turns NaN into 999.999
+		run.setRaw(r.finish);
 		run.setCourse(course);
 		run.setReaction(r.rt);
 		run.setSixty(r.sixty);

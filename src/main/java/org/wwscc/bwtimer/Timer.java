@@ -44,7 +44,7 @@ import javax.swing.table.TableColumnModel;
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.components.MyServerLabel;
 import org.wwscc.timercomm.SerialDataInterface;
-import org.wwscc.timercomm.TimerService;
+import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Logging;
 import org.wwscc.util.NF;
@@ -62,7 +62,7 @@ public class Timer extends JPanel implements ActionListener
 	TimerTable table;
 	TimerModel model;
 	SerialDataInterface serial;
-	TimerService server;
+	TimerServer server;
 
 	public Timer() throws IOException
 	{
@@ -94,7 +94,7 @@ public class Timer extends JPanel implements ActionListener
 		serial = null;
 		
 		try {
-			server = new TimerService(Discovery.BWTIMER_TYPE);
+			server = new TimerServer(Discovery.BWTIMER_TYPE);
 			model.addRunServerListener(server);
 			server.start();
 		} catch (IOException ioe) {

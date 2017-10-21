@@ -59,9 +59,7 @@ dependencies {
     compile 'com.googlecode.json-simple:json-simple:1.1.1'
     compile 'org.postgresql:postgresql:42.1.4'
     compile 'com.jcraft:jsch:0.1.54'
-    compile 'org.apache.commons:commons-lang3:3.6'
     compile 'org.apache.commons:commons-io:1.3.2'
-    compile 'org.apache.commons:commons-collections4:4.1'
 
     testRuntime 'junit:junit:4.12'    
 }

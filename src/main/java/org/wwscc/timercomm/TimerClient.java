@@ -17,16 +17,15 @@ import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
-/**
- *
- * @author bwilson
- */
+@SuppressWarnings("unchecked")
 public final class TimerClient implements RunServiceInterface
 {
 	private static final Logger log = Logger.getLogger(TimerClient.class.getName());
@@ -70,11 +69,11 @@ public final class TimerClient implements RunServiceInterface
 		done = true;
 	}
 	
-	public boolean send(String s)
+	public boolean send(JSONObject o)
 	{
 		try {
-			log.log(Level.FINE, "Sending ''{0}'' to the timer", s);
-			out.write(s.getBytes());
+			log.log(Level.FINE, "Sending ''{0}'' to the timer", o);
+			out.write((o.toJSONString()+"\n").getBytes());
 			return true;
 		} catch (IOException ioe) {
 			log.log(Level.INFO, "TimerClient send failed: " + ioe, ioe);
@@ -83,24 +82,33 @@ public final class TimerClient implements RunServiceInterface
 		return false;
 	}
 
-	@Override
+    @Override
 	public boolean sendDial(LeftRightDialin d)
 	{
-		return send(("DIAL " + d.encode() + "\n"));
+	    JSONObject data = new JSONObject();
+	    data.put("type", "DIAL");
+	    d.encode(data);
+		return send(data);
 	}
 
 	@Override
 	public boolean sendRun(Run r)
 	{
-		return send(("RUN " + r.encode() + "\n"));
+        JSONObject data = new JSONObject();
+        data.put("type", "RUN");
+        r.encode(data);	    
+		return send(data);
 	}
 
 	@Override
 	public boolean deleteRun(Run r)
 	{
-		return send(("DELETE " + r.encode() + "\n"));
+        JSONObject data = new JSONObject();
+        data.put("type", "RDELETE");
+        r.encode(data);     
+        return send(data);
 	}
-
+	
 	class ReceiverThread implements Runnable
 	{
 		@Override
@@ -109,6 +117,7 @@ public final class TimerClient implements RunServiceInterface
 			try
 			{
 				Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION, new Object[] { TimerClient.this, true });
+				JSONParser parser = new JSONParser();
 
 				while (!done)
 				{
@@ -123,23 +132,29 @@ public final class TimerClient implements RunServiceInterface
 							return;
 						}
 						
-						if (line.startsWith("DIAL "))
+						JSONObject cmd = (JSONObject)parser.parse(line);
+						String type = (String)cmd.get("type");
+						
+						switch (type)
 						{
-							LeftRightDialin d = new LeftRightDialin();
-							d.decode(line.substring(5));
-							Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, d);
-						}
-						else if (line.startsWith("RUN "))
-						{
-							Run r = new Run(0.0);
-							r.decode(line.substring(4));
-							Messenger.sendEvent(MT.TIMER_SERVICE_RUN, r);
-						}
-						else if (line.startsWith("DELETE "))
-						{
-							Run r = new Run(0.0);
-							r.decode(line.substring(7));
-							Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, r);
+						    case "DIAL":
+	                            LeftRightDialin d = new LeftRightDialin();
+	                            d.decode(cmd);
+	                            Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, d);
+	                            break;
+						    case "RUN":
+                                Run r = new Run(0.0);
+                                r.decode(cmd);
+                                Messenger.sendEvent(MT.TIMER_SERVICE_RUN, r);
+                                break;
+						    case "RDELETE":
+		                        Run dr = new Run(0.0);
+		                        dr.decode(cmd);
+		                        Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, dr);
+		                        break;
+						    default:
+						        log.warning("Unknown message type: " + type);
+						        break;
 						}
 					}
 					catch (ParseException pe)

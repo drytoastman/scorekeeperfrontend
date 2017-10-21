@@ -117,7 +117,7 @@ public class AttrBase
 	
 	public void setAttrD(String name, Double val)
 	{
-		if ((val == null) || (val <= 0.0))
+		if ((val == null) || (val <= 0.0) || Double.isNaN(val))
 			attr.remove(name);
 		else
 			attr.put(name, val);

@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.storage.Run;
-import org.wwscc.timercomm.TimerService;
+import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Logging;
 import org.wwscc.util.TimeTextField;
@@ -29,7 +29,7 @@ public class DebugTimer extends JPanel
 	
 	JButton defaultButton;
 	TimeTextField tf;
-	TimerService server;
+	TimerServer server;
 	
 	public DebugTimer() throws IOException
 	{
@@ -48,7 +48,7 @@ public class DebugTimer extends JPanel
 		add(tf, "w 200, wrap");
 		add(defaultButton, "w 200, wrap");
 		
-		server = new TimerService(Discovery.BWTIMER_TYPE);
+		server = new TimerServer(Discovery.BWTIMER_TYPE);
 		server.start();
 	}
 		

@@ -36,7 +36,7 @@ import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.components.MyServerLabel;
 import org.wwscc.timercomm.SerialDataInterface;
-import org.wwscc.timercomm.TimerService;
+import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Logging;
 import org.wwscc.util.MT;
@@ -53,7 +53,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 	protected ResultsPane results;
 	protected AuditLog audit;
     protected TimingInterface timing;
-	protected TimerService server;
+	protected TimerServer server;
 
 	protected DialinPane dialins;
 	protected JLabel alignModeLabel;
@@ -113,7 +113,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         timing = new TimingInterface();
 	
 		try {
-			server = new TimerService(Discovery.PROTIMER_TYPE);
+			server = new TimerServer(Discovery.PROTIMER_TYPE);
 			model.addRunServerListener(server);
 			server.start();
 		} catch (IOException ioe) {

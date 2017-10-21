@@ -24,11 +24,11 @@ import org.wwscc.util.Messenger;
 
 /**
  * A server that create TimerClients for each connection as well as running a
- * TimerService to advertise our location.
+ * discovery service to advertise our location.
  */
-public class TimerService implements RunServiceInterface
+public class TimerServer implements RunServiceInterface
 {
-	private static final Logger log = Logger.getLogger(TimerService.class.getName());
+	private static final Logger log = Logger.getLogger(TimerServer.class.getName());
 	public static final int TIMER_DEFAULT_PORT = 54328;
 
 	Thread autocloser;
@@ -38,7 +38,7 @@ public class TimerService implements RunServiceInterface
 	Vector<RunServiceInterface> marked;
 	boolean done;
 	
-	public TimerService(String type) throws IOException
+	public TimerServer(String type) throws IOException
 	{
 	    try {
 	        serversock = new ServerSocket(TIMER_DEFAULT_PORT);
@@ -120,14 +120,10 @@ public class TimerService implements RunServiceInterface
         @Override
 		public void run()
 		{
-			try {
-		        JSONObject data = new JSONObject();
-		        data.put("serviceport", serversock.getLocalPort());
-		        Discovery.get().registerService(servicetype, data);
-                Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, Discovery.get().getLocalAddress(), serversock.getLocalPort() } );
-			} catch (IOException ioe) {
-				log.warning("Unable to register timer service for discovery: " + ioe);
-			}
+			JSONObject data = new JSONObject();
+            data.put("serviceport", serversock.getLocalPort());
+            Discovery.get().registerService(servicetype, data);
+            Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, serversock.getLocalPort() } );
 			
 			while (!done)
 			{

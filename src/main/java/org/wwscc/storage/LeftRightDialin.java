@@ -8,12 +8,13 @@
 
 package org.wwscc.storage;
 
-import org.wwscc.util.NF;
+import org.json.simple.JSONObject;
 
 /**
  *
  * @author bwilson
  */
+@SuppressWarnings("unchecked")
 public class LeftRightDialin implements Serial
 {
 	public double left;
@@ -29,17 +30,17 @@ public class LeftRightDialin implements Serial
 		right = r;
 	}
 
-	@Override
-	public String encode()
+    @Override
+	public void encode(JSONObject out)
 	{
-		return NF.format(left) + " " + NF.format(right);
+	    out.put("left", left);
+        out.put("right", right);
 	}
 
 	@Override
-	public void decode(String s)
+	public void decode(JSONObject in)
 	{
-		String bits[] = s.split("\\s+");
-		left = new Double(bits[0]);
-		right = new Double(bits[1]);
+		left = (double)in.getOrDefault("left", -1);
+		right = (double)in.getOrDefault("left", -1);
 	}
 }

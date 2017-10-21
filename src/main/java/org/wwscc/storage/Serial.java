@@ -1,18 +1,17 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
+ * All rights reserved.
  */
 
 package org.wwscc.storage;
 
-import org.json.simple.parser.ParseException;
+import org.json.simple.JSONObject;
 
-/**
- *
- * @author bwilson
- */
 public interface Serial
 {
-	public String encode();
-	public void decode(String s) throws ParseException;
+	public void encode(JSONObject o);
+	public void decode(JSONObject o);
 }

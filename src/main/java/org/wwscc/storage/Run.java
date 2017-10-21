@@ -16,9 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 import org.wwscc.util.IdGenerator;
 
 
@@ -202,29 +199,27 @@ public class Run extends AttrBase implements Serial, Cloneable
 	}
 
 	@Override
-	public String encode()
+	public void encode(JSONObject out)
 	{
-		JSONObject out = new JSONObject();
-		out.put("course", course);
+		out.put("course", course);		
 		out.put("run", run);
 		out.put("status", status);
-		out.put("raw", raw);
+		if (!Double.isNaN(raw))
+		    out.put("raw", raw);
 		out.put("attr", attr);
-		return out.toJSONString();
 	}
 
 	@Override
-	public void decode(String str) throws ParseException
+	public void decode(JSONObject in)
 	{
 		try {
-			JSONObject in = (JSONObject)(new JSONParser().parse(str));
 			course = (int)(long)in.getOrDefault("course", -1);
 			run    = (int)(long)in.getOrDefault("run", -1);
-			raw    = (double)in.getOrDefault("raw", -1);
+			raw    = (double)in.getOrDefault("raw", Double.NaN);
 			status = (String)in.getOrDefault("status", "OK");
 			attr   = (JSONObject)in.getOrDefault("attr", new JSONObject());
 		} catch (Exception e) {
-			log.log(Level.INFO, String.format("Can't decode run from %s: %s", str, e), e);
+			log.log(Level.INFO, String.format("Can't decode run from %s: %s", in, e), e);
 		}
 	}
 }
