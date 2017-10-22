@@ -26,10 +26,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import org.wwscc.actions.BarcodeScannerOptionsAction;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.actions.QuitAction;
+import org.wwscc.barcodes.BarcodeScannerOptionsAction;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.GroupDialog;
 import org.wwscc.storage.Database;

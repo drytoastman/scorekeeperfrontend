@@ -32,6 +32,23 @@ import javax.swing.SwingUtilities;
  */
 public class Logging
 {
+    public static void unitLogging()
+    {
+        // Start with a fresh root set at warning
+        Logger root = LogManager.getLogManager().getLogger("");
+        root.setLevel(Level.WARNING);
+        for(Handler handler : root.getHandlers()) { root.removeHandler(handler); }
+
+        //Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
+        Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
+        Logger.getLogger("org.wwscc").setLevel(Level.ALL);
+        
+        ConsoleHandler ch = new ConsoleHandler();
+        ch.setLevel(Level.ALL);
+        ch.setFormatter(new SingleLineFormatter());
+        root.addHandler(ch);
+    }
+    
     public static void logSetup(String name)
     {
         // Start with a fresh root set at warning

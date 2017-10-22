@@ -17,6 +17,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -146,8 +149,11 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 	 */
 	public void focusOnDriver(String firstname, String lastname)
 	{
+	    searchDrivers.enable(false);
 		firstSearch.setText(firstname);
 		lastSearch.setText(lastname);
+		searchDrivers.enable(true);
+		searchDrivers.search("");
 		drivers.setSelectedIndex(0);
 		drivers.ensureIndexIsVisible(0);
 	}
@@ -391,8 +397,19 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 				last = lastSearch.getText();
 			if (firstSearch.getDocument().getLength() > 0)
 				first = firstSearch.getText();
-			drivers.setListData(new Vector<Driver>(Database.d.getDriversLike(first, last)));
-			drivers.setSelectedIndex(0);
+			
+	         List<Driver> display = Database.d.getDriversLike(first, last);
+	         Collections.sort(display, new NameDriverComparator());          
+	         drivers.setListData(display.toArray());
+             drivers.setSelectedIndex(0);
 		}
+	}
+	
+	final static class NameDriverComparator implements Comparator<Driver> 
+	{
+	    public int compare(Driver d1, Driver d2)
+	    {
+	        return d1.getFullName().compareTo(d2.getFullName());
+	    }
 	}
 }

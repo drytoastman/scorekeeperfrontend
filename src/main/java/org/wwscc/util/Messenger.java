@@ -18,52 +18,63 @@ import javax.swing.SwingUtilities;
 
 public class Messenger
 {
-	private static final Logger log = Logger.getLogger(Messenger.class.getCanonicalName());
-	private static EnumMap<MT, HashSet<MessageListener>> listPtrs =
-		new EnumMap<MT, HashSet<MessageListener>>(MT.class);
+    private static final Logger log = Logger.getLogger(Messenger.class.getCanonicalName());
+    private static EnumMap<MT, HashSet<MessageListener>> listPtrs = new EnumMap<MT, HashSet<MessageListener>>(MT.class);
+    private static boolean testMode = false;
 
-	static public void unregisterAll(MessageListener listener)
-	{
-		for (HashSet<MessageListener> s : listPtrs.values())
-			s.remove(listener);
-	}
+    static public void setTestMode()
+    {
+        testMode = true;
+    }
 
-	public static void unregister(MT type, MessageListener listener)
-	{
-		HashSet<MessageListener> h = listPtrs.get(type);
-		if (h != null)
-			h.remove(listener);
-	}
+    static public void unregisterAll(MessageListener listener)
+    {
+        for (HashSet<MessageListener> s : listPtrs.values())
+            s.remove(listener);
+    }
 
-	public static void register(MT type, MessageListener listener)
-	{
-		HashSet<MessageListener> h = listPtrs.get(type);
-		if (h == null)
-		{
-			h = new HashSet<MessageListener>();
-			listPtrs.put(type, h);
-		}
-		h.add(listener);
-	}
+    public static void unregister(MT type, MessageListener listener)
+    {
+        HashSet<MessageListener> h = listPtrs.get(type);
+        if (h != null)
+            h.remove(listener);
+    }
 
-	public static void sendEvent(final MT type, final Object data)
-	{
-		SwingUtilities.invokeLater(new Runnable() { public void run() { 
-			try {
-				sendEventNow(type, data); 
-			} catch (Exception e) {
-				log.log(Level.WARNING, "Error sending " + type.toString() + ": " + e.getMessage(), e);
-			}
-		}});
-	}
+    public static void register(MT type, MessageListener listener)
+    {
+        HashSet<MessageListener> h = listPtrs.get(type);
+        if (h == null)
+        {
+            h = new HashSet<MessageListener>();
+            listPtrs.put(type, h);
+        }
+        h.add(listener);
+    }
 
-	public static void sendEventNow(MT type, Object data)
-	{
-		HashSet<MessageListener> h = listPtrs.get(type);
-		if (h == null) return;
-		for (MessageListener ml : h)
-			ml.event(type, data);
-	}
+    public static void sendEvent(final MT type, final Object data)
+    {
+        if (testMode) { // in test mode we don't need to let it step through the event thread
+            sendEventNow(type, data);
+            return;
+        }
+
+        SwingUtilities.invokeLater(new Runnable() { public void run() {
+            try {
+                sendEventNow(type, data);
+            } catch (Exception e) {
+                log.log(Level.WARNING, "Error sending " + type.toString() + ": " + e.getMessage(), e);
+            }
+        }});
+    }
+
+    public static void sendEventNow(MT type, Object data)
+    {
+        HashSet<MessageListener> h = listPtrs.get(type);
+        if (h == null) return;        
+        for (MessageListener ml : h) {
+            ml.event(type, data);
+        }
+    }
 }
 
 

@@ -15,8 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,7 +55,6 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
-import org.wwscc.util.SearchTrigger;
 
 
 public class EntryPanel extends DriverCarPanel implements MessageListener
@@ -74,7 +71,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
-	SearchDrivers2 searchDrivers2;
 	
 	public EntryPanel()
 	{
@@ -101,12 +97,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 				print.setEnabled(true);
 			}
 		});
-		
-		searchDrivers2 = new SearchDrivers2();
-		firstSearch.getDocument().removeDocumentListener(searchDrivers);
-		firstSearch.getDocument().addDocumentListener(searchDrivers2);
-		lastSearch.getDocument().removeDocumentListener(searchDrivers);
-		lastSearch.getDocument().addDocumentListener(searchDrivers2);
 
 		drivers.setCellRenderer(new DriverRenderer());
 		driverInfo.setLineWrap(false);
@@ -393,9 +383,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	@Override
 	public void valueChanged(ListSelectionEvent e) 
 	{
+	    if (e.getValueIsAdjusting())
+           return;
 		super.valueChanged(e);
-		if (e.getValueIsAdjusting())
-				return;
+
 	    if (e.getSource() == drivers) {
 	        driverSelectionChanged();
 	    } else if (e.getSource() == cars) {
@@ -497,6 +488,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		            log.log(Level.WARNING, "\b{0} drivers exist with the membership value {1}, using the first", new Object[] {found.size(), barcode});
 		        
 				Driver d = found.get(0);
+				log.info("Focus on driver");
 				focusOnDriver(d.getFirstName(), d.getLastName());
 				break;
 
@@ -515,34 +507,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 					}
 				}
 				break;
-		}
-	}
-	
-
-	class SearchDrivers2 extends SearchTrigger
-	{
-		@Override
-		public void search(String txt)
-		{
-			String first = null, last = null;
-			if (lastSearch.getDocument().getLength() > 0) 
-				last = lastSearch.getText();
-			if (firstSearch.getDocument().getLength() > 0)
-				first = firstSearch.getText();
-			
-			List<Driver> display = Database.d.getDriversLike(first, last);
-			Collections.sort(display, new NameDriverComparator());			
-			drivers.setListData(display.toArray());
-			drivers.setSelectedIndex(0);
-		}
-	}
-	
-	
-	final static class NameDriverComparator implements Comparator<Driver> 
-	{
-		public int compare(Driver d1, Driver d2)
-		{
-			return d1.getFullName().compareTo(d2.getFullName());
 		}
 	}
 }

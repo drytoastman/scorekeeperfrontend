@@ -26,9 +26,9 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import org.wwscc.actions.BarcodeScannerOptionsAction;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
+import org.wwscc.barcodes.BarcodeScannerOptionsAction;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
