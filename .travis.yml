@@ -16,7 +16,6 @@ deploy:
   file_glob: true
   file:
     - "build/libs/scorekeeper-*.jar"
-    - "extras/WindowsEnvironmentValidate.ps1"
   skip_cleanup: true
   on:
     tags: true
