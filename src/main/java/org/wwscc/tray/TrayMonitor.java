@@ -21,8 +21,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -287,6 +292,30 @@ public class TrayMonitor implements ActionListener
         }
     }
     
+    private static boolean checkSingleton()
+    {
+        final Path p = Prefs.getLockFilePath("traymonitor");
+        if (Files.exists(p)) {
+            JOptionPane.showMessageDialog(null, "<html>Another Scorekeeper TrayMonitor is already running. Only one can be running at a time.<br/><br/>" +
+                       "If this is incorrect, try removing " + Prefs.getLockFilePath("traymonitor") + " and running TrayMonitor again.<br/>&nbsp;</html>");
+            return false;
+        }
+
+        try (OutputStream out = Files.newOutputStream(p)) {
+            out.write(new Date().toString().getBytes());
+        } catch (IOException ioe) {
+            log.log(Level.WARNING, "Error creating lock/singleton file", ioe);
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override public void run() {
+                try {
+                    Files.deleteIfExists(p);
+                } catch (IOException e) {}
+        }});
+
+        return true;
+    }
     
     /**
      * Main entry point.
@@ -297,6 +326,10 @@ public class TrayMonitor implements ActionListener
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         System.setProperty("program.name", "TrayMonitor");
         Logging.logSetup("traymonitor");
+
+        if (!checkSingleton())
+            return;
+
         TrayMonitor tm = new TrayMonitor(args);
         tm.startAndWaitForThreads();
         System.exit(0);

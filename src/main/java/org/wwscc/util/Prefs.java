@@ -10,6 +10,7 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.prefs.Preferences;
@@ -42,6 +43,11 @@ public class Prefs
         String v = p.getImplementationVersion();
         if (v == null) return "latest";
         return v;
+	}
+
+	public static Path getLockFilePath(String name)
+	{
+	    return Paths.get(System.getProperty("user.home"), "scorekeeperlogs", name+".lock");
 	}
 
 	public static String getLogDirectory()
