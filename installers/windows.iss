@@ -25,6 +25,8 @@ Name: "{group}\Uninstall";   WorkingDir: "{app}"; Filename: "{app}\unins000.exe"
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
+Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runascurrentuser waituntilterminated; StatusMsg: "Creating Docker VM";
+Filename: {code:ImageBatchFile};                              Flags: runascurrentuser waituntilterminated; StatusMsg: "Download database images";
 
 [Code]
 const
@@ -70,15 +72,28 @@ begin
       
       if MsgBox(Msg, mbConfirmation, MB_YESNO) = IDYES then begin
         if not JavaOk then begin
-          ShellExec('open', 'http://java.com/download', '', '', SW_SHOW, ewNoWait, ResultCode);
+          ShellExec('open', 'http://java.com/en/download/windows-64bit.jsp', '', '', SW_SHOW, ewNoWait, ResultCode);
         end;
         if not DockerOk then begin
           ShellExec('open', 'https://docs.docker.com/toolbox/toolbox_install_windows/', '', '', SW_SHOW, ewNoWait, ResultCode);
         end;
       end;
    end;
-   
 end;
+
+
+function ImageBatchFile(ignored: String): String;
+var
+ ResultCode: Integer;
+begin
+   Result := ExpandConstant('{tmp}\pullimages.bat')
+   if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
+       SaveStringToFile(Result, 'docker pull drytoastman/scdb:{#Version}'#10, True);
+       SaveStringToFile(Result, 'docker pull drytoastman/scweb:{#Version}'#10, True);
+       SaveStringToFile(Result, 'docker pull drytoastman/scsync:{#Version}'#10, True);
+   end;
+end;
+
 
 procedure AddFirewallPort(AppName: string; Protocol, Port: integer);
 var
