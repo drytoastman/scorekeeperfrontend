@@ -10,6 +10,7 @@ package org.wwscc.registration;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -37,6 +38,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.event.ListSelectionEvent;
 
@@ -66,7 +68,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	public static final String UNREGISTER     = "Unregister";
 
 	JButton registeredandpaid, registerit, unregisterit;
-	JButton newdriver, editdriver, editnotes;
+	JButton clearSearch, newdriver, editdriver, editnotes;
 	JButton newcar, newcarfrom, editcar, deletecar, print;
 	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
 	JComboBox<PrintService> printers;
@@ -75,7 +77,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	public EntryPanel()
 	{
 		super(Registration.state);
-		setLayout(new MigLayout("fill", "[400, grow 25][:150:200, grow 25][:150:200, grow 25]"));
+		setLayout(new MigLayout("fill, gap 0, ins 0", "[45%, fill][55%, fill]", "fill"));
 		Messenger.register(MT.EVENT_CHANGED, this);
 		Messenger.register(MT.BARCODE_SCANNED, this);
 		Messenger.register(MT.CAR_CREATED, this);
@@ -107,23 +109,24 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		registeredandpaid = new JButton(REGISTERANDPAY);
 		registeredandpaid.addActionListener(this);
 		registeredandpaid.setEnabled(false);
-		registeredandpaid.setFont(registeredandpaid.getFont().deriveFont(12f));
+		//registeredandpaid.setFont(registeredandpaid.getFont().deriveFont(12f));
 
 		registerit = new JButton(REGISTERONLY);
 		registerit.addActionListener(this);
 		registerit.setEnabled(false);
-		registerit.setFont(registerit.getFont().deriveFont(12f));
+		//registerit.setFont(registerit.getFont().deriveFont(12f));
 
 		unregisterit = new JButton(UNREGISTER);
 		unregisterit.addActionListener(this);
 		unregisterit.setEnabled(false);
-		unregisterit.setFont(unregisterit.getFont().deriveFont(12f));
+		//unregisterit.setFont(unregisterit.getFont().deriveFont(12f));
 		
-		newdriver  = smallButton(NEWDRIVER, true);
-		editdriver = smallButton(EDITDRIVER, false);
-		editnotes  = smallButton(EDITNOTES, false);
-		newcar     = smallButton(NEWCAR, false);		
-		newcarfrom = smallButton(NEWFROM, false);
+		clearSearch = smallButton(CLEAR, true);
+		newdriver   = smallButton(NEWDRIVER, true);
+		editdriver  = smallButton(EDITDRIVER, false);
+		editnotes   = smallButton(EDITNOTES, false);
+		newcar      = smallButton(NEWCAR, false);		
+		newcarfrom  = smallButton(NEWFROM, false);
 		
 		editcar = new JButton(new EditCarAction());
 		editcar.setEnabled(false);
@@ -151,49 +154,57 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		paidwarning.setHorizontalAlignment(JLabel.CENTER);
 		
 		activeLabel = new Code39();
+		activeLabel.setAlignmentX(CENTER_ALIGNMENT);
+		
 		print = new JButton(new PrintLabelAction());
-		print.setFont(new Font(null, Font.PLAIN, 11));
 		print.setEnabled(false);
 
-		/* Delete button, row 0 */
-		add(createTitle("1. Search"), "spanx 3, growx, wrap");
-
-		add(new JLabel("First Name"), "split 2");
-		add(firstSearch, "grow, wrap");
-		add(new JLabel("Last Name"), "split 2");
-		add(lastSearch, "grow, wrap");
-		add(smallButton(CLEAR, true), "right, wrap");
-
-		add(createTitle("2. Driver"), "spanx 3, growx, wrap");
-		add(dscroll, "spany 7, grow");
-		add(newdriver, "growx, spanx 3, split");
-		add(editdriver, "growx");
-		add(editnotes, "growx, wrap");
+		JPanel searchp = new JPanel(new MigLayout("fill, gap 3", "[fill,15%][fill,50%][fill,35%]", ""));
+		JPanel driverp = new JPanel(new MigLayout("fill, gap 3", "[fill,50%][50%!]", "fill"));
+		JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
+		JPanel carp    = new JPanel(new MigLayout("fill, gap 3", "[fill,55%][45%!]", ""));
 		
-		add(driverInfo, "spanx 2, growx, wrap");
-		add(membershipwarning, "spanx 2, growx, h 15, wrap");
-		add(noteswarning, "spanx 2, growx, h 15, wrap");
-		add(activeLabel, "center, spanx 2, wrap");
-		add(printers, "center, spanx 2, wrap");
-		add(print, "center, growx, spanx 2, wrap");
+		leftp.add(searchp, "growx, wrap");
+		leftp.add(driverp, "grow");		
+		add(leftp, "grow");
+		add(carp,  "grow");
+		
+		firstSearch.setNextFocusableComponent(lastSearch);
+		
+		searchp.add(createTitle("1. Search"), "spanx 5, growx, wrap");
+		searchp.add(new JLabel("First Name"), "");
+		searchp.add(firstSearch,              "");
+		searchp.add(clearSearch,              "wrap");
+		searchp.add(new JLabel("Last Name"),  "");
+		searchp.add(lastSearch,               "");
+		searchp.add(newdriver,                "");
 
-		add(createTitle("3. Car"), "spanx 3, growx, gaptop 4, wrap");
-		add(cscroll, "spany 3, hmin 130, grow");
-		add(newcar, "growx");
-		add(newcarfrom, "growx, wrap");
-		add(editcar, "growx"); 
-		add(deletecar, "growx, wrap");
+		driverp.add(createTitle("2. Driver"), "spanx 2, growx, wrap");
+		driverp.add(dscroll,           "spany 9, grow");
+		driverp.add(editdriver,        "growx, wrap");
+		driverp.add(editnotes,         "growx, wrap");
+		driverp.add(driverInfo,        "growx, gap 0 0 10 10, wrap");
+		driverp.add(membershipwarning, "h 15, wrap");
+		driverp.add(noteswarning,      "h 15, wrap");
+		driverp.add(activeLabel,       "center, wrap");
+		driverp.add(printers,          "growx, wrap");
+		driverp.add(print,             "growx, wrap");
+		driverp.add(new JLabel(""),    "pushy 100");
 		
-		add(carInfo, "spanx 2, growx, top, wrap");
-		
-		add(paidwarning, "grow, h 15");
-	    add(paidlabel, "spanx 2, split 2");
-	    add(paidreport, "wrap");
-	        
-		add(createTitle("4. Do it"), "spanx 3, growx, wrap");
-		add(registeredandpaid, "split 3, spanx 3, gapbottom 5");
-		add(registerit, "");
-		add(unregisterit, "wrap");
+		carp.add(createTitle("3. Car"), "spanx 2, growx, wrap");
+		carp.add(cscroll,           "spany 10, grow");
+		carp.add(newcar,            "growx, wrap");
+		carp.add(newcarfrom,        "growx, wrap");
+		carp.add(editcar,           "growx, wrap"); 
+		carp.add(deletecar,         "growx, wrap");
+		carp.add(carInfo,           "growx, gap 0 0 10 10, wrap");
+		carp.add(registeredandpaid, "growx, wrap");
+		carp.add(registerit,        "growx, wrap");
+		carp.add(unregisterit,      "growx, wrap");
+		carp.add(paidlabel,         "gaptop 5, split");
+		carp.add(paidreport,        "growx, wrap");
+		carp.add(new JLabel(""),    "pushy 100, wrap");
+		carp.add(paidwarning,       "spanx 2, growx, h 15");
 		
 		new Thread(new FindPrinters()).start();
 	}
@@ -300,7 +311,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	private JButton smallButton(String text, boolean enabled)
 	{
 		JButton b = new JButton(text);
-		b.setFont(new Font(null, Font.PLAIN, 11));
+		//b.setFont(new Font(null, Font.PLAIN, 11));
 		b.setEnabled(enabled);
 		b.addActionListener(this);
 		return b;

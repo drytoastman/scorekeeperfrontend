@@ -10,6 +10,7 @@ package org.wwscc.registration;
 
 import java.awt.BorderLayout;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -35,6 +36,7 @@ import org.wwscc.util.ApplicationState;
 import org.wwscc.util.Logging;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 
 public class Registration extends JFrame
@@ -82,10 +84,13 @@ public class Registration extends JFrame
 		bar.add(options);
 //		bar.add(tools);
 		setJMenuBar(bar);
-
-		Database.openDefault();
-		pack();
+        
+		//setBounds(new Rectangle(20, 20, 1350, 750));
+        setBounds(Prefs.getWindowBounds("registration"));
+        Prefs.trackWindowBounds(this, "registration");
 		setVisible(true);
+		
+		Database.openDefault();
 	}
 
 

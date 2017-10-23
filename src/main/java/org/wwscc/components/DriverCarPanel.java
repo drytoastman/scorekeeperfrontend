@@ -52,7 +52,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 {
 	private static final Logger log = Logger.getLogger(DriverCarPanel.class.getCanonicalName());
 
-	public static final String CLEAR      = "Clear";
+	public static final String CLEAR      = "Clear Search";
 	public static final String NEWDRIVER  = "New Driver";
 	public static final String EDITDRIVER = "Edit Driver";
 	public static final String EDITNOTES  = "Edit Notes";

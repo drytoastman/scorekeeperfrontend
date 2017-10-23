@@ -86,17 +86,17 @@ public class DriverEntry extends DriverCarPanel implements MessageListener
 		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(firstSearch, c);
 		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(new JLabel("Last Name"), c);
 		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(lastSearch, c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton("Clear"), c);
+		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(CLEAR), c);
 
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("2. Driver"), c);
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0.9; add(dscroll, c);
-		c.gridx = 0; c.gridy = y++;   c.gridwidth = 1; c.weighty = 0;   add(smallButton("New Driver"), c);
+		c.gridx = 0; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWDRIVER), c);
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(driverInfo, c);
 
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("3. Car"), c);
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0.8; add(cscroll, c);
-		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(smallButton("New Car"), c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton("New From"), c);
+		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWCAR), c);
+		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWFROM), c);
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(carInfo, c);
 
 		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("4. Do it"), c);
