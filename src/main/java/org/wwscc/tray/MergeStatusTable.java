@@ -33,7 +33,7 @@ import org.wwscc.util.Resources;
 
 public class MergeStatusTable extends JTable {
 
-    public static final int BASE_COL_COUNT = 5;
+    public static final int BASE_COL_COUNT = 4;
     
     public MergeStatusTable()
     {
@@ -166,7 +166,6 @@ public class MergeStatusTable extends JTable {
                 case 1:  return "Host";
                 case 2:  return "Last";
                 case 3:  return "Next";
-                case 4:  return "Drivers";
             }
             if (col < series.size() + BASE_COL_COUNT)
                 return series.get(col-BASE_COL_COUNT);
@@ -267,9 +266,6 @@ public class MergeStatusTable extends JTable {
                     break;
                 case 3: 
                     setToDate(server.getNextCheck()); 
-                    break;
-                case 4: 
-                    setTextLimit(server.getDriversState(), 12); 
                     break;
                 
                 default: // a series hash column
