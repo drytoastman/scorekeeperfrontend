@@ -25,8 +25,8 @@ Name: "{group}\Uninstall";   WorkingDir: "{app}"; Filename: "{app}\unins000.exe"
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
-Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runascurrentuser waituntilterminated; StatusMsg: "Creating Docker VM";
-Filename: {code:ImageBatchFile};                              Flags: runascurrentuser waituntilterminated; StatusMsg: "Download database images";
+Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Creating Docker VM";
+Filename: {code:ImageBatchFile};                              Flags: runasoriginaluser waituntilterminated; StatusMsg: "Download database images";
 
 [Code]
 const
