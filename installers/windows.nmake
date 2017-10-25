@@ -1,0 +1,2 @@
+GracefulShutdown.exe: 
+	cl /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" GracefulShutdown.cpp  kernel32.lib user32.lib

@@ -2,5 +2,6 @@ bin
 build
 logs
 *.log
+*.exe
+*.obj
 .gradle
-docker-compose.yaml
