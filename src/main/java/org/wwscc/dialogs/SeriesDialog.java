@@ -10,7 +10,7 @@ package org.wwscc.dialogs;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -20,14 +20,18 @@ public class SeriesDialog extends BaseDialog<List<String>>
 {
 	/**
 	 * Create the dialog.
+	 * @param toplabel the label to show about the series list
 	 * @param seriesoptions the possible series to select
 	 */
-    public SeriesDialog(String[] seriesoptions)
+    public SeriesDialog(String toplabel, String[] seriesoptions)
 	{
-        super(new MigLayout(), true);
+        super(new MigLayout("", "[50%][50%]"), true);
+        JLabel title = new JLabel(toplabel);
+        title.setFont(title.getFont().deriveFont(14.0f));
+        mainPanel.add(title, "spanx 2, gapbottom 5, wrap");
 		for (String s : seriesoptions)
 		{
-		    mainPanel.add(label(s, true), "");
+		    mainPanel.add(label(s, true), "right");
 		    mainPanel.add(checkbox(s, false), "wrap");
 		}
     }

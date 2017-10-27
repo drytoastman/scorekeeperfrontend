@@ -31,6 +31,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.UIManager;
 
 import org.json.simple.JSONObject;
@@ -75,20 +76,20 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         setContentPane(content);
         
         JMenuBar bar = new JMenuBar();
-        JMenu sync = new JMenu("Sync");
-        bar.add(sync);      
-        sync.add(new MergeWithAction());
-        sync.add(syncallnow);
-        sync.add(new DownloadNewSeriesAction());
+        JMenu file = new JMenu("File");
+        bar.add(file);      
+        file.add(new MergeWithAction());
+        file.add(syncallnow);
+        file.add(new JSeparator());
+        file.add(new DownloadNewSeriesAction());
+        file.add(new DeleteLocalSeriesAction());
 
         JMenu adv = new JMenu("Advanced");
         bar.add(adv);
         adv.add(new JCheckBoxMenuItem(new LocalDiscoveryAction()));
         adv.add(new ResetHashAction());
-        adv.add(new DeleteLocalSeriesAction());
         
         setJMenuBar(bar);
-        
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
         discoveryChange(Prefs.getAllowDiscovery());
@@ -240,7 +241,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
-            SeriesDialog sd = new SeriesDialog(PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
+            SeriesDialog sd = new SeriesDialog("Select the local series to delete", PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();

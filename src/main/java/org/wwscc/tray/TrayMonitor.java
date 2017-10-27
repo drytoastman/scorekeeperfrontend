@@ -222,6 +222,7 @@ public class TrayMonitor implements ActionListener
     	private volatile Map<String, String> _machineenv;
         private volatile Image _currentIcon;
         private volatile boolean _machineready, _portsforwarded, _shutdownrequested, _applicationdone, _shutdownmachine, _usingmachine;
+        private volatile String _lastMachineStatus, _lastBackendStatus;
         public StateMachine()
         {
         	_machineready      = false;
@@ -229,6 +230,8 @@ public class TrayMonitor implements ActionListener
             _shutdownrequested = false;
             _applicationdone   = false;
             _shutdownmachine   = false;
+            _lastMachineStatus = "";
+            _lastBackendStatus = "";
         }
         
         public boolean isApplicationDone()          { return _applicationdone; }
@@ -239,9 +242,25 @@ public class TrayMonitor implements ActionListener
 		
         public void signalPortsReady(boolean ready)        { _portsforwarded = ready; }
 		public void setMachineEnv(Map<String, String> env) { _machineenv = env; }
-		public void setMachineStatus(String status)        { mMachineStatus.setLabel(status); }
-		public void setBackendStatus(String status)        { mBackendStatus.setLabel(status); }
 		public void setUsingMachine(boolean using)         { _usingmachine = using; }
+		
+	    public void setMachineStatus(String status)
+	    { 
+	        mMachineStatus.setLabel(status);
+	        if (!_lastMachineStatus.equals(status)) {
+	            log.info("Machine status changed to " + status);
+	            _lastMachineStatus = status;
+	        }
+	    }
+	    
+	    public void setBackendStatus(String status)
+	    {
+	        mBackendStatus.setLabel(status); 
+            if (!_lastBackendStatus.equals(status)) {
+                log.info("Backend status changed to " + status);
+                _lastBackendStatus = status;
+            }
+	    }
         
         public void signalMachineReady(boolean ready)
         {
@@ -271,7 +290,7 @@ public class TrayMonitor implements ActionListener
 	        }
 
             if (ready)
-                mBackendStatus.setLabel("Backend: Running");
+                setBackendStatus("Backend: Running");
         }
                 
         public void shutdownRequest()
