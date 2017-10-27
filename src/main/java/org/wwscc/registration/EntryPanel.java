@@ -10,7 +10,6 @@ package org.wwscc.registration;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -74,7 +73,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
 	
-	public EntryPanel()
+	@SuppressWarnings("deprecation")
+    public EntryPanel()
 	{
 		super(Registration.state);
 		setLayout(new MigLayout("fill, gap 0, ins 0", "[45%, fill][55%, fill]", "fill"));
@@ -169,6 +169,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		add(leftp, "grow");
 		add(carp,  "grow");
 		
+		// deprecated but nothing easy enough to replace
 		firstSearch.setNextFocusableComponent(lastSearch);
 		
 		searchp.add(createTitle("1. Search"), "spanx 5, growx, wrap");

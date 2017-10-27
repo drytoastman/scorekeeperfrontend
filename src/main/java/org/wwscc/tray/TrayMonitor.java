@@ -9,7 +9,6 @@
 package org.wwscc.tray;
 
 import java.awt.AWTException;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.Menu;
 import java.awt.MenuItem;
@@ -20,12 +19,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,7 +41,6 @@ import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.Logging;
 import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
-
 
 public class TrayMonitor implements ActionListener
 {
@@ -63,8 +61,9 @@ public class TrayMonitor implements ActionListener
     List<Process> launched;
     Map<String, MenuItem> appMenus;
     MenuItem mBackendStatus, mMachineStatus;
-    SharedState state;
+    StateMachine state;
     TrayIcon trayIcon;
+    FileLock filelock;
 
     public TrayMonitor(String args[])
     {
@@ -73,10 +72,16 @@ public class TrayMonitor implements ActionListener
             log.severe("\bTrayIcon is not supported, unable to run Scorekeeper monitor application.");
             System.exit(-1);
         }
+        
+        if (!ensureSingleton())
+        {
+            log.warning("Another TrayMonitor is running, quitting now.");
+            System.exit(-1);
+        }
 
         appMenus = new HashMap<String, MenuItem>();
         launched = new ArrayList<Process>();
-        state = new SharedState();
+        state = new StateMachine();
         
         PopupMenu trayPopup = new PopupMenu();        
         newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
@@ -99,10 +104,6 @@ public class TrayMonitor implements ActionListener
         quit.addActionListener(this);
         trayPopup.add(quit);
 
-        Font f = UIManager.getDefaults().getFont("MenuItem.font").deriveFont(Font.ITALIC).deriveFont(14.0f);
-        mMachineStatus.setFont(f);
-        mBackendStatus.setFont(f);
-
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
         // Force an update check when opening the context menu
@@ -122,6 +123,38 @@ public class TrayMonitor implements ActionListener
         }        
     }
 
+    
+    /**
+     * Use a local file lock to make sure that we are the only tray monitor running.
+     * @return true if we are the only running traymonitor and can continue, false if we should stop
+     */
+    private boolean ensureSingleton()
+    {
+        try {
+            filelock = FileChannel.open(Prefs.getLockFilePath("traymonitor"), StandardOpenOption.CREATE, StandardOpenOption.WRITE).tryLock();
+            if (filelock == null) throw new IOException("File already locked");
+        } catch (Exception e) {
+            if (JOptionPane.showConfirmDialog(null, "<html>"+ e + "<br/><br/>" + 
+                        "Unable to lock TrayMonitor access. " +  
+                        "This usually indicates that another copy of TrayMonitor is<br/>already running and only one should be running at a time. " +
+                        "It is also possible that TrayMonitor<br/>did not exit cleanly last time and the lock is just left over.<br/><br/>" +
+                        "Click No to quit now or click Yes to start anyways.<br/>&nbsp;<br/>",
+                        "Continue With Launch", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
+                return false;
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override public void run() {
+                try {
+                    if (filelock != null)
+                        filelock.release();
+                } catch (IOException e) {}
+        }});
+        
+        return true;
+    }
+
+    
     /**
      * This actually starts the threads in the program and then waits for
      * them to finish.  We can't used thread.join as it breaks thread.notify
@@ -142,6 +175,7 @@ public class TrayMonitor implements ActionListener
         }
     }
     
+    
     private void newAppItem(String initial, String cmd, Menu parent)
     {
         MenuItem m = new MenuItem(initial);
@@ -152,6 +186,7 @@ public class TrayMonitor implements ActionListener
         appMenus.put(cmd, m);
     }
 
+    
     @Override
     public void actionPerformed(ActionEvent e)
     {
@@ -159,7 +194,7 @@ public class TrayMonitor implements ActionListener
         switch (cmd)
         {
             case "debugcollect":
-                new DebugCollector(cmonitor.containers.get("db")).start();
+                new DebugCollector(cmonitor).start();
                 break;
 
             case "datasync":
@@ -182,19 +217,22 @@ public class TrayMonitor implements ActionListener
      * Encapsulate the state shared between our monitors so we can decide when or
      * when not to take further action.
      */
-    class SharedState implements TrayStateInterface
+    class StateMachine implements TrayStateInterface
     {
     	private volatile Map<String, String> _machineenv;
         private volatile Image _currentIcon;
-        private volatile boolean _machineready, _portsforwarded, _applicationdone;
-        public SharedState()
+        private volatile boolean _machineready, _portsforwarded, _shutdownrequested, _applicationdone, _shutdownmachine, _usingmachine;
+        public StateMachine()
         {
-        	_machineready    = false;
-            _portsforwarded  = false;
-            _applicationdone = false;
+        	_machineready      = false;
+            _portsforwarded    = false;
+            _shutdownrequested = false;
+            _applicationdone   = false;
+            _shutdownmachine   = false;
         }
         
         public boolean isApplicationDone()          { return _applicationdone; }
+        public boolean shouldStopMachine()          { return _shutdownmachine; }
         public boolean arePortsForwarded()          { return _portsforwarded;  }
         public boolean isMachineReady()             { return _machineready;    }
 		public Map<String, String> getMachineEnv()  { return _machineenv; }
@@ -203,6 +241,7 @@ public class TrayMonitor implements ActionListener
 		public void setMachineEnv(Map<String, String> env) { _machineenv = env; }
 		public void setMachineStatus(String status)        { mMachineStatus.setLabel(status); }
 		public void setBackendStatus(String status)        { mBackendStatus.setLabel(status); }
+		public void setUsingMachine(boolean using)         { _usingmachine = using; }
         
         public void signalMachineReady(boolean ready)
         {
@@ -220,7 +259,7 @@ public class TrayMonitor implements ActionListener
 	        {
 	            if (next == coneok) 
 	            {
-	                mBackendStatus.setLabel("Backend: Waiting for DB");
+	                mBackendStatus.setLabel("Backend: Waiting for Database");
 	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
 		            syncviewer = new DataSyncInterface();
@@ -237,25 +276,49 @@ public class TrayMonitor implements ActionListener
                 
         public void shutdownRequest()
         {
-            if (_applicationdone) {
+            if (_shutdownrequested) 
+            {   // Quit called a second time while shutting down, just quit now
                 log.warning("User force quiting.");
                 System.exit(-1);
             }
             
-            if (JOptionPane.showConfirmDialog(null, "This will stop all applications including the database and web server.  Is that ok?", 
-                "Quit Scorekeeper", JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
-            	return;
-            	
-            _applicationdone = true;
-            if (syncviewer != null)
-                syncviewer.shutdown();
+            if (_usingmachine) 
+            {
+                Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
+                int result = JOptionPane.showOptionDialog(null, "<html>" + 
+                        "This will stop all applications including the database and web server.<br/>" +
+                        "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;", 
+                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                if (result == 2)
+                    return;
+                _shutdownmachine = (result == 1);
+            }
+            else
+            {            
+                Object[] options = { "Shutdown Scorekeeper", "Cancel" };
+                int result = JOptionPane.showOptionDialog(null, "<html>" + 
+                        "This will stop all applications including the database and web server.", 
+                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                if (result == 1)
+                    return;
+            }
+
+            // first shutdown all the things with database connections
+            _shutdownrequested = true;
+            for (Process p : launched) {
+                if (p.isAlive())
+                    p.destroy();
+            }
+            if (syncviewer != null) syncviewer.shutdown();
             Database.d.close();
+
+            // second backup the database
+            cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".pgdump"));            
+
+            // note the shutdown flag and wake up our monitors to finish up
+            _applicationdone = true;
             mmonitor.poke();
             cmonitor.poke();
-            for (Process p : launched) {
-            	if (p.isAlive())
-            		p.destroy();
-            }
         }
     }
     
@@ -279,7 +342,7 @@ public class TrayMonitor implements ActionListener
             log.info(String.format("Running %s", cmd));
             ProcessBuilder starter = new ProcessBuilder(cmd);
             starter.redirectErrorStream(true);
-            starter.redirectOutput(Redirect.appendTo(new File(Prefs.getLogDirectory(), "jvmlaunches.log")));
+            starter.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("jvmlaunches.log").toFile()));
             Process p = starter.start();
             Thread.sleep(1000);
             if (!p.isAlive()) {
@@ -292,30 +355,6 @@ public class TrayMonitor implements ActionListener
         }
     }
     
-    private static boolean checkSingleton()
-    {
-        final Path p = Prefs.getLockFilePath("traymonitor");
-        if (Files.exists(p)) {
-            JOptionPane.showMessageDialog(null, "<html>Another Scorekeeper TrayMonitor is already running. Only one can be running at a time.<br/><br/>" +
-                       "If this is incorrect, try removing " + Prefs.getLockFilePath("traymonitor") + " and running TrayMonitor again.<br/>&nbsp;</html>");
-            return false;
-        }
-
-        try (OutputStream out = Files.newOutputStream(p)) {
-            out.write(new Date().toString().getBytes());
-        } catch (IOException ioe) {
-            log.log(Level.WARNING, "Error creating lock/singleton file", ioe);
-        }
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override public void run() {
-                try {
-                    Files.deleteIfExists(p);
-                } catch (IOException e) {}
-        }});
-
-        return true;
-    }
     
     /**
      * Main entry point.
@@ -326,9 +365,6 @@ public class TrayMonitor implements ActionListener
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
         System.setProperty("program.name", "TrayMonitor");
         Logging.logSetup("traymonitor");
-
-        if (!checkSingleton())
-            return;
 
         TrayMonitor tm = new TrayMonitor(args);
         tm.startAndWaitForThreads();

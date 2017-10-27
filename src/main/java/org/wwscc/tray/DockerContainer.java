@@ -24,7 +24,7 @@ import java.util.Set;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
-public class DockerContainer 
+public class DockerContainer implements DataRetrievalInterface
 {
     public static final String DBV_PREFIX   = "scdatabase-";
     public static final String LOGV_PREFIX  = "sclogs-";
@@ -157,23 +157,15 @@ public class DockerContainer
         return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) == 0;
     }
     
-    /**
-     * Call docker to run pg_dump and pipe the output to file
-     * @param file the file to write the backup data to
-     * @return true if succeeded
-     */
+    @Override
     public boolean dumpDatabase(Path file) 
     {
-        ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "pg_dump", "-U", "postgres", "-d", "scorekeeper");
+        ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "pg_dump", "-U", "postgres", "-F", "c", "-d", "scorekeeper");
         p.redirectOutput(Redirect.appendTo(file.toFile()));
         return Exec.execit(p, null) == 0;      
     }
 
-    /**
-     * Call docker to copy log files from container to host
-     * @param dir the directory to copy the logs to
-     * @return true if succeeded
-     */
+    @Override
     public boolean copyLogs(Path dir)
     {
         return Exec.execit(Exec.build(machineenv, "docker", "cp", name+":/var/log", dir.toString()), null) == 0;      

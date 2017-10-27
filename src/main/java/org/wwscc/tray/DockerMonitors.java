@@ -1,5 +1,6 @@
 package org.wwscc.tray;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -66,9 +67,9 @@ public class DockerMonitors
      */
     public static class MachineMonitor extends Monitor
     {
-        Map<String,String> machineenv;
-        JSch jsch;
-        Session portforward;
+        private Map<String,String> machineenv;
+        private JSch jsch;
+        private Session portforward;
 
         public MachineMonitor(TrayStateInterface state)
         {
@@ -83,10 +84,12 @@ public class DockerMonitors
             {
                 state.signalPortsReady(true);
                 state.signalMachineReady(true);
+                state.setUsingMachine(false);
                 state.setMachineStatus("Machine: Not needed");
                 return false;
             }
 
+            state.setUsingMachine(true);
             if (!DockerMachine.machinecreated())
             {
                 log.info("Creating a new docker machine.");
@@ -113,7 +116,7 @@ public class DockerMonitors
             if (!DockerMachine.machinerunning())
             {
                 log.info("Starting the docker machine.");
-                state.setMachineStatus("Machine: Starting VM");
+                state.setMachineStatus("Machine: (Re)starting VM");
                 if (!DockerMachine.startmachine())
                 {
                     log.severe("\bUnable to start docker machine. See logs.");
@@ -179,10 +182,10 @@ public class DockerMonitors
      * Thread to keep checking our services for status.  It pauses for 5 seconds but can
      * be woken by anyone calling notify on the class object.
      */
-    public static class ContainerMonitor extends Monitor implements MessageListener
+    public static class ContainerMonitor extends Monitor implements MessageListener, DataRetrievalInterface
     {
-        Map<String, DockerContainer> containers;
-        Set<String> names;
+        private Map<String, DockerContainer> containers;
+        private Set<String> names;
 
         public ContainerMonitor(TrayStateInterface state)
         {
@@ -206,7 +209,6 @@ public class DockerMonitors
                 } catch (InterruptedException ie) {}
             }
 
-
             for (DockerContainer c : containers.values()) {
             	state.setBackendStatus("Backend: Init " + c.getName());
                 c.setMachineEnv(state.getMachineEnv());
@@ -225,7 +227,7 @@ public class DockerMonitors
             // Something isn't running, try and start them now            
             if (dead.size() > 0) {
                 ok = false;
-                state.setBackendStatus("Backend: (re)starting " + dead);
+                state.setBackendStatus("Backend: Restarting " + dead);
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
@@ -246,12 +248,31 @@ public class DockerMonitors
         	state.setBackendStatus("Backend: Shutting down");
             if (!DockerContainer.stopAll(containers.values()))
                 log.severe("\bUnable to stop the web and database services. See logs.");
+            if (state.shouldStopMachine()) {
+                // we do this in the container monitor for ease of performing stopAll first
+                state.setBackendStatus("Backend: Shutting down machine");
+                DockerMachine.stopmachine();
+            }
             state.setBackendStatus("Backend: Stopped");
         }
 
+        @Override
+        public boolean dumpDatabase(Path file) 
+        {
+            return containers.get("db").dumpDatabase(file);
+        }
+        
+        @Override
+        public boolean copyLogs(Path dir)
+        {
+            return containers.get("db").copyLogs(dir);
+        }
+        
 		@Override
-		public void event(MT type, Object data) {
-			if (type == MT.POKE_SYNC_SERVER) {
+		public void event(MT type, Object data) 
+		{
+			if (type == MT.POKE_SYNC_SERVER) 
+			{
 				containers.get("sync").poke();
 			}
 		}

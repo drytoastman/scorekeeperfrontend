@@ -95,5 +95,14 @@ public class DockerMachine
 	public static boolean startmachine()
 	{
 		return Exec.execit(Exec.build(null, "docker-machine", "start"), null) == 0;
-	}    
+	}
+	   
+	/**
+     * Try to stop virtual box node
+     * @return true if command returns success
+     */
+    public static boolean stopmachine()
+    {
+        return Exec.execit(Exec.build(null, "docker-machine", "stop"), null) == 0;
+    }    
 }

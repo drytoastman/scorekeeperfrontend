@@ -10,7 +10,6 @@ package org.wwscc.registration;
 
 import java.awt.BorderLayout;
 import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.logging.Level;

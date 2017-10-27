@@ -85,7 +85,7 @@ public class Logging
             }});
 
         try {
-            File logdir = new File(Prefs.getLogDirectory());
+            File logdir = Prefs.getLogDirectory().toFile();
             if (!logdir.exists())
                 if (!logdir.mkdirs())
                     throw new IOException("Can't create log directory " + logdir);

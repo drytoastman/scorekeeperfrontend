@@ -8,7 +8,6 @@
 
 package org.wwscc.protimer;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -31,7 +30,7 @@ public class AuditLog implements MessageListener
     public AuditLog()
     {
         try {
-            audit = new FileHandler(new File(Prefs.getLogDirectory(), "proaudit.%g.log").getAbsolutePath(), 1000000, 10, true);
+            audit = new FileHandler(Prefs.getLogDirectory().resolve("proaudit.%g.log").toAbsolutePath().toString(), 1000000, 10, true);
             audit.setFormatter(new Logging.SingleLineFormatter());
         } catch (IOException ioe) {
             log.log(Level.WARNING, "Can't open audit log: " + ioe, ioe);

@@ -10,6 +10,7 @@ package org.wwscc.util;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Hashtable;
@@ -94,14 +95,32 @@ public class Prefs
         return v;
     }
 
+    private static Path _ensureDirectory(Path p)
+    {
+        File f = p.toFile();
+        if (!f.exists())
+            f.mkdirs();
+        return p;
+    }
+    
+    private static Path getRootDir()
+    {
+        return _ensureDirectory(Paths.get(System.getProperty("user.home"), "scorekeeper"));
+    }
+    
     public static Path getLockFilePath(String name)
     {
-        return Paths.get(System.getProperty("user.home"), "scorekeeperlogs", name+".lock");
+        return getRootDir().resolve(name+".lock");
     }
 
-    public static String getLogDirectory()
+    public static Path getLogDirectory()
     {
-        return Paths.get(System.getProperty("user.home"), "scorekeeperlogs", getVersion()).toString();
+        return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "logs")));
+    }
+    
+    public static Path getBackupDirectory()
+    {
+        return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "backup")));
     }
 
     public static UUID getServerId()

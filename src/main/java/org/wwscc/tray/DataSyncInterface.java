@@ -266,6 +266,13 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         }
     }
 
+
+    /** 
+     * A main interface for testing datasync interface by itself
+     * @param args ignored
+     * @throws InterruptedException ignored
+     * @throws NoSuchAlgorithmException ignored
+     */
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());

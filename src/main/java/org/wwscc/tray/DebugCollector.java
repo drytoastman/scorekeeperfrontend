@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
@@ -39,12 +38,12 @@ public class DebugCollector extends Thread
     private static final Logger log = Logger.getLogger(DebugCollector.class.getName());
 
     List<Path> files;
-    DockerContainer dbcontainer;
+    DataRetrievalInterface retrieval;
     
-    public DebugCollector(DockerContainer container)
+    public DebugCollector(DataRetrievalInterface rt)
     {
         files = new ArrayList<Path>();
-        dbcontainer = container;
+        retrieval = rt;
     }
     
     public void run()
@@ -73,7 +72,7 @@ public class DebugCollector extends Thread
         
         fc.setDialogTitle("Specify a zip file to save files in");
         fc.setSelectedFile(new File("debug-" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".zip"));
-        int returnVal = fc.showOpenDialog(null);
+        int returnVal = fc.showSaveDialog(null);
         if (returnVal != JFileChooser.APPROVE_OPTION)
             return;
         
@@ -93,17 +92,17 @@ public class DebugCollector extends Thread
             Path temp = Files.createTempDirectory("sc_debug_");
             monitor.setProgress(20);
             monitor.setNote("copying backend files");
-            dbcontainer.copyLogs(temp);
+            retrieval.copyLogs(temp);
             monitor.setProgress(30);
             monitor.setNote("dump database data");
-            dbcontainer.dumpDatabase(temp.resolve("database.sql"));
+            retrieval.dumpDatabase(temp.resolve("database.pgdump"));
           
             monitor.setProgress(60);
             monitor.setNote("adding backend logs to zipfile");
             addLogs(temp);
             monitor.setProgress(70);
             monitor.setNote("adding java logs to zipfile");
-            addLogs(Paths.get(Prefs.getLogDirectory()));
+            addLogs(Prefs.getLogDirectory());
             monitor.setProgress(80);
             monitor.setNote("saving zipfile to disk");
             zipfiles(zipfile);
