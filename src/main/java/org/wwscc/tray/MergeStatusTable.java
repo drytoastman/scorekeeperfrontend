@@ -192,8 +192,8 @@ public class MergeStatusTable extends JTable {
         Date epoch = new Date(1);
         Color[] good  = new Color[] { Color.BLACK, Color.WHITE };
         Color[] inact = new Color[] { Color.BLACK, Color.LIGHT_GRAY };
-        Color[] abad  = new Color[] { Color.BLACK, Color.RED };
-        Color[] ibad  = new Color[] { Color.BLACK, new Color(200, 70, 70) };
+        Color[] abad  = new Color[] { Color.BLACK, new Color(210,  60,  60) };
+        Color[] ibad  = new Color[] { Color.BLACK, new Color(160, 100, 100) };
         Color mycolor = new Color(240, 240, 255);
         
         private void setColors(boolean active, boolean warn)
