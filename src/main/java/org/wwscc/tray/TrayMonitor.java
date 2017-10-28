@@ -246,8 +246,9 @@ public class TrayMonitor implements ActionListener
 		
 	    public void setMachineStatus(String status)
 	    { 
-	        mMachineStatus.setLabel(status);
-	        if (!_lastMachineStatus.equals(status)) {
+	        mMachineStatus.setLabel("Machine: " + status);
+            mMachineStatus.setEnabled(!status.equals("Running"));
+            if (!_lastMachineStatus.equals(status)) {
 	            log.info("Machine status changed to " + status);
 	            _lastMachineStatus = status;
 	        }
@@ -255,7 +256,8 @@ public class TrayMonitor implements ActionListener
 	    
 	    public void setBackendStatus(String status)
 	    {
-	        mBackendStatus.setLabel(status); 
+	        mBackendStatus.setLabel("Backend: " + status);
+	        mBackendStatus.setEnabled(!status.equals("Running"));
             if (!_lastBackendStatus.equals(status)) {
                 log.info("Backend status changed to " + status);
                 _lastBackendStatus = status;
@@ -278,7 +280,7 @@ public class TrayMonitor implements ActionListener
 	        {
 	            if (next == coneok) 
 	            {
-	                mBackendStatus.setLabel("Backend: Waiting for Database");
+	                setBackendStatus("Waiting for Database");
 	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
 		            syncviewer = new DataSyncInterface();
@@ -288,9 +290,6 @@ public class TrayMonitor implements ActionListener
 	            trayIcon.setImage(next); 
 	            _currentIcon = next;
 	        }
-
-            if (ready)
-                setBackendStatus("Backend: Running");
         }
                 
         public void shutdownRequest()

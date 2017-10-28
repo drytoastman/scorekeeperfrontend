@@ -85,7 +85,7 @@ public class DockerMonitors
                 state.signalPortsReady(true);
                 state.signalMachineReady(true);
                 state.setUsingMachine(false);
-                state.setMachineStatus("Machine: Not needed");
+                state.setMachineStatus("Not needed");
                 return false;
             }
 
@@ -93,7 +93,7 @@ public class DockerMonitors
             if (!DockerMachine.machinecreated())
             {
                 log.info("Creating a new docker machine.");
-                state.setMachineStatus("Machine: Creating VM");
+                state.setMachineStatus("Creating VM");
                 if (!DockerMachine.createmachine())
                 {
                     log.severe("Unable to create a docker machine.  See logs.");
@@ -116,7 +116,7 @@ public class DockerMonitors
             if (!DockerMachine.machinerunning())
             {
                 log.info("Starting the docker machine.");
-                state.setMachineStatus("Machine: (Re)starting VM");
+                state.setMachineStatus("Restarting VM");
                 if (!DockerMachine.startmachine())
                 {
                     log.severe("\bUnable to start docker machine. See logs.");
@@ -134,7 +134,7 @@ public class DockerMonitors
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
                     state.signalPortsReady(false);
-                    state.setMachineStatus("Machine: Starting port forwarding ...");
+                    state.setMachineStatus("Starting port forwarding ...");
 
                     if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
                         throw new JSchException("Missing information in machinenv");
@@ -163,17 +163,17 @@ public class DockerMonitors
                 return false;
             }
 
-            state.setMachineStatus("Machine: Running");
+            state.setMachineStatus("Running");
             return true;
         }
 
         @Override
         protected void mshutdown()
         {
-        	state.setMachineStatus("Machine: Disconnecting ...");
+        	state.setMachineStatus("Disconnecting ...");
             if (portforward != null)
                 portforward.disconnect();
-            state.setMachineStatus("Machine: Disconnected");
+            state.setMachineStatus("Disconnected");
         }
     }
 
@@ -202,7 +202,7 @@ public class DockerMonitors
 
         public boolean minit() 
         {
-        	state.setBackendStatus("Backend: Waiting for machine");
+        	state.setBackendStatus("Waiting for machine");
             while (!state.isMachineReady()) {
                 try {
                     synchronized (this) { this.wait(ms); }
@@ -210,7 +210,7 @@ public class DockerMonitors
             }
 
             for (DockerContainer c : containers.values()) {
-            	state.setBackendStatus("Backend: Init " + c.getName());
+            	state.setBackendStatus("Init " + c.getName());
                 c.setMachineEnv(state.getMachineEnv());
                 c.createNetsAndVolumes();
                 c.start();
@@ -227,7 +227,7 @@ public class DockerMonitors
             // Something isn't running, try and start them now            
             if (dead.size() > 0) {
                 ok = false;
-                state.setBackendStatus("Backend: Restarting " + dead);
+                state.setBackendStatus("Restarting " + dead);
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
@@ -240,20 +240,21 @@ public class DockerMonitors
             }
 
             state.signalComposeReady(ok);
+            state.setBackendStatus("Running");
             return ok;
         }
 
         public void mshutdown()
         {
-        	state.setBackendStatus("Backend: Shutting down");
+        	state.setBackendStatus("Shutting down");
             if (!DockerContainer.stopAll(containers.values()))
                 log.severe("\bUnable to stop the web and database services. See logs.");
             if (state.shouldStopMachine()) {
                 // we do this in the container monitor for ease of performing stopAll first
-                state.setBackendStatus("Backend: Shutting down machine");
+                state.setBackendStatus("Shutting down machine");
                 DockerMachine.stopmachine();
             }
-            state.setBackendStatus("Backend: Stopped");
+            state.setBackendStatus("Stopped");
         }
 
         @Override
