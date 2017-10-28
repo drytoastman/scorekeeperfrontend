@@ -1,6 +1,6 @@
 install:
     - set PATH=%PATH%;"C:\Program Files (x86)\Inno Setup 5"
-    - cmd: FOR /F "tokens=*" %%F IN ('git describe --tags --abbrev=0') DO SET suffix=%%F
+    - cmd: FOR /F "tokens=*" %%F IN ('"git describe --tags --abbrev=0"') DO SET suffix=%%F
 
 build_script:
     - gradlew.bat shadowJar --info --no-daemon
