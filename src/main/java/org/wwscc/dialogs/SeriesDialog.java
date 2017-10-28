@@ -27,11 +27,13 @@ public class SeriesDialog extends BaseDialog<List<String>>
 	{
         super(new MigLayout("", "[50%][50%]"), true);
         JLabel title = new JLabel(toplabel);
-        title.setFont(title.getFont().deriveFont(14.0f));
+        title.setFont(title.getFont().deriveFont(13.0f));
         mainPanel.add(title, "spanx 2, gapbottom 5, wrap");
 		for (String s : seriesoptions)
 		{
-		    mainPanel.add(label(s, true), "right");
+		    JLabel l = new JLabel(s);
+		    l.setFont(l.getFont().deriveFont(12.0f));
+		    mainPanel.add(l, "right");
 		    mainPanel.add(checkbox(s, false), "wrap");
 		}
     }

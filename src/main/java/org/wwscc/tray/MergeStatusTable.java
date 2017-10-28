@@ -185,6 +185,8 @@ public class MergeStatusTable extends JTable {
     static class MergeServerColumnsRenderer extends DefaultTableCellRenderer
     {
         ImageIcon home = new ImageIcon(Resources.loadImage("home.png"));
+        ImageIcon group = new ImageIcon(Resources.loadImage("group.png"));
+        ImageIcon servericon = new ImageIcon(Resources.loadImage("server.png"));                
         ImageIcon syncing = new ImageIcon(Resources.loadImage("syncing.png"));
         SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date epoch = new Date(1);
@@ -251,6 +253,10 @@ public class MergeStatusTable extends JTable {
                 case 0:
                     if (server.isLocalHost())
                         setIcon(home);
+                    else if (server.getAddress().equals(""))
+                        setIcon(servericon);
+                    else
+                        setIcon(group);
                     break;
                 case 1:  
                     if (server.getAddress().equals(""))

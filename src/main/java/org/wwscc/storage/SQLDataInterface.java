@@ -1034,7 +1034,7 @@ public abstract class SQLDataInterface implements DataInterface
 	{
         try
         {
-            executeUpdate("UPDATE mergeservers SET active=false", null);
+            executeUpdate("UPDATE mergeservers SET hoststate='I'", null);
         }
         catch (SQLException ioe)
         {
@@ -1079,7 +1079,7 @@ public abstract class SQLDataInterface implements DataInterface
         }
         catch (Exception ioe)
         {
-            logError("mergeServerSet", ioe);
+            logError("mergeServerUpdateNow", ioe);
         }	    
 	}
 	

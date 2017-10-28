@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.SwingConstants;
@@ -71,6 +72,18 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
             errornote.setForeground(Color.RED);
             mainPanel.add(errornote, "spanx 2, center, grow, wrap");
         }      
+    }
+    
+    public void selectHost(String host)
+    {
+        JComboBox<Object> cb = selects.get("host");
+        for (int ii = 0; ii < cb.getItemCount(); ii++) {
+            MergeServer ms = (MergeServer)cb.getItemAt(ii);
+            if (ms.getHostname().equals(host)) {
+                cb.setSelectedIndex(ii);
+                return;
+            }
+        }
     }
     
     @Override

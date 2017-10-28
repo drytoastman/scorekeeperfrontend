@@ -31,7 +31,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.UIManager;
 
 import org.json.simple.JSONObject;
@@ -42,6 +41,7 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.Discovery;
+import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.Logging;
 import org.wwscc.util.MT;
@@ -65,24 +65,23 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         table = new MergeStatusTable();
-        Action syncallnow = new MergeWithAllLocalAction();
         JLabel header = new JLabel("Sync Status");
         header.setFont(header.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
         
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
         content.add(header, "split");
-        content.add(new JButton(syncallnow), "gapleft 10, wrap");
+        content.add(new JButton(new MergeWithAllLocalAction()), "gapleft 10");
+        content.add(new JButton(new MergeWithHomeAction()), "gapleft 10");
+        content.add(new JButton(new DownloadNewSeriesAction(Prefs.getHomeServer())), "gapleft 10, wrap");
         content.add(new JScrollPane(table), "grow");
         setContentPane(content);
         
         JMenuBar bar = new JMenuBar();
-        JMenu file = new JMenu("File");
-        bar.add(file);      
-        file.add(new MergeWithAction());
-        file.add(syncallnow);
-        file.add(new JSeparator());
-        file.add(new DownloadNewSeriesAction());
-        file.add(new DeleteLocalSeriesAction());
+        JMenu data = new JMenu("Data");
+        bar.add(data);      
+        data.add(new MergeWithAction());
+        data.add(new DownloadNewSeriesAction(null));
+        data.add(new DeleteLocalSeriesAction());
 
         JMenu adv = new JMenu("Advanced");
         bar.add(adv);
@@ -109,7 +108,8 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             done = false;
             // These two should always be there
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
-            Database.d.mergeServerSetRemote("scorekeeper.wwscc.org", "", 10);
+            Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
+            Database.d.mergeServerInactivateAll();
 
             Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
 
@@ -175,11 +175,18 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     
     static class DownloadNewSeriesAction extends AbstractAction
     {
-        public DownloadNewSeriesAction() {
-            super("Download New Series From");
+        String host = null;
+        public DownloadNewSeriesAction(String h) {
+            super("Download New Series From ...");
+            if (h != null) {
+                host = h;
+                putValue(Action.NAME, "Download New Series From " + host);
+            }
         }
         public void actionPerformed(ActionEvent e) {
             HostSeriesSelectionDialog hd = new HostSeriesSelectionDialog(true);
+            if (host != null)
+                hd.selectHost(host);
             if (!hd.doDialog("Select Host and Series", null))
                 return;
 
@@ -190,10 +197,21 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         }
     }   
     
+    static class MergeWithHomeAction extends AbstractAction
+    {
+        public MergeWithHomeAction() {
+            super("Sync With " + Prefs.getHomeServer());
+        }
+        public void actionPerformed(ActionEvent e) {
+            Database.d.mergeServerUpdateNow(IdGenerator.generateV5DNSId(Prefs.getHomeServer()));
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
+    
     static class MergeWithAction extends AbstractAction
     {
         public MergeWithAction() {
-            super("Sync With Host Now");
+            super("Sync With ...");
         }
         public void actionPerformed(ActionEvent e) {
             HostSeriesSelectionDialog d = new HostSeriesSelectionDialog(false);
@@ -207,7 +225,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     static class MergeWithAllLocalAction extends AbstractAction
     {
         public MergeWithAllLocalAction() {
-            super("Sync All Active Now");
+            super("Sync All Nearby Now");
         }
         public void actionPerformed(ActionEvent e) {
         	for (MergeServer s : Database.d.getMergeServers()) {
@@ -241,7 +259,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
-            SeriesDialog sd = new SeriesDialog("Select the local series to delete", PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
+            SeriesDialog sd = new SeriesDialog("Select the series to remove locally", PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();
