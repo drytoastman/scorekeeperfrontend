@@ -19,13 +19,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl";
 Source: "..\build\libs\scorekeeper-{#Version}.jar"; DestDir: "{app}";
 
 [Icons]
-Name: "{group}\TrayMonitor"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
-Name: "{group}\Uninstall";   WorkingDir: "{app}"; Filename: "{app}\unins000.exe";
+Name: "{userstartup}\Scorekeeper"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
-Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Creating Docker VM";
+Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Creating Docker VM (if not already present)";
+Filename: "docker-machine.exe"; Parameters: "start default";  Flags: runasoriginaluser waituntilterminated; StatusMsg: "Starting Docker VM (if not already started)";
 Filename: {code:ImageBatchFile};                              Flags: runasoriginaluser waituntilterminated; StatusMsg: "Download database images";
 
 [Code]
