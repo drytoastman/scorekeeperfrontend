@@ -101,6 +101,7 @@ public class MergeServer
     public boolean isLocalHost()      { return serverid.equals(IdGenerator.nullid); }
     
     public boolean isActive()         { return ((hoststate == HostState.ACTIVE) || (hoststate == HostState.ONESHOT)); }
+    public boolean isRemote()         { return address.equals(""); }
     
     public String getConnectEndpoint() 
     {

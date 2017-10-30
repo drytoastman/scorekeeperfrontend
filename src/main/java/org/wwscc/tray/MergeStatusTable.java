@@ -203,7 +203,7 @@ public class MergeStatusTable extends JTable {
                 case 0:
                     if (server.isLocalHost())
                         setIcon(home);
-                    else if (server.getAddress().equals(""))
+                    else if (server.isRemote())
                         setIcon(servericon);
                     else
                         setIcon(group);

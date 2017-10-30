@@ -1017,27 +1017,30 @@ public abstract class SQLDataInterface implements DataInterface
 	
     private void _mergeServerSet(UUID serverid, String name, String address, int ctimeout)
     {
-        try
-        {
+        try {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, ctimeout) VALUES (?, ?, ?, ?) " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, ctimeout=?", newList(serverid, name, address, ctimeout, name, address, ctimeout));
-        }
-        catch (SQLException ioe)
-        {
+        } catch (SQLException ioe) {
             logError("mergeServerSetLocal", ioe);
         }
     }
 	
-	
+    @Override
+    public void mergeServerDelete(UUID serverid)
+    {
+        try {
+            executeUpdate("DELETE FROM mergeservers WHERE serverid=?", newList(serverid));
+        } catch (SQLException ioe) {
+            logError("mergeServerInactivateAll", ioe);
+        }        
+    }
+
 	@Override
 	public void mergeServerInactivateAll()
 	{
-        try
-        {
+        try {
             executeUpdate("UPDATE mergeservers SET hoststate='I'", null);
-        }
-        catch (SQLException ioe)
-        {
+        } catch (SQLException ioe) {
             logError("mergeServerInactivateAll", ioe);
         }
 	}
@@ -1045,14 +1048,11 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void mergeServerActivate(UUID serverid, String name, String ip)
 	{
-        try
-        {
+        try {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, hoststate) VALUES (?, ?, ?, now(), 'A') " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(), hoststate='A'",
                           newList(serverid, name, ip, name, ip));
-        }
-        catch (SQLException ioe)
-        {
+        } catch (SQLException ioe) {
             logError("mergeServerActivate", ioe);
         }
 	}
@@ -1060,12 +1060,9 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void mergeServerDeactivate(UUID serverid)
 	{
-        try
-        {
+        try {
             executeUpdate("UPDATE mergeservers SET hoststate='I', nextcheck='epoch' WHERE serverid=?", newList(serverid));
-        }
-        catch (SQLException ioe)
-        {
+        } catch (SQLException ioe) {
             logError("mergeServerDeactivate", ioe);
         }
 	}
@@ -1073,12 +1070,9 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void mergeServerUpdateNow(UUID serverid)
 	{
-        try
-        {
+        try {
             executeUpdate("UPDATE mergeservers SET hoststate=(CASE hoststate WHEN 'I' THEN '1' ELSE hoststate END), nextcheck=now()::timestamp WHERE serverid=?", newList(serverid));
-        }
-        catch (Exception ioe)
-        {
+        } catch (Exception ioe) {
             logError("mergeServerUpdateNow", ioe);
         }	    
 	}
@@ -1086,12 +1080,9 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void mergeServerResetAll()
 	{
-        try
-        {
+        try {
             executeUpdate("UPDATE mergeservers set mergestate='{}'", null);
-        }
-        catch (SQLException ioe)
-        {
+        } catch (SQLException ioe) {
             logError("mergeServerResetAll", ioe);
         }       
 	}

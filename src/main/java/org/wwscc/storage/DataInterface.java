@@ -151,6 +151,7 @@ public interface DataInterface
 	/* MergeServers interface */
 	public void mergeServerSetLocal(String name, String address, int ctimeout);
 	public void mergeServerSetRemote(String hostname, String address, int ctimeout);
+	public void mergeServerDelete(UUID serverid);
 	public void mergeServerInactivateAll();
 	public void mergeServerActivate(UUID serverid, String name, String ip);
 	public void mergeServerDeactivate(UUID serverid);

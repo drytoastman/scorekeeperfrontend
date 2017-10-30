@@ -83,7 +83,8 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         content.add(new JButton(addAction(new MergeWithHomeAction())), "gapleft 10");
         content.add(new JButton(addAction(new DownloadNewSeriesAction(Prefs.getHomeServer()))), "gapleft 10, wrap");
         content.add(new JScrollPane(activetable), "grow, wrap");
-        content.add(iheader, "wrap");
+        content.add(iheader, "split");
+        content.add(new JButton(addAction(new ClearOldDiscoveredAction())), "gapleft 10, wrap");
         content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
         
@@ -277,6 +278,21 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
             Prefs.setAllowDiscovery(on);
             updateDiscoverySetting(on);
+        }
+    }
+    
+    class ClearOldDiscoveredAction extends AbstractAction
+    {
+        public ClearOldDiscoveredAction() {
+            super("Clear Old Discovered Entries");
+        }
+        public void actionPerformed(ActionEvent e) {
+            for (MergeServer s : Database.d.getMergeServers()) {
+                if (!s.isLocalHost() && !s.isActive() && !s.isRemote()) {
+                    Database.d.mergeServerDelete(s.getServerId());
+                }
+            }
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
 
