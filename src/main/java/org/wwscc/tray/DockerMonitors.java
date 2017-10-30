@@ -69,7 +69,9 @@ public class DockerMonitors
     {
         private Map<String,String> machineenv;
         private JSch jsch;
-        private Session portforward;
+        private Session portforward, port80forward;
+        private String machinehost = "192.168.99.100";
+        private Pattern hostpattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
 
         public MachineMonitor(TrayStateInterface state)
         {
@@ -131,30 +133,41 @@ public class DockerMonitors
 
             try 
             {
+                if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
+                    throw new JSchException("Missing information in machinenv");
+
+                Matcher m = hostpattern.matcher(machineenv.get("DOCKER_HOST"));
+                if (m.find()) { machinehost = m.group(1); }
+
+                if (jsch.getIdentityNames().size() == 0)
+                    jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());
+
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
                     state.signalPortsReady(false);
-                    state.setMachineStatus("Starting port forwarding ...");
+                    state.setMachineStatus("Forwarding ports 6432,59432 ...");
 
-                    if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
-                        throw new JSchException("Missing information in machinenv");
-                    
-                    String host = "192.168.99.100";
-                    Matcher m = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)").matcher(machineenv.get("DOCKER_HOST"));
-                    if (m.find()) { host = m.group(1); }
-
-                    if (jsch.getIdentityNames().size() == 0)
-                        jsch.addIdentity(Paths.get(machineenv.get("DOCKER_CERT_PATH"), "id_rsa").toString());            
-
-                    portforward = jsch.getSession("docker", host);
+                    portforward = jsch.getSession("docker", machinehost);
                     portforward.setConfig("StrictHostKeyChecking", "no");
                     portforward.setConfig("GSSAPIAuthentication",  "no");
                     portforward.setConfig("PreferredAuthentications", "publickey");
-                    portforward.setPortForwardingL("*",           80, "127.0.0.1",    80);
                     portforward.setPortForwardingL("*",        54329, "127.0.0.1", 54329);
                     portforward.setPortForwardingL("127.0.0.1", 6432, "127.0.0.1",  6432);
                     portforward.connect();
                     state.signalPortsReady(true);
+                }
+
+                // This one is the most likely to be blocked by another service, separate it so everything
+                // else (i.e. database) can at least connect in the mean time
+                if ((port80forward == null) || (!port80forward.isConnected()))
+                {
+                    state.setMachineStatus("Forwarding port 80 ...");
+                    port80forward = jsch.getSession("docker", machinehost);
+                    port80forward.setConfig("StrictHostKeyChecking", "no");
+                    port80forward.setConfig("GSSAPIAuthentication",  "no");
+                    port80forward.setConfig("PreferredAuthentications", "publickey");
+                    port80forward.setPortForwardingL("*", 80, "127.0.0.1", 80);
+                    port80forward.connect();
                 }
             } 
             catch (JSchException jse) 

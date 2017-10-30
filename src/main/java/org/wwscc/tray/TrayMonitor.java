@@ -85,14 +85,14 @@ public class TrayMonitor implements ActionListener
         syncviewer = new DataSyncInterface();
         
         PopupMenu trayPopup = new PopupMenu();        
-        newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
-        newAppItem("Registration",     "org.wwscc.registration.Registration", trayPopup);
-        newAppItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup);
-        newAppItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup);
-        newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup);
+        newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup, false);
+        newAppItem("Registration",     "org.wwscc.registration.Registration", trayPopup, false);
+        newAppItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup, false);
+        newAppItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup, false);
+        newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup, false);
         trayPopup.addSeparator();
-        newAppItem("Data Sync",        "datasync",     trayPopup);
-        newAppItem("Debug Collection", "debugcollect", trayPopup);
+        newAppItem("Data Sync",        "datasync",     trayPopup, false);
+        newAppItem("Debug Collection", "debugcollect", trayPopup, true);
 
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");
@@ -177,12 +177,12 @@ public class TrayMonitor implements ActionListener
     }
     
     
-    private void newAppItem(String initial, String cmd, Menu parent)
+    private void newAppItem(String initial, String cmd, Menu parent, boolean enabled)
     {
         MenuItem m = new MenuItem(initial);
         m.setActionCommand(cmd);
         m.addActionListener(this);
-        m.setEnabled(false);
+        m.setEnabled(enabled);
         parent.add(m);
         appMenus.put(cmd, m);
     }
