@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +58,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     private static final Logger log = Logger.getLogger(DataSyncInterface.class.getName());
 
     private final Thread queryT = new UpdaterThread();
+    List<Action> actions;
     MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
     boolean done;
@@ -66,6 +68,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         super("Data Synchronization");
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         
+        actions = new ArrayList<Action>();
         model = new MergeServerModel();
         activetable = new MergeStatusTable(model, true);
         inactivetable = new MergeStatusTable(model, false);
@@ -76,27 +79,28 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
         content.add(aheader, "split");
-        content.add(new JButton(new MergeWithAllLocalAction()), "gapleft 10");
-        content.add(new JButton(new MergeWithHomeAction()), "gapleft 10");
-        content.add(new JButton(new DownloadNewSeriesAction(Prefs.getHomeServer())), "gapleft 10, wrap");
+        content.add(new JButton(addAction(new MergeWithAllLocalAction())), "gapleft 10");
+        content.add(new JButton(addAction(new MergeWithHomeAction())), "gapleft 10");
+        content.add(new JButton(addAction(new DownloadNewSeriesAction(Prefs.getHomeServer()))), "gapleft 10, wrap");
         content.add(new JScrollPane(activetable), "grow, wrap");
         content.add(iheader, "wrap");
         content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
         
-        JMenuBar bar = new JMenuBar();
         JMenu data = new JMenu("Data");
-        bar.add(data);      
-        data.add(new MergeWithAction());
-        data.add(new DownloadNewSeriesAction(null));
-        data.add(new DeleteLocalSeriesAction());
+        data.add(addAction(new MergeWithAction()));
+        data.add(addAction(new DownloadNewSeriesAction(null)));
+        data.add(addAction(new DeleteLocalSeriesAction()));
 
         JMenu adv = new JMenu("Advanced");
-        bar.add(adv);
-        adv.add(new JCheckBoxMenuItem(new LocalDiscoveryAction()));
-        adv.add(new ResetHashAction());
+        adv.add(new JCheckBoxMenuItem(addAction(new LocalDiscoveryAction(Prefs.getAllowDiscovery()))));
+        adv.add(addAction(new ResetHashAction()));
         
+        JMenuBar bar = new JMenuBar();
+        bar.add(data);      
+        bar.add(adv);
         setJMenuBar(bar);
+        
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
     }
@@ -123,8 +127,10 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
             Database.d.mergeServerInactivateAll();
             
-            // start discovery if its turned on
-            discoveryChange(Prefs.getAllowDiscovery());
+            // enable menus and start discovery if its turned on
+            for (Action a : actions)
+                a.setEnabled(true);
+            updateDiscoverySetting(Prefs.getAllowDiscovery());
 
             Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
 
@@ -143,8 +149,15 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         }
     }
 
+    private Action addAction(Action a)
+    {
+        actions.add(a);
+        a.setEnabled(false);
+        return a;
+    }
+    
     @SuppressWarnings("unchecked")
-    private void discoveryChange(boolean up) 
+    private void updateDiscoverySetting(boolean up) 
     {
         if (up)
         {
@@ -254,17 +267,16 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     
     class LocalDiscoveryAction extends AbstractAction
     {
-        public LocalDiscoveryAction() {
-            setNewState(Prefs.getAllowDiscovery());
+        public LocalDiscoveryAction(boolean on) {
+            putValue(Action.SELECTED_KEY, on);
+            putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
         }
         public void actionPerformed(ActionEvent e) {
-            setNewState(((AbstractButton)e.getSource()).getModel().isSelected());
-        }
-        private void setNewState(boolean on) {
+            boolean on = ((AbstractButton)e.getSource()).getModel().isSelected();
             putValue(Action.SELECTED_KEY, on);
             putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
             Prefs.setAllowDiscovery(on);
-            discoveryChange(on);
+            updateDiscoverySetting(on);
         }
     }
 

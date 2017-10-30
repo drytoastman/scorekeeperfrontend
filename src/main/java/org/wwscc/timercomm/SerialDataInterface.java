@@ -250,9 +250,9 @@ public class SerialDataInterface implements SerialPortEventListener
 		{
 			SerialDataInterface i = getPorts().get(name);
 			if (i == null)
-				log.warning(name + " doesn't exist");
+				log.warning("\b"+ name + " doesn't exist");
 			else if (i.open)
-				log.warning(name + " already open");
+				log.warning("\b"+ name + " already open");
 			else
 			{
 				i.open();
@@ -262,7 +262,7 @@ public class SerialDataInterface implements SerialPortEventListener
 		} 
 		catch (Exception e)
 		{
-			log.warning("Unable to open port: " + e);
+			log.warning("\bUnable to open port: " + e);
 			return null;
 		}
 	}
@@ -273,9 +273,9 @@ public class SerialDataInterface implements SerialPortEventListener
 		{
 			SerialDataInterface i = getPorts().get(name);
 			if (i == null)
-				log.warning(name + " doesn't exist");
+				log.warning("\b"+ name + " doesn't exist");
 			else if (!i.open)
-				log.warning(name + " already closed");
+				log.warning("\b"+ name + " already closed");
 			else
 			{
 				i.close();
@@ -285,7 +285,7 @@ public class SerialDataInterface implements SerialPortEventListener
 		} 
 		catch (Exception e)
 		{
-			log.warning("Unable to close port: " + e);
+			log.warning("\bUnable to close port: " + e);
 		}
 	}
 
@@ -319,7 +319,7 @@ public class SerialDataInterface implements SerialPortEventListener
 
 		if (a.isEmpty())
 		{
-			log.severe("There are no available serial ports to open");
+			log.severe("\bThere are no available serial ports to open");
 			return null;
 		}
 		
