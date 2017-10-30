@@ -56,24 +56,32 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
 {
     private static final Logger log = Logger.getLogger(DataSyncInterface.class.getName());
 
-    MergeStatusTable table;
+    private final Thread queryT = new UpdaterThread();
+    MergeServerModel model;
+    MergeStatusTable activetable, inactivetable;
     boolean done;
 
     public DataSyncInterface()
     {
         super("Data Synchronization");
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-
-        table = new MergeStatusTable();
-        JLabel header = new JLabel("Sync Status");
-        header.setFont(header.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
+        
+        model = new MergeServerModel();
+        activetable = new MergeStatusTable(model, true);
+        inactivetable = new MergeStatusTable(model, false);
+        JLabel aheader = new JLabel("Active Hosts");
+        JLabel iheader = new JLabel("Inactive Hosts");
+        aheader.setFont(aheader.getFont().deriveFont(18.0f).deriveFont(Font.BOLD));
+        iheader.setFont(aheader.getFont());
         
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
-        content.add(header, "split");
+        content.add(aheader, "split");
         content.add(new JButton(new MergeWithAllLocalAction()), "gapleft 10");
         content.add(new JButton(new MergeWithHomeAction()), "gapleft 10");
         content.add(new JButton(new DownloadNewSeriesAction(Prefs.getHomeServer())), "gapleft 10, wrap");
-        content.add(new JScrollPane(table), "grow");
+        content.add(new JScrollPane(activetable), "grow, wrap");
+        content.add(iheader, "wrap");
+        content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
         
         JMenuBar bar = new JMenuBar();
@@ -91,11 +99,15 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         setJMenuBar(bar);
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
-        discoveryChange(Prefs.getAllowDiscovery());
-        new UpdaterThread().start();
     }
 
-    public void shutdown()
+    
+    public void startQueryThread()
+    {
+        queryT.start();
+    }
+
+    public void stopQueryThread()
     {
         done = true;
     }
@@ -110,6 +122,9 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
             Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
             Database.d.mergeServerInactivateAll();
+            
+            // start discovery if its turned on
+            discoveryChange(Prefs.getAllowDiscovery());
 
             Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
 
@@ -168,7 +183,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         {
             Set<String> tables = (Set<String>)data;
             if (tables.contains("mergeservers")) {
-                table.setData(Database.d.getMergeServers());
+                model.setData(Database.d.getMergeServers());
             }
         }
     }
@@ -225,7 +240,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     static class MergeWithAllLocalAction extends AbstractAction
     {
         public MergeWithAllLocalAction() {
-            super("Sync All Nearby Now");
+            super("Sync All Active Now");
         }
         public void actionPerformed(ActionEvent e) {
         	for (MergeServer s : Database.d.getMergeServers()) {
@@ -302,6 +317,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         DataSyncInterface v = new DataSyncInterface();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
+        v.startQueryThread();
         while (true)
         {
             Thread.sleep(2000);

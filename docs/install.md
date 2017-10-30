@@ -1,18 +1,17 @@
 # Installing
-## Windows Home
-1. If the computer is used for things other than Scorekeeper, you may wish to create a user just for Scorekeeper
-2. Download the latest ScorekeeperSetup installer from <https://github.com/drytoastman/scorekeeperfrontend/releases> 
+## Windows Home (Docker-Toolbox + Java 8)
+1. Download the latest ScorekeeperSetup installer from <https://github.com/drytoastman/scorekeeperfrontend/releases> 
     * The installer may foward you to websites to install Java 8 and/or Docker-Toolbox if they are not present already
-3. The installer will perform all setup and put an entry in the startup folder so that its starts when you login
-    * This version has to run a virtual machine which takes about 60 seconds to startup after logging in
+2. The installer will perform all setup and put an entry in the startup folder and on the desktop
+    * This version has to run a virtual machine which takes about 60 seconds to startup the first time after logging in
 
-## x64 Linux, OS X, Windows Pro (anything with Docker + Java 8)
+## x64 Linux, OS X, Windows Pro (Docker + Java 8)
 1. There is no installer at this point so you need to do a few things manually
 2. Verify that the following requirements are met:
     * Java 8 (including openjfx if using openjdk)
     * Docker
 3. Download the latest Scorekeeper jar from <https://github.com/drytoastman/scorekeeperfrontend/releases> to your computer
-4. Setup a way to run "java -jar scorekeeper-<VERSION>.jar" to start Scorekeeper and run it now
+4. Setup a way to run "java -jar scorekeeper-_VERSION_.jar" to start Scorekeeper and run it now
 5. The first time you run a new version it will download the necessary docker images, showing the status as it does so:
     * Init scweb
     * Init scsync
@@ -27,7 +26,7 @@
 
 # Notes on Application Use
 
-1. Starting and stopping the TrayMonitor should be quick as the containers are quick to start and stop.
+1. Starting and stopping the TrayMonitor should be quick as the containers are quick to start and stop
 2. The only long delay is on Windows Home when restarting the virtual machine after a reboot or logoff
 
 ![ContextMenu](images/startingvm.png)

@@ -231,7 +231,7 @@ public class DockerMonitors
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
-                            log.severe("\bUnable to start " + c.getName() + ". See logs.");
+                            log.severe("Unable to start " + c.getName() + ". See logs.");
                         } else {
                             quickrecheck = true;
                         }

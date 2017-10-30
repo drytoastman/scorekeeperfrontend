@@ -18,8 +18,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl";
 [Files]
 Source: "..\build\libs\scorekeeper-{#Version}.jar"; DestDir: "{app}";
 
+[InstallDelete]
+Type: files; Name: "{group}\Scorekeeper*"
+
 [Icons]
-Name: "{userstartup}\Scorekeeper"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
+Name:       "{group}\Scorekeeper {#Version}"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
+Name: "{userdesktop}\Scorekeeper {#Version}"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";

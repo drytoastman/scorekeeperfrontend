@@ -53,7 +53,6 @@ public class TrayMonitor implements ActionListener
     }
 
     // not initialized or started until startAndWaitForThreads
-    DataSyncInterface syncviewer = null;
     DockerMonitors.MachineMonitor   mmonitor;
     DockerMonitors.ContainerMonitor cmonitor;
     
@@ -62,6 +61,7 @@ public class TrayMonitor implements ActionListener
     Map<String, MenuItem> appMenus;
     MenuItem mBackendStatus, mMachineStatus;
     StateMachine state;
+    DataSyncInterface syncviewer;
     TrayIcon trayIcon;
     FileLock filelock;
 
@@ -82,6 +82,7 @@ public class TrayMonitor implements ActionListener
         appMenus = new HashMap<String, MenuItem>();
         launched = new ArrayList<Process>();
         state = new StateMachine();
+        syncviewer = new DataSyncInterface();
         
         PopupMenu trayPopup = new PopupMenu();        
         newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup);
@@ -198,8 +199,8 @@ public class TrayMonitor implements ActionListener
                 break;
 
             case "datasync":
-                if (syncviewer != null)
-                    syncviewer.setVisible(true);
+                syncviewer.setVisible(true);
+                syncviewer.toFront();
                 break;
 
             case "Quit":
@@ -283,7 +284,7 @@ public class TrayMonitor implements ActionListener
 	                setBackendStatus("Waiting for Database");
 	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
-		            syncviewer = new DataSyncInterface();
+		        	syncviewer.startQueryThread();
 		        	for (MenuItem m : appMenus.values())
 		        		m.setEnabled(true);
 	            }
@@ -327,7 +328,7 @@ public class TrayMonitor implements ActionListener
                 if (p.isAlive())
                     p.destroy();
             }
-            if (syncviewer != null) syncviewer.shutdown();
+            syncviewer.stopQueryThread();
             Database.d.close();
 
             // second backup the database

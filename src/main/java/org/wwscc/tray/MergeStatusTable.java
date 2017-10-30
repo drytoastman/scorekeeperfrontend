@@ -10,21 +10,21 @@ package org.wwscc.tray;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JTable;
+import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.event.TableModelEvent;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 
 import org.json.simple.JSONObject;
 import org.wwscc.storage.MergeServer;
@@ -35,20 +35,23 @@ public class MergeStatusTable extends JTable {
 
     public static final int BASE_COL_COUNT = 4;
     
-    public MergeStatusTable()
+    public MergeStatusTable(MergeServerModel model, boolean active)
     {
-        super(new ServerModel());
-        
+        super(model);        
         getTableHeader().setReorderingAllowed(false);
         setFillsViewportHeight(true);
-        setRowHeight(20);
-        setDefaultRenderer(DecoratedMergeServer.class, new MergeServerColumnsRenderer());     
-    }
-    
-    public void setData(List<MergeServer> data)
-    {
-        ServerModel model = (ServerModel)getModel();
-        model.setData(data);
+        setRowHeight(25);
+        setDefaultRenderer(DecoratedMergeServer.class, new MergeServerColumnsRenderer());
+        TableRowSorter<MergeServerModel> sorter = new TableRowSorter<MergeServerModel>(model);
+        setRowSorter(sorter);
+        sorter.setRowFilter(new RowFilter<MergeServerModel, Integer>() {
+            @Override
+            public boolean include(Entry<? extends MergeServerModel, ? extends Integer> entry) {
+                MergeServer s = (MergeServer)entry.getValue(0);
+                return !(active ^ (s.isActive() || s.isLocalHost()));
+            }
+            
+        });
     }
     
     @Override
@@ -123,78 +126,24 @@ public class MergeStatusTable extends JTable {
         }
     }
     
-    static class ServerModel extends AbstractTableModel
-    {
-        List<DecoratedMergeServer> servers;
-        List<String> series;
-        
-        public ServerModel()
-        {
-            servers = new ArrayList<DecoratedMergeServer>();
-            series = new ArrayList<String>();
-        }
-        
-        public void setData(List<MergeServer> data)
-        {
-            servers.clear();            
-            series.clear();
-            
-            // Figure out columns
-            if (data != null)
-            {
-                for (MergeServer s : data) {
-                    if (s.getServerId().equals(IdGenerator.nullid)) {
-                        series.addAll(s.getSeriesSet());
-                        break;
-                    }
-                }
-                Collections.sort(series);
-                
-                // Then create our decorated MergeServers
-                for (MergeServer s : data)
-                    servers.add(new DecoratedMergeServer(s, series));
-                Collections.sort(servers);
-            }
-            
-            fireTableStructureChanged();
-        }
-        
-        @Override
-        public String getColumnName(int col) {
-            switch (col) {
-                case 0:  return "";
-                case 1:  return "Host";
-                case 2:  return "Last";
-                case 3:  return "Next";
-            }
-            if (col < series.size() + BASE_COL_COUNT)
-                return series.get(col-BASE_COL_COUNT);
-            return "";
-        }
-        
-        @Override
-        public int getRowCount()                    { return servers.size(); }
-        @Override
-        public int getColumnCount()                 { return BASE_COL_COUNT + series.size(); }
-        @Override
-        public Class<?> getColumnClass(int col)     { return DecoratedMergeServer.class; }
-        @Override
-        public Object getValueAt(int row, int col)  { return servers.get(row); }
-    }
-    
     static class MergeServerColumnsRenderer extends DefaultTableCellRenderer
     {
         ImageIcon home = new ImageIcon(Resources.loadImage("home.png"));
         ImageIcon group = new ImageIcon(Resources.loadImage("group.png"));
         ImageIcon servericon = new ImageIcon(Resources.loadImage("server.png"));                
         ImageIcon syncing = new ImageIcon(Resources.loadImage("syncing.png"));
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date epoch = new Date(1);
+        Font normal = getFont();
+        Font bold = normal.deriveFont(14f);
+        
         Color[] good  = new Color[] { Color.BLACK, Color.WHITE };
         Color[] inact = new Color[] { Color.BLACK, Color.LIGHT_GRAY };
         Color[] abad  = new Color[] { Color.BLACK, new Color(210,  60,  60) };
         Color[] ibad  = new Color[] { Color.BLACK, new Color(160, 100, 100) };
         Color mycolor = new Color(240, 240, 255);
+
+        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date epoch = new Date(1);
+        
         
         private void setColors(boolean active, boolean warn)
         {
@@ -228,7 +177,7 @@ public class MergeStatusTable extends JTable {
         
         private boolean isMismatchedWithLocal(JTable table, int col, String testhash)
         {
-            DecoratedMergeServer local = ((ServerModel)table.getModel()).servers.get(0);
+            DecoratedMergeServer local = ((MergeServerModel)table.getModel()).servers.get(0);
             JSONObject lstatus = local.columns[col-BASE_COL_COUNT];                    
             String lhash = (String)lstatus.get("totalhash");
             return !testhash.equals(lhash);
@@ -238,6 +187,7 @@ public class MergeStatusTable extends JTable {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) 
         {
             setHorizontalAlignment(SwingConstants.CENTER);
+            setFont(normal);
             setIcon(null);
             setText("");
             if ((value == null) || !(value instanceof DecoratedMergeServer))
@@ -270,8 +220,9 @@ public class MergeStatusTable extends JTable {
                     if (!server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
                         setColors(server.isActive(), true);
                     break;
-                case 3: 
-                    setToDate(server.getNextCheck()); 
+                case 3:
+                    if (server.isActive())
+                        setToDate(server.getNextCheck()); 
                     break;
                 
                 default: // a series hash column
@@ -288,6 +239,7 @@ public class MergeStatusTable extends JTable {
                             setColors(server.isActive(), true);
                         if (seriesstatus.containsKey("syncing"))
                             setIcon(syncing);
+                        setFont(bold);
                     }
                     break;
             }
