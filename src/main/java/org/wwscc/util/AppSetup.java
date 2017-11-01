@@ -8,6 +8,7 @@
 
 package org.wwscc.util;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -27,6 +28,8 @@ import java.util.logging.SimpleFormatter;
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIDefaults;
+import javax.swing.UIManager;
 
 /**
  */
@@ -57,6 +60,9 @@ public class AppSetup
     {
         // Set our platform wide L&F 
         System.setProperty("swing.defaultlaf", "javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+        defaults.put("Table.gridColor", new Color(140,140,140));
+        defaults.put("Table.showGrid", true);
         
         // Set the program name which is used by PostgresqlDatabase to identify the app in logs
         System.setProperty("program.name", name);
