@@ -26,6 +26,7 @@ import com.jcraft.jsch.Session;
 public class DockerMonitors 
 {
     private static final Logger log = Logger.getLogger(DockerMonitors.class.getName());
+    public static final String RUNNING = "Running";
 
     /**
      * Abstract class to define the basic init, loop/wait and shutdown phases of our monitors
@@ -91,7 +92,6 @@ public class DockerMonitors
                 state.signalPortsReady(true);
                 state.signalMachineReady(true);
                 state.setUsingMachine(false);
-                state.setMachineStatus("Not needed");
                 return false;
             }
 
@@ -180,7 +180,7 @@ public class DockerMonitors
                 return false;
             }
 
-            state.setMachineStatus("Running");
+            state.setMachineStatus(RUNNING);
             return true;
         }
 
@@ -257,7 +257,7 @@ public class DockerMonitors
             }
 
             state.signalComposeReady(ok);
-            state.setBackendStatus("Running");
+            state.setBackendStatus(RUNNING);
             return ok;
         }
 

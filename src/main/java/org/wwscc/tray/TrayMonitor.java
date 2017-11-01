@@ -241,12 +241,19 @@ public class TrayMonitor implements ActionListener
 		
         public void signalPortsReady(boolean ready)        { _portsforwarded = ready; }
 		public void setMachineEnv(Map<String, String> env) { _machineenv = env; }
-		public void setUsingMachine(boolean using)         { _usingmachine = using; }
+		
+		public void setUsingMachine(boolean using)         
+		{ 
+			_usingmachine = using;
+			if (!_usingmachine) {
+				mMachineStatus.getParent().remove(mMachineStatus);
+			}
+		}
 		
 	    public void setMachineStatus(String status)
 	    { 
 	        mMachineStatus.setLabel("Machine: " + status);
-            mMachineStatus.setEnabled(!status.equals("Running"));
+            mMachineStatus.setEnabled(!status.equals(DockerMonitors.RUNNING));
             if (!_lastMachineStatus.equals(status)) {
 	            log.info("Machine status changed to " + status);
 	            _lastMachineStatus = status;
@@ -256,7 +263,7 @@ public class TrayMonitor implements ActionListener
 	    public void setBackendStatus(String status)
 	    {
 	        mBackendStatus.setLabel("Backend: " + status);
-	        mBackendStatus.setEnabled(!status.equals("Running"));
+	        mBackendStatus.setEnabled(!status.equals(DockerMonitors.RUNNING));
             if (!_lastBackendStatus.equals(status)) {
                 log.info("Backend status changed to " + status);
                 _lastBackendStatus = status;
