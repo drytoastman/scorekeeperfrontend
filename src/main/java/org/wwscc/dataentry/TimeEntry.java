@@ -400,7 +400,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 			String msg = ioe.getMessage();
 			if ((msg != null) && !msg.equals("cancel"))
 			{
-				log.log(Level.WARNING, "Timer Select Failed ({0}), turning Off", ioe.getMessage());
+				log.log(Level.WARNING, "\bTimer Select Failed ({0}), turning Off", ioe.getMessage());
 				mode = Mode.OFF;				
 			}
 

@@ -58,7 +58,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (e == null)
 		{
-			log.warning("\bFailed to fetch entrant data, perhaps try again");
+			log.warning("\bFailed to fetch entrant data from database");
 			return;
 		}
 		
@@ -83,7 +83,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		try {
 			Database.d.registerCar(DataEntry.state.getCurrentEventId(), e.getCar(), false, false);
 		} catch (SQLException ioe) {
-			log.log(Level.WARNING, "Registration during car add failed: {0}" + ioe.getMessage(), ioe);
+			log.log(Level.WARNING, "\bRegistration during car add failed: {0}" + ioe.getMessage(), ioe);
 		}
 		
 		int row = tableData.size() - 1;

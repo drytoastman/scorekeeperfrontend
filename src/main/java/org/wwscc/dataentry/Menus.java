@@ -148,7 +148,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 		{
 		    if (DataEntry.state.getCurrentEvent() == null)
 		    {
-		        log.warning("Can't set runs when there is no series/event open");
+		        log.warning("\bCan't set runs when there is no series/event open");
 		        return;
 		    }
 		    

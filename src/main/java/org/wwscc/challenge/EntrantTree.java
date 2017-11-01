@@ -142,7 +142,7 @@ public class EntrantTree extends CarTree implements MessageListener
 					return transfer.source != null;
 				}
 			}
-			catch (Exception ioe) { log.log(Level.WARNING, "Error during drop:{0}", ioe); }
+			catch (Exception ioe) { log.log(Level.WARNING, "\bError during drop:{0}", ioe); }
 			return false;
 		}
 	}

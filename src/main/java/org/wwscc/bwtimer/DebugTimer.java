@@ -17,7 +17,7 @@ import net.miginfocom.swing.MigLayout;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.TimeTextField;
 
 /**
@@ -57,20 +57,18 @@ public class DebugTimer extends JPanel
 	{
 		try
 		{
-			Logging.logSetup("bwtimer");
-			DebugTimer t = new DebugTimer();
-			
+			AppSetup.appSetup("debugtimer");
+			DebugTimer t = new DebugTimer();			
 			JFrame f = new JFrame("DebugTimer");
 			f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			f.getContentPane().add(t);
 			f.pack();
 			f.setVisible(true);
-
 			t.getRootPane().setDefaultButton(t.defaultButton);
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "Timer stopped: " + e, e);
+			log.log(Level.SEVERE, "\bTimer stopped: " + e, e);
 			e.printStackTrace();
 		}
 	}

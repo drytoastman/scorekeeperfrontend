@@ -27,10 +27,8 @@ import java.util.zip.ZipOutputStream;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
-import javax.swing.UIManager;
-
 import org.apache.commons.io.FileUtils;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
 
 public class DebugCollector extends Thread
@@ -140,7 +138,7 @@ public class DebugCollector extends Thread
                     Files.copy(p, zos);
                 }
             } catch (IOException ioe) {
-                log.warning("Unable to archive " + p);
+                log.warning("\bUnable to archive " + p);
             }
             zos.closeEntry();
         }
@@ -170,9 +168,7 @@ public class DebugCollector extends Thread
      */
     public static void main(String args[]) throws IOException
     {
-        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-        System.setProperty("program.name", "DebugCollector");
-        Logging.logSetup("debugcollector");
+        AppSetup.appSetup("debugcollector");
         DockerContainer.Db db = new DockerContainer.Db();
         db.setMachineEnv(DockerMachine.machineenv());
         new DebugCollector(db).start();

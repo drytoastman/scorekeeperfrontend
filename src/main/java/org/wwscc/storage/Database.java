@@ -39,7 +39,7 @@ public class Database
 		try {
 			openSeries(Prefs.getSeries(""));
 		} catch (Exception ioe) {
-			log.severe("Failed to open default: " + ioe);
+			log.severe("\bFailed to open default: " + ioe);
 		}
 	}
 	
@@ -88,7 +88,7 @@ public class Database
 			}
 			return true;
 		} catch (SQLException sqle) {
-			log.severe(String.format("Unable to open series %s due to error %s", series, sqle));
+			log.severe(String.format("\bUnable to open series %s due to error %s", series, sqle));
 			return false;
 		}
 	}

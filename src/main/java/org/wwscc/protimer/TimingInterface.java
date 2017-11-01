@@ -67,7 +67,7 @@ public class TimingInterface implements MessageListener
 				try {
 					processData(new String((byte[])o));
 				} catch (PSIException pse) {
-					log.log(Level.WARNING, "Error processing data: {0}", pse);
+					log.log(Level.WARNING, "Error processing data: {0}", pse); // don't dialog
 				}
 				break;
 
@@ -120,7 +120,7 @@ public class TimingInterface implements MessageListener
 		}
 		catch (Exception e)
 		{
-			log.log(Level.WARNING, "Write error: {0}", e);
+			log.log(Level.WARNING, "Write error: {0}", e); // don't dialog
 		}
 	}
 

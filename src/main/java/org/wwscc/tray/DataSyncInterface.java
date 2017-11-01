@@ -32,7 +32,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.UIManager;
 
 import org.json.simple.JSONObject;
 import org.wwscc.dialogs.HostSeriesSelectionDialog;
@@ -44,7 +43,7 @@ import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Discovery.DiscoveryListener;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -337,9 +336,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
      */
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
-        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-        System.setProperty("program.name", "DataSyncTestMain");
-        Logging.logSetup("datasync");
+        AppSetup.appSetup("datasync");
 
         Database.openPublic(true);
         DataSyncInterface v = new DataSyncInterface();

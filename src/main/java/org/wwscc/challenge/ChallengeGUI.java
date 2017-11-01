@@ -19,14 +19,11 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BetterViewportLayout;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 
 /**
  * @author bwilson
@@ -91,12 +88,12 @@ public class ChallengeGUI extends JFrame
 		JPanel content = new JPanel(layout);
 		content.add(selectBar, BorderLayout.NORTH);
 		content.add(main, BorderLayout.CENTER);
-
-		Database.openDefault();
 		
 		setContentPane(content);
 		setSize(1024,768);
 		setVisible(true);
+		
+	    Database.openDefault();
 	}
 	
 	/**
@@ -107,20 +104,12 @@ public class ChallengeGUI extends JFrame
 	{
 		try
 		{
-	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-	        System.setProperty("program.name", "Challenge");
-	        Logging.logSetup("challenge");
-			SwingUtilities.invokeLater(new Runnable() { public void run() {
-				try {
-					new ChallengeGUI();
-				} catch (Exception sqle) {
-					log.log(Level.SEVERE, "Failed to start Challenge GUI: " + sqle, sqle);
-				}
-			}});
+	        AppSetup.appSetup("challengegui");
+			new ChallengeGUI();
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "Failed to start Challenge GUI: " + e, e);
+			log.log(Level.SEVERE, "\bFailed to start Challenge GUI: " + e, e);
 		}
 	}
 }

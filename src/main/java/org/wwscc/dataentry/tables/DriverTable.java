@@ -337,7 +337,7 @@ class DriverTransferHandler extends TransferHandler
 
 			return true;
 		}
-		catch (Exception e) { log.warning("General error during driver drag:" + e); }
+		catch (Exception e) { log.warning("\bGeneral error during driver drag:" + e); }
 
 		return false;
 	}

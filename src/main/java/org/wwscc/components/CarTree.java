@@ -117,7 +117,7 @@ public class CarTree extends JTree
 		{
 			if (e == null)
 			{
-				log.warning("Null entrant in reg list?");
+				log.warning("Null entrant in reg list?"); // too noisy for dialog
 				continue;
 			}
 	

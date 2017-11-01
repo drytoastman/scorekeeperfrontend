@@ -23,16 +23,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
 import org.wwscc.barcodes.BarcodeScannerOptionsAction;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -130,21 +127,12 @@ public class Registration extends JFrame
 	{
 		try
 		{
-	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-	        System.setProperty("program.name", "Registration");
-	        Logging.logSetup("registration");
-	            
-			SwingUtilities.invokeLater(new Runnable() { public void run() {
-				try {
-					new Registration();
-				} catch (Throwable ioe) {
-					log.log(Level.SEVERE, "Registration failed to start: " + ioe, ioe);
-				}
-			}});
+	        AppSetup.appSetup("registration");	            
+			new Registration();
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "Registration main failure: " + e, e);
+			log.log(Level.SEVERE, "\bRegistration main failure: " + e, e);
 		}
 	}
 }

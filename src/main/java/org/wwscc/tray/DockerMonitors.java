@@ -19,6 +19,10 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+/**
+ * The background threads that responsible for monitoring the status of our docker containers
+ * and possibly the docker-machine setup (if needed).
+ */
 public class DockerMonitors 
 {
     private static final Logger log = Logger.getLogger(DockerMonitors.class.getName());
@@ -98,7 +102,7 @@ public class DockerMonitors
                 state.setMachineStatus("Creating VM");
                 if (!DockerMachine.createmachine())
                 {
-                    log.severe("Unable to create a docker machine.  See logs.");
+                    log.severe("\bUnable to create a docker machine.  See logs.");
                     return false;
                 }
             }
@@ -244,7 +248,7 @@ public class DockerMonitors
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
-                            log.severe("Unable to start " + c.getName() + ". See logs.");
+                            log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
                         } else {
                             quickrecheck = true;
                         }

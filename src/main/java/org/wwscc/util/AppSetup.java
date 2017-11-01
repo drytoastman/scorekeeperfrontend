@@ -30,7 +30,7 @@ import javax.swing.SwingUtilities;
 
 /**
  */
-public class Logging
+public class AppSetup
 {
     public static void unitLogging()
     {
@@ -49,8 +49,18 @@ public class Logging
         root.addHandler(ch);
     }
     
-    public static void logSetup(String name)
+    /**
+     * Do some common setup for all applications at startup
+     * @param name the application name used for Java logging and database logging
+     */
+    public static void appSetup(String name)
     {
+        // Set our platform wide L&F 
+        System.setProperty("swing.defaultlaf", "javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        
+        // Set the program name which is used by PostgresqlDatabase to identify the app in logs
+        System.setProperty("program.name", name);
+        
         // Start with a fresh root set at warning
         Logger root = LogManager.getLogManager().getLogger("");
         Formatter format = new SingleLineFormatter();

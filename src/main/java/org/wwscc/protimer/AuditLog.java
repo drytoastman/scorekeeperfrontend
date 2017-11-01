@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -31,9 +31,9 @@ public class AuditLog implements MessageListener
     {
         try {
             audit = new FileHandler(Prefs.getLogDirectory().resolve("proaudit.%g.log").toAbsolutePath().toString(), 1000000, 10, true);
-            audit.setFormatter(new Logging.SingleLineFormatter());
+            audit.setFormatter(new AppSetup.SingleLineFormatter());
         } catch (IOException ioe) {
-            log.log(Level.WARNING, "Can't open audit log: " + ioe, ioe);
+            log.log(Level.WARNING, "\bCan't open audit log: " + ioe, ioe);
             return;
         }
 

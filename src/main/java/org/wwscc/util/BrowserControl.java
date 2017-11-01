@@ -105,7 +105,7 @@ public class BrowserControl
                     });
                     engine.load(url);
                 } catch (Exception e) {
-                    log.log(Level.SEVERE, "\bCouldn't print:" + e, e);
+                    log.log(Level.SEVERE, "\bCould not print:" + e, e);
                 }
             }
         });

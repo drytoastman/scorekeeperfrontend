@@ -35,7 +35,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -46,7 +45,7 @@ import org.wwscc.components.MyServerLabel;
 import org.wwscc.timercomm.SerialDataInterface;
 import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.NF;
 import org.wwscc.util.Prefs;
 
@@ -98,7 +97,7 @@ public class Timer extends JPanel implements ActionListener
 			model.addRunServerListener(server);
 			server.start();
 		} catch (IOException ioe) {
-			log.log(Level.SEVERE, "Timer Server Failed to start: {0}", ioe.getMessage());
+			log.log(Level.SEVERE, "\bTimer Server Failed to start: {0}", ioe.getMessage());
 		}
 	}
 
@@ -166,7 +165,7 @@ public class Timer extends JPanel implements ActionListener
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Can't open port: " + e, e);
+			log.log(Level.SEVERE, "\bCan't open port: " + e, e);
 		}
 	}
 
@@ -178,7 +177,7 @@ public class Timer extends JPanel implements ActionListener
 			serial.close();
 			openPort.setText("Serial Port Not Connected");
 		} catch (IOException ioe) {
-			log.log(Level.SEVERE, "Failed to close: " + ioe, ioe);
+			log.log(Level.SEVERE, "\bFailed to close: " + ioe, ioe);
 		}
 		
 		serial = null;
@@ -385,9 +384,7 @@ public class Timer extends JPanel implements ActionListener
 	{
 		try
 		{
-	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-	        System.setProperty("program.name", "BWTimer");
-	        Logging.logSetup("bwtimer");
+	        AppSetup.appSetup("bwtimer");
 	            
 			final Timer t = new Timer();
 			final JFrame f = new JFrame("Timer");
@@ -406,7 +403,7 @@ public class Timer extends JPanel implements ActionListener
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "Timer stopped: " + e, e);
+			log.log(Level.SEVERE, "\bTimer stopped: " + e, e);
 			e.printStackTrace();
 		}
 	}

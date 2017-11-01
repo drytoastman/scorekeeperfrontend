@@ -231,7 +231,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 				SimpleDoc doc = new SimpleDoc(activeLabel, DocFlavor.SERVICE_FORMATTED.PRINTABLE, null);
 				ps.createPrintJob().print(doc, attr);
 			}  catch (PrintException ex) {
-				log.log(Level.SEVERE, "Barcode print failed: " + ex.getMessage(), ex);
+				log.log(Level.SEVERE, "\bBarcode print failed: " + ex.getMessage(), ex);
 			}
 		}
 	}
@@ -256,7 +256,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 						Database.d.updateCar(c);
 						reloadCars(c);
 					} catch (SQLException ioe) {
-						log.log(Level.SEVERE, "Failed to edit car: " + ioe.getMessage(), ioe);
+						log.log(Level.SEVERE, "\bFailed to update car: " + ioe.getMessage(), ioe);
 					}
 				}
 			});
@@ -277,7 +277,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 					Database.d.deleteCar(selectedCar);
 					reloadCars(null);
 				} catch (SQLException ioe) {
-					log.log(Level.SEVERE, "Failed to delete car: " + ioe, ioe);
+					log.log(Level.SEVERE, "\bFailed to delete car: " + ioe, ioe);
 				}
 			}
 		}
@@ -383,7 +383,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		}
 		catch (SQLException ioe)
 		{
-			log.log(Level.SEVERE, "Registation action failed: " + ioe, ioe);
+			log.log(Level.SEVERE, "\bRegistation action failed: " + ioe, ioe);
 		}
 	}
 
@@ -515,7 +515,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 						Database.d.registerCar(Registration.state.getCurrentEventId(), c, true, true);
 						reloadCars(c);
 					} catch (SQLException e) {
-						log.log(Level.WARNING, "Hmm.  I wasn't able to register the car: " + e.getMessage(), e);
+						log.log(Level.WARNING, "\bUnable to register the car: " + e.getMessage(), e);
 					}
 				}
 				break;

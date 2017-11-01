@@ -92,7 +92,7 @@ public class IdGenerator
             long lobyte = out.getLong();
             return new UUID(hibyte, lobyte);
         } catch (NoSuchAlgorithmException e) {
-            log.log(Level.SEVERE, "Failed to load SHA1 for generating V5 DNS UUID", e);
+            log.log(Level.SEVERE, "\bFailed to load SHA1 for generating V5 DNS UUID", e);
             return nullid;
         }
 	}

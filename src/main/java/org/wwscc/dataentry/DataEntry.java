@@ -19,9 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.components.MyIpLabel;
@@ -30,7 +27,7 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
 import org.wwscc.util.ApplicationState;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -83,9 +80,9 @@ public class DataEntry extends JFrame implements MessageListener
 		}
 	}
 
-	public DataEntry(String title) throws IOException
+	public DataEntry() throws IOException
 	{
-		super(title);
+		super("DataEntry");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
 		
@@ -167,23 +164,12 @@ public class DataEntry extends JFrame implements MessageListener
 	{
 		try
 		{
-	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-	        System.setProperty("program.name", "DataEntry");
-            Logging.logSetup("dataentry");
-
-            // BMW: Why did I do this?  What needs to be done in event thread?
-			final String title = "DataEntry";
-			SwingUtilities.invokeLater(new Runnable() { public void run() {
-				try {
-					new DataEntry(title);
-				} catch (Throwable e) {
-					log.log(Level.SEVERE, "DataEntry creation failed: " + e, e);
-				}
-			}});
+            AppSetup.appSetup("dataentry");
+            new DataEntry();
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "App failure: " + e, e);
+			log.log(Level.SEVERE, "\bApp failure: " + e, e);
 		}
 	}
 }

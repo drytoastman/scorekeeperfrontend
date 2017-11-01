@@ -85,7 +85,7 @@ public class ChallengeModel implements MessageListener
 		{
 			if (client == null)
 			{
-				log.severe("Unabled to send dialins, not connected");
+				log.severe("\bUnable to send dialins, not connected");
 				return;
 			}
 			
@@ -313,7 +313,7 @@ public class ChallengeModel implements MessageListener
 		ChallengeRound r = getRound(eid);
 		if (r == null)
 		{
-			log.warning("missing " + eid);
+			log.warning("\bmissing " + eid);
 			return null;
 		}
 		
@@ -626,7 +626,7 @@ public class ChallengeModel implements MessageListener
 				}
 				catch (Exception e)
 				{
-					log.log(Level.SEVERE, "Failed to connect: {0}", e.getMessage());
+					log.log(Level.SEVERE, "\bFailed to connect: {0}", e.getMessage());
 				}
 				break;
 

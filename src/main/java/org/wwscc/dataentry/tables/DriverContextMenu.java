@@ -153,7 +153,7 @@ class PaidAction extends AbstractAction
 			Database.d.registerCar(DataEntry.state.getCurrentEventId(), entrant.getCar(), true, true);
 			Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
 		} catch (SQLException ioe) {
-			log.severe("Failed to mark driver paid: " + ioe.getMessage());
+			log.severe("\bFailed to mark driver paid: " + ioe.getMessage());
 		}
 	}
 }

@@ -34,11 +34,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 
@@ -172,7 +170,7 @@ public class TrayMonitor implements ActionListener
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
         } catch (InterruptedException ie) {
-            log.warning("Exiting due to interuption: " + ie);
+            log.warning("\bTrayMonitor exiting due to interuption: " + ie);
         }
     }
     
@@ -381,10 +379,7 @@ public class TrayMonitor implements ActionListener
      */
     public static void main(String args[])
     {
-        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-        System.setProperty("program.name", "TrayMonitor");
-        Logging.logSetup("traymonitor");
-
+        AppSetup.appSetup("traymonitor");
         TrayMonitor tm = new TrayMonitor(args);
         tm.startAndWaitForThreads();
         System.exit(0);

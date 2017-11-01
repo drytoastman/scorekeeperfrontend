@@ -210,7 +210,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 		} 
 		catch (SQLException sqle) 
 		{
-			log.warning("Postgresql error closing series: " + sqle);
+			log.warning("\bPostgresql error closing series: " + sqle);
 		}
 	}
 
@@ -238,7 +238,7 @@ public class PostgresqlDatabase extends SQLDataInterface
                 Messenger.sendEvent(MT.DATABASE_NOTIFICATION, changes);
             }
         } catch (SQLException e) {
-            log.log(Level.INFO, "Failed to process pg notifications: " + e, e);
+            log.log(Level.WARNING, "Failed to process pg notifications: " + e, e);
         }
 	}
 	
@@ -247,7 +247,7 @@ public class PostgresqlDatabase extends SQLDataInterface
 		try {
 			conn.rollback();
 		} catch (SQLException sqle) {
-			log.warning("Database rollback failed.  You should probably restart the application.");
+			log.warning("\bDatabase rollback failed.  You should probably restart the application.");
 		}
 	}
 

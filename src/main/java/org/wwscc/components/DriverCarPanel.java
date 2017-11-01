@@ -224,7 +224,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 						Database.d.newDriver(d);
 						focusOnDriver(d.getFirstName(), d.getLastName());
 					} catch (SQLException ioe) {
-						log.log(Level.SEVERE, "Failed to create driver: " + ioe, ioe);
+						log.log(Level.SEVERE, "\bFailed to create driver: " + ioe, ioe);
 					}
 				}
 			});
@@ -245,7 +245,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 						drivers.clearSelection();
 						drivers.setSelectedIndex(ii);
 					} catch (SQLException ioe) {
-						log.log(Level.SEVERE, "Failed to update driver: " + ioe, ioe);
+						log.log(Level.SEVERE, "\bFailed to update driver: " + ioe, ioe);
 					}
 				}
 			});
@@ -284,7 +284,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 					}
 					catch (SQLException ioe)
 					{
-						log.log(Level.SEVERE, "Failed to create a car: " + ioe, ioe);
+						log.log(Level.SEVERE, "\bFailed to create a car: " + ioe, ioe);
 					}
 				}
 			});

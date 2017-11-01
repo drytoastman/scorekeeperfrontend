@@ -258,7 +258,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 				}
 				catch (PrinterException pe)
 				{
-					log.log(Level.SEVERE, "Failed to print: {0}", pe.getMessage());
+					log.log(Level.SEVERE, "\bFailed to print: {0}", pe.getMessage());
 				}
 				break;
 		}
@@ -758,7 +758,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 					return true;
 				}
 			}
-			catch (Exception ioe) { log.warning("Error during drop:" + ioe); }
+			catch (Exception ioe) { log.warning("\bError during drop:" + ioe); }
 			return false;
 		}
 	}

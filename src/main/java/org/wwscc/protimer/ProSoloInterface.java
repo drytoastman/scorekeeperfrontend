@@ -31,14 +31,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
-import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.components.MyServerLabel;
 import org.wwscc.timercomm.SerialDataInterface;
 import org.wwscc.timercomm.TimerServer;
 import org.wwscc.util.Discovery;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -117,7 +115,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 			model.addRunServerListener(server);
 			server.start();
 		} catch (IOException ioe) {
-			log.log(Level.SEVERE, "Timer Server Failed to start: {0}", ioe.getMessage());
+			log.log(Level.SEVERE, "\bTimer Server Failed to start: {0}", ioe.getMessage());
 		}
     }
 
@@ -242,10 +240,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 	{
 		try
 		{
-	        System.setProperty("swing.defaultlaf", UIManager.getSystemLookAndFeelClassName());
-	        System.setProperty("program.name", "ProSoloInterface");
-	        Logging.logSetup("prointerface");
-
+	        AppSetup.appSetup("prointerface");
 	        final ProSoloInterface frame = new ProSoloInterface();
 			frame.addWindowListener(new WindowAdapter() {
 				public void windowOpened(WindowEvent e) {
@@ -255,7 +250,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 		}
 		catch (Throwable e)
 		{
-			log.log(Level.SEVERE, "ProTimer thread died: " + e, e);
+			log.log(Level.SEVERE, "\bProTimer thread died: " + e, e);
 		}
     }
 }

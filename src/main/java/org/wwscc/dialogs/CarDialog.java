@@ -306,7 +306,7 @@ public class CarDialog extends BaseDialog<Car>
 		}
 		catch (Exception e)
 		{
-			log.severe("Bad data in CarDialog: " + e);
+			log.severe("\bBad data in CarDialog: " + e);
 			return null;
 		}
 	}

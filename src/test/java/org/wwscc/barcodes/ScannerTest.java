@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wwscc.util.Logging;
+import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -31,7 +31,7 @@ public class ScannerTest {
 
     @BeforeClass
     public static void init() {
-        Logging.unitLogging();
+        AppSetup.unitLogging();
         Prefs.setTestMode();
         Prefs.setScannerConfig(new ScannerConfig(start, end, 200).encode());
         Messenger.setTestMode();
