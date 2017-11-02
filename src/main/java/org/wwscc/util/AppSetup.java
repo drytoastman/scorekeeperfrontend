@@ -113,6 +113,13 @@ public class AppSetup
             JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
                     "Unable to enable logging to file: " + ioe, "Log Error", JOptionPane.ERROR_MESSAGE);
         }
+
+        // force the initialization of IdGenerator on another thread so app can start now without an odd delay later
+        new Thread() {
+            public void run() {
+                IdGenerator.generateId();
+            }
+        }.start();
     }
 
     /**

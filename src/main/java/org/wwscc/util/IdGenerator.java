@@ -35,9 +35,12 @@ public class IdGenerator
 	private static long counter = 0;
 	private static long hwseq = 0;
 	
-	// Called at application start to initialize the static lower half
-	static
+	// Lazy initialization of hwseq, also retry if not successful on first try
+	static private long getHWSeq()
 	{
+	    if (hwseq != 0)
+	        return hwseq;
+
 		for (int ii = 0; ii < 20; ii++)
 		{
 			try 
@@ -58,6 +61,8 @@ public class IdGenerator
 			} 
 			catch (SocketException se) {}
 		}
+
+		return hwseq;
 	}
 
 	public synchronized static UUID generateId()
@@ -74,7 +79,7 @@ public class IdGenerator
 		long nstime = lasttime + counter;
 		long timever = ((nstime << 32) & TIME_LOW_MASK) | ((nstime >> 16) & TIME_MID_MASK) | (VERSION1 & VERSION_MASK) | ((nstime >> 48) & TIME_HI_MASK);
 
-		return new UUID(timever, hwseq);
+		return new UUID(timever, getHWSeq());
 	}
 	
 	public static UUID generateV5DNSId(String hostname)
