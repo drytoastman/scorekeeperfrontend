@@ -14,6 +14,7 @@ import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 import gnu.io.UnsupportedCommOperationException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.TooManyListenersException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
+
 import org.wwscc.dialogs.PortDialog;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
@@ -62,9 +63,7 @@ public class SerialDataInterface implements SerialPortEventListener
 		try {
 			System.loadLibrary("rxtxSerial2");
 		} catch (Throwable e) {
-			JOptionPane.showMessageDialog(null, 
-				"Can't load the native serial drivers, serial port access will be broken.  Everything else should be fine.",
-				"Error", JOptionPane.ERROR_MESSAGE);
+			log.severe("\bCan't load the native serial drivers, serial port access will be broken.  Everything else should be fine.");
             return;
 		}
 	

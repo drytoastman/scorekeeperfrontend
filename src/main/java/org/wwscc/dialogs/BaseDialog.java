@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
+import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -260,7 +261,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 			}
 			else if (errorMessage != null)
 			{
-				JOptionPane.showMessageDialog(null, errorMessage, "Dialog Error", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), errorMessage, "Dialog Error", JOptionPane.WARNING_MESSAGE);
 			}
 			else
 			{

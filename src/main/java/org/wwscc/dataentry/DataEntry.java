@@ -123,7 +123,7 @@ public class DataEntry extends JFrame implements MessageListener
 		content.add(setupBar, "spanx 3, growx, wrap");
 		content.add(tabs, "spany 2, growx 0, growy");
 		content.add(miniPanels, "growx, growy 0, hidemode 2");
-		content.add(timeEntry, "spany 2, growx 0, growy, wrap");
+		content.add(timeEntry, "spany 2, growx 0, growy, w 150!, wrap");
 		content.add(tableScroll, "grow, wrap");
 		content.add(infoBoxes, "spanx 3, growx, wrap");
 		

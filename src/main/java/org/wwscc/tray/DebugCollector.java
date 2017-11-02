@@ -77,7 +77,7 @@ public class DebugCollector extends Thread
         File zipfile = fc.getSelectedFile();
         if (zipfile.exists() && !zipfile.canWrite())
         {
-            JOptionPane.showMessageDialog(null, zipfile + " is not writable", "Error", JOptionPane.ERROR_MESSAGE);
+            log.warning("\b" + zipfile + " is not writable");
             return;
         }
         

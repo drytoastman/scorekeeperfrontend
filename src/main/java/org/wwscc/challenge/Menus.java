@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -98,7 +100,7 @@ public class Menus extends JMenuBar implements ActionListener
 		{
 			if (c.getChallengeId() == curid)
 			{
-				String response = (String)JOptionPane.showInputDialog(null, "Edit Challenge", c.getName());
+				String response = (String)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Edit Challenge", c.getName());
 				if (response != null)
 				{
 					c.setName(response);
@@ -112,7 +114,7 @@ public class Menus extends JMenuBar implements ActionListener
 	protected void deleteChallenge()
 	{
 		List<Challenge> current = Database.d.getChallengesForEvent(ChallengeGUI.state.getCurrentEventId());
-		Challenge response = (Challenge)JOptionPane.showInputDialog(null, "Delete which challenge?", "Delete Challenge", JOptionPane.QUESTION_MESSAGE, null, current.toArray(), null);
+		Challenge response = (Challenge)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Delete which challenge?", "Delete Challenge", JOptionPane.QUESTION_MESSAGE, null, current.toArray(), null);
 		if (response == null)
 			return;
 		

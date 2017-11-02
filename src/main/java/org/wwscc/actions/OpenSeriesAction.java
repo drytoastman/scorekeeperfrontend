@@ -3,6 +3,7 @@ package org.wwscc.actions;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
+import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
@@ -22,7 +23,7 @@ public class OpenSeriesAction extends AbstractAction
 	public void actionPerformed(ActionEvent e)
 	{
 		String options[] = PostgresqlDatabase.getSeriesList(null).toArray(new String[0]);
-		String series = (String)JOptionPane.showInputDialog(null, "Select the series", "Series Selection", JOptionPane.QUESTION_MESSAGE, null, options, null);
+		String series = (String)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Select the series", "Series Selection", JOptionPane.QUESTION_MESSAGE, null, options, null);
 		if (series == null)
 			return;
 		

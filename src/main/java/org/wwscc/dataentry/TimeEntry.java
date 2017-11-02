@@ -42,10 +42,9 @@ import javax.swing.JMenu;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.UIManager;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
@@ -105,7 +104,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 	TimeTextField segVal[];
 	JLabel segLabel[];
 	JComboBox<String> status;
-	JTextArea error;
+	JLabel errorLabel;
 
 	JButton del;
 	JButton enter;
@@ -207,15 +206,9 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		del.setMargin(new Insets(0,0,0,0));
 		del.addActionListener(this);
 
-
-		error = new JTextArea("");
-		error.setEditable(false);
-		error.setLineWrap(true);
-		error.setWrapStyleWord(true);
-		error.setBackground((Color)UIManager.get("Label.background"));
-		error.setForeground(Color.RED);
-		error.setFont((Font)UIManager.get("Label.font"));
-
+		errorLabel = new JLabel("");
+		errorLabel.setForeground(Color.RED);
+		errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		JScrollPane scroll = new JScrollPane(timeList);
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -224,7 +217,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		setLayout(new MigLayout("ins 0 0 0 4, hidemode 3, fillx", "[al right, 50!][fill,grow]", ""));
 		add(connectionStatus, "spanx 2, al center, wrap");
 		add(del, "spanx 2, growx, wrap");
-		add(scroll, "spanx 2, growx, h 50:300:500, wrap, w 120!");
+		add(scroll, "spanx 2, growx, h 50:300:500, wrap");
 		add(reactionLabel, "");
 		add(reaction, "wrap");
 		add(sixtyLabel, "");
@@ -243,7 +236,8 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		add(new JLabel("Status"), "");
 		add(status, "wrap");
 		add(enter, "spanx 2, growx, wrap");
-		add(error, "spanx 2, wrap");
+		add(errorLabel, "spanx 2, growx, growy 0, wrap");
+		add(new JLabel(""), "pushy 100");
 
 		switchTimerMode(Mode.OFF);
 		
@@ -262,6 +256,11 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 	public JButton getEnterButton()
 	{
 		return enter;
+	}
+	
+	public void setError(String txt)
+	{
+	    errorLabel.setText("<html>"+txt+"</html>"); // force it to wrap
 	}
 
 	/**
@@ -468,7 +467,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		catch (Exception e)
 		{
 			String msg = e.getMessage();
-			error.setText((msg != null)?msg : "Unknown error, see log trace");
+			setError((msg != null)?msg : "Unknown error, see log trace");
 			log.log(Level.INFO, "Time entry failed: " + e.getMessage(), e);
             Toolkit.getDefaultToolkit().beep();
 		}
@@ -576,7 +575,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		cones.setInt(0);
 		gates.setInt(0);
 		status.setSelectedIndex(0);
-		error.setText("");
+		setError("");
 	}
 
 
@@ -603,7 +602,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 		cones.setInt(r.getCones());
 		gates.setInt(r.getGates());
 		status.setSelectedItem(r.getStatus());
-		error.setText("");
+		setError("");
 	}
 
 
