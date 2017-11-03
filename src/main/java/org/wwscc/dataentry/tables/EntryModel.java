@@ -53,7 +53,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 	public void addCar(UUID carid)
 	{
 		if (tableData == null) return;
-		boolean move = false;
 
 		Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (e == null)
@@ -70,7 +69,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 				return;
 			}
 			tableData.remove(e); // remove it from position and following will readd at the end
-			move = true;
 		}
 		else if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse()))
 		{
@@ -85,12 +83,13 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		} catch (SQLException ioe) {
 			log.log(Level.WARNING, "\bRegistration during car add failed: {0}" + ioe.getMessage(), ioe);
 		}
-		
-		int row = tableData.size() - 1;
-		if (move)
-            fireTableRowsUpdated(row, row);		    
-		else
-		    fireTableRowsInserted(row, row);
+
+		/* Two reasons for the using fireTableDataChanged vs inserted/updated
+		 *  1: having a single sorter on top of two tables with the same model means that inserted events
+		 *     get fired twice and cause indexing errors in the sorter/filterer
+		 *  2: for simplicity, do the same for updates
+		 */
+        fireTableDataChanged();
     	fireEntrantsChanged();
 	}
 
