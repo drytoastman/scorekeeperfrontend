@@ -41,6 +41,6 @@ public class LeftRightDialin implements Serial
 	public void decode(JSONObject in)
 	{
 		left = (double)in.getOrDefault("left", -1);
-		right = (double)in.getOrDefault("left", -1);
+		right = (double)in.getOrDefault("right", -1);
 	}
 }

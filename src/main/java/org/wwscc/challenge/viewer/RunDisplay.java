@@ -49,7 +49,6 @@ class RunDisplay extends JComponent
 	JComboBox<Integer> cones;
 	JComboBox<Integer> gates;
 	JComboBox<String> status;
-	JLabel rundiff;
 
 	ChallengeModel model;
 	ChallengeRun run;
@@ -92,9 +91,6 @@ class RunDisplay extends JComponent
 		status.addActionListener(l);		
 		status.setFont(comboFont);
 
-		rundiff = new JLabel("", JLabel.CENTER);
-		rundiff.setFont(timeFont);
-
 		setLayout(new MigLayout());
 		runPanel = new JPanel(new MigLayout("ins 0"));
 		runPanel.setBorder(plainBorder);
@@ -106,28 +102,25 @@ class RunDisplay extends JComponent
 		nextButton = new FocusButton(rid);
 		nextButton.setFont(titleFont);
 		
-		add(title, "split 3, w 33%");
-		add(nextButton, "w 70!, wrap");
+		add(title, "split, w 55!");
+		add(nextButton, "w 45!, wrap");
 		add(runPanel, "wrap");
 		
 		runPanel.add(title("start"), "center");
 		runPanel.add(title("time"), "center");
 		runPanel.add(title("cones"), "center");
 		runPanel.add(title("gates"), "center");
-		runPanel.add(title("status"), "center");
-		runPanel.add(title("diff"), "center, wrap");
+		runPanel.add(title("status"), "center, wrap");
 
 		int reactionWidth = reaction.getFontMetrics(reaction.getFont()).stringWidth("0.000");
 		int reactionHeight = reaction.getFontMetrics(reaction.getFont()).getHeight();
-		int diffSize = rundiff.getFontMetrics(rundiff.getFont()).stringWidth("-20.000");
 		
 		runPanel.add(reaction, String.format("flowy, split 2, gapright 5, gapleft 5, width %d!, height %d!", reactionWidth, reactionHeight));
 		runPanel.add(sixty, String.format("gapleft 5, height %d!", reactionHeight));
 		runPanel.add(value, "");
-		runPanel.add(cones, "width 34!");
-		runPanel.add(gates, "width 34!");
+		runPanel.add(cones, "width 50!");
+		runPanel.add(gates, "width 50!");
 		runPanel.add(status, "");
-		runPanel.add(rundiff, String.format("width %d!, gapleft 5, gapright 5", diffSize));
 	}
 
 	private JLabel title(String s)
@@ -148,7 +141,6 @@ class RunDisplay extends JComponent
 			cones.setSelectedIndex(0);
 			gates.setSelectedIndex(0);
 			status.setSelectedIndex(0);
-			rundiff.setText("");
 
 			run = model.getRun(runId);
 			if (run == null)
@@ -165,12 +157,6 @@ class RunDisplay extends JComponent
 			gates.setSelectedItem(run.getGates());
 			status.setSelectedItem(run.getStatus());
 			diff = model.getPenSum(run) - model.getDial(runId);
-			if (Double.isNaN(diff))
-				rundiff.setText("");
-			else if (diff > 900)
-				rundiff.setText("DEF");
-			else
-				rundiff.setText(NF.format(diff));
 		} 
 		finally
 		{

@@ -137,6 +137,11 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
             d.setMembership(barcode);
             Database.d.newDriver(d);
         }
+        else
+        {
+            log.severe("\bNegative elements in list of drivers?!");
+            return;
+        }
 
         List<Car> available = Database.d.getRegisteredCars(d.getDriverId(), DataEntry.state.getCurrentEventId());
         Iterator<Car> iter = available.iterator();

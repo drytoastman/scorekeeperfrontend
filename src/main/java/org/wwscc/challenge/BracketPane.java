@@ -549,8 +549,8 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 	private void setButtonByCenterLeft(JComponent button, int x, int y)
 	{
 		Dimension butsize = button.getPreferredSize();
-		butsize.height = 14;
-		button.setBounds(x+10, y-butsize.height, butsize.width, butsize.height);
+		butsize.height = 20;
+		button.setBounds(x+11, y-butsize.height+2, butsize.width, butsize.height);
 	}
 
 	@Override

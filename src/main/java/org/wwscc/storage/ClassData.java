@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class ClassData
 {
 	private static Logger log = Logger.getLogger(ClassData.class.getCanonicalName());
-	public static String PLACEHOLDER_CLASS = "HOLD";
+	public static final String PLACEHOLDER_CLASS = "HOLD";
 	
 	HashMap <String, ClassData.Class> classes;
 	HashMap <String, ClassData.Index> indexes;

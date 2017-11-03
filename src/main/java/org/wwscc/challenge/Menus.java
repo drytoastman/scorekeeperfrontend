@@ -98,7 +98,7 @@ public class Menus extends JMenuBar implements ActionListener
 		UUID curid = ChallengeGUI.state.getCurrentChallengeId();
 		for (Challenge c : Database.d.getChallengesForEvent(ChallengeGUI.state.getCurrentEventId()))
 		{
-			if (c.getChallengeId() == curid)
+			if (c.getChallengeId().equals(curid))
 			{
 				String response = (String)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Edit Challenge", c.getName());
 				if (response != null)

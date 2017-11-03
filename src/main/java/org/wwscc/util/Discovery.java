@@ -26,7 +26,7 @@ import org.json.simple.parser.JSONParser;
 public class Discovery
 {
     private static final Logger log = Logger.getLogger(Discovery.class.getName());
-    private static Discovery singleton;
+    private static volatile Discovery singleton;
     
     public static final String DISCOVERY_GROUP = "224.0.0.251";
     public static final int    DISCOVERY_PORT  = 5454;

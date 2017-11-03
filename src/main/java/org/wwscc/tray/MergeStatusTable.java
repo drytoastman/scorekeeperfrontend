@@ -169,7 +169,7 @@ public class MergeStatusTable extends JTable {
         {
             if (s == null)
                 setText("");
-            if (s.length() > limit)
+            else if (s.length() > limit)
                 setText(s.substring(0, limit));
             else
                 setText(s);

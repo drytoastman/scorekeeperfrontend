@@ -7,11 +7,13 @@
  */
 package org.wwscc.challenge.viewer;
 
+import java.awt.Container;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import net.miginfocom.swing.MigLayout;
@@ -49,16 +51,22 @@ class EntrantDisplay extends JComponent
 		else
 			name = "(none)";
 
-		autoWin = new JButton("AutoWin");
+		autoWin = new JButton("Advance");
 		autoWin.setFont(buttonFont);
 		autoWin.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
 				Messenger.sendEvent(MT.AUTO_WIN, entryId);
+		        for(Container p = EntrantDisplay.this.getParent(); p != null; p = p.getParent()) {
+		            if (p instanceof JInternalFrame) {
+		                ((JInternalFrame)p).doDefaultCloseAction();
+		                return;
+		            }
+		        }
 			}
 		});
 
-		changeDial = new JButton("Dial");
+		changeDial = new JButton("Set Dial");
 		changeDial.setFont(buttonFont);
 		changeDial.addActionListener(new ActionListener() {
 			@Override
@@ -80,8 +88,8 @@ class EntrantDisplay extends JComponent
 		
 		setLayout(new MigLayout());
 		add(nameLbl, "al center, split 2");
-		add(dialLbl, "wrap");
-		add(autoWin, "hmax 15, al center, split 2");
-		add(changeDial, "hmax 15, al center");
+		add(dialLbl, "");
+	    add(changeDial, "al center");
+		add(autoWin, "al center, split 2");
 	}
 }

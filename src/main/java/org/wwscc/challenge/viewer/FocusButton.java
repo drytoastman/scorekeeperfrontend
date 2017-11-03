@@ -27,9 +27,8 @@ import org.wwscc.util.Resources;
 class FocusButton extends JButton 
 {
 	static ImageIcon timerOn = null;
-	static ImageIcon timerOff = null;
 	static Colors next3 = new Colors(Color.BLACK, new Color(200, 100, 100), new Color(255, 0, 100), new Color(200, 200, 200));
-	static Colors next2 = new Colors(Color.BLACK, new Color(100, 100, 200), new Color(100, 0, 255), new Color(200, 200, 200));
+	static Colors next2 = new Colors(Color.BLACK, new Color(130, 130, 230), new Color(200, 80, 255), new Color(200, 200, 200));
 	static Colors next = new Colors(Color.BLACK, new Color(0, 200, 0), new Color(0, 255, 0), new Color(200, 200, 200));
 	static Colors none = new Colors(Color.BLACK, new Color(255, 255, 255), new Color(200, 200, 200), new Color(240, 240, 240));
 
@@ -59,7 +58,7 @@ class FocusButton extends JButton
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			ActivateDialog d = new ActivateDialog();
-			d.doDialog("Activation Selection", null);
+			d.doDialog("ProTimer Time Data Destination Change", null);
 			if (d.isValid())
 				Messenger.sendEvent(MT.ACTIVE_CHANGE_REQUEST, new ActivationRequest(runid, d.getResult() == 0));
 		}
@@ -67,8 +66,8 @@ class FocusButton extends JButton
 	
 	class ActivateDialog extends BaseDialog<Integer>
 	{
-		private static final String deactive = "Deactivate";
-		private static final String active = "Activate as next target";
+		private static final String deactive = "Deactivate as ProTimer target";
+		private static final String active = "Activate as next destination of ProTimer data";
 		
 		public ActivateDialog()
 		{
@@ -94,12 +93,9 @@ class FocusButton extends JButton
 	public FocusButton(Id.Run rid) 
 	{
 		super("");
-		try 
-		{ // lazy loading of timerIcon if we don't have one
-			if (timerOn == null)
-			{
+		try {
+			if (timerOn == null) {
 				timerOn = new ImageIcon(Resources.loadImage("smalltimer.png"));
-				timerOff = new ImageIcon(Resources.loadImage("smalltimernot.png"));
 			}
 		} catch (Exception e) {} // try our best but failure is just fine
 		
@@ -107,7 +103,7 @@ class FocusButton extends JButton
 		runid = rid;
 		stamp = new JLabel();
 		stamp.setHorizontalAlignment(JLabel.CENTER);
-		setText(runid.isLeft() ? "Left" : "Right");
+		setText(runid.isLeft() ? "L": "R");
 		setStage(-1);
 		addActionListener(new FocusResponse());
 	}
@@ -142,12 +138,12 @@ class FocusButton extends JButton
 		// cheap way to draw icon/text with nice spacing
 		if (currentState < 0)
 		{
-			stamp.setText("Idle");
-			stamp.setIcon(timerOff);
+			stamp.setText("");
+			stamp.setIcon(null);
 		}
 		else
 		{
-			stamp.setText(getText() + " " + (currentState + 1));
+		    stamp.setText(getText() + currentState);
 			stamp.setIcon(timerOn);
 		}
 		

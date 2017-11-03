@@ -446,6 +446,13 @@ public class ChallengeModel implements MessageListener
 	 */
 	public double getPenSum(ChallengeRun r)
 	{
+	    if (r == null) {
+	        log.warning("Called getPenSum on null run");
+	        new Throwable().printStackTrace();
+	        return Double.NaN;
+	    }
+	    if (!r.isOK())
+	        return 999.999;
 		Event e = ChallengeGUI.state.getCurrentEvent();
 		return r.getRaw() + (e.getConePenalty() * r.getCones()) + (e.getGatePenalty() * r.getGates());
 	}
@@ -468,6 +475,8 @@ public class ChallengeModel implements MessageListener
 	 */
 	public Double getNewDial(ChallengeRound.RoundEntrant re)
 	{
+	    if ((re.getLeft() == null) || (re.getRight() == null))
+	        return re.getDial();
 		double halfres = (getPenSum(re.getLeft()) + getPenSum(re.getRight()))/2;
 		double dial = re.getDial();
 		if (halfres < dial)
