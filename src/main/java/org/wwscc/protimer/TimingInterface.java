@@ -115,6 +115,7 @@ public class TimingInterface implements MessageListener
 			if (serial != null)
 			{
 				log.log(Level.INFO, "OUT: {0}", command);
+				Messenger.sendEvent(MT.SENDING_SERIAL, command);
 				serial.write(command + "\r");
 			}
 		}

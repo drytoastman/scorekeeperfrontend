@@ -127,4 +127,5 @@ public enum MT {
     INPUT_RESET_SOFT,
     INPUT_RESET_HARD,
     INPUT_TEXT,
+    SENDING_SERIAL
 }

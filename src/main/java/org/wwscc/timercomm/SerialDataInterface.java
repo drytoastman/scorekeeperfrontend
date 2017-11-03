@@ -44,8 +44,6 @@ public class SerialDataInterface implements SerialPortEventListener
 	private InputStream is = null;
 	private ByteBuffer buffer = null;
 	private boolean open = false;
-	private int ioerrorbump = 0;
-
 
     public SerialDataInterface(CommPortIdentifier portId)
 	{
@@ -58,13 +56,6 @@ public class SerialDataInterface implements SerialPortEventListener
 		{
 			log.info(commId.getName() + " already open, skipping");
 			return;
-		}
-
-		try {
-			System.loadLibrary("rxtxSerial2");
-		} catch (Throwable e) {
-			log.severe("\bCan't load the native serial drivers, serial port access will be broken.  Everything else should be fine.");
-            return;
 		}
 	
 		log.info("Opening port " + commId.getName());
@@ -105,7 +96,7 @@ public class SerialDataInterface implements SerialPortEventListener
 			case 0x80:
 				String strtime = new StringBuffer(new String(buf, 1, buf.length-1)).reverse().toString();
 				double time = Double.valueOf(strtime) / 1000;
-				log.fine("Finish time: " + time);
+				log.info("Finish time: " + time);
 				Messenger.sendEvent(MT.SERIAL_TIMER_DATA, new Run(time));
 				break;
 
@@ -145,11 +136,8 @@ public class SerialDataInterface implements SerialPortEventListener
 				}
 				catch (IOException ex)
 				{
-					ioerrorbump++; // only show error if this is repeated, once is from reopening
-					if (ioerrorbump > 1)
-						log.log(Level.WARNING, "serial port read error: " + ex, ex);
+					log.log(Level.WARNING, "serial port read error: " + ex, ex);
 				}
-				ioerrorbump = 0;
 				break;
 
 			default:

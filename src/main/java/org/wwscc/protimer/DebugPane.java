@@ -10,6 +10,7 @@
 package org.wwscc.protimer;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
@@ -18,8 +19,12 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
 
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -29,8 +34,8 @@ import org.wwscc.util.Messenger;
 public class DebugPane extends JPanel implements ActionListener, MessageListener
 {
     private static final Logger log = Logger.getLogger(DebugPane.class.getCanonicalName());
-    
-    JTextArea text;
+
+    JTextPane text;
     JTextField input;
     JButton enter;
 
@@ -38,7 +43,7 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
     {
         super(new BorderLayout());
 
-        text = new JTextArea();
+        text = new JTextPane();
         input = new JTextField(40);
         enter = new JButton("Send");
         enter.addActionListener(this);
@@ -52,8 +57,9 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
 
         add(p, BorderLayout.NORTH);
         add(sp, BorderLayout.CENTER);
-        
+
         Messenger.register(MT.SERIAL_GENERIC_DATA, this);
+        Messenger.register(MT.SENDING_SERIAL, this);
     }
 
     @Override
@@ -65,19 +71,36 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
         input.setText("");
     }
 
+    private Color inColor  = new Color(20, 150, 20);
+    private Color outColor = new Color(0, 0, 200);
+    StyleContext sc = StyleContext.getDefaultStyleContext();
+    AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.FontFamily, "Lucida Console");
+    private void newText(String s, boolean in)
+    {
+        aset = sc.addAttribute(aset, StyleConstants.FontSize, 16);
+        aset = sc.addAttribute(aset, StyleConstants.Foreground, in ? inColor : outColor);
+
+        log.finer("dbp: " + s + ", " + in);
+        text.setCaretPosition(text.getDocument().getLength());
+        text.setCharacterAttributes(aset, false);
+        text.replaceSelection(s + "\n");
+        text.setCaretPosition(text.getDocument().getLength());
+    }
+
     @Override
     public void event(MT type, Object o)
     {
         switch (type)
         {
             case SERIAL_GENERIC_DATA:
-                String str = new String((byte[])o);
-                log.finer("serial: " + str);
-                text.append(str);
-                text.setCaretPosition(text.getDocument().getLength());
+                newText(new String((byte[])o), true);
+                break;
+
+            case SENDING_SERIAL:
+                newText((String)o, false);
                 break;
         }
-    }    
+    }
 }
 
 
