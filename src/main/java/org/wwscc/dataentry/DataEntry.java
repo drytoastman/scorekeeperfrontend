@@ -41,7 +41,7 @@ public class DataEntry extends JFrame implements MessageListener
 	
 	Menus menus;
 	SelectionBar setupBar;
-	DriverEntry driverEntry;
+	AddByNamePanel addByName;
 	ClassTree  numberTree;
 	AnnouncerPanel announcer;
 	TimeEntry timeEntry;
@@ -91,13 +91,13 @@ public class DataEntry extends JFrame implements MessageListener
 
 		setupBar = new SelectionBar();
 		numberTree = new ClassTree();
-		driverEntry = new DriverEntry();
+		addByName = new AddByNamePanel();
 		announcer = new AnnouncerPanel();
 		
 		tabs = new JTabbedPane();
 		tabs.setMinimumSize(new Dimension(270, 400));
 		tabs.setPreferredSize(new Dimension(270, 768));
-		tabs.addTab("Add By Name", driverEntry);
+		tabs.addTab("Add By Name", addByName);
 		tabs.addTab("Quick Entry", new QuickEntrySearch());
 		tabs.addTab("Preregistered", new JScrollPane(numberTree));
 		tabs.addTab("Announcer Data", announcer);
@@ -147,7 +147,7 @@ public class DataEntry extends JFrame implements MessageListener
 		{
 			case OBJECT_DCLICKED:
 				if (o instanceof Entrant)
-					tabs.setSelectedComponent(driverEntry);
+					tabs.setSelectedComponent(addByName);
 				break;
 			case TIME_RECEIVED:
 			    if (o instanceof Run)

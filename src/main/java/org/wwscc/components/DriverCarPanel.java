@@ -110,13 +110,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		dscroll.getVerticalScrollBar().setPreferredSize(new Dimension(15,200));
 
 		// create default height
-		driverInfo = displayArea("\n\n\n\n\n");
+		driverInfo = displayArea(7);
 
 		/* Car Section */
 		cars = new JList<Car>();
 		cars.addListSelectionListener(this);
 		cars.setVisibleRowCount(2);
-		//cars.setPrototypeCellValue("12345678901234567890");
 		cars.setSelectionMode(0);
 	
 		cscroll = new JScrollPane(cars);
@@ -124,20 +123,29 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		cscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		cscroll.getVerticalScrollBar().setPreferredSize(new Dimension(15,200));
 
-		carInfo = displayArea("\n");
+		carInfo = displayArea(3);
 	}
 
 	
-	private JTextArea displayArea(String text)
+	private JTextArea displayArea(int linecount)
 	{
-		JTextArea ta = new JTextArea(text);
+		JTextArea ta = new JTextArea();
 		ta.setEditable(false);
-		ta.setLineWrap(true);
-		ta.setWrapStyleWord(true);
+		ta.setLineWrap(false);
 		ta.setBackground((Color)UIManager.get("Label.background"));
 		ta.setForeground(new Color(20, 20, 150));
 		ta.setFont(new Font("Dialog", Font.PLAIN, 12));
-
+		
+		// ugly hack to set a preferred height based on lines of text
+	    ta.setSize(100,Short.MAX_VALUE);    
+		StringBuilder b = new StringBuilder();
+		for (int ii = 0; ii < linecount-1; ii++) {
+		    b.append(ii+"\n"+ii);
+		}
+		ta.setText(b.toString());
+		int h = (int)(ta.getPreferredSize().height*0.9);
+		ta.setPreferredSize(new Dimension(Short.MAX_VALUE, h));
+		ta.setText("");
 		return ta;
 	}
 

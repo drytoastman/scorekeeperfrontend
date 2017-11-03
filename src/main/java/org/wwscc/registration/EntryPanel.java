@@ -101,7 +101,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		});
 
 		drivers.setCellRenderer(new DriverRenderer());
-		driverInfo.setLineWrap(false);
 		cars.setCellRenderer(new CarRenderer());
 		carInfo.setLineWrap(false);
 

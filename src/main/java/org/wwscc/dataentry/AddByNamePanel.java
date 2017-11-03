@@ -12,9 +12,6 @@ package org.wwscc.dataentry;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -33,8 +30,10 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 
+import net.miginfocom.swing.MigLayout;
 
-public class DriverEntry extends DriverCarPanel implements MessageListener
+
+public class AddByNamePanel extends DriverCarPanel implements MessageListener
 {
 	//private static final Logger log = Logger.getLogger(DriverEntry.class.getCanonicalName());
 
@@ -42,10 +41,10 @@ public class DriverEntry extends DriverCarPanel implements MessageListener
 	boolean carAlreadyInOrder = true;
 	boolean entrantIsSelected = false;
 
-	public DriverEntry()
+	public AddByNamePanel()
 	{
 		super(DataEntry.state);
-		setLayout(new GridBagLayout());
+		setLayout(new MigLayout("ins 5, gap 3, fill", "fill", "fill"));
 		carAddOption = true;
 
 		Messenger.register(MT.OBJECT_CLICKED, this);
@@ -69,41 +68,32 @@ public class DriverEntry extends DriverCarPanel implements MessageListener
 
 		driverInfo.setFont(new Font("Dialog", Font.PLAIN, 10));
 		carInfo.setFont(new Font("Dialog", Font.PLAIN, 10));
+
+		add(createTitle("1. Search"), "wrap");
+		add(new JLabel("First Name"), "split, grow 0");
+		add(firstSearch, "wrap");
+		add(new JLabel("Last Name"), "split, grow 0");
+		add(lastSearch, "wrap");
+		add(smallButton(CLEAR), "wrap");
 		
-		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.BOTH;
-		c.anchor = GridBagConstraints.CENTER;
-		c.weightx = 1;
-		c.weighty = 1;
-		c.insets = new Insets(2, 4, 2, 4);
+	    add(createTitle("2. Driver"), "wrap");
+	    add(dscroll, "pushy 100, grow, wrap");
+	    add(smallButton(NEWDRIVER), "split");
+	    add(smallButton(EDITDRIVER), "wrap");
 
-		int y = 0;
+	    add(driverInfo, "growx, growy 0, wrap");
 
-		/* Delete button, row 0 */
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("1. Search"), c); 
+	    add(createTitle("3. Car"), "wrap");
+	    add(cscroll, "pushy 100, grow, wrap");
+	    add(smallButton(NEWCAR), "split");
+	    add(smallButton(NEWFROM), "wrap");
+	    add(carInfo, "growx, growy 0, wrap");
 
-		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(new JLabel("First Name"), c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(firstSearch, c);
-		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(new JLabel("Last Name"), c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(lastSearch, c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(CLEAR), c);
-
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("2. Driver"), c);
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0.9; add(dscroll, c);
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWDRIVER), c);
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(driverInfo, c);
-
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("3. Car"), c);
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0.8; add(cscroll, c);
-		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWCAR), c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0;   add(smallButton(NEWFROM), c);
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(carInfo, c);
-
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 0;   add(createTitle("4. Do it"), c);
-		c.gridx = 0; c.gridy = y;   c.gridwidth = 1; c.weighty = 0.0; add(addit, c);
-		c.gridx = 1; c.gridy = y++; c.gridwidth = 1; c.weighty = 0.0; add(changeit, c);
-		/* Fill vertical space so everything stays at the top */
-		c.gridx = 0; c.gridy = y++; c.gridwidth = 2; c.weighty = 1;   add(new JLabel(""), c);		
+	    add(createTitle("4. Do it"), "wrap");
+	    add(addit, "split");
+	    add(changeit, "wrap");
+	   
+	    add(new JLabel(""), "h 15!");
 	}
 
 
@@ -203,7 +193,7 @@ public class DriverEntry extends DriverCarPanel implements MessageListener
 
 	final static class MyListRenderer extends DefaultListCellRenderer 
 	{
-		private Color mygray = new Color(220,220,220);
+		private Color mygray = new Color(210,190,190);
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean iss, boolean chf)
