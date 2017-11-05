@@ -139,7 +139,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		
 		noteswarning = new JLabel("");
 		noteswarning.setForeground(Color.WHITE);
-		noteswarning.setBackground(Color.RED);
+		noteswarning.setBackground(new Color(249, 157, 27));
 		
 		paidlabel = new JLabel("Online Payments:");
 		paidlabel.setFont(paidlabel.getFont().deriveFont(Font.BOLD, 14.0f));
@@ -159,9 +159,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		print.setEnabled(false);
 
 		JPanel searchp = new JPanel(new MigLayout("fill, gap 3", "[fill,15%][fill,50%][fill,35%]", ""));
-		JPanel driverp = new JPanel(new MigLayout("fill, gap 3", "[fill,50%][50%!]", "fill"));
+		JPanel driverp = new JPanel(new MigLayout("fill, gap 2", "[fill,50%][50%!]", "fill"));
 		JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
-		JPanel carp    = new JPanel(new MigLayout("fill, gap 3", "[fill,55%][45%!]", ""));
+		JPanel carp    = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", ""));
 		
 		leftp.add(searchp, "growx, wrap");
 		leftp.add(driverp, "grow");		
@@ -177,16 +177,16 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		searchp.add(clearSearch,              "wrap");
 		searchp.add(new JLabel("Last Name"),  "");
 		searchp.add(lastSearch,               "");
-		searchp.add(newdriver,                "");
 
 		driverp.add(createTitle("2. Driver"), "spanx 2, growx, wrap");
-		driverp.add(dscroll,           "spany 9, grow");
+		driverp.add(dscroll,           "spany 10, grow");
+		driverp.add(newdriver,         "growx, wrap");
 		driverp.add(editdriver,        "growx, wrap");
 		driverp.add(editnotes,         "growx, wrap");
-		driverp.add(driverInfo,        "growx, gap 0 0 10 10, wrap");
-		driverp.add(membershipwarning, "h 15, wrap");
-		driverp.add(noteswarning,      "h 15, wrap");
-		driverp.add(activeLabel,       "center, wrap");
+		driverp.add(driverInfo,        "growx, wrap");
+		driverp.add(membershipwarning, "growx, h 18, wrap");
+		driverp.add(noteswarning,      "growx, h 18, wrap");
+		driverp.add(activeLabel,       "gapy 4 4, center, wrap");
 		driverp.add(printers,          "growx, wrap");
 		driverp.add(print,             "growx, wrap");
 		driverp.add(new JLabel(""),    "pushy 100");
@@ -416,6 +416,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		if (selectedDriver != null)
 		{
 			editdriver.setEnabled(true);
+			editnotes.setEnabled(true);
 			activeLabel.setValue(selectedDriver.getMembership(), String.format("%s - %s", selectedDriver.getMembership(), selectedDriver.getFullName()));
 			activeLabel.repaint();
 			
@@ -431,7 +432,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 					StringBuffer buf = new StringBuffer(dups.get(0).getFullName());
 					for (int ii = 1; ii < dups.size(); ii++)
 						buf.append(", ").append(dups.get(ii).getFullName());
-					membershipwarning.setText("Duplicate Membership with " + buf);
+					membershipwarning.setText("Duplicate Membership - " + buf);
 					membershipwarning.setOpaque(true);
 				}
 			}
@@ -446,6 +447,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		else
 		{
 			editdriver.setEnabled(false);
+			editnotes.setEnabled(false);
 			activeLabel.setValue("", "");
 			activeLabel.repaint();
 		}
