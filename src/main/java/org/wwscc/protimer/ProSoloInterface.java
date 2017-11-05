@@ -149,7 +149,7 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 	{
 		JPanel panel = new JPanel(new MigLayout("ins 5, gap 0, fill", "[grow 33][grow 100][grow 33][grow 0]"));
 		panel.add(new TimingButtons(true), "growx");
-		panel.add(new OpenStatus(), "growx");
+		panel.add(new OpenStatus(), "grow");
 		panel.add(new TimingButtons(false), "growx");
 		panel.add(new JLabel(""), "w 10!");
 		return panel;

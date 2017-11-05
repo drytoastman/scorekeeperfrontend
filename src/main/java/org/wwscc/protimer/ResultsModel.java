@@ -9,7 +9,6 @@
 
 package org.wwscc.protimer;
 
-import java.io.IOException;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,7 +32,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	double holdLeftDial;
 	double holdRightDial;
 	
-	public ResultsModel() throws IOException
+	public ResultsModel()
 	{
 		super();
 		runs = new Vector<DualResult>();
@@ -155,15 +154,16 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 		return new ColorTime(Double.NaN, 0);
 	}
 
-
+	
 	protected DualResult lastEntry()
 	{
-		if (runs.isEmpty())
-			return null;
-		else
-			return runs.lastElement();
+	    if (runs.isEmpty())
+	        return null;
+	    else
+	        return runs.lastElement();
 	}
-
+	
+	
 	protected DualResult getLastFinishLine() throws PSIException
 	{
 		int index;
@@ -229,8 +229,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 					break;
 
 
-				case DELETE_START_LEFT:	 lastEntry().deleteLeftStart(); break;
-				case DELETE_START_RIGHT: lastEntry().deleteRightStart(); break;
+				case DELETE_START_LEFT:     deleteStart(true); break;
+				case DELETE_START_RIGHT:    deleteStart(false); break;
 
 				case DELETE_FINISH_LEFT:	deleteFinish(true); break;
 				case DELETE_FINISH_RIGHT:	deleteFinish(false); break;
@@ -272,6 +272,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	public void addReaction(boolean left, ColorTime c) throws PSIException
 	{
 		DualResult dr = lastEntry();
+		if (dr == null)
+		    return;
 		if (left)
 		{
 			dr.setLeftReaction((ColorTime)c);
@@ -294,6 +296,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	public void addSixty(boolean left, ColorTime c) throws PSIException
 	{
 		DualResult dr = lastEntry();
+		if (dr == null)
+		    return;
 		if (left)
 		{
 			dr.setLeftSixty((ColorTime)c);
@@ -308,11 +312,23 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 		}
 	}
 
-
+	public void deleteStart(boolean left) 
+	{
+	    DualResult dr = lastEntry();
+	    if (dr == null)
+	        return;
+	    if (left)
+	        dr.deleteLeftStart();
+	    else
+	        dr.deleteRightStart();
+	}
+	
 	public void deleteFinish(boolean left)
 	{
 		if (left)
 		{
+		    if (runs.size() <= nextLeftFinish)
+		        return;
 			Result r = runs.get(nextLeftFinish-1).deleteLeftFinish();
 			if (r != null)
 			{
@@ -323,6 +339,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 		}
 		else
 		{
+	        if (runs.size() <= nextRightFinish)
+	            return;
 			Result r = runs.get(nextRightFinish-1).deleteRightFinish();
 			if (r != null)
 			{
@@ -336,9 +354,10 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	
 	public void addFinish(boolean left, ColorTime c, double dial) throws PSIException
 	{
-		//Sounds.playSomething();
 		if (left)
 		{
+		    if (nextLeftFinish >= runs.size())
+		        return;
 			DualResult dr = runs.get(nextLeftFinish);
 			while (!dr.hasLeftReaction())	
 			{
@@ -354,6 +373,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 		}
 		else
 		{
+            if (nextRightFinish >= runs.size())
+                return;
 			DualResult dr = runs.get(nextRightFinish);
 			while (!dr.hasRightReaction())	
 			{
