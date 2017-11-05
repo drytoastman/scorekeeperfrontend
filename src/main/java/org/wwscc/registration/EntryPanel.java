@@ -38,7 +38,9 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 
 import net.miginfocom.swing.MigLayout;
@@ -70,6 +72,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JButton clearSearch, newdriver, editdriver, editnotes;
 	JButton newcar, newcarfrom, editcar, deletecar, print;
 	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
+	JPanel singleCarPanel, multiCarPanel;
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
 	
@@ -158,15 +161,18 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		print = new JButton(new PrintLabelAction());
 		print.setEnabled(false);
 
-		JPanel searchp = new JPanel(new MigLayout("fill, gap 3", "[fill,15%][fill,50%][fill,35%]", ""));
+		cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+		JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
 		JPanel driverp = new JPanel(new MigLayout("fill, gap 2", "[fill,50%][50%!]", "fill"));
 		JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
-		JPanel carp    = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", ""));
+		JPanel rightp  = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", "[grow 0][grow 100][grow 0]"));
 		
 		leftp.add(searchp, "growx, wrap");
-		leftp.add(driverp, "grow");		
+		leftp.add(driverp, "grow");
 		add(leftp, "grow");
-		add(carp,  "grow");
+		add(rightp,  "grow");
+
 		
 		// deprecated but nothing easy enough to replace
 		firstSearch.setNextFocusableComponent(lastSearch);
@@ -191,21 +197,32 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		driverp.add(print,             "growx, wrap");
 		driverp.add(new JLabel(""),    "pushy 100");
 		
-		carp.add(createTitle("3. Car"), "spanx 2, growx, wrap");
-		carp.add(cscroll,           "spany 10, grow");
-		carp.add(newcar,            "growx, wrap");
-		carp.add(newcarfrom,        "growx, wrap");
-		carp.add(editcar,           "growx, wrap"); 
-		carp.add(deletecar,         "growx, wrap");
-		carp.add(carInfo,           "growx, gap 0 0 10 10, wrap");
-		carp.add(registeredandpaid, "growx, wrap");
-		carp.add(registerit,        "growx, wrap");
-		carp.add(unregisterit,      "growx, wrap");
-		carp.add(paidlabel,         "gaptop 5, split");
-		carp.add(paidreport,        "growx, wrap");
-		carp.add(new JLabel(""),    "pushy 100, wrap");
-		carp.add(paidwarning,       "spanx 2, growx, h 15");
+	    singleCarPanel = new JPanel(new MigLayout("fill, ins 0, gap 2"));
+	    multiCarPanel  = new JPanel(new MigLayout("fill, ins 0, gap 2"));
+	        
+		rightp.add(createTitle("3. Car"), "spanx 2, growx, wrap");
+		rightp.add(cscroll,            "grow");
+		rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
+		rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
+	    rightp.add(paidwarning,        "spanx 2, growx, h 15");
+
+	    singleCarPanel.add(newcar,            "growx, wrap");
+	    singleCarPanel.add(newcarfrom,        "growx, wrap");
+	    singleCarPanel.add(editcar,           "growx, wrap"); 
+	    singleCarPanel.add(deletecar,         "growx, wrap");
+	    singleCarPanel.add(carInfo,           "growx, gap 0 0 5 5, wrap");
+	    singleCarPanel.add(registeredandpaid, "growx, wrap");
+	    singleCarPanel.add(registerit,        "growx, wrap");
+		singleCarPanel.add(unregisterit,      "growx, wrap");
+		singleCarPanel.add(paidlabel,         "gaptop 5, split");
+		singleCarPanel.add(paidreport,        "growx, wrap");
+		singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 		
+	    multiCarPanel.add(new JTextArea("Here are some details"), "growx, wrap");
+		multiCarPanel.add(new JButton("Merge Now"), "growx, wrap");
+	    multiCarPanel.add(new JLabel(""),           "pushy 100, wrap");
+
+	    multiCarPanel.setVisible(false);
 		new Thread(new FindPrinters()).start();
 	}
 	
@@ -329,12 +346,11 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		paidwarning.setText("");
 
 		ListModel<Car> m = cars.getModel();
-		if (m.getSize() == 0)
-			return;
-		for (int ii = 0; ii < m.getSize(); ii++)
-		{
-			MetaCar c = (MetaCar)m.getElementAt(ii);
-			if (!c.isInRunOrder() && c.hasPaid()) return;
+		if (m.getSize() > 0) {
+		    for (int ii = 0; ii < m.getSize(); ii++) {
+		        MetaCar c = (MetaCar)m.getElementAt(ii);
+			    if (!c.isInRunOrder() && c.hasPaid()) return;
+		    }
 		}
 		
 		paidwarning.setText("No unused paid cars are present");
@@ -455,6 +471,15 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	
 	protected void carSelectionChanged()
 	{
+	    List<Car> selectedCars = cars.getSelectedValuesList();
+	    if (selectedCars.size() > 1) {
+	        singleCarPanel.setVisible(false);
+	        multiCarPanel.setVisible(true);
+	    } else {
+	        multiCarPanel.setVisible(false);
+	        singleCarPanel.setVisible(true);	        
+	    }
+	    
 		newcar.setEnabled(selectedDriver != null);
 
 		if (selectedCar != null)

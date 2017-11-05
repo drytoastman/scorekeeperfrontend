@@ -30,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -102,7 +103,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		drivers.addListSelectionListener(this);
 		drivers.setVisibleRowCount(1);
 		//drivers.setPrototypeCellValue("12345678901234567890");
-		drivers.setSelectionMode(0);
+		drivers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		dscroll = new JScrollPane(drivers);
 		dscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -116,7 +117,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		cars = new JList<Car>();
 		cars.addListSelectionListener(this);
 		cars.setVisibleRowCount(2);
-		cars.setSelectionMode(0);
+		cars.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	
 		cscroll = new JScrollPane(cars);
 		cscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
