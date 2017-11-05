@@ -11,8 +11,6 @@ package org.wwscc.protimer;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -22,7 +20,6 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -150,18 +147,11 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
 	
 	public JPanel createButtonPanel()
 	{
-		JPanel panel = new JPanel(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-
-		c.fill = GridBagConstraints.BOTH;
-		c.weightx = 0.33;
-		panel.add(new TimingButtons(true), c);
-		c.weightx = 1.00;
-		panel.add(new OpenStatus(), c);
-		c.weightx = 0.33;
-		panel.add(new TimingButtons(false), c);
-		c.weightx = 0;
-		panel.add(Box.createHorizontalStrut(25));
+		JPanel panel = new JPanel(new MigLayout("ins 5, gap 0, fill", "[grow 33][grow 100][grow 33][grow 0]"));
+		panel.add(new TimingButtons(true), "growx");
+		panel.add(new OpenStatus(), "growx");
+		panel.add(new TimingButtons(false), "growx");
+		panel.add(new JLabel(""), "w 10!");
 		return panel;
 	}
 

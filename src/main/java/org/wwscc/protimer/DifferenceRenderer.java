@@ -12,14 +12,14 @@ package org.wwscc.protimer;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 import org.wwscc.util.NF;
+
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Cell renderer for a Double that always creates three decimal places (123.000)
@@ -45,13 +45,9 @@ public class DifferenceRenderer extends JPanel implements TableCellRenderer
 		colorA = new Color(210, 150, 0);
 		colorB = new Color(0, 140, 160);
 
-		//Border b = new LineBorder(Color.BLACK);
+		//setOpaque(true);
+		setLayout(new MigLayout("debug 100, fill, ins 1 10 1 10, gap 1", "[grow 0, right][grow 100, center][grow 0, right]"));
 
-		setOpaque(true);
-		//setBackground(new Color(222, 222, 222));
-		setLayout(new GridBagLayout());
-
-		//Font bf = new Font("fixed", Font.PLAIN, 18);
 		Font fix = new Font("fixed", Font.PLAIN, 18);
 		Font lblfont = new Font("serif", Font.PLAIN, 18);
 		Font msgfont = new Font("serif", Font.PLAIN, 20);
@@ -91,29 +87,21 @@ public class DifferenceRenderer extends JPanel implements TableCellRenderer
 		msg2 = new JLabel();
 		msg2.setFont(msgfont);
 
-		GridBagConstraints g = new GridBagConstraints();
-		g.insets = new Insets(2, 2, 2, 2);
-		g.weightx = 1;
-		g.gridwidth = 1;
+		add(overleft, "");
+		add(overlbl, "");
+		add(overright, "wrap");
 
-		g.anchor = GridBagConstraints.EAST;   g.gridx = 0; g.gridy = 0; add(overleft, g);
-		g.anchor = GridBagConstraints.CENTER; g.gridx = 1; g.gridy = 0; add(overlbl, g);
-		g.anchor = GridBagConstraints.WEST;   g.gridx = 2; g.gridy = 0; add(overright, g);
+		add(coverleft, "");
+		add(coverlbl, "");
+		add(coverright, "wrap");
 
-		g.anchor = GridBagConstraints.EAST;   g.gridx = 0; g.gridy = 1; add(coverleft, g);
-		g.anchor = GridBagConstraints.CENTER; g.gridx = 1; g.gridy = 1; add(coverlbl, g);
-		g.anchor = GridBagConstraints.WEST;   g.gridx = 2; g.gridy = 1; add(coverright, g);
+		add(newdialleft, "");
+		add(newdiallbl, "");
+		add(newdialright, "wrap");
 
-		g.anchor = GridBagConstraints.EAST;   g.gridx = 0; g.gridy = 2; add(newdialleft, g);
-		g.anchor = GridBagConstraints.CENTER; g.gridx = 1; g.gridy = 2; add(newdiallbl, g);
-		g.anchor = GridBagConstraints.WEST;   g.gridx = 2; g.gridy = 2; add(newdialright, g);
-
-		g.anchor = GridBagConstraints.CENTER; 
-		g.gridwidth = 3;
-		g.gridx = 0; g.gridy = 3; add(msg1, g); 
-		g.gridx = 0; g.gridy = 4; add(msg2, g);
+		add(msg1, "alignx center, spanx 3, wrap"); 
+		add(msg2, "alignx center, spanx 3, wrap");
 	}
-
 
 
 	protected String side(int type)
@@ -264,7 +252,6 @@ public class DifferenceRenderer extends JPanel implements TableCellRenderer
 			}
 
 		}
-
 
 		return this;
 	}

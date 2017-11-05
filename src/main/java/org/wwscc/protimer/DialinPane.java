@@ -9,12 +9,27 @@
 
 package org.wwscc.protimer;
 
-import java.awt.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.text.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.text.AbstractDocument;
+
 import org.wwscc.storage.LeftRightDialin;
-import org.wwscc.util.*;
+import org.wwscc.util.MT;
+import org.wwscc.util.MessageListener;
+import org.wwscc.util.Messenger;
+import org.wwscc.util.NF;
+
+import net.miginfocom.swing.MigLayout;
 
 public class DialinPane extends JPanel implements ActionListener, MessageListener
 {
@@ -26,9 +41,8 @@ public class DialinPane extends JPanel implements ActionListener, MessageListene
 
 	public DialinPane()
 	{
-		super(new GridBagLayout());
+		super(new MigLayout("al center", "al center"));
 
-		GridBagConstraints c = new GridBagConstraints();
 		Font f = new Font("serif", Font.BOLD, 20);
 
 		Messenger.register(MT.DIALIN_LEFT, this);
@@ -58,13 +72,13 @@ public class DialinPane extends JPanel implements ActionListener, MessageListene
 		rightLbl.setFont(f);
 		rightDial.setFont(f);
 
-		c.gridx = 0; add(leftLbl, c);
-		c.insets = new Insets(0, 10, 0,  0); c.gridx = 1; add(leftDial, c);
-		c.insets = new Insets(0, 20, 0,  0); c.gridx = 2; add(leftField, c);
-		c.insets = new Insets(0,  3, 0,  3); c.gridx = 3; add(set, c);
-		c.insets = new Insets(0,  0, 0, 20); c.gridx = 4; add(rightField, c);
-		c.insets = new Insets(0,  0, 0, 10); c.gridx = 5; add(rightDial, c);
-		c.gridx = 6; add(rightLbl, c);
+		add(leftLbl, "");
+		add(leftDial, "w 60!");
+		add(leftField, "");
+		add(set, "");
+		add(rightField, "");
+		add(rightDial, "w 60!");
+		add(rightLbl, "");
 
 	}
 
