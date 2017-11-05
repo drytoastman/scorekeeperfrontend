@@ -16,6 +16,8 @@ import org.wwscc.util.IdGenerator;
 
 public class Driver extends AttrBase //implements Comparable<Driver>
 {
+    public static final String PLACEHOLDER = "Placeholder";
+
 	protected UUID driverid;
 	protected String firstname;
 	protected String lastname;
@@ -42,7 +44,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		firstname = f;
 		lastname = l;
 	}
-	
+
 	public Driver(ResultSet rs) throws SQLException
 	{
 		super(rs);
@@ -54,7 +56,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		password   = rs.getString("password");
 		membership = rs.getString("membership");
 	}
-	
+
 	public LinkedList<Object> getValues()
 	{
 		LinkedList<Object> ret = new LinkedList<Object>();
@@ -84,7 +86,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	public String getBrag()       { return getAttrS("brag"); }
 	public String getSponsor()    { return getAttrS("sponsor"); }
 	public String getAlias()      { return getAttrS("alias"); }
-	
+
 	public void setFirstName(String s)  { firstname = s; }
 	public void setLastName(String s)   { lastname = s; }
 	public void setEmail(String s)      { email = s; }
@@ -98,7 +100,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	public void setBrag(String s)       { setAttrS("brag", s); }
 	public void setSponsor(String s)    { setAttrS("sponsor", s); }
 	public void setAlias(String s)      { setAttrS("alias", s); }
-	
+
 	@Override
 	public boolean equals(Object o)
 	{
@@ -117,10 +119,22 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	{
 		return (firstname + lastname).toLowerCase().compareTo((d.firstname + d.lastname).toLowerCase());
 	} */
-	
+
 	public String toString()
 	{
 		return firstname + " " + lastname;
 	}
+
+    public static Driver getPlaceHolder(String barcode)
+    {
+        Driver ret = new Driver(PLACEHOLDER, barcode);
+        ret.setMembership(barcode);
+        return ret;
+    }
+
+    public boolean isPlaceholder()
+    {
+        return firstname.equals(PLACEHOLDER);
+    }
 }
 

@@ -77,6 +77,7 @@ public interface DataInterface
 	public void newDriver(Driver d) throws SQLException; // create a new driver from data in d and set the id variable
 	public void updateDriver(Driver d) throws SQLException; // update the driver values in the database
 	public void deleteDriver(Driver d) throws SQLException;
+	public void deleteDriver(UUID driverid) throws SQLException;
 	public void deleteDrivers(Collection<Driver> d) throws SQLException;
 	public Driver getDriver(UUID driverid);
 	public List<Driver> findDriverByMembership(String membership);

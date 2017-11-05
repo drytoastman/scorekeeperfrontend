@@ -193,7 +193,7 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 
 	final static class MyListRenderer extends DefaultListCellRenderer 
 	{
-		private Color mygray = new Color(210,190,190);
+		private Color mygray = new Color(120,120,120);
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean iss, boolean chf)
@@ -208,11 +208,7 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 				String myclass = c.getClassCode() + " " + Database.d.getEffectiveIndexStr(c);
 				setText(myclass + " #" + c.getNumber() + ": " + c.getYear() + " " + c.getModel() + " " + c.getColor());
 				if (c.isInRunOrder())
-				{
 					setForeground(mygray);
-					if (iss)
-						setBackground(Color.GRAY);
-				}
 			}
 			else if (value instanceof Driver)
 			{

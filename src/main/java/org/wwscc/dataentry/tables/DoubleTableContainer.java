@@ -133,8 +133,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         else if (found.size() == 0)
         {
             log.log(Level.WARNING, "Unable to locate a driver using membership {0}, creating a default", barcode);
-            d = new Driver("Placeholder", barcode);
-            d.setMembership(barcode);
+            d = Driver.getPlaceHolder(barcode);
             Database.d.newDriver(d);
         }
         else

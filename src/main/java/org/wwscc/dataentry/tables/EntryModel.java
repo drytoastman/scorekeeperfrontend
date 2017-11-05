@@ -15,10 +15,14 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
+import javax.swing.FocusManager;
+import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 
 import org.wwscc.dataentry.DataEntry;
+import org.wwscc.storage.ClassData;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
@@ -60,7 +64,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			log.warning("\bFailed to fetch entrant data from database");
 			return;
 		}
-		
+
 		if (tableData.contains(e))
 		{
 			if (!Prefs.useReorderingTable())
@@ -75,7 +79,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			log.log(Level.SEVERE, "\bCarid {0} already in use in another rungroup in this event", carid);
 			return;
 		}
-		
+
 		tableData.add(e);
 
 		try {
@@ -103,17 +107,20 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			log.warning("\bFailed to fetch entrant data, perhaps try again");
 			return;
 		}
-		
+
 		for (Run r : old.getRuns()) {
 			r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), newe.getCarId(), DataEntry.state.getCurrentCourse(), r.run());
 			newe.setRun(r);
-			Database.d.setRun(r); // insert or update 
+			Database.d.setRun(r); // insert or update
 		}
-		
+
+
 		tableData.set(row, newe);
 		fireRunsChanged(newe);
 		fireEntrantsChanged();
 		fireTableRowsUpdated(row, row);
+
+		checkDeletePlaceholder(old);
 	}
 
 	public int getRowForEntrant(Entrant find)
@@ -125,7 +132,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		}
 		return -1;
 	}
-	
+
 	@Override
 	public int getRowCount()
 	{
@@ -147,15 +154,15 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		return "Run " + (col - runoffset);
 	}
 
-	
+
 	/**
 	 * Interface call, return the col class, either an Entrant or a Run.
 	 */
 	@Override
 	public Class<?> getColumnClass(int col)
-	{ 
-		if (col <= runoffset) return Entrant.class; 
-		return Run.class; 
+	{
+		if (col <= runoffset) return Entrant.class;
+		return Run.class;
 	}
 
 
@@ -175,7 +182,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		if (e == null) return true;  // ????
 		return (e.runCount() >= DataEntry.state.getCurrentEvent().getRuns());
 	}
-	
+
 	public boolean isBest(int row, Run x)
 	{
 		Entrant e = tableData.get(row);
@@ -204,14 +211,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		if (row < 0) return null;
 
 		Entrant e = tableData.get(row);
-		if (e == null)  
-		{ 
+		if (e == null)
+		{
 			log.info("get("+row+","+col+") e is null");
-			return null; 
-		} 
+			return null;
+		}
 
-		if (col <= runoffset) return e; 
-		return e.getRun((col-runoffset)); 
+		if (col <= runoffset) return e;
+		return e.getRun((col-runoffset));
 	}
 
 
@@ -245,10 +252,11 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 					log.warning("\bCan't remove an entrant that has runs");
 					return;
 				}
-				
+
 				tableData.remove(row); // remove the row which removes from runorder upon commit
                 fireEntrantsChanged();
 				fireTableDataChanged();
+		        checkDeletePlaceholder(e);
 			}
 			else  // driver change
 			{
@@ -258,7 +266,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		}
 
 		// Setting a run
-		else 
+		else
 		{
 			if (aValue instanceof Run) {
 				Run r = (Run)aValue;
@@ -273,7 +281,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			fireRunsChanged(e);
 			fireTableCellUpdated(row, col);
 		}
-
 	}
 
 
@@ -284,7 +291,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
 		int ii, a, b, c, x;
 		if ((start <= to) && (to <= (end+1))) return; // Move doesn't make sense, doesn't do anything
-		
+
 		/*
 			a = start of first block
 			b = start of second block
@@ -354,6 +361,34 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 	public void fireRunsChanged(Entrant e)
 	{
 		Messenger.sendEvent(MT.RUN_CHANGED, e);
+	}
+
+	/**
+	 * Called when we removed a placeholder car from the runoder, check if they want to delete it and do so here
+	 * @param old the entrant being removed/swapped
+	 */
+	public void checkDeletePlaceholder(Entrant old)
+	{
+	    if (old.getClassCode().equals(ClassData.PLACEHOLDER_CLASS))
+	    {
+            if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getFocusedWindow(), "Do you want to remove the placeholder entry as well?",
+                      "Remove PlaceHolder", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+                return;
+
+            try {
+                Database.d.deleteCar(old.getCar());
+                Messenger.sendEvent(MT.ENTRANTS_CHANGED, null); // force car panel to update, FINISH ME, move to Notifications from database someday instead
+            } catch (SQLException sqle) {
+                log.log(Level.WARNING, "\bUnable delete car as it is still in use\n\n" + sqle, sqle);
+            }
+
+            try {
+                if (old.getFirstName().equals(Driver.PLACEHOLDER))
+                    Database.d.deleteDriver(old.getDriverId()); // this may fail if there are multiple placeholder cars still available, but that is okay
+            } catch (SQLException sqle) {
+                log.info(""+sqle);
+            }
+        }
 	}
 }
 

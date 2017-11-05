@@ -408,8 +408,14 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void deleteDriver(Driver d) throws SQLException
 	{
-		executeUpdate("delete from drivers where driverid=?", newList(d.driverid));
+	    deleteDriver(d.getDriverId());
 	}
+
+   @Override
+    public void deleteDriver(UUID driverid) throws SQLException
+    {
+        executeUpdate("delete from drivers where driverid=?", newList(driverid));
+    }
 
 	@Override
 	public void deleteDrivers(Collection<Driver> list) throws SQLException
@@ -568,7 +574,15 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void deleteCar(Car c) throws SQLException
 	{
-		executeUpdate("delete from cars where carid=?", newList(c.carid));
+	    try {
+	        start();
+	        executeUpdate("delete from registered where carid=?", newList(c.carid));
+	        executeUpdate("delete from cars where carid=?", newList(c.carid));
+	        commit();
+	    } catch (SQLException sqle) {
+	        rollback();
+	        throw sqle;
+	    }
 	}
 
 	@Override
