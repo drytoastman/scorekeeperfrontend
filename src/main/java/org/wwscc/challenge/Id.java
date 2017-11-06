@@ -84,7 +84,7 @@ public class Id
 			if (o == null) return false;
 			if (!(o instanceof Round)) return false;
 			Round other = (Round)o;
-			return ((other.challengeid == challengeid) && (other.round ==  round));
+			return ((other.challengeid.equals(challengeid)) && (other.round ==  round));
 		}
 		
 		@Override

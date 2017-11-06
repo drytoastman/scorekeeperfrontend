@@ -112,7 +112,12 @@ public class Car extends AttrBase
 	{
 		if (!(o instanceof Car))
 			return false;
-		return ((Car)o).carid == carid;
+		return ((Car)o).carid.equals(carid);
+	}
+	
+	public boolean canMerge(Car c) 
+	{
+		return c.getClassCode().equals(classcode) && c.getIndexCode().equals(indexcode);
 	}
 
 	@Override

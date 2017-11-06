@@ -602,6 +602,29 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 
+	@Override
+	public boolean mergeCar(Car from, Car into)
+	{
+		try
+		{
+			start();
+			List<Object> args = newList(into.getCarId(), from.getCarId());
+			executeUpdate("update runs set carid=? where carid=?", args);
+			executeUpdate("update registered set carid=? where carid=?", args);
+			executeUpdate("update runorder set carid=? where carid=?", args);
+			executeUpdate("update challengerounds set car1id=? where car1id=?", args);
+			executeUpdate("update challengerounds set car2id=? where car2id=?", args);
+			executeUpdate("update challengeruns set carid=? where carid=?", args);
+			executeUpdate("delete from cars where carid=?", newList(from.getCarId()));
+			commit();
+			return true;
+		}
+		catch (SQLException sql)
+		{
+			rollback();
+			return false;
+		}
+	}
 	
 	@Override
 	public boolean isRegistered(UUID eventid, UUID carid)

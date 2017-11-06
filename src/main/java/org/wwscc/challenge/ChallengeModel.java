@@ -319,7 +319,7 @@ public class ChallengeModel implements MessageListener
 		
 		RoundEntrant re = (eid.isUpper()) ? r.getTopCar() : r.getBottomCar();
 		Entrant e = entrantcache.get(re.getCarId());
-		if ((e == null) && (re.getCarId() != IdGenerator.nullid))
+		if ((e == null) && (!re.getCarId().equals(IdGenerator.nullid)))
 		{
 			e = Database.d.loadEntrant(ChallengeGUI.state.getCurrentEventId(), re.getCarId(), 1, false);
 			entrantcache.put(re.getCarId(), e);

@@ -38,9 +38,9 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 
 import net.miginfocom.swing.MigLayout;
@@ -71,10 +71,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	JButton registeredandpaid, registerit, unregisterit;
 	JButton clearSearch, newdriver, editdriver, editnotes;
 	JButton newcar, newcarfrom, editcar, deletecar, print;
-	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
+	JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;	
 	JPanel singleCarPanel, multiCarPanel;
 	JComboBox<PrintService> printers;
 	Code39 activeLabel;
+	
+	JLabel mergeWarning;
+	int firstSelection;
 	
 	@SuppressWarnings("deprecation")
     public EntryPanel()
@@ -160,7 +163,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		
 		print = new JButton(new PrintLabelAction());
 		print.setEnabled(false);
-
+		
+		mergeWarning = new JLabel("<html>Can only merge cars with<br/>the same class and index</html>", SwingConstants.CENTER);
+		mergeWarning.setOpaque(true);
+		mergeWarning.setForeground(Color.WHITE);
+		mergeWarning.setBackground(Color.RED);
+		mergeWarning.setFont(paidwarning.getFont());
+		firstSelection = -1;
 		cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
@@ -173,7 +182,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		add(leftp, "grow");
 		add(rightp,  "grow");
 
-		
 		// deprecated but nothing easy enough to replace
 		firstSearch.setNextFocusableComponent(lastSearch);
 		
@@ -218,10 +226,12 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		singleCarPanel.add(paidreport,        "growx, wrap");
 		singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 		
-	    multiCarPanel.add(new JTextArea("Here are some details"), "growx, wrap");
-		multiCarPanel.add(new JButton("Merge Now"), "growx, wrap");
-	    multiCarPanel.add(new JLabel(""),           "pushy 100, wrap");
-
+		/*
+		multiCarPanel.add(mergeButton,        "growx, wrap");
+	    multiCarPanel.add(mergeWarning,       "growx, h 30!, wrap");
+	    multiCarPanel.add(new JLabel(""),     "pushy 100, wrap");
+		*/
+		
 	    multiCarPanel.setVisible(false);
 		new Thread(new FindPrinters()).start();
 	}
@@ -298,6 +308,27 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 			}
 		}
 	}
+	
+	
+	class MergeCarsAction extends AbstractAction
+	{
+		Car target;
+		public MergeCarsAction(int index) 
+		{
+			target = cars.getSelectedValuesList().get(index);
+			putValue(NAME, "<html><center><b>Merge Selected Into</b><br/>" + (index+1) + ". " +
+				  target.getMake() + " " + target.getModel() + " " + target.getColor() + " #" + target.getNumber()); 
+		}
+		@Override
+		public void actionPerformed(ActionEvent e)
+		{
+			for (Car c : cars.getSelectedValuesList()) {
+				if (!c.getCarId().equals(target.getCarId()))
+					Database.d.mergeCar(c, target);
+			}
+			reloadCars(target);
+		}
+	}
 
 	
 	class FindPrinters implements Runnable
@@ -328,7 +359,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	private JButton smallButton(String text, boolean enabled)
 	{
 		JButton b = new JButton(text);
-		//b.setFont(new Font(null, Font.PLAIN, 11));
 		b.setEnabled(enabled);
 		b.addActionListener(this);
 		return b;
@@ -472,14 +502,33 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	protected void carSelectionChanged()
 	{
 	    List<Car> selectedCars = cars.getSelectedValuesList();
-	    if (selectedCars.size() > 1) {
-	        singleCarPanel.setVisible(false);
-	        multiCarPanel.setVisible(true);
-	    } else {
-	        multiCarPanel.setVisible(false);
-	        singleCarPanel.setVisible(true);	        
-	    }
+	    if (selectedCars.size() > 1) 
+	    {
+	        singleCarPanel.setVisible(false);	        
+	        multiCarPanel.removeAll();
+	        
+	        Car first = selectedCars.get(0);
+	        for (int ii = 1; ii < selectedCars.size(); ii++) {
+	        	if (!first.canMerge(selectedCars.get(ii))) {
+	    		    multiCarPanel.add(mergeWarning, "grow, wrap");
+	    		    break;
+	        	}
+	        }
+	        
+	        if (multiCarPanel.getComponentCount() == 0) {
+	        	for (int ii = 0; ii < selectedCars.size(); ii++) {
+	        		multiCarPanel.add(new JButton(new MergeCarsAction(ii)), "grow, pushy 0, wrap");
+	        	}
+	        }
 	    
+		    multiCarPanel.add(new JLabel(""), "pushy 100, wrap");
+	        multiCarPanel.setVisible(true);
+		    multiCarPanel.repaint();
+	        return;
+	    }
+
+	    multiCarPanel.setVisible(false);
+	    singleCarPanel.setVisible(true);
 		newcar.setEnabled(selectedDriver != null);
 
 		if (selectedCar != null)

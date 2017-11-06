@@ -227,7 +227,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
 
 			case ENTRANT_CHANGED:
 				Id.Entry eid = (Id.Entry)data;
-				if (eid.challengeid == challenge.getChallengeId())
+				if (eid.challengeid.equals(challenge.getChallengeId()))
 				{
 					if (eid.round == 0)
 					{

@@ -128,7 +128,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 				List<Challenge> challenges = Database.d.getChallengesForEvent(ChallengeGUI.state.getCurrentEventId());
 				challengeSelect.setModel(new DefaultComboBoxModel<Challenge>(challenges.toArray(new Challenge[0])));
 				for (Challenge c : challenges) {
-					if (c.getChallengeId() == ChallengeGUI.state.getCurrentChallengeId()) {
+					if (c.getChallengeId().equals(ChallengeGUI.state.getCurrentChallengeId())) {
 						challengeSelect.setSelectedItem(c);
 						return;
 					}

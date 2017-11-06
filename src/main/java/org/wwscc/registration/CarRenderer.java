@@ -50,6 +50,8 @@ class CarRenderer implements ListCellRenderer<Object>
 			else
 				p.status.setText("Registered");
 		}
+		else if (c.hasActivity())
+			p.status.setText("Has Runs");
 		else
 			p.status.setText("");
 		

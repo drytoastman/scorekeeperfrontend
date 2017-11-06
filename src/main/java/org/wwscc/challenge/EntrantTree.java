@@ -60,7 +60,7 @@ public class EntrantTree extends CarTree implements MessageListener
 				UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
 				Collection<UUID> exclude;
 				Collection<Entrant> reg;
-				if (challengeid != IdGenerator.nullid)
+				if (!challengeid.equals(IdGenerator.nullid))
 				{
 					reg = Database.d.getEntrantsByEvent(ChallengeGUI.state.getCurrentEventId());
 					exclude = Database.d.getCarIdsByChallenge(challengeid);

@@ -104,6 +104,7 @@ public interface DataInterface
 	public void updateCar(Car d) throws SQLException; // update the car values in the database
 	public void deleteCar(Car d) throws SQLException;
 	public void deleteCars(Collection<Car> d) throws SQLException;
+	public boolean mergeCar(Car from, Car into);
 	public boolean isRegistered(UUID eventid, UUID carid);
 	public MetaCar loadMetaCar(Car c, UUID eventid, int course);
 

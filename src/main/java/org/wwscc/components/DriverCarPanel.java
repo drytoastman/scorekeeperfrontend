@@ -178,7 +178,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		for (int ii = 0; ii < lm.getSize(); ii++)
 		{
 			Car c = (Car)lm.getElementAt(ii);
-			if (c.getCarId() == carid)
+			if (c.getCarId().equals(carid))
 			{
 				cars.setSelectedIndex(ii);
 				cars.ensureIndexIsVisible(ii);

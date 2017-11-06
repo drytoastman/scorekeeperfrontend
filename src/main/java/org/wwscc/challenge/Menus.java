@@ -86,7 +86,7 @@ public class Menus extends JMenuBar implements ActionListener
 			return;
 		
 		UUID newid = Database.d.newChallenge(ChallengeGUI.state.getCurrentEventId(), d.getChallengeName(), d.getChallengeSize());
-		if (newid != IdGenerator.nullid)
+		if (!newid.equals(IdGenerator.nullid))
 		{
 			ChallengeGUI.state.setCurrentChallengeId(newid);
 			Messenger.sendEvent(MT.NEW_CHALLENGE, newid);
