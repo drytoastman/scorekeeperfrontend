@@ -362,7 +362,6 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 
-
 	@Override
 	public MetaCar loadMetaCar(Car c, UUID eventid, int course)
 	{
@@ -370,16 +369,30 @@ public abstract class SQLDataInterface implements DataInterface
 		{
 			MetaCar mc = new MetaCar(c);
 			ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-			mc.paid = false;
 			mc.isRegistered = cr.next();
 			if (mc.isRegistered)
 			    mc.paid = cr.getString("txid") != null;
-			
-			ResultSet ar = executeSelect("select raw from runs where carid=? limit 1", newList(c.getCarId()));
-			mc.hasActivity = ar.next();
-			
+
 			ResultSet rr = executeSelect("select row from runorder where carid=? and eventid=? and course=? limit 1", newList(c.getCarId(), eventid, course));
-			mc.isInRunOrder = rr.next();
+            mc.isInRunOrder = rr.next();
+
+            // check for activity outside this event, shortcut to reduce queries needed
+            if (mc.isRegistered || mc.isInRunOrder) {
+                mc.hasActivity = true;
+            } else {
+    			ResultSet c1 = executeSelect("select carid from registered where carid=? limit 1", newList(c.getCarId()));
+    			if (!c1.next()) {
+    			    ResultSet c2 = executeSelect("select carid from runs where carid=? limit 1", newList(c.getCarId()));
+    			    if (!c2.next()) {
+    			        ResultSet c3 = executeSelect("select carid from runorder where carid=? limit 1", newList(c.getCarId()));
+    			        mc.hasActivity = c3.next();
+    			    } else {
+    			        mc.hasActivity = true;
+    			    }
+    			} else {
+    			    mc.hasActivity = true;
+    			}
+            }
 			
 			closeLeftOvers();
 			return mc;
@@ -603,7 +616,7 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 
 	@Override
-	public boolean mergeCar(Car from, Car into)
+	public void mergeCar(Car from, Car into) throws SQLException
 	{
 		try
 		{
@@ -617,12 +630,11 @@ public abstract class SQLDataInterface implements DataInterface
 			executeUpdate("update challengeruns set carid=? where carid=?", args);
 			executeUpdate("delete from cars where carid=?", newList(from.getCarId()));
 			commit();
-			return true;
 		}
-		catch (SQLException sql)
+		catch (SQLException sqle)
 		{
 			rollback();
-			return false;
+			throw sqle;
 		}
 	}
 	

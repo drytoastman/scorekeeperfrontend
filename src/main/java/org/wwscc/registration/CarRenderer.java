@@ -41,8 +41,11 @@ class CarRenderer implements ListCellRenderer<Object>
 		p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber()));
 		p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
 		
+		p.status.setForeground(Color.BLACK);
 		if (c.isInRunOrder())
+		{
 			p.status.setText("In Event");
+		}
 		else if (c.isRegistered())
 		{
 			if (c.hasPaid())
@@ -51,7 +54,10 @@ class CarRenderer implements ListCellRenderer<Object>
 				p.status.setText("Registered");
 		}
 		else if (c.hasActivity())
-			p.status.setText("Has Runs");
+		{
+		    p.status.setForeground(Color.LIGHT_GRAY);
+			p.status.setText("Other");
+		}
 		else
 			p.status.setText("");
 		

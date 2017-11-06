@@ -18,6 +18,10 @@ public class MetaCar extends Car
 	public MetaCar(Car c)
 	{
 		super(c);
+		isRegistered = false;
+		isInRunOrder = false;
+		hasActivity = false;
+		paid = false;
 	}
 	
 	public boolean hasPaid()      { return paid; }

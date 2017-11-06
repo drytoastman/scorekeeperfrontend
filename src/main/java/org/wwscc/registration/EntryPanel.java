@@ -207,6 +207,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		
 	    singleCarPanel = new JPanel(new MigLayout("fill, ins 0, gap 2"));
 	    multiCarPanel  = new JPanel(new MigLayout("fill, ins 0, gap 2"));
+        multiCarPanel.setVisible(false);
 	        
 		rightp.add(createTitle("3. Car"), "spanx 2, growx, wrap");
 		rightp.add(cscroll,            "grow");
@@ -226,13 +227,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		singleCarPanel.add(paidreport,        "growx, wrap");
 		singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 		
-		/*
-		multiCarPanel.add(mergeButton,        "growx, wrap");
-	    multiCarPanel.add(mergeWarning,       "growx, h 30!, wrap");
-	    multiCarPanel.add(new JLabel(""),     "pushy 100, wrap");
-		*/
-		
-	    multiCarPanel.setVisible(false);
 		new Thread(new FindPrinters()).start();
 	}
 	
@@ -319,14 +313,19 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 			putValue(NAME, "<html><center><b>Merge Selected Into</b><br/>" + (index+1) + ". " +
 				  target.getMake() + " " + target.getModel() + " " + target.getColor() + " #" + target.getNumber()); 
 		}
+		
 		@Override
 		public void actionPerformed(ActionEvent e)
 		{
-			for (Car c : cars.getSelectedValuesList()) {
-				if (!c.getCarId().equals(target.getCarId()))
-					Database.d.mergeCar(c, target);
-			}
-			reloadCars(target);
+		    try {
+    			for (Car c : cars.getSelectedValuesList()) {
+    				if (!c.getCarId().equals(target.getCarId()))
+    					Database.d.mergeCar(c, target);
+    			}
+    			reloadCars(target);
+		    } catch (SQLException sqle) {
+		        log.log(Level.WARNING, "\bUnable to merge cars: " + sqle, sqle);
+		    }
 		}
 	}
 
