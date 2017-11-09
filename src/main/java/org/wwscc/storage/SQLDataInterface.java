@@ -621,14 +621,27 @@ public abstract class SQLDataInterface implements DataInterface
 		try
 		{
 			start();
-			List<Object> args = newList(into.getCarId(), from.getCarId());
-			executeUpdate("update runs set carid=? where carid=?", args);
-			executeUpdate("update registered set carid=? where carid=?", args);
-			executeUpdate("update runorder set carid=? where carid=?", args);
-			executeUpdate("update challengerounds set car1id=? where car1id=?", args);
-			executeUpdate("update challengerounds set car2id=? where car2id=?", args);
-			executeUpdate("update challengeruns set carid=? where carid=?", args);
-			executeUpdate("delete from cars where carid=?", newList(from.getCarId()));
+			List<Object> sa = newList(into.getCarId(), from.getCarId());
+			List<Object> da = newList(from.getCarId());
+
+			// can't swap carids on some tables as they are part of the primary key and that messes with our syncing process
+			executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr) " +
+									"(SELECT eventid,	 ?, course, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
+			executeUpdate("DELETE FROM runs WHERE carid=?", da);
+
+			executeUpdate("INSERT INTO registered (eventid, carid, txid) " +
+										  "(SELECT eventid,	 ?, txid FROM registered WHERE carid=?)", sa);
+			executeUpdate("DELETE FROM registered WHERE carid=?", da);
+
+			executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status) " +
+											 "(SELECT challengeid, round,	 ?, course, reaction, sixty, raw, cones, gates, status FROM challengeruns WHERE carid=?)", sa);
+			executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
+
+			// these we can just swap
+			executeUpdate("update runorder set carid=? where carid=?", sa);
+			executeUpdate("update challengerounds set car1id=? where car1id=?", sa);
+			executeUpdate("update challengerounds set car2id=? where car2id=?", sa);
+			executeUpdate("delete from cars where carid=?", da);
 			commit();
 		}
 		catch (SQLException sqle)

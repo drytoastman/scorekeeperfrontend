@@ -22,7 +22,6 @@ import org.wwscc.util.MT;
 public class EntryModelTests 
 {
     static DockerContainer db;
-    static PostgresqlDatabase pgdb;
     
     EntryModel model;
     UUID driver0 = UUID.fromString("8cf4ac4c-bfa0-11e7-a8b3-0c4de9c60d73");
@@ -38,9 +37,8 @@ public class EntryModelTests
         db.addPort("54329", "5432");
         db.createNetsAndVolumes();
         db.start();
-        PostgresqlDatabase.waitUntilUp();       
-        pgdb = new PostgresqlDatabase("pro2017", true);
-        Database.d = pgdb;
+        PostgresqlDatabase.waitUntilUp();
+        Database.openSeries("pro2017");
     }
 
     @AfterClass
