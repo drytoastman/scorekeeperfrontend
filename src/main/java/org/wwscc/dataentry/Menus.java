@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -49,7 +48,6 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 	JMenu edit, event, results;
 	JCheckBoxMenuItem paidInfoMode;
 	JCheckBoxMenuItem reorderMode;
-	JFileChooser chooser;
 	ButtonGroup runGrouping;
 
 	public Menus()

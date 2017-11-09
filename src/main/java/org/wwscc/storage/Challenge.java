@@ -13,8 +13,6 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.UUID;
 
-import org.wwscc.util.IdGenerator;
-
 /**
  */
 public class Challenge
@@ -25,14 +23,6 @@ public class Challenge
 	protected UUID eventid;
 	protected String name;
 	protected int depth;
-
-	public Challenge(UUID inEvent, String inName, int inDepth)
-	{
-		challengeid = IdGenerator.generateId();;
-		eventid = inEvent;
-		name = inName;
-		depth = inDepth;
-	}
 	
 	public Challenge(ResultSet rs) throws SQLException
 	{

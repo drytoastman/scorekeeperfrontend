@@ -68,18 +68,6 @@ public class ChallengeRun
 		status       = rs.getString("status");
 	}
 
-	public ChallengeRun(double reaction, double sixty , double time, int cones, int gates, String status)
-	{
-		this();
-		this.reaction = reaction;
-		this.sixty    = sixty;
-		this.raw      = time;
-		this.cones    = cones;
-		this.gates    = gates;
-		this.status   = status;
-	}
-
-
 	public void setChallengeRound(Id.Run id)
 	{
 		challengeid = id.challengeid;

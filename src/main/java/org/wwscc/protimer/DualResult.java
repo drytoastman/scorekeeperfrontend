@@ -14,8 +14,6 @@ public class DualResult
 	public static final int NONE = 0;
 	public static final int LEFT = 1;
 	public static final int RIGHT = 2;
-	public static final int LEFT_DEFAULT = 3;
-	public static final int RIGHT_DEFAULT = 4;
 
 	public Result left;
 	public Result right;

@@ -23,24 +23,12 @@ public class EasyNumFilter extends DocumentFilter
 	int beforeDotAllowance = 3;
 	int afterDotAllowance = 3;
 
-	
-    public EasyNumFilter(int intAllowance)
-	{
-		this.isDouble = false;
-		this.afterDotAllowance = intAllowance;
-	}
-
     public EasyNumFilter(int intAllowance, int decimalAllowance)
 	{
 		this.isDouble = true;
 		this.beforeDotAllowance = intAllowance;
 		this.afterDotAllowance = decimalAllowance;
 	}
-
-    public EasyNumFilter(boolean isDouble)
-	{
-		this.isDouble = isDouble;
-    }
 
 	/*	restricts to:
 			isDouble = true:  ###.###

@@ -34,11 +34,6 @@ public class EasyNumFilter extends DocumentFilter
 		this.afterDotAllowance = decimalAllowance;
 	}
 
-    public EasyNumFilter(boolean isDouble)
-	{
-		this.isDouble = isDouble;
-    }
-
 	/*	restricts to:
 			isDouble = true:  ###.###
 			isDouble = false: ###

@@ -164,7 +164,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	}
 	
 	
-	protected DualResult getLastFinishLine() throws PSIException
+	protected DualResult getLastFinishLine()
 	{
 		int index;
 		if (nextLeftFinish > nextRightFinish) index = nextLeftFinish; else index = nextRightFinish;
@@ -244,10 +244,6 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
 			fireTableDataChanged();
 		}
-		catch (PSIException e)
-		{
-			log.log(Level.INFO, "PSI error in processing {0}", e);
-		}
 		catch (NullPointerException npe)
 		{
 			log.info("null returned in processing");
@@ -269,7 +265,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	}
 
 	
-	public void addReaction(boolean left, ColorTime c) throws PSIException
+	public void addReaction(boolean left, ColorTime c)
 	{
 		DualResult dr = lastEntry();
 		if (dr == null)
@@ -293,7 +289,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	}
 
 
-	public void addSixty(boolean left, ColorTime c) throws PSIException
+	public void addSixty(boolean left, ColorTime c)
 	{
 		DualResult dr = lastEntry();
 		if (dr == null)
@@ -352,7 +348,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 	}
 
 	
-	public void addFinish(boolean left, ColorTime c, double dial) throws PSIException
+	public void addFinish(boolean left, ColorTime c, double dial)
 	{
 		if (left)
 		{

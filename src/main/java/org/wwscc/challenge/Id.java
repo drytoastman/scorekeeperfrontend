@@ -111,12 +111,6 @@ public class Id
 		public enum Level { UPPER, LOWER };
 		Level level;
 		
-		public Entry(Entry e)
-		{
-			super(e);
-			level = e.level;
-		}
-		
 		public Entry(UUID c, int r, Level l)
 		{
 			super(c, r);
@@ -170,12 +164,6 @@ public class Id
 		public Run(Round r, Entry.Level l, RunType t)
 		{
 			super(r, l);
-			runType = t;
-		}
-		
-		public Run(UUID c, int r, Entry.Level l, RunType t)
-		{
-			super(c, r, l);
 			runType = t;
 		}
 

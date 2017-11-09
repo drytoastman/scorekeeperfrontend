@@ -15,7 +15,7 @@ public class ModelTest {
     }
     
     @Test
-    public void testNoTree() throws PSIException {
+    public void testNoTree() {
         // This should ignore the input, not throw an exception
         model.addReaction(true, new ColorTime(1));
         model.addReaction(false, new ColorTime(1));
@@ -37,7 +37,7 @@ public class ModelTest {
     }
     
     @Test
-    public void testMultiActive() throws PSIException {
+    public void testMultiActive() {
         model.createNewEntry();
         model.addReaction(true, new ColorTime(1));
         model.addReaction(false, new ColorTime(1));

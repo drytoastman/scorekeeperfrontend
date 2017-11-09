@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.Action;
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
@@ -39,8 +38,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 	private static Logger log = Logger.getLogger(EntryModel.class.getCanonicalName());
 
 	List<Entrant> tableData;
-	Action doubleCourseMode;
-
 	int runoffset;
 	int colCount;
 

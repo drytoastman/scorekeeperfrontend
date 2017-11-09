@@ -28,15 +28,6 @@ public class ChallengeRound
 	protected boolean swappedstart;
 	protected RoundEntrant car1;
 	protected RoundEntrant car2;
-
-	public ChallengeRound(UUID challenge, int rnd)
-	{
-		challengeid = challenge;
-		round = rnd;
-		swappedstart = false;
-		car1 = new RoundEntrant();
-		car2 = new RoundEntrant();
-	}
 	
 	public ChallengeRound(ResultSet rs) throws SQLException
 	{

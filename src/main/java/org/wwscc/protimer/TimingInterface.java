@@ -66,7 +66,7 @@ public class TimingInterface implements MessageListener
 			case SERIAL_GENERIC_DATA:
 				try {
 					processData(new String((byte[])o));
-				} catch (PSIException pse) {
+				} catch (Exception pse) {
 					log.log(Level.WARNING, "Error processing data: {0}", pse); // don't dialog
 				}
 				break;
@@ -125,19 +125,6 @@ public class TimingInterface implements MessageListener
 		}
 	}
 
-	public void processAck(boolean ok)
-	{
-	}
-
-	/*
-	private boolean get_bool(String s[], int n)
-	{
-		if ((s.length > n) && (s[n].equalsIgnoreCase("Y")))
-			return true;
-		else 
-			return false;
-	} 
-	*/
 
 	private boolean get_side(String s[], int n)
 	{
@@ -172,7 +159,7 @@ public class TimingInterface implements MessageListener
 	}
 
 
-	public void processData(String input) throws PSIException
+	public void processData(String input)
 	{
 		log.log(Level.FINE, "Process: ({0})", input);
 		String args[] = input.split("[ \r\n]");

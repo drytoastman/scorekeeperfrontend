@@ -138,7 +138,6 @@ public class Prefs
     }
 
     public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
-    public static String getPasswordFor(String series) { return prefs.get("password-"+series, ""); }
     public static String getSeries(String def) { return prefs.get("series", def); }
     public static int getEventId(int def) { return prefs.getInt("eventid", def); }
     public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
@@ -159,7 +158,6 @@ public class Prefs
     }
 
     public static void setHomeServer(String s) { prefs.put("hostname", s); }
-    public static void setPasswordFor(String series, String s) { prefs.put("password-"+series, s); }
     public static void setSeries(String s) { prefs.put("series", s); }
     public static void setEventId(int i) { prefs.putInt("eventid", i); }
     public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }

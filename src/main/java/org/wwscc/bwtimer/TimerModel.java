@@ -107,11 +107,6 @@ public class TimerModel implements TableModel, TimeStorage
 	}
 
 	/*** Starts *****/
-	public void fakeStart()
-	{
-		doStart(lasttick);
-	}
-
 	private void doStart(long time)
 	{
 		timestamps[start].add(time);
@@ -183,12 +178,6 @@ public class TimerModel implements TableModel, TimeStorage
 			rowUpdated(finishsize-1);
 			newFinish(finishsize-1);
 		}
-	}
-
-	public void periodic()
-	{
-		if (getSequencedCars() > 0)
-			rowUpdated(timestamps[lights-1].size());
 	}
 
 	public int getSequencedCars()

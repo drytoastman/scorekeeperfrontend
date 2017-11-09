@@ -1,7 +1,5 @@
 package org.wwscc.storage;
 
-import java.math.BigDecimal;
-
 /**
  * Add some meta information that can be loaded base on current state but it associated 
  * directly with a Car entry.  This make sure that anyone using the information is getting
@@ -9,7 +7,6 @@ import java.math.BigDecimal;
  */
 public class MetaCar extends Car 
 {
-    public static final BigDecimal ZERO = new BigDecimal(0);
 	protected boolean isRegistered;
 	protected boolean isInRunOrder;
 	protected boolean hasActivity;

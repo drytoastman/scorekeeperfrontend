@@ -6,7 +6,6 @@
 
 package org.wwscc.util;
 
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.border.EmptyBorder;
@@ -19,16 +18,6 @@ public class IconButton extends JButton
 	static ImageIcon buttonIcon;
 	static ImageIcon rolloverIcon;
 	static ImageIcon pressedIcon;
-
-	public IconButton(Icon regular, Icon rollover, Icon pressed)
-	{
-		super();
-		setBorder(new EmptyBorder(0,0,0,0));
-		setContentAreaFilled(false);
-		setIcon(regular);
-		setRolloverIcon(rollover);
-		setPressedIcon(pressed);
-	}
 
 	public IconButton()
 	{

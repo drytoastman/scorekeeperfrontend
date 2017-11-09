@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
-import javax.swing.border.MatteBorder;
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.challenge.ChallengeModel;
 import org.wwscc.challenge.Id;
@@ -35,11 +34,8 @@ class RunDisplay extends JComponent
 	static Font timeFont = new Font("SansSerif", Font.PLAIN, 14);
 	static Font titleFont = new Font("SansSerif", Font.BOLD, 10);
 	static Font bigTitleFont = new Font("SansSerif", Font.BOLD, 12);
-	static Font comboFont = new Font("SansSerif", Font.PLAIN, 10);
-	
+	static Font comboFont = new Font("SansSerif", Font.PLAIN, 10);	
 	static Border plainBorder = new LineBorder(Color.GRAY, 1);
-	static Border nextBorder = new MatteBorder(1, 4, 1, 4, new Color(10, 200, 10));
-	static Border next2Border = new MatteBorder(1, 3, 1, 3, new Color(40, 80, 10));
 	
 	FocusButton nextButton;
 	JPanel runPanel;

@@ -108,11 +108,6 @@ public class Entrant
 	        runs.put(r.run, r);
 	}
 
-	public void clearRuns()
-	{
-		runs.clear();
-	}
-
 	public void deleteRun(int num)
 	{
 		runs.remove(num);

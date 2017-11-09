@@ -343,25 +343,6 @@ public abstract class SQLDataInterface implements DataInterface
 
 	//****************************************************/
 
-	protected boolean hasRuns(UUID eventid, int carid, int course)
-	{
-		try
-		{
-			boolean ret = false;
-			List<Object> vals = newList(carid, eventid, course);
-			ResultSet d = executeSelect("select count(run) as count from runs where carid=? and eventid=? and course=?", vals);
-			if (d.next())
-				ret = d.getInt("count") > 0;
-			closeLeftOvers();
-			return ret;
-		}
-		catch (SQLException ioe)
-		{
-			logError("hasRuns", ioe);
-			return false;
-		}
-	}
-
 	@Override
 	public MetaCar loadMetaCar(Car c, UUID eventid, int course)
 	{
@@ -836,11 +817,6 @@ public abstract class SQLDataInterface implements DataInterface
 			logError("getRunsForChallenge", ioe);
 			return null;
 		}
-	}
-
-	final static class Leader {  // I miss python
-		UUID Xcarid; double basis; double net;
-		Leader(UUID i, double b, double n) { Xcarid = i; basis = b; net = n; }
 	}
 	
 	@Override

@@ -37,20 +37,6 @@ public class Run extends AttrBase implements Serial, Cloneable
 	protected int cones, gates;
 	protected String status;
 	protected double raw;
-
-	public static class RawOrder implements Comparator<Run>
-	{
-		public int compare(Run a, Run b)
-		{
-			if (!a.isOK() && !b.isOK())
-				return 0;
-			if (!a.isOK())
-				return 1;
-			if (!b.isOK())
-				return -1;
-			return (int)(a.raw*1000 - b.raw*1000);
-		}
-	}
 	
 	public static class NetOrder implements Comparator<Run>
 	{
@@ -137,7 +123,6 @@ public class Run extends AttrBase implements Serial, Cloneable
 	public int getCones() { return cones; }
 	public int getGates() { return gates; }
 	public String getStatus() { return status; }
-	public boolean validRun() { return !Double.isNaN(raw); }
 
 	public double getReaction()     { return getAttrD("reaction");}
 	public double getSixty()        { return getAttrD("sixty"); }

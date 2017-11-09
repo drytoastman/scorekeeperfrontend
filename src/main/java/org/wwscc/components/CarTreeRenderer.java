@@ -7,9 +7,7 @@
  */
 package org.wwscc.components;
 
-import java.awt.Color;
 import java.awt.Component;
-import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -21,10 +19,7 @@ import org.wwscc.storage.Entrant;
  * Class to modify the default cell rendering for a JTree
  */
 public class CarTreeRenderer extends DefaultTreeCellRenderer
-{	
-	ImageIcon blu, gre, yel, red;
-	Color grey = new Color(230, 230, 230);
- 
+{	 
 	/**
 	 * Create a new CarTreeRenderer and load our icons.
 	 */

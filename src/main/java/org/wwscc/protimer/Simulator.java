@@ -31,7 +31,13 @@ public class Simulator
 		Object [] result = { new ColorTime(time, color), dial };
 		Messenger.sendEvent(left?MT.FINISH_LEFT:MT.FINISH_RIGHT, result);
 	}
-
+   
+    public void tree()
+    {
+        Messenger.sendEvent(MT.TREE, null);
+    }
+    
+	/*
 	public void win(boolean left)
 	{
 		Messenger.sendEvent(left?MT.WIN_LEFT:MT.WIN_RIGHT, null);
@@ -56,15 +62,11 @@ public class Simulator
 	{
 		Messenger.sendEvent(left?MT.CHALDIAL_LEFT:MT.CHALDIAL_RIGHT, new Double[] {-time, dial } );
 	}
-	
+
 	public void dials(double left, double right)
 	{
 		Messenger.sendEvent(MT.DIALIN_LEFT, left);
 		Messenger.sendEvent(MT.DIALIN_RIGHT, left);
 	}
-		
-	public void tree()
-	{
-		Messenger.sendEvent(MT.TREE, null);
-	}
+	*/
 }

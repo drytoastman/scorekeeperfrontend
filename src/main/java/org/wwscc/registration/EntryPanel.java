@@ -77,7 +77,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 	Code39 activeLabel;
 	
 	JLabel mergeWarning;
-	int firstSelection;
 	
 	@SuppressWarnings("deprecation")
     public EntryPanel()
@@ -169,7 +168,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 		mergeWarning.setForeground(Color.WHITE);
 		mergeWarning.setBackground(Color.RED);
 		mergeWarning.setFont(paidwarning.getFont());
-		firstSelection = -1;
 		cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));

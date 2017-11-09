@@ -87,20 +87,6 @@ public class AttrBase
 		}
 		return -1.0;
 	}
-
-	public boolean getAttrB(String name)
-	{
-		Boolean ret = null;
-		try {
-			ret = (Boolean)attr.get(name);
-			if (ret != null)
-				return ret;
-		} catch (Exception e) {
-			log.info(String.format("Failed to load boolean named %s from %s: %s", name, ret, e)); 
-		}
-		
-		return false;
-	}
 	
 	public Set<String> getAttrKeys()
 	{
@@ -118,14 +104,6 @@ public class AttrBase
 	public void setAttrD(String name, Double val)
 	{
 		if ((val == null) || (val <= 0.0) || Double.isNaN(val))
-			attr.remove(name);
-		else
-			attr.put(name, val);
-	}
-
-	public void setAttrB(String name, Boolean val)
-	{
-		if (val == null)
 			attr.remove(name);
 		else
 			attr.put(name, val);

@@ -334,14 +334,6 @@ public class ClassData
 				return c1.getCode().compareTo(c2.getCode());
 			}
 		}
-
-		static public class ValueOrder implements Comparator<ClassData.Index>
-		{
-		    public int compare(ClassData.Index c1, ClassData.Index c2)
-			{
-				return (int)(c1.getValue()*1000 - c2.getValue()*1000);
-			}
-		}
 		
 		@Override
 		public int hashCode() {

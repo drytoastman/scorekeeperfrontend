@@ -31,7 +31,6 @@ public class TimerServer implements RunServiceInterface
 	private static final Logger log = Logger.getLogger(TimerServer.class.getName());
 	public static final int TIMER_DEFAULT_PORT = 54328;
 
-	Thread autocloser;
 	String servicetype;
 	ServerSocket serversock;
 	Vector<RunServiceInterface> clients;

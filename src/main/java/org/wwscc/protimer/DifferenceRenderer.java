@@ -104,17 +104,6 @@ public class DifferenceRenderer extends JPanel implements TableCellRenderer
 	}
 
 
-	protected String side(int type)
-	{
-		if (type == DualResult.LEFT) 
-			return "Left";
-		else if (type == DualResult.RIGHT)
-			return "Right";
-		else
-			return "???";
-	}
-
-
 	protected String format(double num)
 	{
 		if (Double.isNaN(num))

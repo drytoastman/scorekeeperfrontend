@@ -10,7 +10,6 @@ package org.wwscc.storage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -24,14 +23,6 @@ public class Car extends AttrBase
 	protected String classcode;
 	protected String indexcode;
 	protected boolean useclsmult;
-
-	static public class NumOrder implements Comparator<Car>
-	{
-	    public int compare(Car c1, Car c2)
-		{
-			return c1.number - c2.number;
-		}
-	}
 
 	/*
 	 * Create a blank car object.
