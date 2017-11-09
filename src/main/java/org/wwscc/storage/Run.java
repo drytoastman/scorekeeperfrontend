@@ -132,6 +132,7 @@ public class Run extends AttrBase implements Serial, Cloneable
 
 	public int run() { return run; }
 	public int course() { return course; }
+	public UUID getEventId() { return eventid; }
 	public UUID getCarId() { return carid; }
 	public int getCones() { return cones; }
 	public int getGates() { return gates; }
@@ -153,13 +154,6 @@ public class Run extends AttrBase implements Serial, Cloneable
 	public void setGates(int g)             { gates = g; }
 	public void setStatus(String s)         { status = s; }
 	public void setCarId(UUID cid)          { carid = cid; }
-
-	public void setId(UUID eventid, int course, int run)
-	{
-		this.eventid = eventid;
-		this.course = course;
-		this.run = run;
-	}
 
 	public void updateTo(UUID inEventid, UUID inCarid, int inCourse, int inRun)
 	{

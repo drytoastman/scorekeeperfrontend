@@ -34,7 +34,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 	ClassData classCache = null;
 	long classCacheTimestamp = 0;
-	
+
 	public abstract void start() throws SQLException;
 	public abstract void commit() throws SQLException;
 	public abstract void rollback();
@@ -62,7 +62,7 @@ public abstract class SQLDataInterface implements DataInterface
 		log.log(Level.SEVERE, "\b" + f + " failed: " + e.getMessage(), e);
 	}
 
-	
+
 	@Override
 	public void ping()
 	{
@@ -72,8 +72,8 @@ public abstract class SQLDataInterface implements DataInterface
             log.log(Level.INFO, "Ping failed? " + sqle, sqle);
         }
 	}
-	
-	
+
+
 	@Override
 	public String getSetting(String key)
 	{
@@ -126,7 +126,7 @@ public abstract class SQLDataInterface implements DataInterface
 	 * @param d result data containing entrant info
 	 * @param r result data containing run info or null
 	 * @return a list of entrants
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
 	List<Entrant> loadEntrants(ResultSet d, ResultSet r) throws SQLException
 	{
@@ -151,14 +151,14 @@ public abstract class SQLDataInterface implements DataInterface
 						e.runs.put(rx.run, rx);
 				}
 			}
-			
+
 			ret.add(e);
 		}
 
 		return ret;
 	}
-		
-	
+
+
 	@Override
 	public List<Entrant> getEntrantsByEvent(UUID eventid)
 	{
@@ -189,15 +189,15 @@ public abstract class SQLDataInterface implements DataInterface
 			return null;
 		}
 	}
-	
-	
+
+
 	@Override
 	public List<Car> getRegisteredCars(UUID driverid, UUID eventid)
 	{
 		try
 		{
 			return executeSelect("select c.* from registered as x, cars as c, drivers as d " +
-						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=?", 
+						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=?",
 						newList(eventid, driverid), Car.class.getConstructor(ResultSet.class));
 		}
 		catch (Exception ioe)
@@ -207,7 +207,7 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 
-	
+
 	/**
 	 * Gets all the entrants and their runs based on the current run order.  Ends up
 	 * being a lot faster (particular over a network) to load all of the runs for the run
@@ -237,7 +237,7 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 	}
 
-	
+
 	@Override
 	public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns)
 	{
@@ -300,7 +300,7 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 
 	@Override
-	public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids) 
+	public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids)
 	{
 		try
 		{
@@ -324,12 +324,12 @@ public abstract class SQLDataInterface implements DataInterface
 				items.add(carid);
 				lists.add(items);
 			}
-			
+
 			// update our ids
-			executeGroupUpdate("INSERT INTO runorder VALUES (?,?,?,?,?,now()) " + 
-								"ON CONFLICT (eventid, course, rungroup, row) DO UPDATE " + 
+			executeGroupUpdate("INSERT INTO runorder VALUES (?,?,?,?,?,now()) " +
+								"ON CONFLICT (eventid, course, rungroup, row) DO UPDATE " +
 								"SET carid=?,modified=now()", lists);
-			
+
 			// clear out any leftovers from previous values
 			executeUpdate("DELETE FROM runorder where eventid=? and course=? and rungroup=? and row>?", newList(eventid, course, rungroup, row));
 			commit();
@@ -393,7 +393,7 @@ public abstract class SQLDataInterface implements DataInterface
     			    mc.hasActivity = true;
     			}
             }
-			
+
 			closeLeftOvers();
 			return mc;
 		}
@@ -446,30 +446,30 @@ public abstract class SQLDataInterface implements DataInterface
 			throw sql;
 		}
 	}
-	
-	
+
+
 	@Override
 	public Driver getDriver(UUID driverid)
 	{
 		try
 		{
-			return executeSelect("select * from drivers where driverid=?", newList(driverid), 
+			return executeSelect("select * from drivers where driverid=?", newList(driverid),
 								Driver.class.getConstructor(ResultSet.class)).get(0);
 		}
 		catch (Exception ioe)
 		{
 			logError("getDriver", ioe);
 			return null;
-		}		
+		}
 	}
-	
+
 	@Override
 	public List<Driver> findDriverByMembership(String membership)
 	{
 		List<Driver> ret = new ArrayList<Driver>();
 		try
 		{
-			return executeSelect("select * from drivers where membership like ? order by driverid", newList(membership), 
+			return executeSelect("select * from drivers where membership like ? order by driverid", newList(membership),
 					Driver.class.getConstructor(ResultSet.class));
 		}
 		catch (Exception ioe)
@@ -478,13 +478,13 @@ public abstract class SQLDataInterface implements DataInterface
 		}
 		return ret;
 	}
-	
+
 	@Override
 	public List<Car> getCarsForDriver(UUID driverid)
 	{
 		try
 		{
-			return executeSelect("select * from cars where driverid = ? order by classcode, number", 
+			return executeSelect("select * from cars where driverid = ? order by classcode, number",
 							newList(driverid), Car.class.getConstructor(ResultSet.class));
 		}
 		catch (Exception ioe)
@@ -496,7 +496,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 
 	@Override
-	public Map<String, Set<String>> getCarAttributes() 
+	public Map<String, Set<String>> getCarAttributes()
 	{
 		try
 		{
@@ -504,7 +504,7 @@ public abstract class SQLDataInterface implements DataInterface
 			HashSet<String> make  = new HashSet<String>();
 			HashSet<String> model = new HashSet<String>();
 			HashSet<String> color = new HashSet<String>();
-			
+
 			ResultSet rs = executeSelect("select attr from cars", null);
 			while (rs.next())
 			{
@@ -513,7 +513,7 @@ public abstract class SQLDataInterface implements DataInterface
 				if (attr.containsKey("model")) model.add((String)attr.get("model"));
 				if (attr.containsKey("color")) color.add((String)attr.get("color"));
 			}
-			
+
 			ret.put("make",  make);
 			ret.put("model", model);
 			ret.put("color", color);
@@ -539,7 +539,7 @@ public abstract class SQLDataInterface implements DataInterface
         return ret;
 	}
 
-	   
+
 	@Override
 	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
 	{
@@ -637,7 +637,7 @@ public abstract class SQLDataInterface implements DataInterface
 			throw sqle;
 		}
 	}
-	
+
 	@Override
 	public boolean isRegistered(UUID eventid, UUID carid)
 	{
@@ -656,29 +656,50 @@ public abstract class SQLDataInterface implements DataInterface
 	}
 	
 	@Override
-	public void setRun(Run r)
+	public void setRun(Run r) throws SQLException
 	{
-		try{
+		try {
 			executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
-						"values (?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, run) DO UPDATE " +
-						"SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()", 
-						newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
-								r.cones, r.gates, r.raw, r.status, r.attr));
-		} catch (Exception ioe){
-			logError("setRun", ioe);
+						  "VALUES (?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, run) DO UPDATE " +
+						  "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
+						  newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
+																	   r.cones, r.gates, r.raw, r.status, r.attr));
+		} catch (SQLException sqle) {
+			logError("setRun", sqle);
+			throw sqle;
 		}
 	}
 
 	@Override
-	public void deleteRun(UUID eventid, UUID carid, int course, int run)
+	public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException
+	{
+		try {
+			// do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
+			start();
+			for (Run r : runs) {
+				executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(r.eventid, r.carid, r.course, r.run));
+				r.setCarId(newcarid);
+				executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,now())",
+						newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
+			}
+			commit();
+		} catch (SQLException sqle) {
+			rollback();
+			throw sqle;
+		}
+	}
+
+	@Override
+	public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException
 	{
 		try {
 			executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
-		} catch (Exception ioe){
-			logError("deleteRun", ioe);
+		} catch (SQLException sqle){
+			logError("deleteRun", sqle);
+			throw sqle;
 		}
 	}
-	
+
 	@Override
 	public void addTimerTime(UUID serverid, Run r)
 	{
@@ -686,7 +707,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("INSERT INTO timertimes (serverid, raw, modified) VALUES (?, ?, now())", newList(serverid, r.raw));
         } catch (Exception ioe){
             logError("addTimerTime", ioe);
-        }	    
+        }
 	}
 
 

@@ -108,8 +108,9 @@ public interface DataInterface
 	public boolean isRegistered(UUID eventid, UUID carid);
 	public MetaCar loadMetaCar(Car c, UUID eventid, int course);
 
-	public void setRun(Run r);
-	public void deleteRun(UUID eventid, UUID carid, int course, int run);
+	public void setRun(Run r) throws SQLException;
+	public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException;
+	public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException;
 	public void addTimerTime(UUID serverid, Run r);
 
 

@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
@@ -40,13 +41,13 @@ class DriverContextMenu extends MouseAdapter
 {
 	JTable target;
 	JPopupMenu menu;
-	
+
 	public DriverContextMenu(JTable tbl)
 	{
 		target = tbl;
 		menu = null;
 	}
-	
+
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
@@ -75,13 +76,13 @@ class DriverContextMenu extends MouseAdapter
 		if (target.getSelectedRow() != row) return;
 		if (target.getSelectedColumn() != col) return;
 
-		Entrant selectedE = (Entrant)target.getValueAt(row, col);			
+		Entrant selectedE = (Entrant)target.getValueAt(row, col);
 		List<Car> registered = Database.d.getRegisteredCars(selectedE.getDriverId(), DataEntry.state.getCurrentEventId());
 		List<Car> allcars = Database.d.getCarsForDriver(selectedE.getDriverId());
 
 		menu = new JPopupMenu("");
 		addTitle("Swap to Registered Car");
-		for (Car c : registered) 
+		for (Car c : registered)
 			addCarAction(c);
 
 		addTitle("Swap to Unregistered Car");
@@ -94,11 +95,11 @@ class DriverContextMenu extends MouseAdapter
 		}
 		if (removelast)
 			menu.remove(menu.getComponentCount()-1);
-		
+
 		addTitle("Other");
 		menu.add(new JMenuItem(new TextRunAction(selectedE))).setFont(itemFont);
 		menu.add(new JMenuItem(new PaidAction(selectedE))).setFont(itemFont);
-		
+
 		menu.show(target, e.getX(), e.getY());
 	}
 
@@ -123,13 +124,13 @@ class DriverContextMenu extends MouseAdapter
 			public void actionPerformed(ActionEvent ae) {
 				Messenger.sendEvent(MT.CAR_CHANGE, c.getCarId());
 		}});
-		
+
 		if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
 		{
 			lbl.setEnabled(false);
 			lbl.setForeground(superLightGray);
 		}
-		
+
 		menu.add(lbl);
 	}
 }
@@ -138,14 +139,14 @@ class DriverContextMenu extends MouseAdapter
 class PaidAction extends AbstractAction
 {
 	private static final Logger log = Logger.getLogger(PaidAction.class.getCanonicalName());
-	
+
 	Entrant entrant;
 	public PaidAction(Entrant e)
 	{
 		super("Mark Driver Paid");
 		entrant = e;
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
@@ -161,13 +162,15 @@ class PaidAction extends AbstractAction
 
 class TextRunAction extends AbstractAction
 {
+    private static final Logger log = Logger.getLogger(TextRunAction.class.getCanonicalName());
+
 	Entrant entrant;
 	public TextRunAction(Entrant e)
 	{
 		super("Add Text Runs");
 		entrant = e;
 	}
-	
+
 	@Override
 	public void actionPerformed(ActionEvent e)
 	{
@@ -176,11 +179,15 @@ class TextRunAction extends AbstractAction
 		List<Run> runs = trd.getResult();
 		if (runs == null) return;
 
-		for (Run r : trd.getResult())
-		{
-			r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
-			Database.d.setRun(r);
+		try {
+			for (Run r : trd.getResult()) {
+				r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
+				Database.d.setRun(r);
+			}
+		} catch (SQLException sqle) {
+			log.log(Level.SEVERE, "\bFailed to set run data: " + sqle, sqle);
 		}
+
 		Messenger.sendEvent(MT.RUNGROUP_CHANGED, 1);
 	}
 }

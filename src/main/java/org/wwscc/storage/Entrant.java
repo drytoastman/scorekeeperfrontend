@@ -101,7 +101,13 @@ public class Entrant
 	{
 		runs.put(r.run, r);
 	}
-	
+
+	public void setRuns(Collection<Run> c)
+	{
+	    for (Run r : c)
+	        runs.put(r.run, r);
+	}
+
 	public void clearRuns()
 	{
 		runs.clear();

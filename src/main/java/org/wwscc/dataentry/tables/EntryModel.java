@@ -10,6 +10,7 @@ package org.wwscc.dataentry.tables;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -93,8 +94,8 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		 *     get fired twice and cause indexing errors in the sorter/filterer
 		 *  2: for simplicity, do the same for updates
 		 */
-        fireTableDataChanged();
-    	fireEntrantsChanged();
+		fireTableDataChanged();
+		fireEntrantsChanged();
 	}
 
 	public void replaceCar(UUID carid, int row)
@@ -104,16 +105,21 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		Entrant newe = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
 		if (newe == null)
 		{
-			log.warning("\bFailed to fetch entrant data, perhaps try again");
+			log.warning("\bFailed to fetch data for the replacement car from the database");
 			return;
 		}
 
-		for (Run r : old.getRuns()) {
-			r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), newe.getCarId(), DataEntry.state.getCurrentCourse(), r.run());
-			newe.setRun(r);
-			Database.d.setRun(r); // insert or update
+		try
+		{
+			Collection<Run> currentruns = old.getRuns();
+			Database.d.swapRuns(currentruns, newe.getCarId());
+			newe.setRuns(currentruns);
 		}
-
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "\bFailed to swap runs: " + e, e);
+			return;
+		}
 
 		tableData.set(row, newe);
 		fireRunsChanged(newe);
@@ -254,28 +260,32 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 				}
 
 				tableData.remove(row); // remove the row which removes from runorder upon commit
-                fireEntrantsChanged();
+				fireEntrantsChanged();
 				fireTableDataChanged();
-		        checkDeletePlaceholder(e);
+				checkDeletePlaceholder(e);
 			}
 			else  // driver change
 			{
-			    fireEntrantsChanged();
-			    fireTableRowsUpdated(row, row);
+				fireEntrantsChanged();
+				fireTableRowsUpdated(row, row);
 			}
 		}
 
 		// Setting a run
 		else
 		{
-			if (aValue instanceof Run) {
-				Run r = (Run)aValue;
-				r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
-				e.setRun(r);
-				Database.d.setRun(r);
-			} else if (aValue == null){
-				e.deleteRun(col-runoffset);
-				Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
+			try {
+				if (aValue instanceof Run) {
+					Run r = (Run)aValue;
+					r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
+					Database.d.setRun(r);
+					e.setRun(r);
+				} else if (aValue == null){
+					Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
+					e.deleteRun(col-runoffset);
+				}
+			} catch (SQLException sqle) {
+				log.log(Level.SEVERE, "\bFailed to update run data: " + sqle, sqle);
 			}
 
 			fireRunsChanged(e);
@@ -324,7 +334,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 			tableData.set(ii+x, tmp.get(ii));
 
 		fireTableRowsUpdated(a, c-1);
-    	fireEntrantsChanged();
+		fireEntrantsChanged();
 	}
 
 
@@ -347,7 +357,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
 
 	/* Notifying Listeners, committing */
-    public void fireEntrantsChanged()
+	public void fireEntrantsChanged()
 	{
 		ArrayList<UUID> ids = new ArrayList<UUID>();
 		for (Entrant e : tableData)
@@ -363,14 +373,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 		Messenger.sendEvent(MT.RUN_CHANGED, e);
 	}
 
-	/**
-	 * Called when we removed a placeholder car from the runoder, check if they want to delete it and do so here
-	 * @param old the entrant being removed/swapped
-	 */
-	public void checkDeletePlaceholder(Entrant old)
-	{
-	    if (old.getClassCode().equals(ClassData.PLACEHOLDER_CLASS))
-	    {
+    /**
+     * Called when we removed a placeholder car from the runoder, check if they want to delete it and do so here
+     * @param old the entrant being removed/swapped
+     */
+    public void checkDeletePlaceholder(Entrant old)
+    {
+        if (old.getClassCode().equals(ClassData.PLACEHOLDER_CLASS))
+        {
             if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getFocusedWindow(), "Do you want to remove the placeholder entry as well?",
                       "Remove PlaceHolder", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
                 return;
@@ -389,7 +399,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 log.info(""+sqle);
             }
         }
-	}
+    }
 }
 
 

@@ -40,7 +40,6 @@ public class DockerContainer implements DataRetrievalInterface
             addPort("127.0.0.1:6432", "6432");
             addPort("54329", "5432");
         }
-
     }
 
     public static class Web extends DockerContainer {
@@ -86,7 +85,10 @@ public class DockerContainer implements DataRetrievalInterface
     
     public DockerContainer(String image, String name)
     {
-        this.image      = image+":"+Prefs.getVersion();
+        if (image.contains(":"))
+            this.image  = image;
+        else
+            this.image  = image+":"+Prefs.getVersion();
         this.name       = name;        
         this.volumes    = new HashMap<String, String>();
         this.ports      = new HashMap<String, String>();
