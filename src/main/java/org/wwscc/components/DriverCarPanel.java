@@ -31,6 +31,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -133,9 +134,10 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		JTextArea ta = new JTextArea();
 		ta.setEditable(false);
 		ta.setLineWrap(false);
-		ta.setBackground((Color)UIManager.get("Label.background"));
-		ta.setForeground(new Color(20, 20, 150));
-		ta.setFont(new Font("Dialog", Font.PLAIN, 12));
+        ta.setEnabled(false);
+		UIDefaults d = new UIDefaults();
+		d.put("TextArea[Disabled+NotInScrollPane].textForeground", new Color(0, 0, 150));
+		ta.putClientProperty("Nimbus.Overrides", d);
 		
 		// ugly hack to set a preferred height based on lines of text
 	    ta.setSize(100,Short.MAX_VALUE);    
@@ -358,7 +360,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 		}
 	}
 
-	public static String driverDisplay(Driver d)
+	public String driverDisplay(Driver d)
 	{
 		StringBuilder ret = new StringBuilder();
 		ret.append(d.getDriverId()).append("\n");

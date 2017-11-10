@@ -11,6 +11,7 @@ package org.wwscc.dataentry;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import javax.swing.DefaultListCellRenderer;
@@ -66,8 +67,10 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 		changeit.addActionListener(this);
 		changeit.setEnabled(false);
 
-		driverInfo.setFont(new Font("Dialog", Font.PLAIN, 10));
-		carInfo.setFont(new Font("Dialog", Font.PLAIN, 10));
+		driverInfo.setFont(new Font("Dialog", Font.PLAIN, 11));
+		carInfo.setFont(new Font("Dialog", Font.PLAIN, 11));
+		int dheight = (int)(carInfo.getPreferredSize().height * 0.7);
+		driverInfo.setPreferredSize(new Dimension(Short.MAX_VALUE, dheight));
 
 		add(createTitle("1. Search"), "wrap");
 		add(new JLabel("First Name"), "split, grow 0");
@@ -101,7 +104,7 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 	{
 		JLabel lbl = new JLabel(text);
 		lbl.setFont(new Font("serif", Font.BOLD, 16));
-		lbl.setBorder(new UnderlineBorder(10, 0, 0, 0));
+		lbl.setBorder(new UnderlineBorder(0, 0, 0, 0));
 
 		return lbl;
 	}
@@ -109,11 +112,22 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 	private JButton smallButton(String text)
 	{
 		JButton b = new JButton(text);
-		b.setFont(new Font(null, Font.PLAIN, 11));
+		b.setFont(new Font(null, Font.PLAIN, 10));
 		b.addActionListener(this);
 		return b;
 	}
-	
+
+    @Override
+    public String driverDisplay(Driver d)
+    {
+        StringBuilder ret = new StringBuilder();
+        ret.append(d.getDriverId()).append("\n");
+        ret.append(d.getFullName());
+        ret.append(", #").append(d.getMembership());
+        return ret.toString();
+    }
+
+
 	/**
 	 * Process events from the various buttons
 	 */
