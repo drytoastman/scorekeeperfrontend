@@ -51,7 +51,8 @@ public class HostSeriesSelectionDialog extends BaseDialog<HostSeriesSelectionDia
         List<MergeServer> data = Database.d.getMergeServers();
         ListIterator<MergeServer> iter = data.listIterator();
         while (iter.hasNext()) {
-            if (iter.next().isLocalHost())
+            MergeServer n = iter.next();
+            if ((n.isLocalHost()) || (!n.isActive() && !n.isRemote()))
                 iter.remove();
         }
         
