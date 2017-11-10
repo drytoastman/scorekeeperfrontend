@@ -524,10 +524,13 @@ public abstract class SQLDataInterface implements DataInterface
 	@Override
 	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
 	{
-	    // eventually record actual amounts here, just 1cent for now
+	    // eventually record actual amounts here, just 1 cent for now
 	    String txid = "onsite-"+car.getCarId();
-	    if (!paid)
+	    if (paid) // make sure onsite account is present
+	        executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('onsite', 'Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
+	    else
 	        txid = null;
+
 		String pay  = "INSERT INTO payments (txid, accountid, driverid, eventid, amount) VALUES (?, 'onsite', ?, ?, 0.01) ON CONFLICT (txid) DO ";
 		String reg  = "INSERT INTO registered (eventid, carid, txid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
 		if (overwrite)
