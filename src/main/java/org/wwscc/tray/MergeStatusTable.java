@@ -190,7 +190,9 @@ public class MergeStatusTable extends JTable {
         private boolean shouldDisplayError(DecoratedMergeServer server, String error)
         {
             if (error == null) return false;
-            if (!server.isActive() && error.contains("timeout expired")) return false;
+            if (server.isActive()) return true;
+            if (error.contains("timeout expired")) return false;
+            if (error.contains("Unable to obtain locks")) return false;
             return true;
         }
 
@@ -198,6 +200,10 @@ public class MergeStatusTable extends JTable {
         {
             if (error.contains("timeout expired"))
                 setToolTipText("<html>" + error + "<br/><br/>The remote scorekeeper machine is visible via UDP:5454 but we can't connect to the database at TCP:54329");
+            else if (error.contains("Unable to obtain locks"))
+                setToolTipText("<html>" + error + "<br/><br/>With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
+                                                            "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
+                                                            "to try again now");
             else
                 setToolTipText(error);
         }
