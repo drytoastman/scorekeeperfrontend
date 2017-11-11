@@ -59,7 +59,7 @@ public class TrayMonitor implements ActionListener
     Map<String, MenuItem> appMenus;
     MenuItem mBackendStatus, mMachineStatus;
     StateMachine state;
-    DataSyncInterface syncviewer;
+    DataSyncWindow syncviewer;
     TrayIcon trayIcon;
     FileLock filelock;
 
@@ -80,7 +80,7 @@ public class TrayMonitor implements ActionListener
         appMenus = new HashMap<String, MenuItem>();
         launched = new ArrayList<Process>();
         state = new StateMachine();
-        syncviewer = new DataSyncInterface();
+        syncviewer = new DataSyncWindow();
         
         PopupMenu trayPopup = new PopupMenu();        
         newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup, false);

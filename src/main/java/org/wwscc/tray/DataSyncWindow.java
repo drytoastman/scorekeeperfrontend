@@ -52,9 +52,9 @@ import org.wwscc.util.Prefs;
 
 import net.miginfocom.swing.MigLayout;
 
-public class DataSyncInterface extends JFrame implements MessageListener, DiscoveryListener
+public class DataSyncWindow extends JFrame implements MessageListener, DiscoveryListener
 {
-    private static final Logger log = Logger.getLogger(DataSyncInterface.class.getName());
+    private static final Logger log = Logger.getLogger(DataSyncWindow.class.getName());
 
     private final Thread queryT = new UpdaterThread();
     List<Action> actions;
@@ -62,7 +62,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
     MergeStatusTable activetable, inactivetable;
     boolean done;
 
-    public DataSyncInterface()
+    public DataSyncWindow()
     {
         super("Data Synchronization");
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -132,7 +132,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
                 a.setEnabled(true);
             updateDiscoverySetting(Prefs.getAllowDiscovery());
 
-            Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncInterface.this);
+            Messenger.register(MT.DATABASE_NOTIFICATION, DataSyncWindow.this);
 
             // force an update on start, on the event thread
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
@@ -339,7 +339,7 @@ public class DataSyncInterface extends JFrame implements MessageListener, Discov
         AppSetup.appSetup("datasync");
 
         Database.openPublic(true);
-        DataSyncInterface v = new DataSyncInterface();
+        DataSyncWindow v = new DataSyncWindow();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
         v.startQueryThread();
