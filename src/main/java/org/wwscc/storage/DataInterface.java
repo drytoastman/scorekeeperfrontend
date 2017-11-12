@@ -29,6 +29,12 @@ public interface DataInterface
 	public void close();
 	
 	/**
+	 * Get the data type version
+	 * @return the version schema string
+	 */
+	public String getVersion();
+
+	/**
 	 * @param key the setting to lookup
 	 * @return the string value of the setting
 	 */

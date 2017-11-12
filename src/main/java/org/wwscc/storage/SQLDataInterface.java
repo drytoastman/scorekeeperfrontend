@@ -75,6 +75,21 @@ public abstract class SQLDataInterface implements DataInterface
 
 
 	@Override
+    public String getVersion()
+    {
+        try
+        {
+            ResultSet rs = executeSelect("select version from version", null);
+            if (rs.next())
+                return rs.getString("version");
+        } catch (SQLException ioe) {
+            logError("getVersion", ioe);
+        }
+        return "unknown";
+    }
+
+
+	@Override
 	public String getSetting(String key)
 	{
 		try
