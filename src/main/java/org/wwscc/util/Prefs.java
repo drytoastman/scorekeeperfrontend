@@ -103,7 +103,7 @@ public class Prefs
         return p;
     }
     
-    private static Path getRootDir()
+    public static Path getRootDir()
     {
         return _ensureDirectory(Paths.get(System.getProperty("user.home"), "scorekeeper"));
     }

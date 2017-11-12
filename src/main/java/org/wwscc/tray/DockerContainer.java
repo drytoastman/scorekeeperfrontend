@@ -190,6 +190,17 @@ public class DockerContainer implements DataRetrievalInterface
         }
         return ret == 0;
     }
+    
+    public boolean importDatabase(Path path)
+    {
+        String tmp = "/tmp"+path.getFileName().toString();
+        if (Exec.execit(Exec.build(machineenv, "docker", "cp", path.toString(), name+":"+tmp), null) == 0) {
+            ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "ash", "-c", "unzip -p "+tmp+" | psql -U postgres");
+            p.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("import.log").toFile()));
+            return (Exec.execit(p, null) == 0);            
+        }
+        return false;
+    }
 
     @Override
     public boolean copyLogs(Path dir)

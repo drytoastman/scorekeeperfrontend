@@ -1,9 +1,13 @@
 package org.wwscc.tray;
 
+import java.awt.Window;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -11,9 +15,14 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.FocusManager;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -203,6 +212,7 @@ public class DockerMonitors
     {
         private Map<String, DockerContainer> containers;
         private Set<String> names;
+        private Path toimport;
 
         public ContainerMonitor(TrayStateInterface state)
         {
@@ -214,6 +224,7 @@ public class DockerMonitors
             names = new HashSet<String>();
             for (DockerContainer c : containers.values())
                 names.add(c.getName());
+            toimport = null;
             Messenger.register(MT.POKE_SYNC_SERVER, this);
         }
 
@@ -241,6 +252,26 @@ public class DockerMonitors
             boolean ok = true;
             Set<String> dead = DockerContainer.finddown(state.getMachineEnv(), names);
 
+            // interrupt our regular schedule to shutdown and import data
+            if (toimport != null) {
+                state.setBackendStatus("Preparing to import");
+                List<DockerContainer> nondb = new ArrayList<DockerContainer>();
+                nondb.add(containers.get("web"));
+                nondb.add(containers.get("sync"));
+                DockerContainer.stopAll(nondb);
+                
+                state.setBackendStatus("Importing ...");
+                log.info("importing "  + toimport);
+                Window active = FocusManager.getCurrentManager().getActiveWindow();
+                boolean success = containers.get("db").importDatabase(toimport);
+                toimport = null;
+                
+                if (success)
+                    JOptionPane.showMessageDialog(active, "Import and conversion was successful", "Import Success", JOptionPane.INFORMATION_MESSAGE);
+                else
+                    JOptionPane.showMessageDialog(active, "Import failed, see logs", "Import Failed", JOptionPane.ERROR_MESSAGE);
+            }
+            
             // Something isn't running, try and start them now            
             if (dead.size() > 0) {
                 ok = false;
@@ -293,6 +324,35 @@ public class DockerMonitors
 			{
 				containers.get("sync").poke();
 			}
+		}
+		
+        public void importRequest()
+        {
+	        Window active = FocusManager.getCurrentManager().getActiveWindow();
+	        final JFileChooser fc = new JFileChooser() {
+	            @Override
+	            public void approveSelection(){
+	                File f = getSelectedFile();
+	                if (!f.getName().contains("schema")) {
+	                    JOptionPane.showMessageDialog(active, "This file has no schema information in its name");
+	                    cancelSelection();
+	                    return;
+	                }
+	                super.approveSelection();
+	            }    
+	        };
+	        
+	        fc.setDialogTitle("Specify a backup file to import");
+	        fc.setCurrentDirectory(Prefs.getRootDir().toFile());
+	        int returnVal = fc.showOpenDialog(active);
+	        if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
+	            return;
+
+	        if (JOptionPane.showConfirmDialog(active, "This will overwrite any data in the current database, is that okay?", 
+	                                            "Import Data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
+	            return;
+	        
+	        toimport = fc.getSelectedFile().toPath();
 		}
     }
 }

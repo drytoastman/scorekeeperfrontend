@@ -90,6 +90,7 @@ public class TrayMonitor implements ActionListener
         newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup, false);
         trayPopup.addSeparator();
         newAppItem("Data Sync",        "datasync",     trayPopup, false);
+        newAppItem("Import Data",      "importdata",    trayPopup, false);
         newAppItem("Debug Collection", "debugcollect", trayPopup, true);
 
         trayPopup.addSeparator();
@@ -199,6 +200,10 @@ public class TrayMonitor implements ActionListener
             case "datasync":
                 syncviewer.setVisible(true);
                 syncviewer.toFront();
+                break;
+                
+            case "importdata":
+                cmonitor.importRequest();
                 break;
 
             case "Quit":
