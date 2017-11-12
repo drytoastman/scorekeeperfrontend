@@ -337,7 +337,7 @@ public class TrayMonitor implements ActionListener
             Database.d.close();
 
             // second backup the database
-            cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".pgdump"));            
+            cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".pgdump"), true);
 
             // note the shutdown flag and wake up our monitors to finish up
             _applicationdone = true;

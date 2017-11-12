@@ -275,9 +275,9 @@ public class DockerMonitors
         }
 
         @Override
-        public boolean dumpDatabase(Path file) 
+        public boolean dumpDatabase(Path file, boolean compress)
         {
-            return containers.get("db").dumpDatabase(file);
+            return containers.get("db").dumpDatabase(file, compress);
         }
         
         @Override

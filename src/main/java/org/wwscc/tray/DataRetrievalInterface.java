@@ -10,9 +10,10 @@ public interface DataRetrievalInterface
     /**
      * Call through docker to run pg_dump and pipe the output to file
      * @param file the file to write the backup data to
+     * @param compress true if we should compress the output file into a zip
      * @return true if succeeded
      */
-    public boolean dumpDatabase(Path file);
+    public boolean dumpDatabase(Path file, boolean compress);
     
     /**
      * Call through docker to copy log files from container to host

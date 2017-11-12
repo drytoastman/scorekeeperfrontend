@@ -8,7 +8,10 @@
 
 package org.wwscc.tray;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,12 +23,19 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
 public class DockerContainer implements DataRetrievalInterface
 {
+    private static final Logger log = Logger.getLogger(DockerContainer.class.getCanonicalName());
+
     public static final String DBV_PREFIX   = "scdatabase-";
     public static final String LOGV_PREFIX  = "sclogs-";
     public static final String SOCKV_PREFIX = "scsocket";
@@ -160,11 +170,25 @@ public class DockerContainer implements DataRetrievalInterface
     }
     
     @Override
-    public boolean dumpDatabase(Path file) 
+    public boolean dumpDatabase(Path path, boolean compress) 
     {
-        ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "pg_dump", "-U", "postgres", "-F", "c", "-d", "scorekeeper");
-        p.redirectOutput(Redirect.appendTo(file.toFile()));
-        return Exec.execit(p, null) == 0;      
+        ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "pg_dumpall", "-U", "postgres", "-c");
+        p.redirectOutput(Redirect.appendTo(path.toFile()));
+        int ret = Exec.execit(p, null);
+        if ((ret == 0) && compress) {
+            try {
+                ZipOutputStream out = new ZipOutputStream(new FileOutputStream(path.toFile()+".zip"));
+                out.putNextEntry(new ZipEntry(path.getFileName().toString()));
+                FileInputStream in = new FileInputStream(path.toFile());
+                IOUtils.copy(in, out);
+                IOUtils.closeQuietly(out);
+                IOUtils.closeQuietly(in);
+                Files.deleteIfExists(path);
+            } catch (Exception ioe) {
+                log.log(Level.INFO, "Unable to compress database backup: " + ioe, ioe);
+            }
+        }
+        return ret == 0;
     }
 
     @Override

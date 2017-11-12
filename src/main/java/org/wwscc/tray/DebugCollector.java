@@ -93,7 +93,7 @@ public class DebugCollector extends Thread
             retrieval.copyLogs(temp);
             monitor.setProgress(30);
             monitor.setNote("dump database data");
-            retrieval.dumpDatabase(temp.resolve("database.pgdump"));
+            retrieval.dumpDatabase(temp.resolve("database.pgdump"), false);
           
             monitor.setProgress(60);
             monitor.setNote("adding backend logs to zipfile");
