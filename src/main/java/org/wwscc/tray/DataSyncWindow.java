@@ -351,6 +351,7 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
         DataSyncWindow v = new DataSyncWindow();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
+        v.setUpdaterState(UpdaterState.ACTIVE);
         while (true)
         {
             Thread.sleep(2000);

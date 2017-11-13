@@ -141,8 +141,8 @@ public class MergeStatusTable extends JTable {
 
         Color[] good  = new Color[] { Color.BLACK, Color.WHITE };
         Color[] inact = new Color[] { Color.BLACK, Color.LIGHT_GRAY };
-        Color[] abad  = new Color[] { Color.BLACK, new Color(210,  60,  60) };
-        Color[] ibad  = new Color[] { Color.BLACK, new Color(160, 100, 100) };
+        Color[] abad  = new Color[] { Color.WHITE, new Color(210,  60,  60) };
+        Color[] ibad  = new Color[] { new Color(230, 230, 230), new Color(160, 100, 100) };
         Color mycolor = new Color(240, 240, 255);
 
         SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -196,16 +196,24 @@ public class MergeStatusTable extends JTable {
             return true;
         }
 
-        private void setToolTip(String error)
+        private String getToolTip(String error)
         {
+            String head = "<html>" + error + "<br/><br/>";
             if (error.contains("timeout expired"))
-                setToolTipText("<html>" + error + "<br/><br/>The remote scorekeeper machine is visible via UDP:5454 but we can't connect to the database at TCP:54329");
+                return head + "The remote scorekeeper machine is visible via UDP:5454 but we can't connect to the database at TCP:54329";
             else if (error.contains("Unable to obtain locks"))
-                setToolTipText("<html>" + error + "<br/><br/>With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
-                                                            "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
-                                                            "to try again now");
+                return head + "With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
+                              "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
+                              "to try again now";
+            else if (error.contains("Different schema"))
+                return head + "The remote machine has a software that is newer (or older) than this computer and<br/>" + 
+                              "cannot be merged with due to database schema differences.  The older machine should<br/>" + 
+                              "be updated with the latest software.";
+            else if (error.contains("No password"))
+                return head + "There is no open password in the local database with which to connect to the remote<br/>" +
+                              "machine.  This is a rare occurence that needs manual intervention and should be reported";
             else
-                setToolTipText(error);
+                return error;
         }
 
         @Override
@@ -259,7 +267,7 @@ public class MergeStatusTable extends JTable {
 
                     String error = (String)seriesstatus.get("error");
                     if (shouldDisplayError(server, error)) {
-                        setToolTip(error);
+                        setToolTipText(getToolTip(error));
                         setText(error);
                         setColors(server.isActive(), true);
                     } else {
