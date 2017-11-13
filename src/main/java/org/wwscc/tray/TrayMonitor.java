@@ -15,10 +15,12 @@ import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.channels.FileChannel;
@@ -33,6 +35,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.FocusManager;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.PostgresqlDatabase;
@@ -83,15 +87,15 @@ public class TrayMonitor implements ActionListener
         syncviewer = new DataSyncWindow();
         
         PopupMenu trayPopup = new PopupMenu();        
+        newAppItem("Data Synchronization", "datasync",     trayPopup, false);
         newAppItem("DataEntry",        "org.wwscc.dataentry.DataEntry",       trayPopup, false);
         newAppItem("Registration",     "org.wwscc.registration.Registration", trayPopup, false);
         newAppItem("ProTimer",         "org.wwscc.protimer.ProSoloInterface", trayPopup, false);
         newAppItem("ChallengeGUI",     "org.wwscc.challenge.ChallengeGUI",    trayPopup, false);
         newAppItem("BWTimer",          "org.wwscc.bwtimer.Timer",             trayPopup, false);
         trayPopup.addSeparator();
-        newAppItem("Data Sync",        "datasync",     trayPopup, false);
-        newAppItem("Import Data",      "importdata",    trayPopup, false);
-        newAppItem("Debug Collection", "debugcollect", trayPopup, true);
+        newAppItem("Debug Collection",     "debugcollect", trayPopup, true);
+        newAppItem("Import Previous Data", "importdata",   trayPopup, false);
 
         trayPopup.addSeparator();
         mBackendStatus = new MenuItem("Backend:");
@@ -203,7 +207,7 @@ public class TrayMonitor implements ActionListener
                 break;
                 
             case "importdata":
-                cmonitor.importRequest();
+                state.importRequest();
                 break;
 
             case "Quit":
@@ -294,7 +298,7 @@ public class TrayMonitor implements ActionListener
 	                setBackendStatus("Waiting for Database");
 	        	    PostgresqlDatabase.waitUntilUp();
 		        	Database.openPublic(true);
-		        	syncviewer.startQueryThread();
+		        	syncviewer.setUpdaterState(DataSyncWindow.UpdaterState.ACTIVE);
 		        	for (MenuItem m : appMenus.values())
 		        		m.setEnabled(true);
 	            }
@@ -302,7 +306,43 @@ public class TrayMonitor implements ActionListener
 	            _currentIcon = next;
 	        }
         }
-                
+        
+        public void importRequest()
+        {
+	        Window active = FocusManager.getCurrentManager().getActiveWindow();
+	        final JFileChooser fc = new JFileChooser() {
+	            @Override
+	            public void approveSelection(){
+	                File f = getSelectedFile();
+	                if (!f.getName().contains("schema")) {
+	                    JOptionPane.showMessageDialog(active, "This file has no schema information in its name");
+	                    cancelSelection();
+	                    return;
+	                }
+	                super.approveSelection();
+	            }    
+	        };
+	        
+	        fc.setDialogTitle("Specify a backup file to import");
+	        fc.setCurrentDirectory(Prefs.getRootDir().toFile());
+	        int returnVal = fc.showOpenDialog(active);
+	        if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
+	            return;
+
+	        if (JOptionPane.showConfirmDialog(active, "This will overwrite any data in the current database, is that okay?", 
+	                                            "Import Data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
+	            return;
+        	
+            for (Process p : launched) {
+                if (p.isAlive())
+                    p.destroy();
+            }
+        	syncviewer.setUpdaterState(DataSyncWindow.UpdaterState.IDLE);
+            Database.d.close();
+            cmonitor.importRequest(fc.getSelectedFile().toPath());
+            cmonitor.poke();
+        }
+        
         public void shutdownRequest()
         {
             if (_shutdownrequested) 
@@ -338,12 +378,12 @@ public class TrayMonitor implements ActionListener
                 if (p.isAlive())
                     p.destroy();
             }
-            syncviewer.stopQueryThread();
+        	syncviewer.setUpdaterState(DataSyncWindow.UpdaterState.STOP);
             String ver = Database.d.getVersion();
             Database.d.close();
 
             // second backup the database
-            String date = new SimpleDateFormat("yy-MM-dd+HH-mm").format(new Date());
+            String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
             cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
 
             // note the shutdown flag and wake up our monitors to finish up

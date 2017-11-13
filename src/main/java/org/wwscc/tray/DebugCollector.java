@@ -28,6 +28,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
+import org.wwscc.storage.Database;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
 
@@ -93,8 +94,11 @@ public class DebugCollector extends Thread
             retrieval.copyLogs(temp);
             monitor.setProgress(30);
             monitor.setNote("dump database data");
-            retrieval.dumpDatabase(temp.resolve("database.pgdump"), false);
-          
+
+            String ver = Database.d.getVersion();
+            retrieval.dumpDatabase(temp.resolve(String.format("database#schema_%s.pgdump", ver)), false);
+
+            // second backup the database            
             monitor.setProgress(60);
             monitor.setNote("adding backend logs to zipfile");
             addLogs(temp);

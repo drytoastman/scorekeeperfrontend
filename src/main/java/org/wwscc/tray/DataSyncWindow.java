@@ -55,12 +55,12 @@ import net.miginfocom.swing.MigLayout;
 public class DataSyncWindow extends JFrame implements MessageListener, DiscoveryListener
 {
     private static final Logger log = Logger.getLogger(DataSyncWindow.class.getName());
+    public static enum UpdaterState { IDLE, ACTIVE, STOP };
 
-    private final Thread queryT = new UpdaterThread();
     List<Action> actions;
     MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
-    boolean done;
+    UpdaterState ustate;
 
     public DataSyncWindow()
     {
@@ -103,17 +103,13 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
         
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
+        ustate = UpdaterState.IDLE;
+        new UpdaterThread().start();
     }
 
-    
-    public void startQueryThread()
+    public void setUpdaterState(UpdaterState s)
     {
-        queryT.start();
-    }
-
-    public void stopQueryThread()
-    {
-        done = true;
+        ustate = s;
     }
 
     class UpdaterThread extends Thread
@@ -121,12 +117,23 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
         @Override
         public void run()
         {
-            done = false;
+            while (ustate != UpdaterState.STOP) {
+                try {
+                    if (ustate == UpdaterState.ACTIVE)
+                        inner();
+                    else
+                        Thread.sleep(1000);
+                } catch (Exception e) {}
+            }
+        }
+
+        private void inner()
+        {
             // These two should always be there
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
             Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
             Database.d.mergeServerInactivateAll();
-            
+
             // enable menus and start discovery if its turned on
             for (Action a : actions)
                 a.setEnabled(true);
@@ -138,7 +145,7 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
 
             // other wise, we just ping/poke the database which is the only way to receive any NOTICE events
-            while (!done) {
+            while (ustate == UpdaterState.ACTIVE) {
                 try {
                     Database.d.ping();
                     Thread.sleep(1000);
@@ -146,6 +153,8 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
                     log.log(Level.WARNING, e.toString(), e);
                 }
             }
+
+            Database.d.mergeServerInactivateAll();
         }
     }
 
@@ -342,7 +351,6 @@ public class DataSyncWindow extends JFrame implements MessageListener, Discovery
         DataSyncWindow v = new DataSyncWindow();
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
-        v.startQueryThread();
         while (true)
         {
             Thread.sleep(2000);
