@@ -169,14 +169,14 @@ public class MergeStatusTable extends JTable {
             else setText(dformat.format(time));
         }
 
-        private void setTextLimit(String s, int limit)
+        private String textLimit(String s, int limit)
         {
             if (s == null)
-                setText("");
+                return "";
             else if (s.length() > limit)
-                setText(s.substring(0, limit));
+                return s.substring(0, limit);
             else
-                setText(s);
+                return s;
         }
 
         private boolean isMismatchedWithLocal(JTable table, int col, String testhash)
@@ -187,20 +187,11 @@ public class MergeStatusTable extends JTable {
             return !testhash.equals(lhash);
         }
 
-        private boolean shouldDisplayError(DecoratedMergeServer server, String error)
+        private String getToolTip(String error, String hash)
         {
-            if (error == null) return false;
-            if (server.isActive()) return true;
-            if (error.contains("timeout expired")) return false;
-            if (error.contains("Unable to obtain locks")) return false;
-            return true;
-        }
-
-        private String getToolTip(String error)
-        {
-            String head = "<html>" + error + "<br/><br/>";
+            String head = "<html>" + hash + "<br/>" + error + "<br/><br/>";
             if (error.contains("timeout expired"))
-                return head + "The remote scorekeeper machine is visible via UDP:5454 but we can't connect to the database at TCP:54329";
+                return head + "The remote database is visible via UDP:5454 but we can't connect to the database at TCP:54329";
             else if (error.contains("Unable to obtain locks"))
                 return head + "With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
                               "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
@@ -213,7 +204,7 @@ public class MergeStatusTable extends JTable {
                 return head + "There is no open password in the local database with which to connect to the remote<br/>" +
                               "machine.  This is a rare occurence that needs manual intervention and should be reported";
             else
-                return error;
+                return head;
         }
 
         @Override
@@ -266,17 +257,18 @@ public class MergeStatusTable extends JTable {
                     }
 
                     String error = (String)seriesstatus.get("error");
-                    if (shouldDisplayError(server, error)) {
-                        setToolTipText(getToolTip(error));
+                    String hash = (String)seriesstatus.get("totalhash");
+
+                    if (error != null) {
+                        setToolTipText(getToolTip(error, textLimit(hash, 12)));
                         setText(error);
                         setColors(server.isActive(), true);
                     } else {
-                        String hash = (String)seriesstatus.get("totalhash");
-                        setTextLimit(hash, 12);
                         if (isMismatchedWithLocal(table, col, hash))
                             setColors(server.isActive(), true);
                         if (seriesstatus.containsKey("syncing"))
                             setIcon(syncing);
+                        setText(textLimit(hash, 12));
                         setFont(bold);
                     }
                     break;
