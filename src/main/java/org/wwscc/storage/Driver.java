@@ -25,6 +25,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	protected String username;
 	protected String password;
 	protected String membership;
+	protected boolean optoutmail;
 
 	public Driver()
 	{
@@ -36,6 +37,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		username = driverid.toString();
 		password = "";
 		membership = "";
+		optoutmail = false;
 	}
 
 	public Driver(String f, String l)
@@ -55,6 +57,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		username   = rs.getString("username");
 		password   = rs.getString("password");
 		membership = rs.getString("membership");
+		optoutmail = rs.getBoolean("optoutmail");
 	}
 
 	public LinkedList<Object> getValues()
@@ -67,6 +70,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 		ret.add(username);
 		ret.add(password);
 		ret.add(membership);
+		ret.add(optoutmail);
 		attrCleanup();
 		ret.add(attr);
 		return ret;
@@ -86,6 +90,7 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	public String getBrag()       { return getAttrS("brag"); }
 	public String getSponsor()    { return getAttrS("sponsor"); }
 	public String getAlias()      { return getAttrS("alias"); }
+    public boolean getOptOutMail(){ return optoutmail; }
 
 	public void setFirstName(String s)  { firstname = s; }
 	public void setLastName(String s)   { lastname = s; }
@@ -100,6 +105,8 @@ public class Driver extends AttrBase //implements Comparable<Driver>
 	public void setBrag(String s)       { setAttrS("brag", s); }
 	public void setSponsor(String s)    { setAttrS("sponsor", s); }
 	public void setAlias(String s)      { setAttrS("alias", s); }
+    public void setOptOutMail(boolean b){ optoutmail = b; }
+
 
 	@Override
 	public boolean equals(Object o)

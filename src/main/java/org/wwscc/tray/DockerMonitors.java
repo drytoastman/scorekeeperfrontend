@@ -1,6 +1,5 @@
 package org.wwscc.tray;
 
-import java.awt.Window;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,9 +12,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.swing.FocusManager;
-import javax.swing.JOptionPane;
 
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.StatusDialog;
@@ -251,7 +247,6 @@ public class DockerMonitors
 
             // interrupt our regular schedule to shutdown and import data
             if (toimport != null) {
-                Window active = FocusManager.getCurrentManager().getActiveWindow();
                 StatusDialog dialog = new StatusDialog();
                 dialog.doDialog("Old Data Import", new DialogFinisher<Object>() {
                 		@Override public void dialogFinished(Object object) {

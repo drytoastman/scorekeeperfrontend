@@ -45,7 +45,13 @@ public class DriverDialog extends BaseDialog<Driver>
 
 		/* row 1 */
 		c.gridx = 0; c.gridy = 1; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Email", false), c);
-		c.gridx = 1; c.gridy = 1; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("email", d.getEmail()), c);
+        JPanel check = new JPanel(new GridBagLayout());
+          c.gridx = 0; c.gridy = 0; c.gridwidth = 3; c.weightx = 1; check.add(entry("email", d.getEmail()), c);
+          c.gridx = 3; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; check.add(label("OptOut", false), c);
+          c.gridx = 4; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; check.add(checkbox("optoutmail", d.getOptOutMail()), c);
+        c.insets = new Insets(0,0,0,0);
+        c.gridx = 1; c.gridy = 1; c.gridwidth = 3; c.weightx = 0; mainPanel.add(check, c);
+        c.insets = new Insets(2,4,2,4);
 
 		/* row 2 */
 		c.gridx = 0; c.gridy = 2; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Address", false), c);
@@ -128,6 +134,7 @@ public class DriverDialog extends BaseDialog<Driver>
 		result.setBrag(getEntryText("brag"));
 		result.setSponsor(getEntryText("sponsor"));
 		result.setMembership(getEntryText("membership"));
+		result.setOptOutMail(isChecked("optoutmail"));
 		/*
 		for (DriverField field : xfields)
 		{
