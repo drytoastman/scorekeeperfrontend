@@ -1209,6 +1209,7 @@ public abstract class SQLDataInterface implements DataInterface
         {
             start();
             executeUpdate("DROP SCHEMA " + seriesname + " CASCADE", null);
+            executeUpdate("DELETE FROM results WHERE series=?", newList(seriesname));
             executeUpdate("DROP USER " + seriesname, null);
             commit();
         }
