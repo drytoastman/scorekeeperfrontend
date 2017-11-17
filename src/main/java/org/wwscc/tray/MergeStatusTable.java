@@ -191,7 +191,11 @@ public class MergeStatusTable extends JTable {
         {
             String head = "<html>" + hash + "<br/>" + error + "<br/><br/>";
             if (error.contains("timeout expired"))
-                return head + "The remote database is visible via UDP:5454 but we can't connect to the database at TCP:54329";
+                return head + "The remote database is visible via UDP:5454 but we can't connect to the database at TCP:54329<br/>" +
+                              "Are the firewall rules for 54329 in effect?";
+            else if (error.contains("could not connect to server"))
+                return head + "The remote database actively refused the connection.  This means we can reach the server but<br/>"+
+                              "nothing is listening on port 54329";
             else if (error.contains("Unable to obtain locks"))
                 return head + "With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
                               "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
@@ -240,9 +244,10 @@ public class MergeStatusTable extends JTable {
                         setText(server.getHostname()+"/"+server.getAddress());
                     break;
                 case 2:
-                    // set date but also mark colors if the last check has been too long
-                    setToDate(server.getLastCheck());
-                    if (!server.isLocalHost() && (System.currentTimeMillis() - server.getLastCheck().getTime() > server.getWaitTime()*2000))
+                    // set date but also mark colors if the last check has been too long (2x the server waittime)
+                    Timestamp last = server.getLastCheck();
+                    setToDate(last);
+                    if (!server.isLocalHost() && !last.before(epoch) && (System.currentTimeMillis() - last.getTime() > server.getWaitTime()*2000))
                         setColors(server.isActive(), true);
                     break;
                 case 3:
@@ -257,20 +262,25 @@ public class MergeStatusTable extends JTable {
                     }
 
                     String error = (String)seriesstatus.get("error");
+                    String progress = (String)seriesstatus.get("progress");
                     String hash = (String)seriesstatus.get("totalhash");
 
                     if (error != null) {
                         setToolTipText(getToolTip(error, textLimit(hash, 12)));
                         setText(error);
                         setColors(server.isActive(), true);
+                    } else if (progress != null) {
+                        setText(progress);
                     } else {
                         if (isMismatchedWithLocal(table, col, hash))
                             setColors(server.isActive(), true);
-                        if (seriesstatus.containsKey("syncing"))
-                            setIcon(syncing);
                         setText(textLimit(hash, 12));
                         setFont(bold);
                     }
+                    
+                    if (seriesstatus.containsKey("syncing"))
+                        setIcon(syncing);
+
                     break;
             }
             return this;
