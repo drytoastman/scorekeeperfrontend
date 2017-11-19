@@ -1,23 +1,33 @@
 package org.wwscc.tray;
 
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
+import org.wwscc.storage.Database;
+import org.json.simple.JSONObject;
 import org.wwscc.dialogs.StatusDialog;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
+import org.wwscc.util.Prefs;
+import org.wwscc.util.Discovery.DiscoveryListener;
+
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -26,9 +36,9 @@ import com.jcraft.jsch.Session;
  * The background threads that responsible for monitoring the status of our docker containers
  * and possibly the docker-machine setup (if needed).
  */
-public class DockerMonitors 
+public class Monitors
 {
-    private static final Logger log = Logger.getLogger(DockerMonitors.class.getName());
+    private static final Logger log = Logger.getLogger(Monitors.class.getName());
     public static final String RUNNING = "Running";
 
     /**
@@ -38,33 +48,37 @@ public class DockerMonitors
     {
         protected final Long ms;
         protected boolean quickrecheck;
-        protected TrayStateInterface state;
-         
+        protected StateControl state;
+
         protected abstract boolean minit();
         protected abstract boolean mloop();
         protected abstract void mshutdown();
-        
-        public Monitor(String name, long ms, TrayStateInterface state) { 
-        	super(name); 
-        	this.ms = ms;
-        	this.state = state;
+
+        public Monitor(String name, long ms, StateControl state) {
+            super(name);
+            this.ms = ms;
+            this.state = state;
         }
-        
-        public synchronized void poke() { 
-        	notify(); 
+
+        public synchronized void poke() {
+            notify();
         }
-        
+
+        public synchronized void pass() {
+            try {
+                this.wait(ms);
+            } catch (InterruptedException ie) {}
+        }
+
         @Override
         public void run() {
             if (!minit())
                 return;
             while (!state.isApplicationDone()) {
-                try {
-                    mloop();
-                    if (!quickrecheck)
-                        synchronized (this) { this.wait(ms); }
-                    quickrecheck = false;
-                } catch (InterruptedException e) {}
+                mloop();
+                if (!quickrecheck)
+                    pass();
+                quickrecheck = false;
             }
             mshutdown();
         }
@@ -81,7 +95,7 @@ public class DockerMonitors
         private String machinehost = "192.168.99.100";
         private Pattern hostpattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
 
-        public MachineMonitor(TrayStateInterface state)
+        public MachineMonitor(StateControl state)
         {
             super("MachineMonitor", 10000, state);
             machineenv = null;
@@ -102,7 +116,7 @@ public class DockerMonitors
             if (!DockerMachine.machinecreated())
             {
                 log.info("Creating a new docker machine.");
-                state.setMachineStatus("Creating VM");
+                Messenger.sendEvent(MT.MACHINE_STATUS, "Creating VM");
                 if (!DockerMachine.createmachine())
                 {
                     log.severe("\bUnable to create a docker machine.  See logs.");
@@ -125,7 +139,7 @@ public class DockerMonitors
             if (!DockerMachine.machinerunning())
             {
                 log.info("Starting the docker machine.");
-                state.setMachineStatus("Restarting VM");
+                Messenger.sendEvent(MT.MACHINE_STATUS, "Restarting VM");
                 if (!DockerMachine.startmachine())
                 {
                     log.severe("\bUnable to start docker machine. See logs.");
@@ -138,7 +152,7 @@ public class DockerMonitors
 
             state.signalMachineReady(true);
 
-            try 
+            try
             {
                 if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
                     throw new JSchException("Missing information in machinenv");
@@ -152,7 +166,7 @@ public class DockerMonitors
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
                     state.signalPortsReady(false);
-                    state.setMachineStatus("Forwarding ports 6432,59432 ...");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding ports 6432,59432 ...");
 
                     portforward = jsch.getSession("docker", machinehost);
                     portforward.setConfig("StrictHostKeyChecking", "no");
@@ -168,7 +182,7 @@ public class DockerMonitors
                 // else (i.e. database) can at least connect in the mean time
                 if ((port80forward == null) || (!port80forward.isConnected()))
                 {
-                    state.setMachineStatus("Forwarding port 80 ...");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding port 80 ...");
                     port80forward = jsch.getSession("docker", machinehost);
                     port80forward.setConfig("StrictHostKeyChecking", "no");
                     port80forward.setConfig("GSSAPIAuthentication",  "no");
@@ -176,24 +190,24 @@ public class DockerMonitors
                     port80forward.setPortForwardingL("*", 80, "127.0.0.1", 80);
                     port80forward.connect();
                 }
-            } 
-            catch (JSchException jse) 
+            }
+            catch (JSchException jse)
             {
                 log.log(Level.INFO, "Error setting up portforwarding: " + jse, jse);
                 return false;
             }
 
-            state.setMachineStatus(RUNNING);
+            Messenger.sendEvent(MT.MACHINE_STATUS, RUNNING);
             return true;
         }
 
         @Override
         protected void mshutdown()
         {
-        	state.setMachineStatus("Disconnecting ...");
+            Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnecting ...");
             if (portforward != null)
                 portforward.disconnect();
-            state.setMachineStatus("Disconnected");
+            Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnected");
         }
     }
 
@@ -208,7 +222,7 @@ public class DockerMonitors
         private Set<String> names;
         private Path toimport;
 
-        public ContainerMonitor(TrayStateInterface state)
+        public ContainerMonitor(StateControl state)
         {
             super("ContainerMonitor", 5000, state);
             containers = new HashMap<String, DockerContainer>();
@@ -222,23 +236,20 @@ public class DockerMonitors
             Messenger.register(MT.POKE_SYNC_SERVER, this);
         }
 
-        public boolean minit() 
+        public boolean minit()
         {
-        	state.setBackendStatus("Waiting for machine");
-            while (!state.isMachineReady()) {
-                try {
-                    synchronized (this) { this.wait(ms); }
-                } catch (InterruptedException ie) {}
-            }
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for machine");
+            while (!state.isMachineReady())
+                pass();
 
             for (DockerContainer c : containers.values()) {
-            	state.setBackendStatus("Init " + c.getName());
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Init " + c.getName());
                 c.setMachineEnv(state.getMachineEnv());
                 c.createNetsAndVolumes();
                 c.start();
             }
 
-            return true; 
+            return true;
         }
 
         public boolean mloop()
@@ -249,34 +260,34 @@ public class DockerMonitors
             if (toimport != null) {
                 StatusDialog dialog = new StatusDialog();
                 dialog.doDialog("Old Data Import", new DialogFinisher<Object>() {
-                		@Override public void dialogFinished(Object object) {
-					}});
-                
+                        @Override public void dialogFinished(Object object) {
+                    }});
+
                 dialog.setStatus("Preparing to import ...", -1);
-                state.setBackendStatus("Preparing to import");
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Preparing to import");
 
                 List<DockerContainer> nondb = new ArrayList<DockerContainer>();
                 nondb.add(containers.get("web"));
                 nondb.add(containers.get("sync"));
                 DockerContainer.stopAll(nondb);
-                
+
                 dialog.setStatus("Importing ...", -1);
-                state.setBackendStatus("Importing ...");
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Importing ...");
                 log.info("importing "  + toimport);
                 boolean success = containers.get("db").importDatabase(toimport);
                 toimport = null;
-                
+
                 if (success)
                     dialog.setStatus("Import and conversion was successful", 100);
                 else
-                	dialog.setStatus("Import failed, see logs", 100);
+                    dialog.setStatus("Import failed, see logs", 100);
             }
-            
-            // If something isn't running, try and start them now            
+
+            // If something isn't running, try and start them now
             Set<String> dead = DockerContainer.finddown(state.getMachineEnv(), names);
             if (dead.size() > 0) {
                 ok = false;
-                state.setBackendStatus("Restarting " + dead);
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Restarting " + dead);
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
                         if (!c.start()) {
@@ -288,22 +299,22 @@ public class DockerMonitors
                 }
             }
 
-            state.signalComposeReady(ok);
-            state.setBackendStatus(RUNNING);
+            state.signalContainersReady(ok);
+            Messenger.sendEvent(MT.BACKEND_STATUS, RUNNING);
             return ok;
         }
 
         public void mshutdown()
         {
-        	state.setBackendStatus("Shutting down");
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Shutting down");
             if (!DockerContainer.stopAll(containers.values()))
                 log.severe("\bUnable to stop the web and database services. See logs.");
             if (state.shouldStopMachine()) {
                 // we do this in the container monitor for ease of performing stopAll first
-                state.setBackendStatus("Shutting down machine");
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Shutting down machine");
                 DockerMachine.stopmachine();
             }
-            state.setBackendStatus("Stopped");
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Stopped");
         }
 
         @Override
@@ -311,25 +322,113 @@ public class DockerMonitors
         {
             return containers.get("db").dumpDatabase(file, compress);
         }
-        
+
         @Override
         public boolean copyLogs(Path dir)
         {
             return containers.get("db").copyLogs(dir);
         }
-        
-		@Override
-		public void event(MT type, Object data) 
-		{
-			if (type == MT.POKE_SYNC_SERVER) 
-			{
-				containers.get("sync").poke();
-			}
-		}
-		
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            if (type == MT.POKE_SYNC_SERVER)
+            {
+                containers.get("sync").poke();
+            }
+        }
+
         public void importRequest(Path p)
         {
-	        toimport = p;
-		}
+            toimport = p;
+        }
+    }
+
+
+    /**
+     * Thread to keep checking pinging the datbase to cause notifications
+     * for the discovery pieces. It can be 'paused' when the database is to be offline.
+     */
+    public static class MergeStatusMonitor extends Monitor implements DiscoveryListener
+    {
+        boolean paused;
+
+        public MergeStatusMonitor(StateControl state)
+        {
+            super("MergeStatusMonitor", 1000, state);
+            paused = true; // we start in the 'paused' state
+            Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
+        }
+
+        @Override
+        public boolean minit()
+        {
+            while (!state.isBackendReady())
+                pass();
+
+            // These two should always be there
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+            Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
+            Database.d.mergeServerInactivateAll();
+
+            // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
+            updateDiscoverySetting(Prefs.getAllowDiscovery());
+
+            // force an update on start, on the event thread
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+
+            return true;
+        }
+
+        @Override
+        public boolean mloop()
+        {
+            // we just ping/poke the database which is the only way to receive any NOTICE events
+            if (!paused)
+                Database.d.ping();
+            return true;
+        }
+
+        @Override
+        public void mshutdown()
+        {
+            // Database is already closed at this point, can't do anything else
+        }
+
+        public void setPause(boolean b)
+        {
+            paused = b;
+        }
+
+        @SuppressWarnings("unchecked")
+        private void updateDiscoverySetting(boolean up)
+        {
+            if (up)
+            {
+                JSONObject data = new JSONObject();
+                data.put("serverid", Prefs.getServerId().toString());
+                data.put("hostname", Network.getLocalHostName());
+                Discovery.get().addServiceListener(Discovery.DATABASE_TYPE, this);
+                Discovery.get().registerService(Discovery.DATABASE_TYPE, data);
+            }
+            else
+            {
+                Discovery.get().removeServiceListener(Discovery.DATABASE_TYPE, this);
+                Discovery.get().unregisterService(Discovery.DATABASE_TYPE);
+            }
+        }
+
+        @Override
+        public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
+        {
+            if (ip.equals(Network.getPrimaryAddress()))
+                return;
+            if (up) {
+                Database.d.mergeServerActivate(UUID.fromString((String)data.get("serverid")), (String)data.get("hostname"), ip.getHostAddress());
+            } else {
+                Database.d.mergeServerDeactivate(UUID.fromString((String)data.get("serverid")));
+            }
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
     }
 }

@@ -26,6 +26,15 @@ public enum MT {
 
     // TrayMonitor
     POKE_SYNC_SERVER,
+    DISCOVERY_CHANGE,
+    APP_LAUNCHED,
+    USING_MACHINE,
+    MACHINE_STATUS,
+    BACKEND_STATUS,
+    BACKEND_READY,
+    IMPORT_REQUEST,
+    DEBUG_REQUEST,
+
 
     // Admin
     //DELETE_SELECTED,

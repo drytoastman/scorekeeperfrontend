@@ -18,7 +18,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 /**
- * Simple presence and info detection.  Assumes that each IP will only be hosting one 
+ * Simple presence and info detection.  Assumes that each IP will only be hosting one
  * of each type of service string at this point.  Maybe more later but there doesn't
  * seem to be any need to support that.
  */
@@ -27,20 +27,20 @@ public class Discovery
 {
     private static final Logger log = Logger.getLogger(Discovery.class.getName());
     private static volatile Discovery singleton;
-    
+
     public static final String DISCOVERY_GROUP = "224.0.0.251";
     public static final int    DISCOVERY_PORT  = 5454;
     public static final long   TIMEOUT_MS      = 10000;
-    
+
     public static final String BWTIMER_TYPE    = "BWTIMER";
     public static final String PROTIMER_TYPE   = "PROTIMER";
     public static final String DATABASE_TYPE   = "DATABASE";
-    
-    public interface DiscoveryListener 
+
+    public interface DiscoveryListener
     {
         public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up);
     }
-    
+
     public static Discovery get()
     {
         if (singleton == null)
@@ -53,7 +53,7 @@ public class Discovery
     private byte[] localServicesBytes;
     private Map<String, Map<DiscoveryListener, StateAwareListener>> listeners;
     private JSONParser parser;
-    
+
     private Discovery()
     {
         localServices = new JSONObject();
@@ -63,7 +63,7 @@ public class Discovery
         new Thread(new ReceiverThread(), "DiscoveryReceiver").start();
         new Thread(new SenderThread(), "DiscoverySender").start();
     }
-    
+
     public void addServiceListener(String service, DiscoveryListener listener)
     {
         Map<DiscoveryListener, StateAwareListener> map = listeners.get(service);
@@ -77,26 +77,26 @@ public class Discovery
             map.put(listener, new StateAwareListener(service, listener));
         }
     }
-    
+
     public void removeServiceListener(String service, DiscoveryListener listener)
     {
         Map<DiscoveryListener, StateAwareListener> map = listeners.get(service);
         if (map != null)
             map.remove(listener);
     }
-    
-    public void registerService(String service, JSONObject data) 
+
+    public void registerService(String service, JSONObject data)
     {
         localServices.put(service, data);
         localServicesBytes = localServices.toJSONString().getBytes();
     }
-    
+
     public void unregisterService(String service)
     {
         localServices.remove(service);
         localServicesBytes = localServices.toJSONString().getBytes();
     }
-    
+
     public InetAddress getLocalAddress() throws SocketException
     {
         if (socket != null)
@@ -104,20 +104,20 @@ public class Discovery
         return null;
     }
 
-    
-    class TimedJSON 
+
+    class TimedJSON
     {
-        JSONObject json; 
+        JSONObject json;
         long time;
-        public TimedJSON(JSONObject j, long t) 
-        { 
-            json = j; 
-            time = t; 
+        public TimedJSON(JSONObject j, long t)
+        {
+            json = j;
+            time = t;
         }
     }
-    
+
     /**
-     * Each listener mainains its own state of when things are new or not as listeners
+     * Each listener maintains its own state of when things are new or not as listeners
      * come and go.
      */
     class StateAwareListener
@@ -125,14 +125,14 @@ public class Discovery
         String service;
         DiscoveryListener listener;
         Map<InetAddress, TimedJSON> registry;
-        
+
         public StateAwareListener(String service, DiscoveryListener listener)
         {
             this.service = service;
             this.listener = listener;
             this.registry = new HashMap<InetAddress, TimedJSON>();
         }
-        
+
         public void newData(InetAddress source, JSONObject serviceObject)
         {
             TimedJSON info = new TimedJSON(serviceObject, System.currentTimeMillis());
@@ -147,8 +147,8 @@ public class Discovery
             Iterator<Entry<InetAddress, TimedJSON>> iter = registry.entrySet().iterator();
             while (iter.hasNext())
             {
-                Map.Entry<InetAddress, TimedJSON> pair = iter.next();    
-                if (pair.getValue().time + TIMEOUT_MS < now) {    
+                Map.Entry<InetAddress, TimedJSON> pair = iter.next();
+                if (pair.getValue().time + TIMEOUT_MS < now) {
                     if (listeners.containsKey(service))
                         listener.serviceChange(service, pair.getKey(), pair.getValue().json, false);
                     iter.remove();
@@ -156,7 +156,7 @@ public class Discovery
             }
         }
     }
-    
+
 
     class SenderThread implements Runnable
     {
@@ -165,15 +165,15 @@ public class Discovery
         {
             while (true)
             {
-                try 
+                try
                 {
-                    if (localServices.size() > 0) 
+                    if (localServices.size() > 0)
                     {
                         checkSocket();
                         DatagramPacket packet = new DatagramPacket(localServicesBytes, localServicesBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT);
                         socket.send(packet);
                     }
-                    
+
                     Thread.sleep(3000);
                 }
                 catch (Exception e)
@@ -185,7 +185,7 @@ public class Discovery
         }
     }
 
-    
+
     class ReceiverThread implements Runnable
     {
         @Override
@@ -193,13 +193,13 @@ public class Discovery
         {
             byte[] buf = new byte[512];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            
-            while (true) 
+
+            while (true)
             {
-                try 
+                try
                 {
                     checkSocket();
-    
+
                     packet.setData(buf);
                     try {
                         socket.receive(packet);
@@ -250,18 +250,18 @@ public class Discovery
         socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
         log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getInterface()));
     }
-    
+
     private void closeSocket()
     {
-        if (socket != null) 
+        if (socket != null)
         {
             try {
                 socket.leaveGroup(InetAddress.getByName(DISCOVERY_GROUP));
-            } catch (IOException ioe1) { 
-                log.log(Level.FINER, "leavegroup: " + ioe1, ioe1); 
+            } catch (IOException ioe1) {
+                log.log(Level.FINER, "leavegroup: " + ioe1, ioe1);
             }
-            socket.close(); 
+            socket.close();
             socket = null;
-        }        
+        }
     }
 }
