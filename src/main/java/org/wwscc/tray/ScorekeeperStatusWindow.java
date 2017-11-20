@@ -58,9 +58,9 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Active Hosts"), "split");
-        content.add(button(actions.mergeAll), "gapleft 10");
         content.add(button(actions.mergeWith), "gapleft 10");
-        content.add(button(actions.downloadSeries), "gapleft 10, wrap");
+        content.add(button(actions.downloadSeries), "gapleft 10");
+        content.add(button(actions.mergeAll), "gapleft 10, wrap");
         content.add(new JScrollPane(activetable), "grow, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
@@ -116,6 +116,8 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         Color okfg = new Color(  0,  80,   0);
         Color notokbg = new Color(255, 200, 200);
         Color notokfg = new Color( 80,   0,   0);
+        Color nnbg = new Color(200, 200, 200);
+        Color nnfg = new Color( 70,  70,  70);
 
         public StatusLabel(MT event)
         {
@@ -134,8 +136,16 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         {
             String txt = (String)data;
             setText(txt);
-            setBackground(txt.equals(Monitors.RUNNING) ? okbg : notokbg);
-            setForeground(txt.equals(Monitors.RUNNING) ? okfg : notokfg);
+            if (txt.equals(Monitors.RUNNING)) {
+                setBackground(okbg);
+                setForeground(okfg);
+            } else if (txt.equalsIgnoreCase(Monitors.NOTNEEDED)) {
+                setBackground(nnbg);
+                setForeground(nnfg);
+            } else {
+                setBackground(notokbg);
+                setForeground(notokfg);
+            }
         }
     }
 

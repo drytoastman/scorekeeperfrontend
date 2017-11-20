@@ -40,6 +40,8 @@ public class Monitors
 {
     private static final Logger log = Logger.getLogger(Monitors.class.getName());
     public static final String RUNNING = "Running";
+    public static final String NOTNEEDED = "Not Needed";
+
 
     /**
      * Abstract class to define the basic init, loop/wait and shutdown phases of our monitors
@@ -115,6 +117,7 @@ public class Monitors
                 state.signalPortsReady(true);
                 state.signalMachineReady(true);
                 state.setUsingMachine(false);
+                Messenger.sendEvent(MT.MACHINE_STATUS, NOTNEEDED);
                 return false;
             }
 

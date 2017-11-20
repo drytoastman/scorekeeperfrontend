@@ -82,12 +82,11 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
             errornote.setText("Checking ...");
             if (passchecker != null)
                 passchecker.cancel(true);
-            MergeServer h = (MergeServer)getSelect("host");
             String s = (String)getSelect("series");
             String p = getEntryText("password");
-            if ((h != null) && (s != null) && (p != null))
+            if ((server != null) && (s != null) && (p != null))
             {
-                passchecker = new CheckRemotePassword(h.getConnectEndpoint(), s, p);
+                passchecker = new CheckRemotePassword(server.getConnectEndpoint(), s, p);
                 passchecker.execute();
             }
         }
@@ -102,6 +101,12 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         ret.series = (String)getSelect("series");
         ret.password = getEntryText("password");
         return ret;
+    }
+
+    @Override
+    public boolean verifyData()
+    {
+        return ok.getText().equals("Download");
     }
 
     class GetRemoteSeries extends SwingWorker<List<String>, String>
