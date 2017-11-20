@@ -41,98 +41,97 @@ import net.miginfocom.swing.MigLayout;
  */
 public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements ListSelectionListener
 {
-	//private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
-	private JServiceList list;
-	private List<String> services;
-	
-	/**
-	 * shortcut when only looking for a single name
-	 * @param serviceName the name of the servers to discover
-	 */
-	public SimpleFinderDialog(String serviceName)
-	{
-		this(Arrays.asList(new String[] { serviceName }));
-	}
-	
-	/**
-	 * Create the dialog
-	 * 
-	 * @param serviceNames the service names to look for
-	 */
-    public SimpleFinderDialog(List<String> serviceNames)
-	{
-		super(new MigLayout(""), false);
+    //private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
+    private JServiceList list;
+    private List<String> services;
 
-		// some defaults
-		Map<String, Icon> iconMap = new HashMap<String, Icon>();
-		iconMap.put(Discovery.BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
-		iconMap.put(Discovery.PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
-		iconMap.put(Discovery.DATABASE_TYPE, new ImageIcon(Resources.loadImage("server.gif")));
-		
-		list = new JServiceList(iconMap);
-		list.addListSelectionListener(this);
-		
-		JScrollPane p = new JScrollPane(list);
-        mainPanel.add(p, "w 300, h 400, growx, spanx 2, wrap");
-    
-		mainPanel.add(label("Host", false), "");
-		mainPanel.add(entry("host", ""), "growx, wrap");
-		mainPanel.add(label("Port", false), "");
-		mainPanel.add(ientry("port", 0), "growx, wrap");
-		result = null;
-
-		services = serviceNames;
-		for (String service : services) {
-		    Discovery.get().addServiceListener(service, list);
-		}
+    /**
+     * shortcut when only looking for a single name
+     * @param serviceName the name of the servers to discover
+     */
+    public SimpleFinderDialog(String serviceName)
+    {
+        this(Arrays.asList(new String[] { serviceName }));
     }
 
-	@Override
-	public void close()
-	{
+    /**
+     * Create the dialog
+     *
+     * @param serviceNames the service names to look for
+     */
+    public SimpleFinderDialog(List<String> serviceNames)
+    {
+        super(new MigLayout(""), false);
+
+        // some defaults
+        Map<String, Icon> iconMap = new HashMap<String, Icon>();
+        iconMap.put(Discovery.BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
+        iconMap.put(Discovery.PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
+
+        list = new JServiceList(iconMap);
+        list.addListSelectionListener(this);
+
+        JScrollPane p = new JScrollPane(list);
+        mainPanel.add(p, "w 300, h 400, growx, spanx 2, wrap");
+
+        mainPanel.add(label("Host", false), "");
+        mainPanel.add(entry("host", ""), "growx, wrap");
+        mainPanel.add(label("Port", false), "");
+        mainPanel.add(ientry("port", 0), "growx, wrap");
+        result = null;
+
+        services = serviceNames;
+        for (String service : services) {
+            Discovery.get().addServiceListener(service, list);
+        }
+    }
+
+    @Override
+    public void close()
+    {
         for (String service : services) {
             Discovery.get().removeServiceListener(service, list);
         }
-		super.close();
-	}
-	
-	/**
-	 * Called after OK to verify data before closing.
-	 */ 
-	@Override
-	public boolean verifyData()
-	{
-		try {
-			result = new InetSocketAddress(getEntryText("host"), getEntryInt("port"));
-		} catch (Exception e) {
-			result = null;
-		}
-		return (result != null);
-	}
+        super.close();
+    }
 
-	@Override
-	public void valueChanged(ListSelectionEvent e) 
-	{
-	    ServiceInfo f = list.getSelectedValue();
-		if (f != null)
-		{
-			setEntryText("host", f.ip.getHostAddress());
-			setEntryText("port", String.valueOf(f.serviceport));
-		}
-		else
-		{
-			setEntryText("host", "");
-			setEntryText("port", "");
-		}
-	}
+    /**
+     * Called after OK to verify data before closing.
+     */
+    @Override
+    public boolean verifyData()
+    {
+        try {
+            result = new InetSocketAddress(getEntryText("host"), getEntryInt("port"));
+        } catch (Exception e) {
+            result = null;
+        }
+        return (result != null);
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e)
+    {
+        ServiceInfo f = list.getSelectedValue();
+        if (f != null)
+        {
+            setEntryText("host", f.ip.getHostAddress());
+            setEntryText("port", String.valueOf(f.serviceport));
+        }
+        else
+        {
+            setEntryText("host", "");
+            setEntryText("port", "");
+        }
+    }
 
 }
 
 
-class ServiceInfo 
+class ServiceInfo
 {
     @Override
-    public int hashCode() 
+    public int hashCode()
     {
         final int prime = 31;
         int result = prime + ip.hashCode();
@@ -140,7 +139,7 @@ class ServiceInfo
     }
 
     @Override
-    public boolean equals(Object obj) 
+    public boolean equals(Object obj)
     {
         if (this == obj) return true;
         if ((obj == null) || (obj.getClass() != getClass())) return false;
@@ -151,7 +150,7 @@ class ServiceInfo
     String servicetype;
     InetAddress ip;
     int serviceport;
-    
+
     public ServiceInfo(String servicetype, InetAddress ip, JSONObject data)
     {
         this.servicetype = servicetype;
@@ -165,109 +164,109 @@ class ServiceInfo
 }
 
 
-class JServiceList extends JList<ServiceInfo> implements DiscoveryListener 
-{	
-	private static final Logger log = Logger.getLogger(JServiceList.class.getCanonicalName());
-	
-	private static Map<InetAddress, String> hostnames = new Hashtable<InetAddress, String>();  // map IP to name, need to do async to keep GUI lively
-	private static final Pattern lookslikeip = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
-	
-	DefaultListModel<ServiceInfo> serviceModel;
-	FoundServiceRenderer renderer;
-	
-	/**
-	 * Create a JList that can listen to a ServiceFinder and update its list accordingly
-	 * @param iconMap map of service types to an icon to use
-	 */
-	public JServiceList(Map<String, Icon> iconMap)
-	{
-		super();
-		serviceModel = new DefaultListModel<ServiceInfo>();
-		setModel(serviceModel);
-		renderer = new FoundServiceRenderer(iconMap);
-		setCellRenderer(renderer);
-	}
+class JServiceList extends JList<ServiceInfo> implements DiscoveryListener
+{
+    private static final Logger log = Logger.getLogger(JServiceList.class.getCanonicalName());
 
-	@Override
-	public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
-	{
-	    ServiceInfo info = new ServiceInfo(service, ip, data);
-	    if (up && !serviceModel.contains(info)) {
-	        serviceModel.addElement(info);  // FINISH ME
-	    } else {
-	        serviceModel.removeElement(info);
-	    }
+    private static Map<InetAddress, String> hostnames = new Hashtable<InetAddress, String>();  // map IP to name, need to do async to keep GUI lively
+    private static final Pattern lookslikeip = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
+
+    DefaultListModel<ServiceInfo> serviceModel;
+    FoundServiceRenderer renderer;
+
+    /**
+     * Create a JList that can listen to a ServiceFinder and update its list accordingly
+     * @param iconMap map of service types to an icon to use
+     */
+    public JServiceList(Map<String, Icon> iconMap)
+    {
+        super();
+        serviceModel = new DefaultListModel<ServiceInfo>();
+        setModel(serviceModel);
+        renderer = new FoundServiceRenderer(iconMap);
+        setCellRenderer(renderer);
+    }
+
+    @Override
+    public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
+    {
+        ServiceInfo info = new ServiceInfo(service, ip, data);
+        if (up && !serviceModel.contains(info)) {
+            serviceModel.addElement(info);  // FINISH ME
+        } else {
+            serviceModel.removeElement(info);
+        }
         repaint();
-	}
-	
+    }
 
-	/**
-	 * Renderer for displaying Icon and service information based on FoundService objects
-	 */
-	class FoundServiceRenderer extends DefaultListCellRenderer
-	{
-		Map<String, Icon> iconMap;
-		
-		public FoundServiceRenderer(Map<String, Icon> map)
-		{
-			iconMap = map;
-		}
-		
-		@Override
-		 public Component getListCellRendererComponent(
-	        JList<?> list,
-	        Object value,
-	        int index,
-	        boolean isSelected,
-	        boolean cellHasFocus)
-		 {
-			 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-			 if (value instanceof ServiceInfo)
-			 {
-			     ServiceInfo data = (ServiceInfo)value;
-				 String hostname = "";
-				 
-				 if (hostnames.containsKey(data.ip))
-					 hostname = hostnames.get(data.ip);
-				 else
-					 new Lookup(data.ip).execute();
-				 
-				 if (iconMap.containsKey(data.servicetype))
-				 {
-					setIcon(iconMap.get(data.servicetype));
-					setText(String.format("%s (%s:%s)", hostname, data.ip, data.serviceport));
-				 }
-				else
-				{
-					setIcon(null);
-					setText(String.format("%s (%s:%s) (type=%s)", hostname, data.ip, data.serviceport, data.servicetype));
-				}
-			 }
-			 return this;
-		 }
-	}
-	
-	/**
-	 * Use SwingWorker thread to do hostname lookup so GUI remains responsive
-	 */
-	class Lookup extends SwingWorker<String, Object>
-	{
-		InetAddress tofind;
-		public Lookup(InetAddress src) { tofind = src; }
-		@Override
-		protected String doInBackground() throws Exception { return tofind.getHostName(); }
-		@Override
-		protected void done()  {
-			try {
-				if (lookslikeip.matcher(get()).matches())  // don't resolve to IP?
-					return;
-				hostnames.put(tofind, get());
-				repaint();
-			} catch (Exception e) {
-				log.info("Failed to process hostname lookup: " + e.getMessage());
-			}
-		}
-	}
+
+    /**
+     * Renderer for displaying Icon and service information based on FoundService objects
+     */
+    class FoundServiceRenderer extends DefaultListCellRenderer
+    {
+        Map<String, Icon> iconMap;
+
+        public FoundServiceRenderer(Map<String, Icon> map)
+        {
+            iconMap = map;
+        }
+
+        @Override
+         public Component getListCellRendererComponent(
+            JList<?> list,
+            Object value,
+            int index,
+            boolean isSelected,
+            boolean cellHasFocus)
+         {
+             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+             if (value instanceof ServiceInfo)
+             {
+                 ServiceInfo data = (ServiceInfo)value;
+                 String hostname = "";
+
+                 if (hostnames.containsKey(data.ip))
+                     hostname = hostnames.get(data.ip);
+                 else
+                     new Lookup(data.ip).execute();
+
+                 if (iconMap.containsKey(data.servicetype))
+                 {
+                    setIcon(iconMap.get(data.servicetype));
+                    setText(String.format("%s (%s:%s)", hostname, data.ip, data.serviceport));
+                 }
+                else
+                {
+                    setIcon(null);
+                    setText(String.format("%s (%s:%s) (type=%s)", hostname, data.ip, data.serviceport, data.servicetype));
+                }
+             }
+             return this;
+         }
+    }
+
+    /**
+     * Use SwingWorker thread to do hostname lookup so GUI remains responsive
+     */
+    class Lookup extends SwingWorker<String, Object>
+    {
+        InetAddress tofind;
+        public Lookup(InetAddress src) { tofind = src; }
+        @Override
+        protected String doInBackground() throws Exception { return tofind.getHostName(); }
+        @Override
+        protected void done()  {
+            try {
+                if (lookslikeip.matcher(get()).matches())  // don't resolve to IP?
+                    return;
+                hostnames.put(tofind, get());
+                repaint();
+            } catch (Exception e) {
+                log.info("Failed to process hostname lookup: " + e.getMessage());
+            }
+        }
+    }
 }
 
 

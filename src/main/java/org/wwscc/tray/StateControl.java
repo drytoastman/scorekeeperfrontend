@@ -2,11 +2,13 @@ package org.wwscc.tray;
 
 import java.awt.Window;
 import java.io.File;
+import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.FocusManager;
@@ -20,8 +22,7 @@ import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 
 /**
- * Encapsulate the state shared between components so we can decide when or
- * when not to take further action.
+ * Encapsulate the state shared between components and the logic that binds them
  */
 public class StateControl
 {
@@ -45,13 +46,37 @@ public class StateControl
         _backendready          = false;
 
         launched = new ArrayList<Process>();
-        Messenger.register(MT.DEBUG_REQUEST,  (t,d) -> new DebugCollector(cmonitor).start());
-        Messenger.register(MT.IMPORT_REQUEST, (t,d) -> importRequest());
+        Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
+        Messenger.register(MT.IMPORT_REQUEST,   (t,d) -> importRequest());
+        Messenger.register(MT.LAUNCH_REQUEST,   (t,d) -> this.launchRequest((String)d));
+        Messenger.register(MT.SHUTDOWN_REQUEST, (t,d) -> this.shutdownRequest());
+    }
+
+
+    /**
+     * This actually starts the threads in the program and then waits for
+     * them to finish.  We can't used thread.join as it breaks thread.notify
+     * behavior during regular runtime.
+     */
+    public void startAndWaitForThreads()
+    {
+        cmonitor = new Monitors.ContainerMonitor(this);
+        cmonitor.start();
+        mmonitor = new Monitors.MachineMonitor(this);
+        mmonitor.start();
+        pmonitor = new Monitors.MergeStatusMonitor(this);
+        pmonitor.start();
+
+        try {
+            while (mmonitor.isAlive() || cmonitor.isAlive())
+                Thread.sleep(300);
+        } catch (InterruptedException ie) {
+            log.warning("\bTrayMonitor exiting due to interuption: " + ie);
+        }
     }
 
     public boolean isApplicationDone()          { return _applicationdone; }
     public boolean shouldStopMachine()          { return _shutdownmachine; }
-    public boolean arePortsForwarded()          { return _portsforwarded;  }
     public boolean isMachineReady()             { return _machineready;    }
     public boolean isBackendReady()             { return _backendready;    }
     public Map<String, String> getMachineEnv()  { return _machineenv;      }
@@ -87,6 +112,7 @@ public class StateControl
                 PostgresqlDatabase.waitUntilUp();
                 Database.openPublic(true);
             }
+            Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             Messenger.sendEvent(MT.BACKEND_READY, ok);
             pmonitor.setPause(false);
             _backendready = ok;
@@ -130,6 +156,35 @@ public class StateControl
         cmonitor.poke();
     }
 
+    public void launchRequest(String tolaunch)
+    {
+        try
+        {
+            ArrayList<String> cmd = new ArrayList<String>();
+            if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
+                cmd.add("javaw");
+            else
+                cmd.add("java");
+            cmd.add("-cp");
+            cmd.add(System.getProperty("java.class.path"));
+            cmd.add(tolaunch);
+            log.info(String.format("Running %s", cmd));
+            ProcessBuilder starter = new ProcessBuilder(cmd);
+            starter.redirectErrorStream(true);
+            starter.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("jvmlaunches.log").toFile()));
+            Process p = starter.start();
+            Thread.sleep(1000);
+            if (!p.isAlive()) {
+                throw new Exception("Process not alive after 1 second");
+            }
+            launched.add(p);
+        }
+        catch (Exception ex)
+        {
+            log.log(Level.SEVERE, String.format("\bFailed to launch %s",  tolaunch), ex);
+        }
+    }
+
     public void shutdownRequest()
     {
         if (_shutdownrequested)
@@ -159,6 +214,8 @@ public class StateControl
                 return;
         }
 
+        Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
+
         // first shutdown all the things with database connections
         _shutdownrequested = true;
         for (Process p : launched) {
@@ -181,27 +238,6 @@ public class StateControl
         pmonitor.poke();
     }
 
-    /**
-     * This actually starts the threads in the program and then waits for
-     * them to finish.  We can't used thread.join as it breaks thread.notify
-     * behavior during regular runtime.
-     */
-    public void startAndWaitForThreads()
-    {
-        cmonitor = new Monitors.ContainerMonitor(this);
-        cmonitor.start();
-        mmonitor = new Monitors.MachineMonitor(this);
-        mmonitor.start();
-        pmonitor = new Monitors.MergeStatusMonitor(this);
-        pmonitor.start();
-
-        try {
-            while (mmonitor.isAlive() || cmonitor.isAlive())
-                Thread.sleep(300);
-        } catch (InterruptedException ie) {
-            log.warning("\bTrayMonitor exiting due to interuption: " + ie);
-        }
-    }
 }
 
 

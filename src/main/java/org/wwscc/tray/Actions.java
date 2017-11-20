@@ -2,10 +2,8 @@ package org.wwscc.tray;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,7 +12,6 @@ import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.dialogs.SeriesSelectionDialog;
 import org.wwscc.dialogs.SeriesDialog;
@@ -30,102 +27,90 @@ public class Actions
 {
     private static final Logger log = Logger.getLogger(Actions.class.getName());
 
-    List<LaunchAppAction> apps;
+    List<Action> apps;
+    List<Action> others;
     Action debugRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
-    Action deleteSeries, discovery, resetHash;
+    Action deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
-        apps = new ArrayList<LaunchAppAction>();
-        apps.add(new LaunchAppAction("DataEntry",    "org.wwscc.dataentry.DataEntry"));
-        apps.add(new LaunchAppAction("Registration", "org.wwscc.registration.Registration"));
-        apps.add(new LaunchAppAction("ProTimer",     "org.wwscc.protimer.ProSoloInterface"));
-        apps.add(new LaunchAppAction("ChallengeGUI", "org.wwscc.challenge.ChallengeGUI"));
-        apps.add(new LaunchAppAction("BWTimer",      "org.wwscc.bwtimer.Timer"));
-        Messenger.register(MT.BACKEND_READY, (type, data) -> { for (Action a : apps) a.setEnabled((boolean)data); } );
+        apps = new ArrayList<Action>();
+        others = new ArrayList<Action>();
 
+        apps.add(new EventSendAction("DataEntry",    MT.LAUNCH_REQUEST, "org.wwscc.dataentry.DataEntry", null));
+        apps.add(new EventSendAction("Registration", MT.LAUNCH_REQUEST, "org.wwscc.registration.Registration", null));
+        apps.add(new EventSendAction("ProTimer",     MT.LAUNCH_REQUEST, "org.wwscc.protimer.ProSoloInterface", null));
+        apps.add(new EventSendAction("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI", null));
+        apps.add(new EventSendAction("BWTimer",      MT.LAUNCH_REQUEST, "org.wwscc.bwtimer.Timer", null));
+
+        quit           = new EventSendAction("Quit",               MT.SHUTDOWN_REQUEST);
+        openStatus     = new EventSendAction("Status Window",      MT.OPEN_STATUS_REQUEST);
         debugRequest   = new EventSendAction("Collect Debug Info", MT.DEBUG_REQUEST);
-        importRequest  = new EventSendAction("Import Previous Data", MT.IMPORT_REQUEST);
-        mergeAll       = new MergeWithAllLocalAction();
-        mergeWith      = new MergeWithAction();
-        downloadSeries = new DownloadNewSeriesAction();
-        clearOld       = new ClearOldDiscoveredAction();
 
-        deleteSeries   = new DeleteLocalSeriesAction();
-        discovery      = new LocalDiscoveryAction(Prefs.getAllowDiscovery());
-        resetHash      = new ResetHashAction();
+        importRequest  = addAction(new EventSendAction("Import Previous Data", MT.IMPORT_REQUEST));
+        mergeAll       = addAction(new MergeWithAllLocalAction());
+        mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", MergeWithHostAction.class));
+        downloadSeries = addAction(new PopupMenuWithMergeServerActions("Download New Series From ...", DownloadFromHostAction.class));
+        clearOld       = addAction(new ClearOldDiscoveredAction());
+        deleteSeries   = addAction(new DeleteLocalSeriesAction());
+        discovery      = addAction(new LocalDiscoveryAction());
+        resetHash      = addAction(new ResetHashAction());
+
+        backendReady(false);
+        Messenger.register(MT.BACKEND_READY, (type, data) -> backendReady((boolean)data));
     }
 
-
-    static class LaunchAppAction extends AbstractAction
+    public Action addAction(Action a)
     {
-        String tolaunch;
-        public LaunchAppAction(String name, String classname)
-        {
-            super(name);
-            tolaunch = classname;
-            setEnabled(false);
-        }
+        others.add(a);
+        return a;
+    }
 
-        @Override
-        public void actionPerformed(ActionEvent e)
-        {
-            Process p = launchExternal(tolaunch);
-            if (p != null)
-                Messenger.sendEvent(MT.APP_LAUNCHED, p);
-        }
+    public void backendReady(boolean b)
+    {
+        for (Action a : apps)
+            a.setEnabled(b);
+        for (Action a : others)
+            a.setEnabled(b);
     }
 
 
     /**
-     * Called to launch an application as a new process
-     * @param app the name of the class with a main to execute
-     * @return the Process object for the launched application
+     * Action that creates a popup menu population with Actions created from the list
+     * of active servers to merge with given a template class.
      */
-    public static Process launchExternal(String app)
+    static class PopupMenuWithMergeServerActions extends AbstractAction
     {
-        try {
-            ArrayList<String> cmd = new ArrayList<String>();
-            if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
-                cmd.add("javaw");
-            else
-                cmd.add("java");
-            cmd.add("-cp");
-            cmd.add(System.getProperty("java.class.path"));
-            cmd.add(app);
-            log.info(String.format("Running %s", cmd));
-            ProcessBuilder starter = new ProcessBuilder(cmd);
-            starter.redirectErrorStream(true);
-            starter.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("jvmlaunches.log").toFile()));
-            Process p = starter.start();
-            Thread.sleep(1000);
-            if (!p.isAlive()) {
-                throw new Exception("Process not alive after 1 second");
+        Class<? extends Action> template;
+        public PopupMenuWithMergeServerActions(String s, Class<? extends Action> c)
+        {
+            super(s + "\u2BC6"); // down arrow
+            template = c;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            JPopupMenu menu = new JPopupMenu();
+            for (MergeServer server : Database.d.getMergeServers())
+            {
+                if ((server.isLocalHost()) || (!server.isActive() && !server.isRemote()))
+                    continue;
+                try {
+                    menu.add(new JMenuItem((Action)template.getConstructor(MergeServer.class).newInstance(server)));
+                } catch (Exception ex) {
+                    log.log(Level.WARNING, "can't build action: " + ex, ex);
+                }
             }
-            return p;
-        } catch (Exception e) {
-            log.log(Level.SEVERE, String.format("\bFailed to launch %s",  app), e);
-            return null;
+
+            Component c = (Component)e.getSource();
+            menu.show(c, 5, c.getHeight()-5);
         }
     }
 
-    static List<MergeServer> getActive()
-    {
-        List<MergeServer> data = Database.d.getMergeServers();
-        ListIterator<MergeServer> iter = data.listIterator();
-        while (iter.hasNext()) {
-            MergeServer n = iter.next();
-            if ((n.isLocalHost()) || (!n.isActive() && !n.isRemote()))
-                iter.remove();
-        }
-        return data;
-    }
 
-
-    private static class _DownloadFromhHostAction extends AbstractAction
+    public static class DownloadFromHostAction extends AbstractAction
     {
         MergeServer server;
-        public _DownloadFromhHostAction(MergeServer s) {
+        public DownloadFromHostAction(MergeServer s) {
             super();
             server = s;
             if (server.getAddress().equals(""))
@@ -145,27 +130,11 @@ public class Actions
         }
     }
 
-    static class DownloadNewSeriesAction extends AbstractAction
-    {
-        public DownloadNewSeriesAction()
-        {
-            super("Download New Series From ... \u2BC6");
-        }
-        public void actionPerformed(ActionEvent e) {
-            JPopupMenu menu = new JPopupMenu();
-            for (MergeServer s : getActive()) {
-                menu.add(new JMenuItem(new _DownloadFromhHostAction(s)));
-            }
-            Component c = (Component)e.getSource();
-            menu.show(c, 5, c.getHeight()-5);
-        }
-    }
 
-
-    private static class _MergeWithHostAction extends AbstractAction
+    public static class MergeWithHostAction extends AbstractAction
     {
         MergeServer server;
-        public _MergeWithHostAction(MergeServer s) {
+        public MergeWithHostAction(MergeServer s) {
             super();
             server = s;
             if (server.getAddress().equals(""))
@@ -180,20 +149,6 @@ public class Actions
         }
     }
 
-    static class MergeWithAction extends AbstractAction
-    {
-        public MergeWithAction() {
-            super("Sync With ... \u2BC6");
-        }
-        public void actionPerformed(ActionEvent e) {
-            JPopupMenu menu = new JPopupMenu();
-            for (MergeServer s : getActive()) {
-                menu.add(new JMenuItem(new _MergeWithHostAction(s)));
-            }
-            Component c = (Component)e.getSource();
-            menu.show(c, 5, c.getHeight()-5);
-        }
-    }
 
     static class MergeWithAllLocalAction extends AbstractAction
     {
@@ -210,9 +165,11 @@ public class Actions
         }
     }
 
+
     static class LocalDiscoveryAction extends AbstractAction
     {
-        public LocalDiscoveryAction(boolean on) {
+        public LocalDiscoveryAction() {
+            boolean on = Prefs.getAllowDiscovery();
             putValue(Action.SELECTED_KEY, on);
             putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
         }
@@ -225,6 +182,7 @@ public class Actions
             Messenger.sendEvent(MT.DISCOVERY_CHANGE, on);
         }
     }
+
 
     static class ClearOldDiscoveredAction extends AbstractAction
     {
@@ -240,6 +198,7 @@ public class Actions
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
+
 
     static class DeleteLocalSeriesAction extends AbstractAction
     {
@@ -262,6 +221,7 @@ public class Actions
         }
     }
 
+
     static class ResetHashAction extends AbstractAction
     {
         public ResetHashAction() {
@@ -272,5 +232,4 @@ public class Actions
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
-
 }

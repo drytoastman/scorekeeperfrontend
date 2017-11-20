@@ -64,9 +64,15 @@ public class Monitors
             notify();
         }
 
-        public synchronized void pass() {
+        public synchronized void donefornow() {
             try {
                 this.wait(ms);
+            } catch (InterruptedException ie) {}
+        }
+
+        public synchronized void pause(int msec) {
+            try {
+                this.wait(msec);
             } catch (InterruptedException ie) {}
         }
 
@@ -77,7 +83,7 @@ public class Monitors
             while (!state.isApplicationDone()) {
                 mloop();
                 if (!quickrecheck)
-                    pass();
+                    donefornow();
                 quickrecheck = false;
             }
             mshutdown();
@@ -145,7 +151,8 @@ public class Monitors
                     log.severe("\bUnable to start docker machine. See logs.");
                     return false;
                 }
-                // only load env if we restarted machine
+                // only load env if we restarted machine, pause to make sure env is setup
+                pause(10);
                 machineenv = DockerMachine.machineenv();
                 state.setMachineEnv(machineenv);
             }
@@ -240,7 +247,7 @@ public class Monitors
         {
             Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for machine");
             while (!state.isMachineReady())
-                pass();
+                donefornow();
 
             for (DockerContainer c : containers.values()) {
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Init " + c.getName());
@@ -300,7 +307,6 @@ public class Monitors
             }
 
             state.signalContainersReady(ok);
-            Messenger.sendEvent(MT.BACKEND_STATUS, RUNNING);
             return ok;
         }
 
@@ -346,7 +352,7 @@ public class Monitors
 
 
     /**
-     * Thread to keep checking pinging the datbase to cause notifications
+     * Thread to keep checking pinging the database to cause notifications
      * for the discovery pieces. It can be 'paused' when the database is to be offline.
      */
     public static class MergeStatusMonitor extends Monitor implements DiscoveryListener
@@ -364,7 +370,7 @@ public class Monitors
         public boolean minit()
         {
             while (!state.isBackendReady())
-                pass();
+                donefornow();
 
             // These two should always be there
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);

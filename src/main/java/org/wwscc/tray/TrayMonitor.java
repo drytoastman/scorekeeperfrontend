@@ -10,7 +10,6 @@ package org.wwscc.tray;
 
 import java.awt.AWTException;
 import java.awt.Image;
-import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
@@ -63,18 +62,13 @@ public class TrayMonitor
         state = new StateControl();
         statuswindow = new ScorekeeperStatusWindow(actions);
 
-        MenuItem quit = new MenuItem("Quit");          quit.addActionListener(e -> state.shutdownRequest());
-        MenuItem open = new MenuItem("Status Window"); open.addActionListener(e -> { statuswindow.setVisible(true); statuswindow.toFront(); } );
-
         PopupMenu trayPopup = new PopupMenu();
-        trayPopup.add(open);
+        trayPopup.add(new WrappedAWTMenuItem(actions.openStatus));
         trayPopup.addSeparator();
-        for (Action a : actions.apps) {
-            MenuItem m = new WrappedAWTMenuItem(a);
-            trayPopup.add(m);
-        }
+        for (Action a : actions.apps)
+            trayPopup.add(new WrappedAWTMenuItem(a));
         trayPopup.addSeparator();
-        trayPopup.add(quit);
+        trayPopup.add(new WrappedAWTMenuItem(actions.quit));
 
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);

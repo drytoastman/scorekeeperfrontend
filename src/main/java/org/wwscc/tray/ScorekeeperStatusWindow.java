@@ -8,6 +8,7 @@
 
 package org.wwscc.tray;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
@@ -22,6 +23,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+import javax.swing.border.LineBorder;
 
 import org.wwscc.storage.Database;
 import org.wwscc.util.AppSetup;
@@ -36,7 +39,6 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 {
     MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
-    JLabel backendStatus, machineStatus;
 
     public ScorekeeperStatusWindow(Actions actions)
     {
@@ -47,16 +49,12 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         activetable = new MergeStatusTable(model, true);
         inactivetable = new MergeStatusTable(model, false);
 
-        backendStatus = new JLabel("backend");
-        machineStatus = new JLabel("machine");
-        Messenger.register(MT.MACHINE_STATUS, (t, data) -> machineStatus.setText((String)data));
-        Messenger.register(MT.BACKEND_STATUS, (t, data) -> backendStatus.setText((String)data));
-
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
 
-        content.add(header("Status"), "split");
-        content.add(machineStatus, "split");
-        content.add(backendStatus, "wrap");
+        content.add(header("Machine"), "split");
+        content.add(new StatusLabel(MT.MACHINE_STATUS), "growy, w 200!");
+        content.add(header("Backend"), "split");
+        content.add(new StatusLabel(MT.BACKEND_STATUS), "growy, w 200!, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Active Hosts"), "split");
@@ -81,14 +79,21 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         adv.add(new JCheckBoxMenuItem(actions.discovery));
         adv.add(actions.resetHash);
 
+        JMenu launch = new JMenu("Launch");
+        for (Action a : actions.apps)
+            launch.add(a);
+
         JMenuBar bar = new JMenuBar();
         bar.add(data);
         bar.add(adv);
+        bar.add(launch);
         setJMenuBar(bar);
 
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
+
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
+        Messenger.register(MT.OPEN_STATUS_REQUEST, this);
     }
 
     private JLabel header(String s)
@@ -105,16 +110,52 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         return button;
     }
 
+    class StatusLabel extends JLabel implements MessageListener
+    {
+        Color okbg = new Color(200, 255, 200);
+        Color okfg = new Color(  0,  80,   0);
+        Color notokbg = new Color(255, 200, 200);
+        Color notokfg = new Color( 80,   0,   0);
+
+        public StatusLabel(MT event)
+        {
+            super();
+            Messenger.register(event, this);
+            setHorizontalAlignment(SwingConstants.CENTER);
+            setFont(getFont().deriveFont(13.0f));
+            setOpaque(true);
+            setBackground(notokbg);
+            setForeground(notokfg);
+            setBorder(new LineBorder(Color.GRAY, 1));
+        }
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            String txt = (String)data;
+            setText(txt);
+            setBackground(txt.equals(Monitors.RUNNING) ? okbg : notokbg);
+            setForeground(txt.equals(Monitors.RUNNING) ? okfg : notokfg);
+        }
+    }
+
+
     @SuppressWarnings("unchecked")
     @Override
     public void event(MT type, Object data)
     {
-        if (type == MT.DATABASE_NOTIFICATION)
+        switch (type)
         {
-            Set<String> tables = (Set<String>)data;
-            if (tables.contains("mergeservers")) {
-                model.setData(Database.d.getMergeServers());
-            }
+            case OPEN_STATUS_REQUEST:
+                setVisible(true);
+                toFront();
+                break;
+
+            case DATABASE_NOTIFICATION:
+                Set<String> tables = (Set<String>)data;
+                if (tables.contains("mergeservers"))
+                    model.setData(Database.d.getMergeServers());
+                break;
         }
     }
 
@@ -129,7 +170,9 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
     {
         AppSetup.appSetup("statuswindow");
         Database.openPublic(true);
-        ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(new Actions());
+        Actions a = new Actions();
+        a.backendReady(true);
+        ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(a);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
         Database.openPublic(true);
