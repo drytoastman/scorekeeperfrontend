@@ -1,5 +1,4 @@
-
-# Changes from the old verison
+# Changes from Version 1
 
 1. **Each machine uses a real database server (Postgresql)** that contains all the downloaded series data rather than
    individual SQLite files.
