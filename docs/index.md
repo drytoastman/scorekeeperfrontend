@@ -1,5 +1,3 @@
-# Scorekeeper Documentation
-
 - [Install/First Use](install.md)
 - [Data Synchronization](sync.md)
 - [DataEntry](dataentry.md)
