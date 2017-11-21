@@ -33,9 +33,9 @@ By default, we check sync status with other local machine every 60 seconds.  If 
 and you don't want to wait, you can click **Sync All Active Now** which tells the sync server to schedule a sync check now.
 
 
-# With scorekeeper.wwscc.org
+## With scorekeeper.wwscc.org
 
-## Downloading a New Series
+### Downloading a New Series
 1. Click **Download New Series From ...** and then select **scorekeeper.wwscc.org**.  As you can see, you can also download
    a new series from a local machine that has already downloaded the series earlier.
 
@@ -49,7 +49,7 @@ and you don't want to wait, you can click **Sync All Active Now** which tells th
 4. If the password is correct, the button will change to **Download**, otherwise try the password again
 5. Click **Download** and let it finish
 
-## Syncing A Series
+### Syncing A Series
 1. Click **Sync With ..** and then select **scorekeeper.wwscc.org**.  This is very similar to the sync all active button but
    you can select a non-active remote host.  In this case, there are no local servers we are in contact with, so only
    scorekeeper.wwscc.org shows up.
