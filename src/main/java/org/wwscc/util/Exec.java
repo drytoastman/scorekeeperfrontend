@@ -5,14 +5,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Exec 
+public class Exec
 {
     private static final Logger log = Logger.getLogger(Exec.class.getName());
     private static final Logger sublog = Logger.getLogger(Exec.class.getName()+".subprocess");
-    
+
     public static ProcessBuilder build(Map <String, String> addenv, String ... cmd)
     {
         List<String> cmdlist = new ArrayList<String>();
@@ -25,26 +26,52 @@ public class Exec
     {
         ProcessBuilder p = new ProcessBuilder(cmdlist);
         p.redirectErrorStream(true);
-        if (addenv != null) 
+        if (addenv != null)
         {
             Map <String,String> env = p.environment();
             env.putAll(addenv);
         }
         return p;
     }
-    
+
+    public static int execit(ProcessBuilder in)
+    {
+        return execit(in, null, -1);
+    }
+
     public static int execit(ProcessBuilder in, byte[] output)
+    {
+        return execit(in, output, -1);
+    }
+
+    public static int execit(ProcessBuilder in, int waitms)
+    {
+        return execit(in, null, waitms);
+    }
+
+    public static int execit(ProcessBuilder in, byte[] output, int waitms)
     {
         try {
             Process p = in.start();
-            int ret = p.waitFor();
+            int ret;
+
+            if (waitms > 0) {
+                if (!p.waitFor(waitms, TimeUnit.MILLISECONDS)) {
+                    p.destroy();
+                    throw new IOException("Process did not complete quick enough");
+                }
+                ret = p.exitValue();
+            } else {
+                ret = p.waitFor();
+            }
+
             log.log(Level.FINER, "{0} returns {1}", new Object [] { in.command().toString(), ret });
-            
+
             if ((output == null) && ret != 0) // create buffer if there are errors but one not present so we can log
             {
                 output = new byte[8192];
             }
-            
+
             if (output != null) // read stream if we have a buffer
             {
                 InputStream is = p.getInputStream();
@@ -60,19 +87,19 @@ public class Exec
                     log.log(Level.INFO, "No output from docker command");
                 }
             }
-            
-            p.destroy();            
+
+            p.destroy();
             return ret;
         } catch (InterruptedException | IOException ie) {
             log.log(Level.WARNING, "Exec failed " + ie, ie);
         }
         return -1;
     }
-    
+
     /**
      * Just testing to see if it executes cleanly or not.  Don't log errors or look at output
      * @param in the process to test
-     * @return true if execution was successful, false if not 
+     * @return true if execution was successful, false if not
      */
     public static boolean testit(ProcessBuilder in)
     {

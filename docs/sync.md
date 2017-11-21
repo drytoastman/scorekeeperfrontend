@@ -1,6 +1,6 @@
 # Data Synchronization
 
-You can open the DataSynchronization window by right clicking on the TrayMonitor and selecting **Data Sync**.
+You can open the status window by right clicking on the Tray icon and selecting **Status Window**.
 
 ![ContextMenu](images/syncmenu.png)
 

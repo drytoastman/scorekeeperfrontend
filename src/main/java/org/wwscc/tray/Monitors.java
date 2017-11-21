@@ -134,19 +134,17 @@ public class Monitors
             }
 
             jsch = new JSch();
-            // if machine is already running, load our env now as mloop only loads it if we start machine ourselves
-            if (DockerMachine.machinerunning()) {
-                machineenv = DockerMachine.machineenv();
-                state.setMachineEnv(machineenv);
-            }
             return true;
         }
+
 
         @Override
         protected boolean mloop()
         {
+            // Make sure machine is running
             if (!DockerMachine.machinerunning())
             {
+                state.signalMachineReady(false);
                 log.info("Starting the docker machine.");
                 Messenger.sendEvent(MT.MACHINE_STATUS, "Restarting VM");
                 if (!DockerMachine.startmachine())
@@ -154,19 +152,28 @@ public class Monitors
                     log.severe("\bUnable to start docker machine. See logs.");
                     return false;
                 }
-                // only load env if we restarted machine, pause to make sure env is setup
-                pause(10);
-                machineenv = DockerMachine.machineenv();
-                state.setMachineEnv(machineenv);
+                pause(100);
+                machineenv = null;
             }
 
+            // Make sure we have a proper environment setup
+            if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
+            {
+                machineenv = DockerMachine.machineenv();
+                state.setMachineEnv(machineenv);
+                if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
+                {
+                    log.warning("Unable to load machine env, will try again on next loop");
+                    return false;
+                }
+            }
+
+            // Machine is ready for container execution now
             state.signalMachineReady(true);
 
+            // Make sure port forwarding is up
             try
             {
-                if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
-                    throw new JSchException("Missing information in machinenv");
-
                 Matcher m = hostpattern.matcher(machineenv.get("DOCKER_HOST"));
                 if (m.find()) { machinehost = m.group(1); }
 
@@ -207,6 +214,7 @@ public class Monitors
                 return false;
             }
 
+            // Everything is up at this point
             Messenger.sendEvent(MT.MACHINE_STATUS, RUNNING);
             return true;
         }
@@ -220,6 +228,7 @@ public class Monitors
             Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnected");
         }
     }
+
 
 
     /**
@@ -266,32 +275,15 @@ public class Monitors
         {
             boolean ok = true;
 
-            // interrupt our regular schedule to shutdown and import data
-            if (toimport != null) {
-                StatusDialog dialog = new StatusDialog();
-                dialog.doDialog("Old Data Import", new DialogFinisher<Object>() {
-                        @Override public void dialogFinished(Object object) {
-                    }});
-
-                dialog.setStatus("Preparing to import ...", -1);
-                Messenger.sendEvent(MT.BACKEND_STATUS, "Preparing to import");
-
-                List<DockerContainer> nondb = new ArrayList<DockerContainer>();
-                nondb.add(containers.get("web"));
-                nondb.add(containers.get("sync"));
-                DockerContainer.stopAll(nondb);
-
-                dialog.setStatus("Importing ...", -1);
-                Messenger.sendEvent(MT.BACKEND_STATUS, "Importing ...");
-                log.info("importing "  + toimport);
-                boolean success = containers.get("db").importDatabase(toimport);
-                toimport = null;
-
-                if (success)
-                    dialog.setStatus("Import and conversion was successful", 100);
-                else
-                    dialog.setStatus("Import failed, see logs", 100);
+            if (!state.isMachineReady()) {
+                Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for machine");
+                state.signalContainersReady(false);
+                return false;
             }
+
+            // interrupt our regular schedule to shutdown and import data
+            if (toimport != null)
+                importOld();
 
             // If something isn't running, try and start them now
             Set<String> dead = DockerContainer.finddown(state.getMachineEnv(), names);
@@ -326,6 +318,33 @@ public class Monitors
             Messenger.sendEvent(MT.BACKEND_STATUS, "Stopped");
         }
 
+        public void importOld()
+        {
+            StatusDialog dialog = new StatusDialog();
+            dialog.doDialog("Old Data Import", new DialogFinisher<Object>() {
+                    @Override public void dialogFinished(Object object) {
+                }});
+
+            dialog.setStatus("Preparing to import ...", -1);
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Preparing to import");
+
+            List<DockerContainer> nondb = new ArrayList<DockerContainer>();
+            nondb.add(containers.get("web"));
+            nondb.add(containers.get("sync"));
+            DockerContainer.stopAll(nondb);
+
+            dialog.setStatus("Importing ...", -1);
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Importing ...");
+            log.info("importing "  + toimport);
+            boolean success = containers.get("db").importDatabase(toimport);
+            toimport = null;
+
+            if (success)
+                dialog.setStatus("Import and conversion was successful", 100);
+            else
+                dialog.setStatus("Import failed, see logs", 100);
+        }
+
         @Override
         public boolean dumpDatabase(Path file, boolean compress)
         {
@@ -352,6 +371,7 @@ public class Monitors
             toimport = p;
         }
     }
+
 
 
     /**

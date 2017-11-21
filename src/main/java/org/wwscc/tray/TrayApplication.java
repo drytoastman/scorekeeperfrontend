@@ -28,9 +28,9 @@ import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 import org.wwscc.util.WrappedAWTMenuItem;
 
-public class TrayMonitor
+public class TrayApplication
 {
-    private static final Logger log = Logger.getLogger(TrayMonitor.class.getName());
+    private static final Logger log = Logger.getLogger(TrayApplication.class.getName());
     private static final Image coneok, conewarn;
     static
     {
@@ -44,7 +44,7 @@ public class TrayMonitor
     FileLock filelock;
     Actions actions;
 
-    public TrayMonitor(String args[])
+    public TrayApplication(String args[])
     {
         if (!SystemTray.isSupported())
         {
@@ -54,7 +54,7 @@ public class TrayMonitor
 
         if (!ensureSingleton())
         {
-            log.warning("Another TrayMonitor is running, quitting now.");
+            log.warning("Another TrayApplication is running, quitting now.");
             System.exit(-1);
         }
 
@@ -93,18 +93,18 @@ public class TrayMonitor
 
     /**
      * Use a local file lock to make sure that we are the only tray monitor running.
-     * @return true if we are the only running traymonitor and can continue, false if we should stop
+     * @return true if we are the only running TrayApplication and can continue, false if we should stop
      */
     private boolean ensureSingleton()
     {
         try {
-            filelock = FileChannel.open(Prefs.getLockFilePath("traymonitor"), StandardOpenOption.CREATE, StandardOpenOption.WRITE).tryLock();
+            filelock = FileChannel.open(Prefs.getLockFilePath("TrayApplication"), StandardOpenOption.CREATE, StandardOpenOption.WRITE).tryLock();
             if (filelock == null) throw new IOException("File already locked");
         } catch (Exception e) {
             if (JOptionPane.showConfirmDialog(null, "<html>"+ e + "<br/><br/>" +
-                        "Unable to lock TrayMonitor access. " +
-                        "This usually indicates that another copy of TrayMonitor is<br/>already running and only one should be running at a time. " +
-                        "It is also possible that TrayMonitor<br/>did not exit cleanly last time and the lock is just left over.<br/><br/>" +
+                        "Unable to lock TrayApplication access. " +
+                        "This usually indicates that another copy of TrayApplication is<br/>already running and only one should be running at a time. " +
+                        "It is also possible that TrayApplication<br/>did not exit cleanly last time and the lock is just left over.<br/><br/>" +
                         "Click No to quit now or click Yes to start anyways.<br/>&nbsp;<br/>",
                         "Continue With Launch", JOptionPane.YES_NO_OPTION) == JOptionPane.NO_OPTION)
                 return false;
@@ -127,8 +127,8 @@ public class TrayMonitor
      */
     public static void main(String args[])
     {
-        AppSetup.appSetup("traymonitor");
-        TrayMonitor tm = new TrayMonitor(args);
+        AppSetup.appSetup("trayapplication");
+        TrayApplication tm = new TrayApplication(args);
         tm.startAndWaitForThreads();
         System.exit(0);
     }

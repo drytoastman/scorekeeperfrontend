@@ -24,7 +24,7 @@ public enum MT {
     // Database events
     DATABASE_NOTIFICATION,
 
-    // TrayMonitor
+    // TrayApplication
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,
     USING_MACHINE,

@@ -29,7 +29,7 @@ public class StateControl
     private static final Logger log = Logger.getLogger(Monitors.class.getName());
 
     private volatile Map<String, String> _machineenv;
-    private volatile boolean _machineready, _portsforwarded, _shutdownrequested, _applicationdone, _shutdownmachine, _usingmachine, _backendready;
+    private volatile boolean _machineready, _portsforwarded, _shutdownstarted, _applicationdone, _shutdownmachine, _usingmachine, _backendready;
 
     List<Process> launched;
     Monitors.MachineMonitor   mmonitor;
@@ -40,7 +40,7 @@ public class StateControl
     {
         _machineready      = false;
         _portsforwarded    = false;
-        _shutdownrequested = false;
+        _shutdownstarted   = false;
         _applicationdone   = false;
         _shutdownmachine   = false;
         _backendready          = false;
@@ -48,8 +48,8 @@ public class StateControl
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
         Messenger.register(MT.IMPORT_REQUEST,   (t,d) -> importRequest());
-        Messenger.register(MT.LAUNCH_REQUEST,   (t,d) -> this.launchRequest((String)d));
-        Messenger.register(MT.SHUTDOWN_REQUEST, (t,d) -> this.shutdownRequest());
+        Messenger.register(MT.LAUNCH_REQUEST,   (t,d) -> launchRequest((String)d));
+        Messenger.register(MT.SHUTDOWN_REQUEST, (t,d) -> shutdownRequest());
     }
 
 
@@ -71,7 +71,7 @@ public class StateControl
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
         } catch (InterruptedException ie) {
-            log.warning("\bTrayMonitor exiting due to interuption: " + ie);
+            log.warning("\bTrayApplication exiting due to interuption: " + ie);
         }
     }
 
@@ -111,10 +111,11 @@ public class StateControl
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for Database");
                 PostgresqlDatabase.waitUntilUp();
                 Database.openPublic(true);
+                Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             }
-            Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             Messenger.sendEvent(MT.BACKEND_READY, ok);
-            pmonitor.setPause(false);
+            mmonitor.poke();
+            pmonitor.setPause(!ok);
             _backendready = ok;
         }
     }
@@ -158,36 +159,39 @@ public class StateControl
 
     public void launchRequest(String tolaunch)
     {
-        try
-        {
-            ArrayList<String> cmd = new ArrayList<String>();
-            if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
-                cmd.add("javaw");
-            else
-                cmd.add("java");
-            cmd.add("-cp");
-            cmd.add(System.getProperty("java.class.path"));
-            cmd.add(tolaunch);
-            log.info(String.format("Running %s", cmd));
-            ProcessBuilder starter = new ProcessBuilder(cmd);
-            starter.redirectErrorStream(true);
-            starter.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("jvmlaunches.log").toFile()));
-            Process p = starter.start();
-            Thread.sleep(1000);
-            if (!p.isAlive()) {
-                throw new Exception("Process not alive after 1 second");
+        Runnable launch = () -> {
+            try
+            {
+                ArrayList<String> cmd = new ArrayList<String>();
+                if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
+                    cmd.add("javaw");
+                else
+                    cmd.add("java");
+                cmd.add("-cp");
+                cmd.add(System.getProperty("java.class.path"));
+                cmd.add(tolaunch);
+                log.info(String.format("Running %s", cmd));
+                ProcessBuilder starter = new ProcessBuilder(cmd);
+                starter.redirectErrorStream(true);
+                starter.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("jvmlaunches.log").toFile()));
+                Process p = starter.start();
+                Thread.sleep(1000);
+                if (!p.isAlive()) {
+                    throw new Exception("Process not alive after 1 second");
+                }
+                launched.add(p);
             }
-            launched.add(p);
-        }
-        catch (Exception ex)
-        {
-            log.log(Level.SEVERE, String.format("\bFailed to launch %s",  tolaunch), ex);
-        }
+            catch (Exception ex)
+            {
+                log.log(Level.SEVERE, String.format("\bFailed to launch %s",  tolaunch), ex);
+            }
+        };
+        new Thread(launch, "LaunchApp").start();
     }
 
     public void shutdownRequest()
     {
-        if (_shutdownrequested)
+        if (_shutdownstarted)
         {   // Quit called a second time while shutting down, just quit now
             log.warning("User force quiting.");
             System.exit(-1);
@@ -216,26 +220,29 @@ public class StateControl
 
         Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
 
-        // first shutdown all the things with database connections
-        _shutdownrequested = true;
-        for (Process p : launched) {
-            if (p.isAlive())
-                p.destroy();
-        }
+        Runnable shutdown = () -> {
+            // first shutdown all the things with database connections
+            _shutdownstarted = true;
+            for (Process p : launched) {
+                if (p.isAlive())
+                    p.destroy();
+            }
 
-        pmonitor.setPause(true);
-        String ver = Database.d.getVersion();
-        Database.d.close();
+            pmonitor.setPause(true);
+            String ver = Database.d.getVersion();
+            Database.d.close();
 
-        // second backup the database
-        String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
-        cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
+            // second backup the database
+            String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
+            cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
 
-        // note the shutdown flag and wake up our monitors to finish up
-        _applicationdone = true;
-        mmonitor.poke();
-        cmonitor.poke();
-        pmonitor.poke();
+            // note the shutdown flag and wake up our monitors to finish up
+            _applicationdone = true;
+            mmonitor.poke();
+            cmonitor.poke();
+            pmonitor.poke();
+        };
+        new Thread(shutdown, "ShutdownThread").start();
     }
 
 }

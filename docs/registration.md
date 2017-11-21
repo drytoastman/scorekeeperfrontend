@@ -1,5 +1,5 @@
 # Before the Event
-1. Download/Merge using the [DataSync tool from the TrayMonitor](datasync.md)
+1. Download/Merge from the [Sync tool int the status Window](datasync.md)
 
 # During Registration
 

@@ -26,19 +26,19 @@
 
 # Notes on Application Use
 
-1. Starting and stopping the TrayMonitor should be quick as the containers are quick to start and stop
+1. Starting and stopping the TrayApplication should be quick as the containers are quick to start and stop
 2. The only long delay is on Windows Home when restarting the virtual machine after a reboot or logoff
 
 ![ContextMenu](images/startingvm.png)
 
-3. All Scorekeeper applications should be started from the TrayMonitor menu
-4. If the TrayMonitor isn't running, the database is 99% most likely not running so applications will not work
+3. All Scorekeeper applications should be started from the tray menu or status window menu
+4. If the TrayApplication isn't running, the database is 99% most likely not running so applications will not work
 5. For consistency, each Scorekeeper version is assigned its own storage 'folder'
     * Upgrading versions or changing users will use different data
 
 # Collecting Debug Data
 
-The TrayMonitor contains a menu item "Debug Collection".  This will collect all the frontend logs, backend logs and the database data itself and put it into a zipfile
+The status Window contains a menu item "Debug Collection".  This will collect all the frontend logs, backend logs and the database data itself and put it into a zipfile
 that can be sent to me for figuring out what broke.
 
 

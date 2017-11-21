@@ -5,11 +5,11 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.util.logging.Logger;
 
-import org.wwscc.tray.TrayMonitor;
+import org.wwscc.tray.TrayApplication;
 
 public class Resources 
 {	
-	private static final Logger log = Logger.getLogger(TrayMonitor.class.getName());
+	private static final Logger log = Logger.getLogger(TrayApplication.class.getName());
 	
 	public static Image loadImage(String name)
 	{
