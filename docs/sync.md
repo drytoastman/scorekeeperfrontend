@@ -1,4 +1,8 @@
-# Data Synchronization
+---
+title: Data Synchronization
+layout: default 
+---
+
 
 You can open the status window by right clicking on the Tray icon and selecting **Status Window**.
 

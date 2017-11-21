@@ -2,5 +2,6 @@
 ---
 
 @import "{{ site.theme }}";
-#header_wrap .inner { padding: 10px; }
-
+#header_wrap .inner { padding: 0px; }
+#project_tagline { display: none; }
+strong { font-size: 1.05rem; }
