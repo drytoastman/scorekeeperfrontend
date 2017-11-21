@@ -292,7 +292,7 @@ public class Monitors
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Restarting " + dead);
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
-                        if (!c.start()) {
+                        if (!c.start(750)) {
                             log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
                         } else {
                             quickrecheck = true;

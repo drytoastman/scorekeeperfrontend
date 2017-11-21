@@ -144,6 +144,11 @@ public class DockerContainer implements DataRetrievalInterface
      */
     public boolean start()
     {
+        return start(-1);
+    }
+
+    public boolean start(int waitms)
+    {
         List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
         if (Prefs.isDebug()) {
             cmd.add("-e");
@@ -161,7 +166,7 @@ public class DockerContainer implements DataRetrievalInterface
         }
         cmd.add(image);
 
-        return Exec.execit(Exec.build(machineenv, cmd), 750) == 0;
+        return Exec.execit(Exec.build(machineenv, cmd), waitms) == 0;
     }
 
     public boolean stop()
