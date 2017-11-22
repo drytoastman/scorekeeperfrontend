@@ -4,18 +4,20 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Simple presence and info detection.  Assumes that each IP will only be hosting one
@@ -30,7 +32,7 @@ public class Discovery
 
     public static final String DISCOVERY_GROUP = "224.0.0.251";
     public static final int    DISCOVERY_PORT  = 5454;
-    public static final long   TIMEOUT_MS      = 10000;
+    public static final long   DEFAULT_TIMEOUT = 10000;
 
     public static final String BWTIMER_TYPE    = "BWTIMER";
     public static final String PROTIMER_TYPE   = "PROTIMER";
@@ -38,120 +40,168 @@ public class Discovery
 
     public interface DiscoveryListener
     {
-        public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up);
+        public void serviceChange(UUID serverid, String service, JSONObject data, boolean up);
     }
 
     public static Discovery get()
     {
-        if (singleton == null)
+        if (singleton == null) {
             singleton = new Discovery();
+            singleton.startThreads();
+        }
         return singleton;
     }
 
     private MulticastSocket socket;
-    private JSONObject localServices;
-    private byte[] localServicesBytes;
-    private Map<String, Map<DiscoveryListener, StateAwareListener>> listeners;
+    private JSONArray announcements;
+    private byte[] annoucementBytes;
+    private Map<DiscoveryListener, StateAwareListener> listeners;
     private JSONParser parser;
+    private long timeoutms;
 
-    private Discovery()
+    protected Discovery()
     {
-        localServices = new JSONObject();
-        localServicesBytes = new byte[0];
-        listeners = new Hashtable<String, Map<DiscoveryListener, StateAwareListener>>();
+        announcements = new JSONArray();
+        annoucementBytes = new byte[0];
+        listeners = new HashMap<DiscoveryListener, StateAwareListener>();
         parser = new JSONParser();
+        timeoutms = DEFAULT_TIMEOUT;
+    }
+
+    protected void startThreads()
+    {
         new Thread(new ReceiverThread(), "DiscoveryReceiver").start();
         new Thread(new SenderThread(), "DiscoverySender").start();
     }
 
-    public void addServiceListener(String service, DiscoveryListener listener)
+    protected void setTimeout(long ms)
     {
-        Map<DiscoveryListener, StateAwareListener> map = listeners.get(service);
-        if (map == null) {
-            map = new Hashtable<DiscoveryListener, StateAwareListener>();
-            listeners.put(service, map);
-        }
-        if (map.containsKey(listener)) {
+        timeoutms = ms;
+    }
+
+    public void addServiceListener(DiscoveryListener listener)
+    {
+        if (listeners.containsKey(listener)) {
             log.warning("addServiceListener called while already listening: " + listener);
         } else {
-            map.put(listener, new StateAwareListener(service, listener));
+            listeners.put(listener, new StateAwareListener(listener));
         }
     }
 
-    public void removeServiceListener(String service, DiscoveryListener listener)
+    public void removeServiceListener(DiscoveryListener listener)
     {
-        Map<DiscoveryListener, StateAwareListener> map = listeners.get(service);
-        if (map != null)
-            map.remove(listener);
-    }
-
-    public void registerService(String service, JSONObject data)
-    {
-        localServices.put(service, data);
-        localServicesBytes = localServices.toJSONString().getBytes();
-    }
-
-    public void unregisterService(String service)
-    {
-        localServices.remove(service);
-        localServicesBytes = localServices.toJSONString().getBytes();
-    }
-
-    public InetAddress getLocalAddress() throws SocketException
-    {
-        if (socket != null)
-            return socket.getInterface();
-        return null;
+        listeners.remove(listener);
     }
 
 
-    class TimedJSON
+    private static Predicate<JSONObject> matchesKey(UUID serverid, String service)
     {
-        JSONObject json;
+        return obj -> obj.get("serverid").equals(serverid.toString()) && obj.get("service").equals(service);
+    }
+
+    public void registerService(UUID serverid, String service, JSONObject data)
+    {
+        announcements.removeIf(matchesKey(serverid, service));
+        JSONObject serv = new JSONObject();
+        serv.put("serverid", serverid.toString());
+        serv.put("service", service);
+        serv.put("data", data);
+        announcements.add(serv);
+        annoucementBytes = announcements.toJSONString().getBytes();
+    }
+
+    public void unregisterService(UUID serverid, String service)
+    {
+        announcements.removeIf(matchesKey(serverid, service));
+        annoucementBytes = announcements.toJSONString().getBytes();
+    }
+
+    /**
+     * Process new data from the network.  The actual JSON data looks like:
+     * @throws ParseException
+     */
+    protected void processNetworkData(InetAddress addr, byte buf[], int len) throws ParseException
+    {
+        JSONArray data = (JSONArray)parser.parse(new String(buf, 0, len));
+        for (StateAwareListener l : listeners.values())
+            l.newData(addr, data);
+    }
+
+    /**
+     * Check for anything we haven't heard from in a while
+     */
+    protected void checkForTimeouts()
+    {
+        for (StateAwareListener l : listeners.values()) {
+            l.checkTimeouts();
+        }
+    }
+
+    class ReceivedData
+    {
+        JSONObject data;
         long time;
-        public TimedJSON(JSONObject j, long t)
+        public ReceivedData(JSONObject d, long t)
         {
-            json = j;
+            data = d;
             time = t;
         }
     }
 
     /**
-     * Each listener maintains its own state of when things are new or not as listeners
-     * come and go.
+     * Each listener maintains its own state of when things are new or not as listeners come and go.
      */
     class StateAwareListener
     {
-        String service;
         DiscoveryListener listener;
-        Map<InetAddress, TimedJSON> registry;
+        Map<UUID, Map<String, ReceivedData>> registry;
 
-        public StateAwareListener(String service, DiscoveryListener listener)
+        public StateAwareListener(DiscoveryListener listener)
         {
-            this.service = service;
             this.listener = listener;
-            this.registry = new HashMap<InetAddress, TimedJSON>();
+            this.registry = new HashMap<UUID, Map<String, ReceivedData>>();
         }
 
-        public void newData(InetAddress source, JSONObject serviceObject)
+        /**
+         * Process new data
+         * @param source the source IP of the data
+         * @param entries the list of entries we received, which looks like  { serverid:<UUID>, service:<String>, data:<JSON> }, ... ]
+         */
+        public void newData(InetAddress source, JSONArray entries)
         {
-            TimedJSON info = new TimedJSON(serviceObject, System.currentTimeMillis());
-            TimedJSON old = registry.put(source, info);
-            if ((old == null || !old.json.equals(info.json)))
-                listener.serviceChange(service, source, info.json, true);
+            for (Object o : entries)
+            {
+                JSONObject serv = (JSONObject)o;
+                UUID serverid   = UUID.fromString((String)serv.get("serverid"));
+                String service  = (String)serv.get("service");
+                JSONObject data = (JSONObject)serv.get("data");
+
+                data.put("ip", source);
+                ReceivedData info = new ReceivedData(data, System.currentTimeMillis());
+
+                if (!registry.containsKey(serverid))
+                    registry.put(serverid, new HashMap<String, ReceivedData>());
+                Map<String, ReceivedData> services = registry.get(serverid);
+
+                ReceivedData old = services.put(service, info);
+                if ((old == null || !old.data.equals(info.data)))
+                    listener.serviceChange(serverid, service, info.data, true);
+            }
         }
 
         public void checkTimeouts()
         {
             long now = System.currentTimeMillis();
-            Iterator<Entry<InetAddress, TimedJSON>> iter = registry.entrySet().iterator();
-            while (iter.hasNext())
+            for (UUID serverid : registry.keySet())
             {
-                Map.Entry<InetAddress, TimedJSON> pair = iter.next();
-                if (pair.getValue().time + TIMEOUT_MS < now) {
-                    if (listeners.containsKey(service))
-                        listener.serviceChange(service, pair.getKey(), pair.getValue().json, false);
-                    iter.remove();
+                Iterator<Entry<String, ReceivedData>> iter = registry.get(serverid).entrySet().iterator();
+                while (iter.hasNext())
+                {
+                    Map.Entry<String, ReceivedData> pair = iter.next();
+                    if (pair.getValue().time + timeoutms < now) {
+                        listener.serviceChange(serverid, pair.getKey(), pair.getValue().data, false);
+                        iter.remove();
+                    }
                 }
             }
         }
@@ -167,10 +217,10 @@ public class Discovery
             {
                 try
                 {
-                    if (localServices.size() > 0)
+                    if (announcements.size() > 0)
                     {
                         checkSocket();
-                        DatagramPacket packet = new DatagramPacket(localServicesBytes, localServicesBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT);
+                        DatagramPacket packet = new DatagramPacket(annoucementBytes, annoucementBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT);
                         socket.send(packet);
                     }
 
@@ -199,31 +249,14 @@ public class Discovery
                 try
                 {
                     checkSocket();
-
                     packet.setData(buf);
                     try {
                         socket.receive(packet);
-
-                        // Note any new or changed data
-                        JSONObject data = (JSONObject)parser.parse(new String(buf, 0, packet.getLength()));
-                        for (Object o : data.keySet())
-                        {
-                            String service = (String)o;
-                            Map<DiscoveryListener, StateAwareListener> map = listeners.get(service);
-                            if (map != null)
-                                for (StateAwareListener l : map.values())
-                                    l.newData(packet.getAddress(), (JSONObject)data.get(service));
-                        }
+                        processNetworkData(packet.getAddress(), buf, packet.getLength());
                     } catch (SocketTimeoutException ste) {
-
                     }
 
-                    // Check for timeouts
-                    for (Map<DiscoveryListener, StateAwareListener> map : listeners.values()) {
-                        for (StateAwareListener l : map.values()) {
-                            l.checkTimeouts();
-                        }
-                    }
+                    checkForTimeouts();
                 }
                 catch (Exception e)
                 {

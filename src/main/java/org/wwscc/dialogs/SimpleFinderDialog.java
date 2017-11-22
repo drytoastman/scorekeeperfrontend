@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -43,7 +44,6 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
 {
     //private static final Logger log = Logger.getLogger(SimpleFinderDialog.class.getCanonicalName());
     private JServiceList list;
-    private List<String> services;
 
     /**
      * shortcut when only looking for a single name
@@ -68,7 +68,7 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
         iconMap.put(Discovery.BWTIMER_TYPE, new ImageIcon(Resources.loadImage("timer.gif")));
         iconMap.put(Discovery.PROTIMER_TYPE, new ImageIcon(Resources.loadImage("draglight.gif")));
 
-        list = new JServiceList(iconMap);
+        list = new JServiceList(iconMap, serviceNames);
         list.addListSelectionListener(this);
 
         JScrollPane p = new JScrollPane(list);
@@ -80,18 +80,13 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
         mainPanel.add(ientry("port", 0), "growx, wrap");
         result = null;
 
-        services = serviceNames;
-        for (String service : services) {
-            Discovery.get().addServiceListener(service, list);
-        }
+        Discovery.get().addServiceListener(list);
     }
 
     @Override
     public void close()
     {
-        for (String service : services) {
-            Discovery.get().removeServiceListener(service, list);
-        }
+        Discovery.get().removeServiceListener(list);
         super.close();
     }
 
@@ -151,11 +146,11 @@ class ServiceInfo
     InetAddress ip;
     int serviceport;
 
-    public ServiceInfo(String servicetype, InetAddress ip, JSONObject data)
+    public ServiceInfo(String servicetype, JSONObject data)
     {
         this.servicetype = servicetype;
-        this.ip          = ip;
         try {
+            this.ip          = (InetAddress)data.get("ip");
             this.serviceport = ((Long)data.get("serviceport")).intValue();
         } catch (Exception e) {
             this.serviceport = 0;
@@ -172,31 +167,36 @@ class JServiceList extends JList<ServiceInfo> implements DiscoveryListener
     private static final Pattern lookslikeip = Pattern.compile("\\d+\\.\\d+\\.\\d+\\.\\d+");
 
     DefaultListModel<ServiceInfo> serviceModel;
+    List<String> services;
     FoundServiceRenderer renderer;
 
     /**
      * Create a JList that can listen to a ServiceFinder and update its list accordingly
      * @param iconMap map of service types to an icon to use
+     * @param watchfor the services to actually display
      */
-    public JServiceList(Map<String, Icon> iconMap)
+    public JServiceList(Map<String, Icon> iconMap, List<String> watchfor)
     {
         super();
         serviceModel = new DefaultListModel<ServiceInfo>();
+        services = watchfor;
         setModel(serviceModel);
         renderer = new FoundServiceRenderer(iconMap);
         setCellRenderer(renderer);
     }
 
     @Override
-    public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
+    public void serviceChange(UUID serverid, String service, JSONObject data, boolean up)
     {
-        ServiceInfo info = new ServiceInfo(service, ip, data);
-        if (up && !serviceModel.contains(info)) {
-            serviceModel.addElement(info);  // FINISH ME
-        } else {
-            serviceModel.removeElement(info);
+        if (services.contains(service)) {
+            ServiceInfo info = new ServiceInfo(service, data);
+            if (up && !serviceModel.contains(info)) {
+                serviceModel.addElement(info);  // FINISH ME
+            } else {
+                serviceModel.removeElement(info);
+            }
+            repaint();
         }
-        repaint();
     }
 
 

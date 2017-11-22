@@ -408,9 +408,10 @@ public class Monitors
         @Override
         public boolean mloop()
         {
-            // we just ping/poke the database which is the only way to receive any NOTICE events
-            if (!paused)
-                Database.d.ping();
+            // we update with our current address which causes the database to send us a NOTICE event which causes the GUI to update
+            if (!paused) {
+                Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+            }
             return true;
         }
 
@@ -433,25 +434,29 @@ public class Monitors
                 JSONObject data = new JSONObject();
                 data.put("serverid", Prefs.getServerId().toString());
                 data.put("hostname", Network.getLocalHostName());
-                Discovery.get().addServiceListener(Discovery.DATABASE_TYPE, this);
-                Discovery.get().registerService(Discovery.DATABASE_TYPE, data);
+                Discovery.get().addServiceListener(this);
+                Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
             }
             else
             {
-                Discovery.get().removeServiceListener(Discovery.DATABASE_TYPE, this);
-                Discovery.get().unregisterService(Discovery.DATABASE_TYPE);
+                Discovery.get().removeServiceListener(this);
+                Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
             }
         }
 
         @Override
-        public void serviceChange(String service, InetAddress ip, JSONObject data, boolean up)
+        public void serviceChange(UUID serverid, String service, JSONObject data, boolean up)
         {
+            if (!service.equals(Discovery.DATABASE_TYPE))
+                return;
+            InetAddress ip = (InetAddress)data.get("ip");
             if (ip.equals(Network.getPrimaryAddress()))
                 return;
+            System.out.println(ip + ", " + data + ", " + up);
             if (up) {
-                Database.d.mergeServerActivate(UUID.fromString((String)data.get("serverid")), (String)data.get("hostname"), ip.getHostAddress());
+                Database.d.mergeServerActivate(serverid, (String)data.get("hostname"), ip.getHostAddress());
             } else {
-                Database.d.mergeServerDeactivate(UUID.fromString((String)data.get("serverid")));
+                Database.d.mergeServerDeactivate(serverid);
             }
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }

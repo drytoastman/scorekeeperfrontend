@@ -21,6 +21,7 @@ import org.wwscc.storage.Run;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 /**
  * A server that create TimerClients for each connection as well as running a
@@ -28,126 +29,126 @@ import org.wwscc.util.Messenger;
  */
 public class TimerServer implements RunServiceInterface
 {
-	private static final Logger log = Logger.getLogger(TimerServer.class.getName());
-	public static final int TIMER_DEFAULT_PORT = 54328;
+    private static final Logger log = Logger.getLogger(TimerServer.class.getName());
+    public static final int TIMER_DEFAULT_PORT = 54328;
 
-	String servicetype;
-	ServerSocket serversock;
-	Vector<RunServiceInterface> clients;
-	Vector<RunServiceInterface> marked;
-	boolean done;
-	
-	public TimerServer(String type) throws IOException
-	{
-	    try {
-	        serversock = new ServerSocket(TIMER_DEFAULT_PORT);
-	    } catch (IOException ioe) {
-	        serversock = new ServerSocket(0);
-	    }
-		servicetype = type;
-		log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{type, serversock.getLocalPort()});
-		
-		clients = new Vector<RunServiceInterface>();
-		marked = new Vector<RunServiceInterface>();
-		done = true;
-	}
+    String servicetype;
+    ServerSocket serversock;
+    Vector<RunServiceInterface> clients;
+    Vector<RunServiceInterface> marked;
+    boolean done;
 
-	public void start()
-	{
-		if (!done) return;
-		done = false;
-		new Thread(new ServiceThread()).start();
-	}
-	
-	public void stop()
-	{
-		done = true;
-	}
+    public TimerServer(String type) throws IOException
+    {
+        try {
+            serversock = new ServerSocket(TIMER_DEFAULT_PORT);
+        } catch (IOException ioe) {
+            serversock = new ServerSocket(0);
+        }
+        servicetype = type;
+        log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{type, serversock.getLocalPort()});
 
-	@Override
-	public boolean sendDial(LeftRightDialin d)
-	{
-		boolean ret = true;
-		for (RunServiceInterface c : clients) {
-			if (!c.sendDial(d))
-			{
-				marked.add(c);
-				ret = false;
-			}
-		}
-		clients.removeAll(marked);
-		marked.clear();
-		return ret;
-	}
+        clients = new Vector<RunServiceInterface>();
+        marked = new Vector<RunServiceInterface>();
+        done = true;
+    }
 
-	@Override
-	public boolean sendRun(Run r)
-	{
-		boolean ret = true;
-		for (RunServiceInterface c : clients) {
-			if (!c.sendRun(r)) 
-			{
-				marked.add(c);
-				ret = false;
-			}
-		}
-		clients.removeAll(marked);
-		marked.clear();
-		return ret;	
-	}
-	
-	@Override
-	public boolean deleteRun(Run r)
-	{
-		boolean ret = true;
-		for (RunServiceInterface c : clients) {
-			if (!c.deleteRun(r))
-			{
-				marked.add(c);
-				ret = false;
-			}
-		}
-		clients.removeAll(marked);
-		marked.clear();
-		return ret;
-	}
+    public void start()
+    {
+        if (!done) return;
+        done = false;
+        new Thread(new ServiceThread()).start();
+    }
 
-	
-	class ServiceThread implements Runnable
-	{
-		@SuppressWarnings("unchecked")
+    public void stop()
+    {
+        done = true;
+    }
+
+    @Override
+    public boolean sendDial(LeftRightDialin d)
+    {
+        boolean ret = true;
+        for (RunServiceInterface c : clients) {
+            if (!c.sendDial(d))
+            {
+                marked.add(c);
+                ret = false;
+            }
+        }
+        clients.removeAll(marked);
+        marked.clear();
+        return ret;
+    }
+
+    @Override
+    public boolean sendRun(Run r)
+    {
+        boolean ret = true;
+        for (RunServiceInterface c : clients) {
+            if (!c.sendRun(r))
+            {
+                marked.add(c);
+                ret = false;
+            }
+        }
+        clients.removeAll(marked);
+        marked.clear();
+        return ret;
+    }
+
+    @Override
+    public boolean deleteRun(Run r)
+    {
+        boolean ret = true;
+        for (RunServiceInterface c : clients) {
+            if (!c.deleteRun(r))
+            {
+                marked.add(c);
+                ret = false;
+            }
+        }
+        clients.removeAll(marked);
+        marked.clear();
+        return ret;
+    }
+
+
+    class ServiceThread implements Runnable
+    {
+        @SuppressWarnings("unchecked")
         @Override
-		public void run()
-		{
-			JSONObject data = new JSONObject();
+        public void run()
+        {
+            JSONObject data = new JSONObject();
             data.put("serviceport", serversock.getLocalPort());
-            Discovery.get().registerService(servicetype, data);
+            Discovery.get().registerService(Prefs.getServerId(), servicetype, data);
             Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, serversock.getLocalPort() } );
-			
-			while (!done)
-			{
-				try
-				{
-					Socket s = serversock.accept();
-					TimerClient c = new TimerClient(s);
-					c.start();
-					clients.add(c);
-				}
-				catch (IOException ioe)
-				{
-					log.log(Level.INFO, "Server error: {0}", ioe);
-				}
-			}
-			
-			for (RunServiceInterface tc : clients)
-			{
-				((TimerClient)tc).stop();
-			}
 
-			Discovery.get().unregisterService(servicetype);
-			try { serversock.close(); } catch (IOException ioe) {}
-			
-			Messenger.sendEvent(MT.TIMER_SERVICE_NOTLISTENING, this);
-		}
-	}
+            while (!done)
+            {
+                try
+                {
+                    Socket s = serversock.accept();
+                    TimerClient c = new TimerClient(s);
+                    c.start();
+                    clients.add(c);
+                }
+                catch (IOException ioe)
+                {
+                    log.log(Level.INFO, "Server error: {0}", ioe);
+                }
+            }
+
+            for (RunServiceInterface tc : clients)
+            {
+                ((TimerClient)tc).stop();
+            }
+
+            Discovery.get().unregisterService(Prefs.getServerId(), servicetype);
+            try { serversock.close(); } catch (IOException ioe) {}
+
+            Messenger.sendEvent(MT.TIMER_SERVICE_NOTLISTENING, this);
+        }
+    }
 }
