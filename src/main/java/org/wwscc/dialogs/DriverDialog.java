@@ -8,140 +8,120 @@
 
 package org.wwscc.dialogs;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import javax.swing.Box;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
+
+import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
+
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Core functions for all dialogs.
  */
 public class DriverDialog extends BaseDialog<Driver>
 {
-	/**
-	 * Create the dialog.
-	 * @param d the driver data to source initially
-	 */
+    public final static String[] ATTRLIST = { "address", "city", "state", "zip", "phone", "brag", "sponsor", "econtact", "ephone" };
+    public final static String[] LABELS = { "Address", "City", "State", "Zip", "Phone", "Brag Fact", "Sponsor", "Emerg Contact", "Emerg Phone" };
+
+    /**
+     * Create the dialog.
+     * @param d the driver data to source initially
+     */
     public DriverDialog(Driver d)
-	{
-        super(new GridBagLayout(), true);
+    {
+        super(new MigLayout("fill, w 500, gap 5, ins 5", "[grow 0, right][fill,grow 100][grow 0][fill, grow 100]", ""), true);
 
-		if (d == null) d = new Driver();
+        if (d == null) d = new Driver();
 
-		GridBagConstraints c = new GridBagConstraints();
+        mainPanel.add(label("First Name", true), "");
+        mainPanel.add(entry("firstname", d.getFirstName()), "");
+        mainPanel.add(label("Last Name", true), "");
+        mainPanel.add(entry("lastname", d.getLastName()), "wrap");
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.anchor = GridBagConstraints.EAST;
-		c.insets = new Insets(2,4,2,4);
+        mainPanel.add(label("Email", false), "");
+        JPanel esub = new JPanel(new MigLayout("gap 0, ins 0", "[fill,grow 100][grow 0][grow 0]"));
+        esub.add(entry("email", d.getEmail()), "gapright 5");
+        esub.add(label("OptOut", false), "");
+        esub.add(checkbox("optoutmail", d.getOptOutMail()), "");
+        mainPanel.add(esub, "spanx 3, wrap");
 
-		/* row 0 */
-		c.gridx = 0; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("First Name", true), c);
-		c.gridx = 1; c.gridy = 0; c.gridwidth = 1; c.weightx = 1; mainPanel.add(entry("firstname", d.getFirstName()), c);
+        mainPanel.add(label("Membership", false), "");
+        mainPanel.add(entry("membership", d.getMembership()), "spanx 3, wrap");
 
-		c.gridx = 2; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Last Name", true), c);
-		c.gridx = 3; c.gridy = 0; c.gridwidth = 1; c.weightx = 1; mainPanel.add(entry("lastname", d.getLastName()), c);
+        mainPanel.add(new JSeparator(), "spanx 4, growx, h 2!, wrap");
 
-		/* row 1 */
-		c.gridx = 0; c.gridy = 1; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Email", false), c);
-        JPanel check = new JPanel(new GridBagLayout());
-          c.gridx = 0; c.gridy = 0; c.gridwidth = 3; c.weightx = 1; check.add(entry("email", d.getEmail()), c);
-          c.gridx = 3; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; check.add(label("OptOut", false), c);
-          c.gridx = 4; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; check.add(checkbox("optoutmail", d.getOptOutMail()), c);
-        c.insets = new Insets(0,0,0,0);
-        c.gridx = 1; c.gridy = 1; c.gridwidth = 3; c.weightx = 0; mainPanel.add(check, c);
-        c.insets = new Insets(2,4,2,4);
+        mainPanel.add(label("Address", false), "");
+        mainPanel.add(entry("address", d.getAttrS("address")), "spanx 3, wrap");
 
-		/* row 2 */
-		c.gridx = 0; c.gridy = 2; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Address", false), c);
-		c.gridx = 1; c.gridy = 2; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("address", d.getAddress()), c);
+        mainPanel.add(label("City", false), "");
+        mainPanel.add(entry("city", d.getAttrS("city")), "");
+        JPanel szp = new JPanel(new MigLayout("gap 0, ins 0, fill", "[grow 0, right][fill,grow 100][grow 0][fill, grow 100]"));
+        szp.add(label("State", false), "gapright 5");
+        szp.add(entry("state", d.getAttrS("state")), "gapright 5");
+        szp.add(label("Zip", false), "gapright 5");
+        szp.add(entry("zip", d.getAttrS("zip")), "");
+        mainPanel.add(szp, "growx, spanx 2, wrap");
 
-		/* row 3 */
-		c.gridx = 0; c.gridy = 3; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("City", false), c);
-		c.gridx = 1; c.gridy = 3; c.gridwidth = 1; c.weightx = 1; mainPanel.add(entry("city", d.getCity()), c);
+        for (int ii = 4; ii < ATTRLIST.length; ii++) {
+            mainPanel.add(label(LABELS[ii], false), "");
+            mainPanel.add(entry(ATTRLIST[ii], d.getAttrS(ATTRLIST[ii])), "spanx 3, wrap");
+        }
 
-		JPanel szp = new JPanel(new GridBagLayout());
-		c.gridx = 0; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; szp.add(label("State", false), c);
-		c.gridx = 1; c.gridy = 0; c.gridwidth = 1; c.weightx = 1; szp.add(entry("state", d.getState()), c);
-		c.gridx = 2; c.gridy = 0; c.gridwidth = 1; c.weightx = 0; szp.add(label("Zip", false), c);
-		c.gridx = 3; c.gridy = 0; c.gridwidth = 1; c.weightx = 1; szp.add(entry("zip", d.getZip()), c);
-
-		c.insets = new Insets(0,0,0,0);
-		c.gridx = 2; c.gridy = 3; c.gridwidth = 2; c.weightx = 0; mainPanel.add(szp, c);
-		c.insets = new Insets(2,4,2,4);
-
-		/* row 4 */
-		c.gridx = 0; c.gridy = 4; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Phone", false), c);
-		c.gridx = 1; c.gridy = 4; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("phone", d.getPhone()), c);
-
-		/* row 5 */
-		c.gridx = 0; c.gridy = 5; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Brag Fact", false), c);
-		c.gridx = 1; c.gridy = 5; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("brag", d.getBrag()), c);
-
-		c.gridx = 0; c.gridy = 6; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Sponsor", false), c);
-		c.gridx = 1; c.gridy = 6; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("sponsor", d.getSponsor()), c);
-		
-		c.gridx = 0; c.gridy = 7; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label("Membership", false), c);
-		c.gridx = 1; c.gridy = 7; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry("membership", d.getMembership()), c);
-
-		int row = 8;
-		/*
-		for (DriverField field : xfields)
-		{
-			c.gridx = 0; c.gridy = row; c.gridwidth = 1; c.weightx = 0; mainPanel.add(label(field.getTitle(), false), c);
-			c.gridx = 1; c.gridy = row; c.gridwidth = 3; c.weightx = 1; mainPanel.add(entry(field.getName(), d.getExtra(field.getName())), c);
-			row++;
-		}
-		*/
-
-		/* row 7 (vertical filler) */
-		c.gridx = 0; c.gridy = row; c.gridwidth = 4; c.weightx = 0; c.weighty = 1; mainPanel.add(Box.createHorizontalStrut(450), c);
-
-		result = d;
+        mainPanel.add(new JLabel(" "), "h 0!, pushy 100");
+        result = d;
     }
-	 
-
-	/**
-	 * Called after OK to verify data before closing.
-	 */ 
-	@Override
-	public boolean verifyData()
-	{
-		if (getEntryText("firstname").equals("")) return false;
-		if (getEntryText("lastname").equals("")) return false;
-		return true;
-	}
 
 
-	/**
-	 * Called after OK is pressed and before the dialog is closed.
-	 */
-	@Override
-	public Driver getResult()
-	{
-		if (!valid)
-			return null;
-		
-		result.setFirstName(getEntryText("firstname"));
-		result.setLastName(getEntryText("lastname"));
-		result.setEmail(getEntryText("email"));
-		result.setAddress(getEntryText("address"));
-		result.setCity(getEntryText("city"));
-		result.setState(getEntryText("state"));
-		result.setZip(getEntryText("zip"));
-		result.setPhone(getEntryText("phone"));
-		result.setBrag(getEntryText("brag"));
-		result.setSponsor(getEntryText("sponsor"));
-		result.setMembership(getEntryText("membership"));
-		result.setOptOutMail(isChecked("optoutmail"));
-		/*
-		for (DriverField field : xfields)
-		{
-			result.setExtra(field.getName(), getEntryText(field.getName()));
-		} */
-		return result;
-	}
+    /**
+     * Called after OK to verify data before closing.
+     */
+    @Override
+    public boolean verifyData()
+    {
+        String first = getEntryText("firstname");
+        String last  = getEntryText("lastname");
+        String email = getEntryText("email");
+
+        if (first.equals("")) return false;
+        if (last.equals("")) return false;
+
+        // if the first, last or email are not what we started with, check for duplicate
+        if (!first.equals(result.getFirstName()) || !last.equals(result.getLastName()) || !email.equals(result.getEmail())) {
+            for (Driver d : Database.d.getDriversLike(first, last)) {
+                if (d.getEmail().equals(email)) {
+                    return JOptionPane.showConfirmDialog(this, "A driver with the same firstname, lastname and email already exists. " +
+                                                               "Are you sure you want to create a duplicate?",
+                                                               "title", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Called after OK is pressed and data is verified and before the dialog is closed.
+     */
+    @Override
+    public Driver getResult()
+    {
+        if (!valid)
+            return null;
+
+        result.setFirstName(getEntryText("firstname"));
+        result.setLastName(getEntryText("lastname"));
+        result.setEmail(getEntryText("email"));
+        result.setOptOutMail(isChecked("optoutmail"));
+        result.setMembership(getEntryText("membership"));
+        for (String attr : ATTRLIST) {
+            result.setAttrS(attr, getEntryText(attr));
+        }
+        return result;
+    }
 
 }
 

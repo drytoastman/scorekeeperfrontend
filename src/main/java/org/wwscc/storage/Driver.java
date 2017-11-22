@@ -14,123 +14,99 @@ import java.util.LinkedList;
 import java.util.UUID;
 import org.wwscc.util.IdGenerator;
 
-public class Driver extends AttrBase //implements Comparable<Driver>
+public class Driver extends AttrBase
 {
     public static final String PLACEHOLDER = "Placeholder";
 
-	protected UUID driverid;
-	protected String firstname;
-	protected String lastname;
-	protected String email;
-	protected String username;
-	protected String password;
-	protected String membership;
-	protected boolean optoutmail;
+    protected UUID driverid;
+    protected String firstname;
+    protected String lastname;
+    protected String email;
+    protected String username;
+    protected String password;
+    protected String membership;
+    protected boolean optoutmail;
 
-	public Driver()
-	{
-		super();
-		driverid = IdGenerator.generateId();
-		firstname = "";
-		lastname = "";
-		email = "";
-		username = driverid.toString();
-		password = "";
-		membership = "";
-		optoutmail = false;
-	}
+    public Driver()
+    {
+        super();
+        driverid = IdGenerator.generateId();
+        firstname = "";
+        lastname = "";
+        email = "";
+        username = driverid.toString();
+        password = "";
+        membership = "";
+        optoutmail = false;
+    }
 
-	public Driver(String f, String l)
-	{
-		this();
-		firstname = f;
-		lastname = l;
-	}
+    public Driver(String f, String l)
+    {
+        this();
+        firstname = f;
+        lastname = l;
+    }
 
-	public Driver(ResultSet rs) throws SQLException
-	{
-		super(rs);
-		driverid   = (UUID)rs.getObject("driverid");
-		firstname  = rs.getString("firstname");
-		lastname   = rs.getString("lastname");
-		email      = rs.getString("email");
-		username   = rs.getString("username");
-		password   = rs.getString("password");
-		membership = rs.getString("membership");
-		optoutmail = rs.getBoolean("optoutmail");
-	}
+    public Driver(ResultSet rs) throws SQLException
+    {
+        super(rs);
+        driverid   = (UUID)rs.getObject("driverid");
+        firstname  = rs.getString("firstname");
+        lastname   = rs.getString("lastname");
+        email      = rs.getString("email");
+        username   = rs.getString("username");
+        password   = rs.getString("password");
+        membership = rs.getString("membership");
+        optoutmail = rs.getBoolean("optoutmail");
+    }
 
-	public LinkedList<Object> getValues()
-	{
-		LinkedList<Object> ret = new LinkedList<Object>();
-		ret.add(driverid);
-		ret.add(firstname);
-		ret.add(lastname);
-		ret.add(email);
-		ret.add(username);
-		ret.add(password);
-		ret.add(membership);
-		ret.add(optoutmail);
-		attrCleanup();
-		ret.add(attr);
-		return ret;
-	}
+    public LinkedList<Object> getValues()
+    {
+        LinkedList<Object> ret = new LinkedList<Object>();
+        ret.add(driverid);
+        ret.add(firstname);
+        ret.add(lastname);
+        ret.add(email);
+        ret.add(username);
+        ret.add(password);
+        ret.add(membership);
+        ret.add(optoutmail);
+        attrCleanup();
+        ret.add(attr);
+        return ret;
+    }
 
-	public String getFullName()   { return firstname + " " + lastname; }
-	public UUID   getDriverId()   { return driverid; }
-	public String getFirstName()  { return firstname; }
-	public String getLastName()   { return lastname; }
-	public String getEmail()      { return email; }
-	public String getMembership() { return membership; }
-	public String getAddress()    { return getAttrS("address"); }
-	public String getCity()       { return getAttrS("city"); }
-	public String getState()      { return getAttrS("state"); }
-	public String getZip()        { return getAttrS("zip"); }
-	public String getPhone()      { return getAttrS("phone"); }
-	public String getBrag()       { return getAttrS("brag"); }
-	public String getSponsor()    { return getAttrS("sponsor"); }
-	public String getAlias()      { return getAttrS("alias"); }
+    public String getFullName()   { return firstname + " " + lastname; }
+    public UUID   getDriverId()   { return driverid; }
+    public String getFirstName()  { return firstname; }
+    public String getLastName()   { return lastname; }
+    public String getEmail()      { return email; }
+    public String getMembership() { return membership; }
     public boolean getOptOutMail(){ return optoutmail; }
 
-	public void setFirstName(String s)  { firstname = s; }
-	public void setLastName(String s)   { lastname = s; }
-	public void setEmail(String s)      { email = s; }
-	public void setMembership(String s) { membership = s; }
-	public void setUsername(String s)   { username = s; }
-	public void setAddress(String s)    { setAttrS("address", s); }
-	public void setCity(String s)       { setAttrS("city", s); }
-	public void setState(String s)      { setAttrS("state", s); }
-	public void setZip(String s)        { setAttrS("zip", s); }
-	public void setPhone(String s)      { setAttrS("phone", s); }
-	public void setBrag(String s)       { setAttrS("brag", s); }
-	public void setSponsor(String s)    { setAttrS("sponsor", s); }
-	public void setAlias(String s)      { setAttrS("alias", s); }
+    public void setFirstName(String s)  { firstname = s; }
+    public void setLastName(String s)   { lastname = s; }
+    public void setEmail(String s)      { email = s; }
+    public void setMembership(String s) { membership = s; }
+    public void setUsername(String s)   { username = s; }
     public void setOptOutMail(boolean b){ optoutmail = b; }
 
+    @Override
+    public boolean equals(Object o)
+    {
+        return ((o instanceof Driver) && ((Driver)o).driverid.equals(driverid));
+    }
 
-	@Override
-	public boolean equals(Object o)
-	{
-		return ((o instanceof Driver) && ((Driver)o).driverid.equals(driverid));
-	}
+    @Override
+    public int hashCode()
+    {
+        return driverid.hashCode();
+    }
 
-	@Override
-	public int hashCode()
-	{
-		return driverid.hashCode();
-	}
-
-	/*
-	@Override
-	public int compareTo(Driver d)
-	{
-		return (firstname + lastname).toLowerCase().compareTo((d.firstname + d.lastname).toLowerCase());
-	} */
-
-	public String toString()
-	{
-		return firstname + " " + lastname;
-	}
+    public String toString()
+    {
+        return firstname + " " + lastname;
+    }
 
     public static Driver getPlaceHolder(String barcode)
     {

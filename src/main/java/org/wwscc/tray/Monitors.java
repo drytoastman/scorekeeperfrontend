@@ -16,7 +16,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Database;
 import org.json.simple.JSONObject;
 import org.wwscc.dialogs.StatusDialog;
@@ -321,10 +320,7 @@ public class Monitors
         public void importOld()
         {
             StatusDialog dialog = new StatusDialog();
-            dialog.doDialog("Old Data Import", new DialogFinisher<Object>() {
-                    @Override public void dialogFinished(Object object) {
-                }});
-
+            dialog.doDialog("Old Data Import", o -> {});
             dialog.setStatus("Preparing to import ...", -1);
             Messenger.sendEvent(MT.BACKEND_STATUS, "Preparing to import");
 
