@@ -263,9 +263,14 @@ public class Monitors
             while (!state.isMachineReady())
                 donefornow();
 
+            for (DockerContainer c : containers.values())
+                c.setMachineEnv(state.getMachineEnv());
+
+            Messenger.sendEvent(MT.BACKEND_STATUS, "Clearing old containers");
+            DockerContainer.stopAll(containers.values());
+
             for (DockerContainer c : containers.values()) {
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Init " + c.getName());
-                c.setMachineEnv(state.getMachineEnv());
                 c.createNetsAndVolumes();
                 c.start();
             }
