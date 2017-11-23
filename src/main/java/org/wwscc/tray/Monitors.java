@@ -127,7 +127,8 @@ public class Monitors
                 Messenger.sendEvent(MT.MACHINE_STATUS, "Creating VM");
                 if (!DockerMachine.createmachine())
                 {
-                    log.severe("\bUnable to create a docker machine.  See logs.");
+                    log.severe("Unable to create a docker machine");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "VM Creation Failed");
                     return false;
                 }
             }
@@ -144,15 +145,15 @@ public class Monitors
             if (!DockerMachine.machinerunning())
             {
                 state.signalMachineReady(false);
+                machineenv = null;
                 log.info("Starting the docker machine.");
                 Messenger.sendEvent(MT.MACHINE_STATUS, "Restarting VM");
                 if (!DockerMachine.startmachine())
                 {
-                    log.severe("\bUnable to start docker machine. See logs.");
+                    log.severe("Unable to restart docker machine, will try again");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "VM Paused");
                     return false;
                 }
-                pause(100);
-                machineenv = null;
             }
 
             // Make sure we have a proper environment setup
@@ -162,7 +163,8 @@ public class Monitors
                 state.setMachineEnv(machineenv);
                 if ((machineenv == null) || !machineenv.containsKey("DOCKER_HOST") || !machineenv.containsKey("DOCKER_CERT_PATH"))
                 {
-                    log.warning("Unable to load machine env, will try again on next loop");
+                    log.warning("Unable to load machine env, will try again");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "Waiting for Env");
                     return false;
                 }
             }
@@ -182,7 +184,7 @@ public class Monitors
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
                     state.signalPortsReady(false);
-                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding ports 6432,59432 ...");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding ports 6432,59432");
 
                     portforward = jsch.getSession("docker", machinehost);
                     portforward.setConfig("StrictHostKeyChecking", "no");
@@ -198,7 +200,7 @@ public class Monitors
                 // else (i.e. database) can at least connect in the mean time
                 if ((port80forward == null) || (!port80forward.isConnected()))
                 {
-                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding port 80 ...");
+                    Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding port 80");
                     port80forward = jsch.getSession("docker", machinehost);
                     port80forward.setConfig("StrictHostKeyChecking", "no");
                     port80forward.setConfig("GSSAPIAuthentication",  "no");
@@ -210,6 +212,7 @@ public class Monitors
             catch (JSchException jse)
             {
                 log.log(Level.INFO, "Error setting up portforwarding: " + jse, jse);
+                Messenger.sendEvent(MT.MACHINE_STATUS, "Port Forward Failed");
                 return false;
             }
 
@@ -221,7 +224,7 @@ public class Monitors
         @Override
         protected void mshutdown()
         {
-            Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnecting ...");
+            Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnecting");
             if (portforward != null)
                 portforward.disconnect();
             Messenger.sendEvent(MT.MACHINE_STATUS, "Disconnected");
