@@ -30,51 +30,51 @@ import org.wwscc.util.IdGenerator;
 /** */
 public abstract class SQLDataInterface implements DataInterface
 {
-	private static Logger log = Logger.getLogger(SQLDataInterface.class.getCanonicalName());
+    private static Logger log = Logger.getLogger(SQLDataInterface.class.getCanonicalName());
 
-	ClassData classCache = null;
-	long classCacheTimestamp = 0;
+    ClassData classCache = null;
+    long classCacheTimestamp = 0;
 
-	public abstract void start() throws SQLException;
-	public abstract void commit() throws SQLException;
-	public abstract void rollback();
-	public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
-	public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
-	public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
-	public abstract void closeLeftOvers();
-	public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException;
+    public abstract void start() throws SQLException;
+    public abstract void commit() throws SQLException;
+    public abstract void rollback();
+    public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
+    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
+    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
+    public abstract void closeLeftOvers();
+    public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException;
 
-	/**
-	 * Utility function to create a list for passing args
-	 * @param args list of objects to add to initially
-	 * @return the new List
-	 */
-	static List<Object> newList(Object... args)
-	{
-		List<Object> l = new ArrayList<Object>();
-		for (Object o : args)
-			l.add(o);
-		return l;
-	}
+    /**
+     * Utility function to create a list for passing args
+     * @param args list of objects to add to initially
+     * @return the new List
+     */
+    static List<Object> newList(Object... args)
+    {
+        List<Object> l = new ArrayList<Object>();
+        for (Object o : args)
+            l.add(o);
+        return l;
+    }
 
-	static void logError(String f, Exception e)
-	{
-		log.log(Level.SEVERE, "\b" + f + " failed: " + e.getMessage(), e);
-	}
+    static void logError(String f, Exception e)
+    {
+        log.log(Level.SEVERE, "\b" + f + " failed: " + e.getMessage(), e);
+    }
 
 
-	@Override
-	public void ping()
-	{
-	    try {
+    @Override
+    public void ping()
+    {
+        try {
             executeSelect("select 1", null);
         } catch (SQLException sqle) {
             log.log(Level.INFO, "Ping failed? " + sqle, sqle);
         }
-	}
+    }
 
 
-	@Override
+    @Override
     public String getVersion()
     {
         try
@@ -89,336 +89,336 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
 
-	@Override
-	public String getSetting(String key)
-	{
-		try
-		{
-			ResultSet setting = executeSelect("select val from settings where name=?", newList(key));
-			if (setting.next()) {
-				return setting.getString("val");
-			} else {
-				return "";
-			}
-		} catch (SQLException ioe) {
-			logError("getSetting", ioe);
-			return "";
-		}
-	}
+    @Override
+    public String getSetting(String key)
+    {
+        try
+        {
+            ResultSet setting = executeSelect("select val from settings where name=?", newList(key));
+            if (setting.next()) {
+                return setting.getString("val");
+            } else {
+                return "";
+            }
+        } catch (SQLException ioe) {
+            logError("getSetting", ioe);
+            return "";
+        }
+    }
 
-	@Override
-	public List<Event> getEvents()
-	{
-		try
-		{
-			return executeSelect("select * from events order by date", null, Event.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getEvents", ioe);
-			return null;
-		}
-	}
+    @Override
+    public List<Event> getEvents()
+    {
+        try
+        {
+            return executeSelect("select * from events order by date", null, Event.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getEvents", ioe);
+            return null;
+        }
+    }
 
-	@Override
-	public boolean updateEventRuns(UUID eventid, int runs)
-	{
-		try
-		{
-			executeUpdate("update events set runs=? where eventid=?", newList(runs, eventid));
-			return true;
-		}
-		catch (Exception ioe)
-		{
-			logError("updateEventRuns", ioe);
-			return false;
-		}
-	}
+    @Override
+    public boolean updateEventRuns(UUID eventid, int runs)
+    {
+        try
+        {
+            executeUpdate("update events set runs=? where eventid=?", newList(runs, eventid));
+            return true;
+        }
+        catch (Exception ioe)
+        {
+            logError("updateEventRuns", ioe);
+            return false;
+        }
+    }
 
-	/**
-	 * Utility function for methods that loads entrants from driver/car
-	 * data as well as placing runs if they match.
-	 * @param d result data containing entrant info
-	 * @param r result data containing run info or null
-	 * @return a list of entrants
-	 * @throws SQLException
-	 */
-	List<Entrant> loadEntrants(ResultSet d, ResultSet r) throws SQLException
-	{
-		List<Entrant> ret = new ArrayList<Entrant>();
-		List<Run> runs = null;
+    /**
+     * Utility function for methods that loads entrants from driver/car
+     * data as well as placing runs if they match.
+     * @param d result data containing entrant info
+     * @param r result data containing run info or null
+     * @return a list of entrants
+     * @throws SQLException
+     */
+    List<Entrant> loadEntrants(ResultSet d, ResultSet r) throws SQLException
+    {
+        List<Entrant> ret = new ArrayList<Entrant>();
+        List<Run> runs = null;
 
-		if (r != null)
-		{
-			runs = new ArrayList<Run>();
-			while (r.next())
-				runs.add(new Run(r));
-		}
+        if (r != null)
+        {
+            runs = new ArrayList<Run>();
+            while (r.next())
+                runs.add(new Run(r));
+        }
 
-		while (d.next())
-		{
-			Entrant e = new Entrant(d);
-			if (runs != null)
-			{
-				for (Run rx : runs)
-				{
-					if (rx.getCarId().equals(e.getCarId()))
-						e.runs.put(rx.run, rx);
-				}
-			}
+        while (d.next())
+        {
+            Entrant e = new Entrant(d);
+            if (runs != null)
+            {
+                for (Run rx : runs)
+                {
+                    if (rx.getCarId().equals(e.getCarId()))
+                        e.runs.put(rx.run, rx);
+                }
+            }
 
-			ret.add(e);
-		}
+            ret.add(e);
+        }
 
-		return ret;
-	}
-
-
-	@Override
-	public List<Entrant> getEntrantsByEvent(UUID eventid)
-	{
-		try
-		{
-			return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.* from runs as r, cars as c, drivers as d " +
-						"where r.carid=c.carid AND c.driverid=d.driverid and r.eventid=?", newList(eventid)), null);
-		}
-		catch (Exception ioe)
-		{
-			logError("getEntrantsByEvent", ioe);
-			return null;
-		}
-	}
+        return ret;
+    }
 
 
-	@Override
-	public List<Entrant> getRegisteredEntrants(UUID eventid)
-	{
-		try
-		{
-			return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.txid from registered as x, cars as c, drivers as d " +
-						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? ORDER BY d.firstname,d.lastname", newList(eventid)), null);
-		}
-		catch (Exception ioe)
-		{
-			logError("getRegisteredEntrants", ioe);
-			return null;
-		}
-	}
+    @Override
+    public List<Entrant> getEntrantsByEvent(UUID eventid)
+    {
+        try
+        {
+            return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.* from runs as r, cars as c, drivers as d " +
+                        "where r.carid=c.carid AND c.driverid=d.driverid and r.eventid=?", newList(eventid)), null);
+        }
+        catch (Exception ioe)
+        {
+            logError("getEntrantsByEvent", ioe);
+            return null;
+        }
+    }
 
 
-	@Override
-	public List<Car> getRegisteredCars(UUID driverid, UUID eventid)
-	{
-		try
-		{
-			return executeSelect("select c.* from registered as x, cars as c, drivers as d " +
-						"where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=?",
-						newList(eventid, driverid), Car.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getRegisteredCars", ioe);
-			return null;
-		}
-	}
+    @Override
+    public List<Entrant> getRegisteredEntrants(UUID eventid)
+    {
+        try
+        {
+            return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.txid from registered as x, cars as c, drivers as d " +
+                        "where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? ORDER BY d.firstname,d.lastname", newList(eventid)), null);
+        }
+        catch (Exception ioe)
+        {
+            logError("getRegisteredEntrants", ioe);
+            return null;
+        }
+    }
 
 
-	/**
-	 * Gets all the entrants and their runs based on the current run order.  Ends up
-	 * being a lot faster (particular over a network) to load all of the runs for the run
-	 * group as one and then filter them to each entrant locally.
-	 * @return the list of entrants in the current run order
-	 */
-	@Override
-	public List<Entrant> getEntrantsByRunOrder(UUID eventid, int course, int rungroup)
-	{
-		try
-		{
-			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,reg.txid from drivers d " +
-						"JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid  " +
-						"where r.eventid=? AND r.course=? AND r.rungroup=? order by r.row", newList(eventid, course, rungroup));
-			if (d == null)
-				return new ArrayList<Entrant>();
-			ResultSet runs = executeSelect("select * from runs where eventid=? and course=? and carid in " +
-						"(select carid from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, eventid, course, rungroup));
-			List<Entrant> ret = loadEntrants(d, runs);
-			closeLeftOvers();
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("getEntrantsByRunOrder", ioe);
-			return null;
-		}
-	}
+    @Override
+    public List<Car> getRegisteredCars(UUID driverid, UUID eventid)
+    {
+        try
+        {
+            return executeSelect("select c.* from registered as x, cars as c, drivers as d " +
+                        "where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=?",
+                        newList(eventid, driverid), Car.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getRegisteredCars", ioe);
+            return null;
+        }
+    }
 
 
-	@Override
-	public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns)
-	{
-		try
-		{
-			ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,r.txid from drivers as d, cars as c LEFT JOIN registered as r on r.carid=c.carid and r.eventid=?  " +
-						"where c.driverid=d.driverid and c.carid=?", newList(eventid, carid));
-			ResultSet runs = null;
-			if (loadruns)
-				runs = executeSelect("select * from runs where carid=? and eventid=? and course=?", newList(carid, eventid, course));
-			List<Entrant> e = loadEntrants(d, runs);
-			closeLeftOvers();
-			if (e.size() > 0)
-				return e.get(0);
-			return null;
-		}
-		catch (Exception ioe)
-		{
-			logError("loadEntrant", ioe);
-			return null;
-		}
-	}
+    /**
+     * Gets all the entrants and their runs based on the current run order.  Ends up
+     * being a lot faster (particular over a network) to load all of the runs for the run
+     * group as one and then filter them to each entrant locally.
+     * @return the list of entrants in the current run order
+     */
+    @Override
+    public List<Entrant> getEntrantsByRunOrder(UUID eventid, int course, int rungroup)
+    {
+        try
+        {
+            ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,reg.txid from drivers d " +
+                        "JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid  " +
+                        "where r.eventid=? AND r.course=? AND r.rungroup=? order by r.row", newList(eventid, course, rungroup));
+            if (d == null)
+                return new ArrayList<Entrant>();
+            ResultSet runs = executeSelect("select * from runs where eventid=? and course=? and carid in " +
+                        "(select carid from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, eventid, course, rungroup));
+            List<Entrant> ret = loadEntrants(d, runs);
+            closeLeftOvers();
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getEntrantsByRunOrder", ioe);
+            return null;
+        }
+    }
 
 
-	@Override
-	public Set<UUID> getCarIdsForCourse(UUID eventid, int course)
-	{
-		try
-		{
-			ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=?", newList(eventid, course));
-			HashSet<UUID> ret = new HashSet<UUID>();
-			while (d.next())
-				ret.add((UUID)d.getObject("carid"));
-			closeLeftOvers();
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("getCarIdsForCourse", ioe);
-			return null;
-		}
-	}
+    @Override
+    public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns)
+    {
+        try
+        {
+            ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,r.txid from drivers as d, cars as c LEFT JOIN registered as r on r.carid=c.carid and r.eventid=?  " +
+                        "where c.driverid=d.driverid and c.carid=?", newList(eventid, carid));
+            ResultSet runs = null;
+            if (loadruns)
+                runs = executeSelect("select * from runs where carid=? and eventid=? and course=?", newList(carid, eventid, course));
+            List<Entrant> e = loadEntrants(d, runs);
+            closeLeftOvers();
+            if (e.size() > 0)
+                return e.get(0);
+            return null;
+        }
+        catch (Exception ioe)
+        {
+            logError("loadEntrant", ioe);
+            return null;
+        }
+    }
 
-	@Override
-	public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup)
-	{
-		try
-		{
-			ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=? AND rungroup=? order by row", newList(eventid, course, rungroup));
-			List<UUID> ret = new ArrayList<UUID>();
-			while (d.next())
-				ret.add((UUID)d.getObject("carid"));
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("getCarIdsForRunGroup", ioe);
-			return null;
-		}
-	}
 
-	@Override
-	public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids)
-	{
-		try
-		{
-			if (rungroup <= 0) return; // Shouldn't be doing this if rungroup isn't valid
+    @Override
+    public Set<UUID> getCarIdsForCourse(UUID eventid, int course)
+    {
+        try
+        {
+            ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=?", newList(eventid, course));
+            HashSet<UUID> ret = new HashSet<UUID>();
+            while (d.next())
+                ret.add((UUID)d.getObject("carid"));
+            closeLeftOvers();
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getCarIdsForCourse", ioe);
+            return null;
+        }
+    }
 
-			/* Start transaction */
-			start();
+    @Override
+    public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup)
+    {
+        try
+        {
+            ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=? AND rungroup=? order by row", newList(eventid, course, rungroup));
+            List<UUID> ret = new ArrayList<UUID>();
+            while (d.next())
+                ret.add((UUID)d.getObject("carid"));
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getCarIdsForRunGroup", ioe);
+            return null;
+        }
+    }
 
-			List<List<Object>> lists = new ArrayList<List<Object>>(carids.size());
+    @Override
+    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids)
+    {
+        try
+        {
+            if (rungroup <= 0) return; // Shouldn't be doing this if rungroup isn't valid
 
-			int row = 0;
-			for (UUID carid : carids)
-			{
-				row++;
-				List<Object> items = new ArrayList<Object>(6);
-				items.add(eventid);
-				items.add(course);
-				items.add(rungroup);
-				items.add(row);
-				items.add(carid);
-				items.add(carid);
-				lists.add(items);
-			}
+            /* Start transaction */
+            start();
 
-			// update our ids
-			executeGroupUpdate("INSERT INTO runorder VALUES (?,?,?,?,?,now()) " +
-								"ON CONFLICT (eventid, course, rungroup, row) DO UPDATE " +
-								"SET carid=?,modified=now()", lists);
+            List<List<Object>> lists = new ArrayList<List<Object>>(carids.size());
 
-			// clear out any leftovers from previous values
-			executeUpdate("DELETE FROM runorder where eventid=? and course=? and rungroup=? and row>?", newList(eventid, course, rungroup, row));
-			commit();
-		}
-		catch (Exception ioe)
-		{
-			rollback();
-			logError("setRunOrder", ioe);
-		}
-	}
+            int row = 0;
+            for (UUID carid : carids)
+            {
+                row++;
+                List<Object> items = new ArrayList<Object>(6);
+                items.add(eventid);
+                items.add(course);
+                items.add(rungroup);
+                items.add(row);
+                items.add(carid);
+                items.add(carid);
+                lists.add(items);
+            }
 
-	//****************************************************/
+            // update our ids
+            executeGroupUpdate("INSERT INTO runorder VALUES (?,?,?,?,?,now()) " +
+                                "ON CONFLICT (eventid, course, rungroup, row) DO UPDATE " +
+                                "SET carid=?,modified=now()", lists);
 
-	@Override
-	public MetaCar loadMetaCar(Car c, UUID eventid, int course)
-	{
-		try
-		{
-			MetaCar mc = new MetaCar(c);
-			ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-			mc.isRegistered = cr.next();
-			if (mc.isRegistered)
-			    mc.paid = cr.getString("txid") != null;
+            // clear out any leftovers from previous values
+            executeUpdate("DELETE FROM runorder where eventid=? and course=? and rungroup=? and row>?", newList(eventid, course, rungroup, row));
+            commit();
+        }
+        catch (Exception ioe)
+        {
+            rollback();
+            logError("setRunOrder", ioe);
+        }
+    }
 
-			ResultSet rr = executeSelect("select row from runorder where carid=? and eventid=? and course=? limit 1", newList(c.getCarId(), eventid, course));
+    //****************************************************/
+
+    @Override
+    public MetaCar loadMetaCar(Car c, UUID eventid, int course)
+    {
+        try
+        {
+            MetaCar mc = new MetaCar(c);
+            ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            mc.isRegistered = cr.next();
+            if (mc.isRegistered)
+                mc.paid = cr.getString("txid") != null;
+
+            ResultSet rr = executeSelect("select row from runorder where carid=? and eventid=? and course=? limit 1", newList(c.getCarId(), eventid, course));
             mc.isInRunOrder = rr.next();
 
             // check for activity outside this event, shortcut to reduce queries needed
             if (mc.isRegistered || mc.isInRunOrder) {
                 mc.hasActivity = true;
             } else {
-    			ResultSet c1 = executeSelect("select carid from registered where carid=? limit 1", newList(c.getCarId()));
-    			if (!c1.next()) {
-    			    ResultSet c2 = executeSelect("select carid from runs where carid=? limit 1", newList(c.getCarId()));
-    			    if (!c2.next()) {
-    			        ResultSet c3 = executeSelect("select carid from runorder where carid=? limit 1", newList(c.getCarId()));
-    			        mc.hasActivity = c3.next();
-    			    } else {
-    			        mc.hasActivity = true;
-    			    }
-    			} else {
-    			    mc.hasActivity = true;
-    			}
+                ResultSet c1 = executeSelect("select carid from registered where carid=? limit 1", newList(c.getCarId()));
+                if (!c1.next()) {
+                    ResultSet c2 = executeSelect("select carid from runs where carid=? limit 1", newList(c.getCarId()));
+                    if (!c2.next()) {
+                        ResultSet c3 = executeSelect("select carid from runorder where carid=? limit 1", newList(c.getCarId()));
+                        mc.hasActivity = c3.next();
+                    } else {
+                        mc.hasActivity = true;
+                    }
+                } else {
+                    mc.hasActivity = true;
+                }
             }
 
-			closeLeftOvers();
-			return mc;
-		}
-		catch (Exception ioe)
-		{
-			logError("loadMetaCar", ioe);
-			return null;
-		}
-	}
+            closeLeftOvers();
+            return mc;
+        }
+        catch (Exception ioe)
+        {
+            logError("loadMetaCar", ioe);
+            return null;
+        }
+    }
 
-	@Override
-	public void newDriver(Driver d) throws SQLException
-	{
-		executeUpdate("insert into drivers (driverid, firstname, lastname, email, username, password, membership, optoutmail, attr) values (?,?,?,?,?,?,?,?,?)", d.getValues());
-	}
+    @Override
+    public void newDriver(Driver d) throws SQLException
+    {
+        executeUpdate("insert into drivers (driverid, firstname, lastname, email, username, password, membership, optoutmail, attr) values (?,?,?,?,?,?,?,?,?)", d.getValues());
+    }
 
-	@Override
-	public void updateDriver(Driver d) throws SQLException
-	{
-		LinkedList<Object> vals = d.getValues();
-		vals.add(vals.pop());
-		executeUpdate("update drivers set firstname=?,lastname=?,email=?,username=?,password=?,membership=?,optoutmail=?,attr=?,modified=now() where driverid=?", vals);
-	}
+    @Override
+    public void updateDriver(Driver d) throws SQLException
+    {
+        LinkedList<Object> vals = d.getValues();
+        vals.add(vals.pop());
+        executeUpdate("update drivers set firstname=?,lastname=?,email=?,username=?,password=?,membership=?,optoutmail=?,attr=?,modified=now() where driverid=?", vals);
+    }
 
-	@Override
-	public void deleteDriver(Driver d) throws SQLException
-	{
-	    deleteDriver(d.getDriverId());
-	}
+    @Override
+    public void deleteDriver(Driver d) throws SQLException
+    {
+        deleteDriver(d.getDriverId());
+    }
 
    @Override
     public void deleteDriver(UUID driverid) throws SQLException
@@ -426,747 +426,747 @@ public abstract class SQLDataInterface implements DataInterface
         executeUpdate("delete from drivers where driverid=?", newList(driverid));
     }
 
-	@Override
-	public void deleteDrivers(Collection<Driver> list) throws SQLException
-	{
-		try
-		{
-			start();
-			for (Driver d : list)
-				executeUpdate("delete from drivers where id=?", newList(d.driverid));
-			commit();
-		}
-		catch (SQLException sql)
-		{
-			rollback();
-			throw sql;
-		}
-	}
+    @Override
+    public void deleteDrivers(Collection<Driver> list) throws SQLException
+    {
+        try
+        {
+            start();
+            for (Driver d : list)
+                executeUpdate("delete from drivers where id=?", newList(d.driverid));
+            commit();
+        }
+        catch (SQLException sql)
+        {
+            rollback();
+            throw sql;
+        }
+    }
 
 
-	@Override
-	public Driver getDriver(UUID driverid)
-	{
-		try
-		{
-			return executeSelect("select * from drivers where driverid=?", newList(driverid),
-								Driver.class.getConstructor(ResultSet.class)).get(0);
-		}
-		catch (Exception ioe)
-		{
-			logError("getDriver", ioe);
-			return null;
-		}
-	}
+    @Override
+    public Driver getDriver(UUID driverid)
+    {
+        try
+        {
+            return executeSelect("select * from drivers where driverid=?", newList(driverid),
+                                Driver.class.getConstructor(ResultSet.class)).get(0);
+        }
+        catch (Exception ioe)
+        {
+            logError("getDriver", ioe);
+            return null;
+        }
+    }
 
-	@Override
-	public List<Driver> findDriverByMembership(String membership)
-	{
-		List<Driver> ret = new ArrayList<Driver>();
-		try
-		{
-			return executeSelect("select * from drivers where membership like ? order by driverid", newList(membership),
-					Driver.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("findDriverByMembership", ioe);
-		}
-		return ret;
-	}
+    @Override
+    public List<Driver> findDriverByMembership(String membership)
+    {
+        List<Driver> ret = new ArrayList<Driver>();
+        try
+        {
+            return executeSelect("select * from drivers where membership like ? order by driverid", newList(membership),
+                    Driver.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("findDriverByMembership", ioe);
+        }
+        return ret;
+    }
 
-	@Override
-	public List<Car> getCarsForDriver(UUID driverid)
-	{
-		try
-		{
-			return executeSelect("select * from cars where driverid = ? order by classcode, number",
-							newList(driverid), Car.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getCarsForDriver", ioe);
-			return null;
-		}
-	}
+    @Override
+    public List<Car> getCarsForDriver(UUID driverid)
+    {
+        try
+        {
+            return executeSelect("select * from cars where driverid = ? order by classcode, number",
+                            newList(driverid), Car.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getCarsForDriver", ioe);
+            return null;
+        }
+    }
 
 
-	@Override
-	public Map<String, Set<String>> getCarAttributes()
-	{
-		try
-		{
-			Map<String, Set<String>> ret = new HashMap<String, Set<String>>();
-			HashSet<String> make  = new HashSet<String>();
-			HashSet<String> model = new HashSet<String>();
-			HashSet<String> color = new HashSet<String>();
+    @Override
+    public Map<String, Set<String>> getCarAttributes()
+    {
+        try
+        {
+            Map<String, Set<String>> ret = new HashMap<String, Set<String>>();
+            HashSet<String> make  = new HashSet<String>();
+            HashSet<String> model = new HashSet<String>();
+            HashSet<String> color = new HashSet<String>();
 
-			ResultSet rs = executeSelect("select attr from cars", null);
-			while (rs.next())
-			{
-				JSONObject attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
-				if (attr.containsKey("make"))  make.add((String)attr.get("make"));
-				if (attr.containsKey("model")) model.add((String)attr.get("model"));
-				if (attr.containsKey("color")) color.add((String)attr.get("color"));
-			}
+            ResultSet rs = executeSelect("select attr from cars", null);
+            while (rs.next())
+            {
+                JSONObject attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
+                if (attr.containsKey("make"))  make.add((String)attr.get("make"));
+                if (attr.containsKey("model")) model.add((String)attr.get("model"));
+                if (attr.containsKey("color")) color.add((String)attr.get("color"));
+            }
 
-			ret.put("make",  make);
-			ret.put("model", model);
-			ret.put("color", color);
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("getCarAttributes", ioe);
-			return null;
-		}
-	}
+            ret.put("make",  make);
+            ret.put("model", model);
+            ret.put("color", color);
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getCarAttributes", ioe);
+            return null;
+        }
+    }
 
-	public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid)
-	{
-	    List<Double> ret = new ArrayList<Double>();
-	    try {
+    public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid)
+    {
+        List<Double> ret = new ArrayList<Double>();
+        try {
             ResultSet s = executeSelect("select amount from payments where driverid=? and eventid=? and accountid!='onsite'", newList(driverid, eventid));
             while (s.next())
                 ret.add(s.getDouble(1));
-	    } catch (SQLException sqle) {
-	        logError("getPaymentsForEvent", sqle);
-	    }
+        } catch (SQLException sqle) {
+            logError("getPaymentsForEvent", sqle);
+        }
         return ret;
-	}
+    }
 
 
-	@Override
-	public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
-	{
-	    // eventually record actual amounts here, just 1 cent for now
-	    String txid = "onsite-"+car.getCarId();
-	    if (paid) // make sure onsite account is present
-	        executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('onsite', 'Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
-	    else
-	        txid = null;
+    @Override
+    public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
+    {
+        // eventually record actual amounts here, just 1 cent for now
+        String txid = "onsite-"+car.getCarId();
+        if (paid) // make sure onsite account is present
+            executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('onsite', 'Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
+        else
+            txid = null;
 
-		String pay  = "INSERT INTO payments (txid, accountid, driverid, eventid, amount) VALUES (?, 'onsite', ?, ?, 0.01) ON CONFLICT (txid) DO ";
-		String reg  = "INSERT INTO registered (eventid, carid, txid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
-		if (overwrite)
-		{
-		    if (paid)
-		        executeUpdate(pay+"UPDATE SET amount=0.01,modified=now()", newList(txid, car.getDriverId(), eventid));
-			executeUpdate(reg+"UPDATE SET txid=?,modified=now()", newList(eventid, car.getCarId(), txid, txid));
-		}
-		else
-		{
-		    if (paid)
-		        executeUpdate(pay+"NOTHING", newList(txid, car.getDriverId(), eventid));
-			executeUpdate(reg+"NOTHING", newList(eventid, car.getCarId(), txid));
-		}
-	}
+        String pay  = "INSERT INTO payments (txid, accountid, driverid, eventid, amount) VALUES (?, 'onsite', ?, ?, 0.01) ON CONFLICT (txid) DO ";
+        String reg  = "INSERT INTO registered (eventid, carid, txid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
+        if (overwrite)
+        {
+            if (paid)
+                executeUpdate(pay+"UPDATE SET amount=0.01,modified=now()", newList(txid, car.getDriverId(), eventid));
+            executeUpdate(reg+"UPDATE SET txid=?,modified=now()", newList(eventid, car.getCarId(), txid, txid));
+        }
+        else
+        {
+            if (paid)
+                executeUpdate(pay+"NOTHING", newList(txid, car.getDriverId(), eventid));
+            executeUpdate(reg+"NOTHING", newList(eventid, car.getCarId(), txid));
+        }
+    }
 
-	@Override
-	public void unregisterCar(UUID eventid, Car car) throws SQLException
-	{
-		List<Object> vals = newList(eventid, car.getCarId());
-		executeUpdate("delete from registered where eventid=? and carid=?", vals);
-	}
+    @Override
+    public void unregisterCar(UUID eventid, Car car) throws SQLException
+    {
+        List<Object> vals = newList(eventid, car.getCarId());
+        executeUpdate("delete from registered where eventid=? and carid=?", vals);
+    }
 
-	@Override
-	public void newCar(Car c) throws SQLException
-	{
-		executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
-	}
+    @Override
+    public void newCar(Car c) throws SQLException
+    {
+        executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
+    }
 
-	@Override
-	public void updateCar(Car c) throws SQLException
-	{
-		LinkedList<Object> vals = c.getValues();
-		vals.add(vals.pop());
-		executeUpdate("update cars set driverid=?,classcode=?,indexcode=?,number=?,useclsmult=?,attr=?,modified=now() where carid=?", vals);
-	}
+    @Override
+    public void updateCar(Car c) throws SQLException
+    {
+        LinkedList<Object> vals = c.getValues();
+        vals.add(vals.pop());
+        executeUpdate("update cars set driverid=?,classcode=?,indexcode=?,number=?,useclsmult=?,attr=?,modified=now() where carid=?", vals);
+    }
 
-	@Override
-	public void deleteCar(Car c) throws SQLException
-	{
-	    try {
-	        start();
-	        executeUpdate("delete from registered where carid=?", newList(c.carid));
-	        executeUpdate("delete from cars where carid=?", newList(c.carid));
-	        commit();
-	    } catch (SQLException sqle) {
-	        rollback();
-	        throw sqle;
-	    }
-	}
+    @Override
+    public void deleteCar(Car c) throws SQLException
+    {
+        try {
+            start();
+            executeUpdate("delete from registered where carid=?", newList(c.carid));
+            executeUpdate("delete from cars where carid=?", newList(c.carid));
+            commit();
+        } catch (SQLException sqle) {
+            rollback();
+            throw sqle;
+        }
+    }
 
-	@Override
-	public void deleteCars(Collection<Car> list) throws SQLException
-	{
-		try
-		{
-			start();
-			for (Car c : list)
-				executeUpdate("delete from cars where carid=?", newList(c.carid));
-			commit();
-		}
-		catch (SQLException ioe)
-		{
-			rollback();
-			throw ioe;
-		}
-	}
+    @Override
+    public void deleteCars(Collection<Car> list) throws SQLException
+    {
+        try
+        {
+            start();
+            for (Car c : list)
+                executeUpdate("delete from cars where carid=?", newList(c.carid));
+            commit();
+        }
+        catch (SQLException ioe)
+        {
+            rollback();
+            throw ioe;
+        }
+    }
 
-	@Override
-	public void mergeCar(Car from, Car into) throws SQLException
-	{
-		try
-		{
-			start();
-			List<Object> sa = newList(into.getCarId(), from.getCarId());
-			List<Object> da = newList(from.getCarId());
+    @Override
+    public void mergeCar(Car from, Car into) throws SQLException
+    {
+        try
+        {
+            start();
+            List<Object> sa = newList(into.getCarId(), from.getCarId());
+            List<Object> da = newList(from.getCarId());
 
-			// can't swap carids on some tables as they are part of the primary key and that messes with our syncing process
-			executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr) " +
-									"(SELECT eventid,	 ?, course, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
-			executeUpdate("DELETE FROM runs WHERE carid=?", da);
+            // can't swap carids on some tables as they are part of the primary key and that messes with our syncing process
+            executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr) " +
+                                    "(SELECT eventid,	 ?, course, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
+            executeUpdate("DELETE FROM runs WHERE carid=?", da);
 
-			executeUpdate("INSERT INTO registered (eventid, carid, txid) " +
-										  "(SELECT eventid,	 ?, txid FROM registered WHERE carid=?)", sa);
-			executeUpdate("DELETE FROM registered WHERE carid=?", da);
+            executeUpdate("INSERT INTO registered (eventid, carid, txid) " +
+                                          "(SELECT eventid,	 ?, txid FROM registered WHERE carid=?)", sa);
+            executeUpdate("DELETE FROM registered WHERE carid=?", da);
 
-			executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status) " +
-											 "(SELECT challengeid, round,	 ?, course, reaction, sixty, raw, cones, gates, status FROM challengeruns WHERE carid=?)", sa);
-			executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
+            executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status) " +
+                                             "(SELECT challengeid, round,	 ?, course, reaction, sixty, raw, cones, gates, status FROM challengeruns WHERE carid=?)", sa);
+            executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
 
-			// these we can just swap
-			executeUpdate("update runorder set carid=? where carid=?", sa);
-			executeUpdate("update challengerounds set car1id=? where car1id=?", sa);
-			executeUpdate("update challengerounds set car2id=? where car2id=?", sa);
-			executeUpdate("delete from cars where carid=?", da);
-			commit();
-		}
-		catch (SQLException sqle)
-		{
-			rollback();
-			throw sqle;
-		}
-	}
+            // these we can just swap
+            executeUpdate("update runorder set carid=? where carid=?", sa);
+            executeUpdate("update challengerounds set car1id=? where car1id=?", sa);
+            executeUpdate("update challengerounds set car2id=? where car2id=?", sa);
+            executeUpdate("delete from cars where carid=?", da);
+            commit();
+        }
+        catch (SQLException sqle)
+        {
+            rollback();
+            throw sqle;
+        }
+    }
 
-	@Override
-	public boolean isRegistered(UUID eventid, UUID carid)
-	{
-		try
-		{
-			ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(carid, eventid));
-			boolean ret = cr.next();
-			closeLeftOvers();
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("isRegistered", ioe);
-			return false;
-		}
-	}
-	
-	@Override
-	public void setRun(Run r) throws SQLException
-	{
-		try {
-			executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
-						  "VALUES (?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, run) DO UPDATE " +
-						  "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
-						  newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
-																	   r.cones, r.gates, r.raw, r.status, r.attr));
-		} catch (SQLException sqle) {
-			logError("setRun", sqle);
-			throw sqle;
-		}
-	}
+    @Override
+    public boolean isRegistered(UUID eventid, UUID carid)
+    {
+        try
+        {
+            ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(carid, eventid));
+            boolean ret = cr.next();
+            closeLeftOvers();
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("isRegistered", ioe);
+            return false;
+        }
+    }
 
-	@Override
-	public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException
-	{
-		try {
-			// do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
-			start();
-			for (Run r : runs) {
-				executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(r.eventid, r.carid, r.course, r.run));
-				r.setCarId(newcarid);
-				executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,now())",
-						newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
-			}
-			commit();
-		} catch (SQLException sqle) {
-			rollback();
-			throw sqle;
-		}
-	}
+    @Override
+    public void setRun(Run r) throws SQLException
+    {
+        try {
+            executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
+                          "VALUES (?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, run) DO UPDATE " +
+                          "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
+                          newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
+                                                                       r.cones, r.gates, r.raw, r.status, r.attr));
+        } catch (SQLException sqle) {
+            logError("setRun", sqle);
+            throw sqle;
+        }
+    }
 
-	@Override
-	public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException
-	{
-		try {
-			executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
-		} catch (SQLException sqle){
-			logError("deleteRun", sqle);
-			throw sqle;
-		}
-	}
+    @Override
+    public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException
+    {
+        try {
+            // do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
+            start();
+            for (Run r : runs) {
+                executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(r.eventid, r.carid, r.course, r.run));
+                r.setCarId(newcarid);
+                executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,now())",
+                        newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
+            }
+            commit();
+        } catch (SQLException sqle) {
+            rollback();
+            throw sqle;
+        }
+    }
 
-	@Override
-	public void addTimerTime(UUID serverid, Run r)
-	{
+    @Override
+    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException
+    {
+        try {
+            executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
+        } catch (SQLException sqle){
+            logError("deleteRun", sqle);
+            throw sqle;
+        }
+    }
+
+    @Override
+    public void addTimerTime(UUID serverid, Run r)
+    {
         try {
             executeUpdate("INSERT INTO timertimes (serverid, raw, modified) VALUES (?, ?, now())", newList(serverid, r.raw));
         } catch (Exception ioe){
             logError("addTimerTime", ioe);
         }
-	}
+    }
 
 
-	@Override
-	public Set<UUID> getCarIdsByChallenge(UUID challengeid)
-	{
-		try
-		{
-			
-			ResultSet rs = executeSelect("select car1id,car2id from challengerounds where challengeid=?", newList(challengeid));
-			HashSet<UUID> ret = new HashSet<UUID>();
-			while (rs.next())
-			{
-				ret.add((UUID)rs.getObject("car1id"));
-				ret.add((UUID)rs.getObject("car2id"));
-			}
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("getCarIdsByChallenge", ioe);
-			return null;
-		}
-	}
-
-	@Override
-	public UUID newChallenge(UUID eventid, String name, int size)
-	{
-		try
-		{
-			int rounds = size - 1;
-			int depth = (int)(Math.log(size)/Math.log(2));
-			UUID challengeid = IdGenerator.generateId();
-			start();
-
-			executeUpdate("insert into challenges (challengeid, eventid, name, depth) values (?,?,?,?)", 
-										newList(challengeid, eventid, name, depth));
-
-			String sql = "insert into challengerounds (challengeid,round,swappedstart) values (?,?,?)";
-			List<Object> rargs = newList(challengeid, 0, false);
-			for (int ii = 0; ii <= rounds; ii++)
-			{
-				rargs.set(1, ii);
-				executeUpdate(sql, rargs);
-			}
-			rargs.set(1, 99);
-			executeUpdate(sql, rargs);
-
-			commit();
-			return challengeid;
-		}
-		catch (Exception ioe)
-		{
-			logError("newChallenge", ioe);
-			rollback();
-		}
-		
-		return IdGenerator.nullid;
-	}
-
-	@Override
-	public void deleteChallenge(UUID challengeid)
-	{
-		try
-		{   // This delete cascades to challengrounds and challengeruns
-			executeUpdate("DELETE FROM challenges WHERE challengeid=?", newList(challengeid));
-		}
-		catch (Exception ioe)
-		{
-			logError("deleteChallenge", ioe);
-		}
-	}
-	
-	
-	@Override
-	public List<Challenge> getChallengesForEvent(UUID eventid)
-	{
-		try
-		{
-			return executeSelect("select * from challenges where eventid = ?", newList(eventid), Challenge.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getChallengesForEvent", ioe);
-			return null;
-		}
-	}
-
-	@Override
-	public List<ChallengeRound> getRoundsForChallenge(UUID challengeid) 
-	{
-		try
-		{
-			return executeSelect("select * from challengerounds where challengeid=?", newList(challengeid), 
-								ChallengeRound.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getRoundsForChallenge", ioe);
-			return null;
-		}
-	}
-
-	@Override
-	public List<ChallengeRun> getRunsForChallenge(UUID challengeid)
-	{
-		try
-		{
-			return executeSelect("select * from challengeruns where challengeid=?", newList(challengeid), ChallengeRun.class.getConstructor(ResultSet.class));
-		}
-		catch (Exception ioe)
-		{
-			logError("getRunsForChallenge", ioe);
-			return null;
-		}
-	}
-	
-	@Override
-	public Dialins loadDialins(UUID eventid) 
-	{		
-		String sql = "SELECT c.classcode,c.indexcode,c.useclsmult,r.* "
-				+ "FROM runs AS r JOIN cars AS c ON c.carid=r.carid WHERE r.eventid=? ORDER BY r.carid,r.course";
-
-		try
-		{
-			Event e      = executeSelect("select * from events where eventid=?", newList(eventid), Event.class.getConstructor(ResultSet.class)).get(0);
-			ResultSet rs = executeSelect(sql, newList(eventid));
-
-			Dialins ret         = new Dialins();
-			UUID currentid      = IdGenerator.nullid;
-			String classcode    = "";
-			String indexcode    = "";
-			boolean useclsmult  = false;
-			double index        = 1.0;
-			double bestraw[]    = new double[2];
-			double bestnet[]    = new double[2];
-			
-			// 1. load all runs
-			// 2. calculate best raw/net/sum for each carid
-			// 3. set personal dialin
-			while (rs.next())
-			{
-				Run r = new Run(rs);
-				double net = 999.999;
-				
-				if (!currentid.equals(r.getCarId()))  // next car, process previous
-				{
-					ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
-					currentid = r.getCarId();
-					bestraw[0] = bestraw[1] = bestnet[0] = bestnet[1] = 999.999;
-				}
-				
-				classcode    = rs.getString("classcode");
-				indexcode    = rs.getString("indexcode");
-				useclsmult   = rs.getBoolean("useclsmult");
-				index        = getClassData().getEffectiveIndex(classcode, indexcode, useclsmult);
-				
-				if (r.isOK()) // we ignore non-OK runs
-				{				
-					int idx = r.course() - 1;
-					if (r.raw < bestraw[idx])
-						bestraw[idx] = r.raw;
-					
-					net = (r.getRaw() + (e.getConePenalty() * r.getCones()) + (e.getGatePenalty() * r.getGates())) * index;
-					if (net < bestnet[idx])
-						bestnet[idx] = net;
-				}
-			}
-				
-			// 4. order and set class dialins
-			ret.finalizedialins();
-			closeLeftOvers();
-			return ret;
-		}
-		catch (Exception ioe)
-		{
-			logError("loadDialins", ioe);
-			return null;
-		}
-	}
-
-	@Override
-	public void updateChallenge(Challenge c)
-	{
-		try
-		{
-			LinkedList<Object> vals = c.getValues();
-			vals.add(vals.pop());
-			executeUpdate("update challenges set eventid=?,name=?,depth=? where challengeid=?", vals);
-		}
-		catch (SQLException ioe)
-		{
-			logError("updateChallenge", ioe);
-		}
-	}
-
-
-	protected void _updateChallengeRound(ChallengeRound r) throws SQLException
-	{
-		List<Object> list = newList();
-		list.add(r.swappedstart);
-		list.add(r.car1.carid);
-		list.add(r.car1.dial);
-		list.add(r.car2.carid);
-		list.add(r.car2.dial);
-		list.add(r.challengeid);
-		list.add(r.round);
-		executeUpdate("update challengerounds set swappedstart=?,car1id=?,car1dial=?,car2id=?,car2dial=? where challengeid=? and round=?", list);
-	}
-	
-	
-	@Override
-	public void updateChallengeRound(ChallengeRound r) 
-	{
-		try
-		{
-			_updateChallengeRound(r);
-		}
-		catch (Exception ioe)
-		{
-			logError("updateChallengeRound", ioe);
-		}
-	}
-	
-	@Override
-	public void updateChallengeRounds(List<ChallengeRound> rounds) 
-	{
-		try
-		{
-			start();
-			for (ChallengeRound r : rounds)
-				_updateChallengeRound(r);
-			commit();
-		}
-		catch (Exception ioe)
-		{
-			rollback();
-			logError("updateChallengeRounds", ioe);
-		}
-	}
-	
-	@Override
-	public void setChallengeRun(ChallengeRun r)
-	{
-		try {
-			executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status, modified) " +
-						"values (?,?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (challengeid, round, carid, course) DO UPDATE " +
-						"SET reaction=?,sixty=?,raw=?,cones=?,gates=?,status=?,modified=now()", 
-						newList(r.challengeid, r.round, r.carid, r.course, r.reaction, r.sixty, r.raw, r.cones, r.gates, r.status, 
-								r.reaction, r.sixty, r.raw, r.cones, r.gates, r.status));
-		} catch (Exception ioe){
-			logError("setChallengeRun", ioe);
-		}
-	}
-
-	@Override
-	public void deleteChallengeRun(ChallengeRun r)
-	{
-		if (r == null)
-			return;
-		try {
-			executeUpdate("DELETE FROM challengeruns where challengeid=? AND round=? AND carid=? AND course=?", newList(r.challengeid, r.round, r.carid, r.course)); 
-		} catch (Exception ioe){
-			logError("deleteChallengeRun", ioe);
-		}
-	}
-	
-	
-	@Override
-	public List<Driver> getDriversLike(String first, String last)
-	{
-		if ((first == null) && (last == null))
-			return new ArrayList<Driver>();
-		try
-		{
-			Constructor<Driver> cc = Driver.class.getConstructor(ResultSet.class);
-			if (first == null)
-				return executeSelect("select * from drivers where lower(lastname) like ? order by firstname,lastname", newList(last.toLowerCase()+"%"), cc);
-			else if (last == null)
-				return executeSelect("select * from drivers where lower(firstname) like ? order by firstname,lastname", newList(first.toLowerCase()+"%"), cc);
-			else
-				return executeSelect("select * from drivers where lower(firstname) like ? and lower(lastname) like ? order by firstname,lastname", newList(first.toLowerCase()+"%", last.toLowerCase()+"%"), cc);
-		}
-		catch (Exception ioe)
-		{
-			logError("getDriversLike", ioe);
-			return null;
-		}
-	}
-
-
-	@Override
-	public boolean isInOrder(UUID eventid, UUID carid, int course) 
-	{
-		try
-		{
-			ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND carid=?", newList(eventid, course, carid));
-			return rs.next();
-		}
-		catch (Exception ioe)
-		{
-			logError("isInOrder", ioe);
-			return false;
-		}
-		finally
-		{
-			closeLeftOvers();
-		}
-	}
-	
-	@Override
-	public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup) 
-	{
-		try
-		{
-			ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND rungroup=? AND carid=?", newList(eventid, course, rungroup, carid));
-			return rs.next();
-		}
-		catch (Exception ioe)
-		{
-			logError("isInCurrentOrder", ioe);
-			return false;
-		}
-		finally
-		{
-			closeLeftOvers();
-		}
-	}
-
-	@Override
-	public ClassData getClassData()
-	{
-		try
-		{
-			if ((classCache != null) && (classCacheTimestamp < System.currentTimeMillis() + 2000))
-				return classCache;
-				
-			ClassData ret = new ClassData();
-			for (ClassData.Class cls : executeSelect("select * from classlist", null, ClassData.Class.class.getConstructor(ResultSet.class)))
-				ret.add(cls);
-			for (ClassData.Index idx : executeSelect("select * from indexlist", null, ClassData.Index.class.getConstructor(ResultSet.class)))
-				ret.add(idx);
-			classCache = ret; // save for quick lookups when doing multiple calls within a couple seconds
-			classCacheTimestamp = System.currentTimeMillis();
-			return classCache;
-		}
-		catch (Exception ioe)
-		{
-			logError("getClassData", ioe);
-			return null;
-		}
-	}
-
-	@Override
-	public String getEffectiveIndexStr(Car c)
-	{
-		return getClassData().getIndexStr(c.classcode, c.indexcode, c.useClsMult());
-	}
-
-	
-	@Override
-	public void mergeServerSetLocal(String name, String address, int ctimeout) 
-	{
-        _mergeServerSet(IdGenerator.nullid, name, address, ctimeout);	    
-	}
-	
     @Override
-    public void mergeServerSetRemote(String name, String address, int ctimeout) 
+    public Set<UUID> getCarIdsByChallenge(UUID challengeid)
+    {
+        try
+        {
+
+            ResultSet rs = executeSelect("select car1id,car2id from challengerounds where challengeid=?", newList(challengeid));
+            HashSet<UUID> ret = new HashSet<UUID>();
+            while (rs.next())
+            {
+                ret.add((UUID)rs.getObject("car1id"));
+                ret.add((UUID)rs.getObject("car2id"));
+            }
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("getCarIdsByChallenge", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public UUID newChallenge(UUID eventid, String name, int size)
+    {
+        try
+        {
+            int rounds = size - 1;
+            int depth = (int)(Math.log(size)/Math.log(2));
+            UUID challengeid = IdGenerator.generateId();
+            start();
+
+            executeUpdate("insert into challenges (challengeid, eventid, name, depth) values (?,?,?,?)",
+                                        newList(challengeid, eventid, name, depth));
+
+            String sql = "insert into challengerounds (challengeid,round,swappedstart) values (?,?,?)";
+            List<Object> rargs = newList(challengeid, 0, false);
+            for (int ii = 0; ii <= rounds; ii++)
+            {
+                rargs.set(1, ii);
+                executeUpdate(sql, rargs);
+            }
+            rargs.set(1, 99);
+            executeUpdate(sql, rargs);
+
+            commit();
+            return challengeid;
+        }
+        catch (Exception ioe)
+        {
+            logError("newChallenge", ioe);
+            rollback();
+        }
+
+        return IdGenerator.nullid;
+    }
+
+    @Override
+    public void deleteChallenge(UUID challengeid)
+    {
+        try
+        {   // This delete cascades to challengrounds and challengeruns
+            executeUpdate("DELETE FROM challenges WHERE challengeid=?", newList(challengeid));
+        }
+        catch (Exception ioe)
+        {
+            logError("deleteChallenge", ioe);
+        }
+    }
+
+
+    @Override
+    public List<Challenge> getChallengesForEvent(UUID eventid)
+    {
+        try
+        {
+            return executeSelect("select * from challenges where eventid = ?", newList(eventid), Challenge.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getChallengesForEvent", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public List<ChallengeRound> getRoundsForChallenge(UUID challengeid)
+    {
+        try
+        {
+            return executeSelect("select * from challengerounds where challengeid=?", newList(challengeid),
+                                ChallengeRound.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getRoundsForChallenge", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public List<ChallengeRun> getRunsForChallenge(UUID challengeid)
+    {
+        try
+        {
+            return executeSelect("select * from challengeruns where challengeid=?", newList(challengeid), ChallengeRun.class.getConstructor(ResultSet.class));
+        }
+        catch (Exception ioe)
+        {
+            logError("getRunsForChallenge", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public Dialins loadDialins(UUID eventid)
+    {
+        String sql = "SELECT c.classcode,c.indexcode,c.useclsmult,r.* "
+                + "FROM runs AS r JOIN cars AS c ON c.carid=r.carid WHERE r.eventid=? ORDER BY r.carid,r.course";
+
+        try
+        {
+            Event e      = executeSelect("select * from events where eventid=?", newList(eventid), Event.class.getConstructor(ResultSet.class)).get(0);
+            ResultSet rs = executeSelect(sql, newList(eventid));
+
+            Dialins ret         = new Dialins();
+            UUID currentid      = IdGenerator.nullid;
+            String classcode    = "";
+            String indexcode    = "";
+            boolean useclsmult  = false;
+            double index        = 1.0;
+            double bestraw[]    = new double[2];
+            double bestnet[]    = new double[2];
+
+            // 1. load all runs
+            // 2. calculate best raw/net/sum for each carid
+            // 3. set personal dialin
+            while (rs.next())
+            {
+                Run r = new Run(rs);
+                double net = 999.999;
+
+                if (!currentid.equals(r.getCarId()))  // next car, process previous
+                {
+                    ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
+                    currentid = r.getCarId();
+                    bestraw[0] = bestraw[1] = bestnet[0] = bestnet[1] = 999.999;
+                }
+
+                classcode    = rs.getString("classcode");
+                indexcode    = rs.getString("indexcode");
+                useclsmult   = rs.getBoolean("useclsmult");
+                index        = getClassData().getEffectiveIndex(classcode, indexcode, useclsmult);
+
+                if (r.isOK()) // we ignore non-OK runs
+                {
+                    int idx = r.course() - 1;
+                    if (r.raw < bestraw[idx])
+                        bestraw[idx] = r.raw;
+
+                    net = (r.getRaw() + (e.getConePenalty() * r.getCones()) + (e.getGatePenalty() * r.getGates())) * index;
+                    if (net < bestnet[idx])
+                        bestnet[idx] = net;
+                }
+            }
+
+            // 4. order and set class dialins
+            ret.finalizedialins();
+            closeLeftOvers();
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("loadDialins", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public void updateChallenge(Challenge c)
+    {
+        try
+        {
+            LinkedList<Object> vals = c.getValues();
+            vals.add(vals.pop());
+            executeUpdate("update challenges set eventid=?,name=?,depth=? where challengeid=?", vals);
+        }
+        catch (SQLException ioe)
+        {
+            logError("updateChallenge", ioe);
+        }
+    }
+
+
+    protected void _updateChallengeRound(ChallengeRound r) throws SQLException
+    {
+        List<Object> list = newList();
+        list.add(r.swappedstart);
+        list.add(r.car1.carid);
+        list.add(r.car1.dial);
+        list.add(r.car2.carid);
+        list.add(r.car2.dial);
+        list.add(r.challengeid);
+        list.add(r.round);
+        executeUpdate("update challengerounds set swappedstart=?,car1id=?,car1dial=?,car2id=?,car2dial=? where challengeid=? and round=?", list);
+    }
+
+
+    @Override
+    public void updateChallengeRound(ChallengeRound r)
+    {
+        try
+        {
+            _updateChallengeRound(r);
+        }
+        catch (Exception ioe)
+        {
+            logError("updateChallengeRound", ioe);
+        }
+    }
+
+    @Override
+    public void updateChallengeRounds(List<ChallengeRound> rounds)
+    {
+        try
+        {
+            start();
+            for (ChallengeRound r : rounds)
+                _updateChallengeRound(r);
+            commit();
+        }
+        catch (Exception ioe)
+        {
+            rollback();
+            logError("updateChallengeRounds", ioe);
+        }
+    }
+
+    @Override
+    public void setChallengeRun(ChallengeRun r)
+    {
+        try {
+            executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status, modified) " +
+                        "values (?,?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (challengeid, round, carid, course) DO UPDATE " +
+                        "SET reaction=?,sixty=?,raw=?,cones=?,gates=?,status=?,modified=now()",
+                        newList(r.challengeid, r.round, r.carid, r.course, r.reaction, r.sixty, r.raw, r.cones, r.gates, r.status,
+                                r.reaction, r.sixty, r.raw, r.cones, r.gates, r.status));
+        } catch (Exception ioe){
+            logError("setChallengeRun", ioe);
+        }
+    }
+
+    @Override
+    public void deleteChallengeRun(ChallengeRun r)
+    {
+        if (r == null)
+            return;
+        try {
+            executeUpdate("DELETE FROM challengeruns where challengeid=? AND round=? AND carid=? AND course=?", newList(r.challengeid, r.round, r.carid, r.course));
+        } catch (Exception ioe){
+            logError("deleteChallengeRun", ioe);
+        }
+    }
+
+
+    @Override
+    public List<Driver> getDriversLike(String first, String last)
+    {
+        if ((first == null) && (last == null))
+            return new ArrayList<Driver>();
+        try
+        {
+            Constructor<Driver> cc = Driver.class.getConstructor(ResultSet.class);
+            if (first == null)
+                return executeSelect("select * from drivers where lower(lastname) like ? order by firstname,lastname", newList(last.toLowerCase()+"%"), cc);
+            else if (last == null)
+                return executeSelect("select * from drivers where lower(firstname) like ? order by firstname,lastname", newList(first.toLowerCase()+"%"), cc);
+            else
+                return executeSelect("select * from drivers where lower(firstname) like ? and lower(lastname) like ? order by firstname,lastname", newList(first.toLowerCase()+"%", last.toLowerCase()+"%"), cc);
+        }
+        catch (Exception ioe)
+        {
+            logError("getDriversLike", ioe);
+            return null;
+        }
+    }
+
+
+    @Override
+    public boolean isInOrder(UUID eventid, UUID carid, int course)
+    {
+        try
+        {
+            ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND carid=?", newList(eventid, course, carid));
+            return rs.next();
+        }
+        catch (Exception ioe)
+        {
+            logError("isInOrder", ioe);
+            return false;
+        }
+        finally
+        {
+            closeLeftOvers();
+        }
+    }
+
+    @Override
+    public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup)
+    {
+        try
+        {
+            ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND rungroup=? AND carid=?", newList(eventid, course, rungroup, carid));
+            return rs.next();
+        }
+        catch (Exception ioe)
+        {
+            logError("isInCurrentOrder", ioe);
+            return false;
+        }
+        finally
+        {
+            closeLeftOvers();
+        }
+    }
+
+    @Override
+    public ClassData getClassData()
+    {
+        try
+        {
+            if ((classCache != null) && (classCacheTimestamp < System.currentTimeMillis() + 2000))
+                return classCache;
+
+            ClassData ret = new ClassData();
+            for (ClassData.Class cls : executeSelect("select * from classlist", null, ClassData.Class.class.getConstructor(ResultSet.class)))
+                ret.add(cls);
+            for (ClassData.Index idx : executeSelect("select * from indexlist", null, ClassData.Index.class.getConstructor(ResultSet.class)))
+                ret.add(idx);
+            classCache = ret; // save for quick lookups when doing multiple calls within a couple seconds
+            classCacheTimestamp = System.currentTimeMillis();
+            return classCache;
+        }
+        catch (Exception ioe)
+        {
+            logError("getClassData", ioe);
+            return null;
+        }
+    }
+
+    @Override
+    public String getEffectiveIndexStr(Car c)
+    {
+        return getClassData().getIndexStr(c.classcode, c.indexcode, c.useClsMult());
+    }
+
+
+    @Override
+    public void mergeServerSetLocal(String name, String address, int ctimeout)
+    {
+        _mergeServerSet(IdGenerator.nullid, name, address, ctimeout);
+    }
+
+    @Override
+    public void mergeServerSetRemote(String name, String address, int ctimeout)
     {
         _mergeServerSet(IdGenerator.generateV5DNSId(name), name, address, ctimeout);
     }
-	
+
     private void _mergeServerSet(UUID serverid, String name, String address, int ctimeout)
     {
         try {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, ctimeout) VALUES (?, ?, ?, ?) " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, ctimeout=?", newList(serverid, name, address, ctimeout, name, address, ctimeout));
         } catch (SQLException ioe) {
-            logError("mergeServerSetLocal", ioe);
+            log.log(Level.WARNING, "_mergeServerSet: " + ioe, ioe);
         }
     }
-	
+
     @Override
     public void mergeServerDelete(UUID serverid)
     {
         try {
             executeUpdate("DELETE FROM mergeservers WHERE serverid=?", newList(serverid));
         } catch (SQLException ioe) {
-            logError("mergeServerInactivateAll", ioe);
-        }        
+            log.log(Level.WARNING, "mergeServerDelete: " + ioe, ioe);
+        }
     }
 
-	@Override
-	public void mergeServerInactivateAll()
-	{
+    @Override
+    public void mergeServerInactivateAll()
+    {
         try {
             executeUpdate("UPDATE mergeservers SET hoststate='I'", null);
         } catch (SQLException ioe) {
-            logError("mergeServerInactivateAll", ioe);
+            log.log(Level.WARNING, "mergeServerInactivateAll: " + ioe, ioe);
         }
-	}
+    }
 
-	@Override
-	public void mergeServerActivate(UUID serverid, String name, String ip)
-	{
+    @Override
+    public void mergeServerActivate(UUID serverid, String name, String ip)
+    {
         try {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, hoststate) VALUES (?, ?, ?, now(), 'A') " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(), hoststate='A'",
                           newList(serverid, name, ip, name, ip));
         } catch (SQLException ioe) {
-            logError("mergeServerActivate", ioe);
+            log.log(Level.WARNING, "mergeServerActivate: " + ioe, ioe);
         }
-	}
-	
-	@Override
-	public void mergeServerDeactivate(UUID serverid)
-	{
+    }
+
+    @Override
+    public void mergeServerDeactivate(UUID serverid)
+    {
         try {
             executeUpdate("UPDATE mergeservers SET hoststate='I', nextcheck='epoch' WHERE serverid=?", newList(serverid));
         } catch (SQLException ioe) {
-            logError("mergeServerDeactivate", ioe);
+            log.log(Level.WARNING, "mergeServerDeactivate: " + ioe, ioe);
         }
-	}
-	
-	@Override
-	public void mergeServerUpdateNow(UUID serverid)
-	{
+    }
+
+    @Override
+    public void mergeServerUpdateNow(UUID serverid)
+    {
         try {
             executeUpdate("UPDATE mergeservers SET hoststate=(CASE hoststate WHEN 'I' THEN '1' ELSE hoststate END), nextcheck=now()::timestamp WHERE serverid=?", newList(serverid));
         } catch (Exception ioe) {
-            logError("mergeServerUpdateNow", ioe);
-        }	    
-	}
-	
-	@Override
-	public void mergeServerResetAll()
-	{
+            log.log(Level.WARNING, "mergeServerUpdateNow: " + ioe, ioe);
+        }
+    }
+
+    @Override
+    public void mergeServerResetAll()
+    {
         try {
             executeUpdate("UPDATE mergeservers set mergestate='{}'", null);
         } catch (SQLException ioe) {
             logError("mergeServerResetAll", ioe);
-        }       
-	}
-	
-	@Override
-	public List<MergeServer> getMergeServers()
-	{
+        }
+    }
+
+    @Override
+    public List<MergeServer> getMergeServers()
+    {
         try
         {
             List<MergeServer> ret = new ArrayList<MergeServer>();
@@ -1179,11 +1179,11 @@ public abstract class SQLDataInterface implements DataInterface
             logError("getMergeServers", ioe);
             return null;
         }
-	}
+    }
 
-	@Override
-	public boolean verifyUserAndSeries(String seriesname, String password)
-	{
+    @Override
+    public boolean verifyUserAndSeries(String seriesname, String password)
+    {
         try
         {
             ResultSet a = executeSelect("select verify_user(?, ?)", newList(seriesname, password));
@@ -1199,9 +1199,9 @@ public abstract class SQLDataInterface implements DataInterface
             logError("verifyUserAndSeries", ioe);
         }
         return false;
-	}
-	
-	
+    }
+
+
     @Override
     public boolean deleteUserAndSeries(String seriesname)
     {
@@ -1219,8 +1219,8 @@ public abstract class SQLDataInterface implements DataInterface
             logError("deleteUserAndSeries", ioe);
         }
         return false;
-    }	
-	
+    }
+
     @Override
     public boolean deleteDriversTable()
     {
@@ -1237,5 +1237,5 @@ public abstract class SQLDataInterface implements DataInterface
             logError("deleteDriversTable", ioe);
         }
         return false;
-    }   
+    }
 }
