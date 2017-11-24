@@ -1,9 +1,12 @@
 package org.wwscc.tray;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import org.wwscc.util.Exec;
@@ -95,6 +98,17 @@ public class DockerMachine
     public static boolean startmachine()
     {
         return Exec.execit(Exec.build(null, "docker-machine", "start"), null) == 0;
+    }
+
+    /**
+     * Try to set the date on docker VM to match that of local machine (important after sleep)
+     * @return true if command returns success
+     */
+    public static boolean settime()
+    {
+        SimpleDateFormat fmt = new SimpleDateFormat("MMddHHmmyyyy");
+        fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return Exec.execit(Exec.build(null, "docker-machine", "ssh", "sudo date -u " + fmt.format(new Date())), null) == 0;
     }
 
     /**
