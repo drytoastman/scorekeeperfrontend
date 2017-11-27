@@ -13,7 +13,6 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -164,7 +163,9 @@ public class DataEntry extends JFrame implements MessageListener
                 @SuppressWarnings("unchecked")
                 Set<String> tables = (Set<String>)o;
                 if (tables.contains("registered") || tables.contains("runorder") || tables.contains("cars") || tables.contains("drivers")) {
-                    log.fine("directing dbnote into entrants changed");
+                    // We do not refresh on runs as 1) we are most likely changing it and 2) it messes up the current table selection
+                    // The user has the refresh button if they need it
+                    log.fine("directing db notification into entrants changed");
                     Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
                 }
                 break;
