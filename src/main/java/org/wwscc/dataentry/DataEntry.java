@@ -10,7 +10,11 @@ package org.wwscc.dataentry;
 
 import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -19,6 +23,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.Timer;
+
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.components.MyIpLabel;
@@ -36,141 +42,153 @@ import org.wwscc.util.Prefs;
 
 public class DataEntry extends JFrame implements MessageListener
 {
-	private static final Logger log = Logger.getLogger(DataEntry.class.getName());
-	public static final ApplicationState state = new ApplicationState();
-	
-	Menus menus;
-	SelectionBar setupBar;
-	AddByNamePanel addByName;
-	ClassTree  numberTree;
-	AnnouncerPanel announcer;
-	TimeEntry timeEntry;
-	JTabbedPane tabs;
+    private static final Logger log = Logger.getLogger(DataEntry.class.getName());
+    public static final ApplicationState state = new ApplicationState();
 
-	final static class HelpPanel extends JLabel implements MessageListener
-	{
-		private static final long serialVersionUID = -6376824946457087404L;
+    Menus menus;
+    SelectionBar setupBar;
+    AddByNamePanel addByName;
+    ClassTree  numberTree;
+    AnnouncerPanel announcer;
+    TimeEntry timeEntry;
+    JTabbedPane tabs;
 
-		public HelpPanel()
-		{
-			super("Use Tabbed Panels to add Entrants");
-			setHorizontalAlignment(CENTER);
-			setFont(getFont().deriveFont(12f));
-			Messenger.register(MT.OBJECT_CLICKED, this);
-			Messenger.register(MT.OBJECT_DCLICKED, this);
-		}
+    final static class HelpPanel extends JLabel implements MessageListener
+    {
+        private static final long serialVersionUID = -6376824946457087404L;
 
-		@Override
-		public void event(MT type, Object data) {
-			switch (type)
-			{
-				case OBJECT_CLICKED:
-					if (data instanceof Entrant)
-						setText("Entrant: Ctrl-X or Delete to remove them, Drag to move them, Swap Entrant to change them");
-					else if (data instanceof Run)
-						setText("Runs: Ctrl-X or Delete to cut, Ctrl-C to copy, Ctrl-V to paste");
-					else
-						setText("Ctrl-V to paste a Run");
-					break;
-				case OBJECT_DCLICKED:
-					if (data instanceof Entrant)
-						setText("Click Swap Entrant to change the entrant for the given runs");
-					break;
-			}
-		}
-	}
+        public HelpPanel()
+        {
+            super("Use Tabbed Panels to add Entrants");
+            setHorizontalAlignment(CENTER);
+            setFont(getFont().deriveFont(12f));
+            Messenger.register(MT.OBJECT_CLICKED, this);
+            Messenger.register(MT.OBJECT_DCLICKED, this);
+        }
 
-	public DataEntry() throws IOException
-	{
-		super("DataEntry");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
-		
-		menus = new Menus();
-		setJMenuBar(menus);
+        @Override
+        public void event(MT type, Object data) {
+            switch (type)
+            {
+                case OBJECT_CLICKED:
+                    if (data instanceof Entrant)
+                        setText("Entrant: Ctrl-X or Delete to remove them, Drag to move them, Swap Entrant to change them");
+                    else if (data instanceof Run)
+                        setText("Runs: Ctrl-X or Delete to cut, Ctrl-C to copy, Ctrl-V to paste");
+                    else
+                        setText("Ctrl-V to paste a Run");
+                    break;
+                case OBJECT_DCLICKED:
+                    if (data instanceof Entrant)
+                        setText("Click Swap Entrant to change the entrant for the given runs");
+                    break;
+            }
+        }
+    }
 
-		setupBar = new SelectionBar();
-		numberTree = new ClassTree();
-		addByName = new AddByNamePanel();
-		announcer = new AnnouncerPanel();
-		
-		tabs = new JTabbedPane();
-		tabs.setMinimumSize(new Dimension(270, 400));
-		tabs.setPreferredSize(new Dimension(270, 768));
-		tabs.addTab("Add By Name", addByName);
-		tabs.addTab("Quick Entry", new QuickEntrySearch());
-		tabs.addTab("Preregistered", new JScrollPane(numberTree));
-		tabs.addTab("Announcer Data", announcer);
+    public DataEntry() throws IOException
+    {
+        super("DataEntry");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
 
-		DoubleTableContainer tableScroll = new DoubleTableContainer();
-		timeEntry = new TimeEntry();
-		menus.add(timeEntry.getTimerMenu());
+        menus = new Menus();
+        setJMenuBar(menus);
 
-		HelpPanel help = new HelpPanel();
-		MyIpLabel myip = new MyIpLabel();
-		help.setBorder(BorderFactory.createLoweredBevelBorder());
-		myip.setBorder(BorderFactory.createLoweredBevelBorder());
+        setupBar = new SelectionBar();
+        numberTree = new ClassTree();
+        addByName = new AddByNamePanel();
+        announcer = new AnnouncerPanel();
 
-		JPanel infoBoxes = new JPanel(new MigLayout("fill, ins 0", "[75%]0[25%]"));
-		infoBoxes.add(help, "grow, hmin 20");
-		infoBoxes.add(myip, "grow");
+        tabs = new JTabbedPane();
+        tabs.setMinimumSize(new Dimension(270, 400));
+        tabs.setPreferredSize(new Dimension(270, 768));
+        tabs.addTab("Add By Name", addByName);
+        tabs.addTab("Quick Entry", new QuickEntrySearch());
+        tabs.addTab("Preregistered", new JScrollPane(numberTree));
+        tabs.addTab("Announcer Data", announcer);
 
-		JPanel miniPanels = new JPanel(new MigLayout("fill, ins 0, gap 0", "", ""));
-		miniPanels.add(new MiniInput.ManualBarcodeInput(), "growx, growy 0, hidemode 2, wrap");
-		miniPanels.add(new MiniInput.FilterEntries(), "growx, growy 0, hidemode 2, wrap");
+        DoubleTableContainer tableScroll = new DoubleTableContainer();
+        timeEntry = new TimeEntry();
+        menus.add(timeEntry.getTimerMenu());
 
-		JPanel content = new JPanel(new MigLayout("fill, ins 1, gap 2", "[grow 0][fill][grow 0]", "[grow 0][grow 0][grow 100][grow 0]"));
-		content.add(setupBar, "spanx 3, growx, wrap");
-		content.add(tabs, "spany 2, growx 0, growy");
-		content.add(miniPanels, "growx, growy 0, hidemode 2");
-		content.add(timeEntry, "spany 2, growx 0, growy, w 150!, wrap");
-		content.add(tableScroll, "grow, wrap");
-		content.add(infoBoxes, "spanx 3, growx, wrap");
-		
-		setContentPane(content);
+        HelpPanel help = new HelpPanel();
+        MyIpLabel myip = new MyIpLabel();
+        help.setBorder(BorderFactory.createLoweredBevelBorder());
+        myip.setBorder(BorderFactory.createLoweredBevelBorder());
+
+        JPanel infoBoxes = new JPanel(new MigLayout("fill, ins 0", "[75%]0[25%]"));
+        infoBoxes.add(help, "grow, hmin 20");
+        infoBoxes.add(myip, "grow");
+
+        JPanel miniPanels = new JPanel(new MigLayout("fill, ins 0, gap 0", "", ""));
+        miniPanels.add(new MiniInput.ManualBarcodeInput(), "growx, growy 0, hidemode 2, wrap");
+        miniPanels.add(new MiniInput.FilterEntries(), "growx, growy 0, hidemode 2, wrap");
+
+        JPanel content = new JPanel(new MigLayout("fill, ins 1, gap 2", "[grow 0][fill][grow 0]", "[grow 0][grow 0][grow 100][grow 0]"));
+        content.add(setupBar, "spanx 3, growx, wrap");
+        content.add(tabs, "spany 2, growx 0, growy");
+        content.add(miniPanels, "growx, growy 0, hidemode 2");
+        content.add(timeEntry, "spany 2, growx 0, growy, w 150!, wrap");
+        content.add(tableScroll, "grow, wrap");
+        content.add(infoBoxes, "spanx 3, growx, wrap");
+
+        setContentPane(content);
         setBounds(Prefs.getWindowBounds("dataentry"));
         Prefs.trackWindowBounds(this, "dataentry");
-		setVisible(true);
-		
-		log.log(Level.INFO, "Starting Application: {0}", new java.util.Date());
-		
-		Messenger.register(MT.OBJECT_DCLICKED, this);
+        setVisible(true);
+
+        log.log(Level.INFO, "Starting Application: {0}", new java.util.Date());
+
+        Messenger.register(MT.OBJECT_DCLICKED, this);
         Messenger.register(MT.TIME_RECEIVED, this);
-		Database.openDefault();
-	}
+        Messenger.register(MT.DATABASE_NOTIFICATION, this);
+        Database.openDefault();
+    }
 
 
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-			case OBJECT_DCLICKED:
-				if (o instanceof Entrant)
-					tabs.setSelectedComponent(addByName);
-				break;
-			case TIME_RECEIVED:
-			    if (o instanceof Run)
-			        Database.d.addTimerTime(Prefs.getServerId(), (Run)o);
-			    break;
-		}
-	}
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case OBJECT_DCLICKED:
+                if (o instanceof Entrant)
+                    tabs.setSelectedComponent(addByName);
+                break;
+            case TIME_RECEIVED:
+                if (o instanceof Run)
+                    Database.d.addTimerTime(Prefs.getServerId(), (Run)o);
+                break;
+            case DATABASE_NOTIFICATION:
+                @SuppressWarnings("unchecked")
+                Set<String> tables = (Set<String>)o;
+                if (tables.contains("registered") || tables.contains("runorder") || tables.contains("cars") || tables.contains("drivers")) {
+                    log.fine("directing dbnote into entrants changed");
+                    Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
+                }
+                break;
+        }
+    }
 
-	/**
-	 * Main
-	 * @param args the command line args, added to title
-	 */
-	public static void main(String args[])
-	{
-		try
-		{
+    /**
+     * Main
+     * @param args the command line args, added to title
+     */
+    public static void main(String args[])
+    {
+        try
+        {
             AppSetup.appSetup("dataentry");
             new DataEntry();
-		}
-		catch (Throwable e)
-		{
-			log.log(Level.SEVERE, "\bApp failure: " + e, e);
-		}
-	}
+            new Timer(1000, new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
+                Database.d.ping();
+            }}).start();
+        }
+        catch (Throwable e)
+        {
+            log.log(Level.SEVERE, "\bApp failure: " + e, e);
+        }
+    }
 }
 

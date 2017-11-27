@@ -46,17 +46,17 @@ import net.miginfocom.swing.MigLayout;
 public class QuickEntrySearch extends JPanel implements MessageListener, DocumentListener
 {
     private static Logger log = Logger.getLogger(QuickEntrySearch.class.getCanonicalName());
-    
+
     JTextField entry;
     JTable cars;
-    
+
     public QuickEntrySearch()
     {
         super(new MigLayout("", "fill, grow", "[grow 0][grow 0][fill, grow 100]"));
-        
+
         entry = new JTextField();
         entry.getDocument().addDocumentListener(this);
-        
+
         cars = new JTable();
         cars.setDefaultRenderer(Object.class, new EntryRenderer());
         cars.setRowHeight(25);
@@ -70,7 +70,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
                     addSelected();
             }
         });
-        
+
         ActionListener add = new ActionListener() {
             @Override public void actionPerformed(ActionEvent e) {
                 addSelected();
@@ -86,8 +86,9 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
 
         Messenger.register(MT.QUICKID_SEARCH, this);
         Messenger.register(MT.EVENT_CHANGED, this);
+        Messenger.register(MT.ENTRANTS_CHANGED, this);
     }
-    
+
     private void setColumnWidths(TableColumn col, int min, int pref, int max)
     {
         if (col == null) return;
@@ -95,11 +96,11 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         col.setPreferredWidth(pref);
         col.setMaxWidth(max);
     }
-    
+
     class EntryModel extends AbstractTableModel
     {
         List<Entrant> entries;
-        
+
         public EntryModel() { entries = Database.d.getRegisteredEntrants(DataEntry.state.getCurrentEventId()); }
         @Override
         public int getRowCount() { return entries.size(); }
@@ -108,24 +109,24 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         @Override
         public Object getValueAt(int row, int c) { return entries.get(row); }
     }
-    
+
     class EntryRenderer extends DefaultTableCellRenderer
     {
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) 
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col)
         {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
             Entrant e = (Entrant)value;
             if (col == 0)
                 setText(e.getName());
             else if (col == 1)
-                setText(e.getClassCode());                
+                setText(e.getClassCode());
             else if (col == 2)
                 setText(""+e.getNumber());
             return this;
         }
     }
-    
-    class QuickEntryFilter extends RowFilter<EntryModel, Integer> 
+
+    class QuickEntryFilter extends RowFilter<EntryModel, Integer>
     {
         String match;
         public QuickEntryFilter(String s)
@@ -136,9 +137,9 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
             else
                 match = null;
         }
-        
+
         @Override
-        public boolean include(Entry<? extends EntryModel, ? extends Integer> entry) 
+        public boolean include(Entry<? extends EntryModel, ? extends Integer> entry)
         {
             if ((match == null) || (match.equals("")))
                 return true;
@@ -173,26 +174,27 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
             return;
         }
     }
-    
+
     private void addSelected()
     {
         int idx = cars.getSelectedRow();
         if (idx >= 0) {
             Entrant ent = (Entrant)cars.getValueAt(idx, 0);
-            Messenger.sendEvent(MT.CAR_ADD, ent.getCarId());   
+            Messenger.sendEvent(MT.CAR_ADD, ent.getCarId());
         }
     }
-    
+
     @Override
-    public void event(MT type, Object data) 
+    public void event(MT type, Object data)
     {
-        switch (type) 
+        switch (type)
         {
             case QUICKID_SEARCH:
                 if (getParent() instanceof JTabbedPane)
                     ((JTabbedPane)getParent()).setSelectedComponent(this);
                 entry.requestFocus();
             case EVENT_CHANGED:
+            case ENTRANTS_CHANGED:
                 cars.setModel(new EntryModel());
                 TableColumnModel tcm = cars.getColumnModel();
                 setColumnWidths(tcm.getColumn(0), 80, 160, 320);
