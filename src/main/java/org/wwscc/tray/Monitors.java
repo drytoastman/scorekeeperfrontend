@@ -348,6 +348,9 @@ public class Monitors
                 dialog.setStatus("Import and conversion was successful", 100);
             else
                 dialog.setStatus("Import failed, see logs", 100);
+
+            Database.openDefault();
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
 
         @Override
