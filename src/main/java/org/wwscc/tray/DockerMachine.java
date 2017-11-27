@@ -106,9 +106,9 @@ public class DockerMachine
      */
     public static boolean settime()
     {
-        SimpleDateFormat fmt = new SimpleDateFormat("MMddHHmmyyyy");
+        SimpleDateFormat fmt = new SimpleDateFormat("MMddHHmmyyyy.ss");
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return Exec.execit(Exec.build(null, "docker-machine", "ssh", "sudo date -u " + fmt.format(new Date())), null) == 0;
+        return Exec.execit(Exec.build(null, "docker-machine", "ssh", "default", "sudo date -u " + fmt.format(new Date())), null) == 0;
     }
 
     /**

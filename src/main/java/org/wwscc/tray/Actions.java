@@ -124,9 +124,11 @@ public class Actions
             if (!hd.doDialog("Select Host and Series", null))
                 return;
             HSResult ret = hd.getResult();
-            Database.d.verifyUserAndSeries(ret.series, ret.password);
-            Database.d.mergeServerUpdateNow(server.getServerId());
-            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            new Thread() { @Override public void run()  {
+                Database.d.verifyUserAndSeries(ret.series, ret.password);
+                Database.d.mergeServerUpdateNow(server.getServerId());
+                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            }}.start();
         }
     }
 
@@ -190,12 +192,14 @@ public class Actions
             super("Clear Old Discovered Entries");
         }
         public void actionPerformed(ActionEvent e) {
-            for (MergeServer s : Database.d.getMergeServers()) {
-                if (!s.isLocalHost() && !s.isActive() && !s.isRemote()) {
-                    Database.d.mergeServerDelete(s.getServerId());
+            new Thread() { @Override public void run()  {
+                for (MergeServer s : Database.d.getMergeServers()) {
+                    if (!s.isLocalHost() && !s.isActive() && !s.isRemote()) {
+                        Database.d.mergeServerDelete(s.getServerId());
+                    }
                 }
-            }
-            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            }}.start();
         }
     }
 
@@ -210,14 +214,17 @@ public class Actions
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();
-            if (selected.size() > 0)
-            {
+            if (selected.size() == 0)
+                return;
+
+            new Thread() { @Override public void run()  {
                 for (String s : selected)
-                    Database.d.deleteUserAndSeries(s);
+                    if (!Database.d.deleteUserAndSeries(s))
+                        return;
                 if (sd.allSelected())
                     Database.d.deleteDriversTable();
-            }
-            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            }}.start();
         }
     }
 

@@ -179,13 +179,12 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         AppSetup.appSetup("statuswindow");
-        Database.openPublic(true);
+        Database.openPublic(true, 5000);
         Actions a = new Actions();
         a.backendReady(true);
         ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(a);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
-        Database.openPublic(true);
         v.model.setData(Database.d.getMergeServers());
         while (true)
         {

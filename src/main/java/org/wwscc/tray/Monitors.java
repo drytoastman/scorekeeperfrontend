@@ -170,7 +170,7 @@ public class Monitors
             }
 
             // Machine is ready for container execution now
-            DockerMachine.settime(); // After sleeping, the time might be off, can't rely on NTP so we reach in and set it ourselves
+            DockerMachine.settime();  // set time just in case sleeping vm drifted
             state.signalMachineReady(true);
 
             // Make sure port forwarding is up

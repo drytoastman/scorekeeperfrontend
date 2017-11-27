@@ -110,7 +110,7 @@ public class StateControl
             {
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for Database");
                 PostgresqlDatabase.waitUntilUp();
-                Database.openPublic(true);
+                Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             }
             Messenger.sendEvent(MT.BACKEND_READY, ok);

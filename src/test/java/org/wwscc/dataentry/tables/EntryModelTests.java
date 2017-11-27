@@ -38,7 +38,7 @@ public class EntryModelTests
         db.createNetsAndVolumes();
         db.start();
         PostgresqlDatabase.waitUntilUp();
-        Database.openSeries("pro2017");
+        Database.openSeries("pro2017", 2000);
     }
 
     @AfterClass
