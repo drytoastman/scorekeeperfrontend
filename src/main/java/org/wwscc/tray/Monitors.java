@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wwscc.storage.Database;
+import org.wwscc.storage.MergeServer;
 import org.json.simple.JSONObject;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.util.Discovery;
@@ -40,6 +41,7 @@ public class Monitors
     private static final Logger log = Logger.getLogger(Monitors.class.getName());
     public static final String RUNNING = "Running";
     public static final String NOTNEEDED = "Not Needed";
+    public static final String HOME_SERVER = "scorekeeper.wwscc.org";
 
 
     /**
@@ -381,7 +383,6 @@ public class Monitors
     }
 
 
-
     /**
      * Thread to keep checking pinging the database to cause notifications
      * for the discovery pieces. It can be 'paused' when the database is to be offline.
@@ -403,9 +404,19 @@ public class Monitors
             while (!state.isBackendReady())
                 donefornow();
 
-            // These two should always be there
+            // Local should always be there
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
-            Database.d.mergeServerSetRemote(Prefs.getHomeServer(), "", 10);
+
+            // And a remote home server of some type should always be there
+            boolean remotepresent = false;
+            for (MergeServer s : Database.d.getMergeServers()) {
+                if (s.isRemote())
+                    remotepresent = true;
+            }
+            if (!remotepresent) {
+                Database.d.mergeServerSetRemote(HOME_SERVER, "", 10);
+            }
+
             Database.d.mergeServerInactivateAll();
 
             // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce

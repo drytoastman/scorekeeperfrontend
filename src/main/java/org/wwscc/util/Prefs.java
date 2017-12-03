@@ -102,12 +102,12 @@ public class Prefs
             f.mkdirs();
         return p;
     }
-    
+
     public static Path getRootDir()
     {
         return _ensureDirectory(Paths.get(System.getProperty("user.home"), "scorekeeper"));
     }
-    
+
     public static Path getLockFilePath(String name)
     {
         return getRootDir().resolve(name+".lock");
@@ -117,7 +117,7 @@ public class Prefs
     {
         return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "logs")));
     }
-    
+
     public static Path getBackupDirectory()
     {
         return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "backup")));
@@ -137,7 +137,6 @@ public class Prefs
         return ret;
     }
 
-    public static String getHomeServer() { return prefs.get("hostname", "scorekeeper.wwscc.org"); }
     public static String getSeries(String def) { return prefs.get("series", def); }
     public static int getEventId(int def) { return prefs.getInt("eventid", def); }
     public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
@@ -157,7 +156,6 @@ public class Prefs
         return r;
     }
 
-    public static void setHomeServer(String s) { prefs.put("hostname", s); }
     public static void setSeries(String s) { prefs.put("series", s); }
     public static void setEventId(int i) { prefs.putInt("eventid", i); }
     public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }
