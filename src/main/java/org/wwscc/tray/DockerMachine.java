@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.wwscc.util.Exec;
 
 /**
@@ -52,11 +53,18 @@ public class DockerMachine
     }
 
     /**
-     * @return true if docker-machine is installed
+     * @return true if docker-machine and vboxmanage are installed (VirtualBox comes with Docker ToolBox)
      */
     public static boolean machinepresent()
     {
-        return Exec.testit(Exec.build(null, "docker-machine", "-h"));
+        if (Exec.testit(Exec.build(null, "docker-machine", "-h"))) {
+            if (SystemUtils.IS_OS_WINDOWS) {
+                return Exec.testit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"));
+            } else {
+                return Exec.testit(Exec.build(null, "vboxmanage", "-v"));
+            }
+        }
+        return false;
     }
 
     /**
