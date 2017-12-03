@@ -128,7 +128,8 @@ public class StateControl
             public void approveSelection(){
                 File f = getSelectedFile();
                 if (!f.getName().contains("schema")) {
-                    JOptionPane.showMessageDialog(active, "This file has no schema information in its name");
+                    JOptionPane.showMessageDialog(active, "This file has no schema information in its name. "
+                            + "This import process is only intended for restoring from automatic backups produced by version 2 software.");
                     cancelSelection();
                     return;
                 }
@@ -232,9 +233,11 @@ public class StateControl
             String ver = Database.d.getVersion();
             Database.d.close();
 
-            // second backup the database
-            String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
-            cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
+            // second backup the database, but only if we've connected to something real
+            if (!ver.equals("unknown")) {
+                String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
+                cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
+            }
 
             // note the shutdown flag and wake up our monitors to finish up
             _applicationdone = true;
