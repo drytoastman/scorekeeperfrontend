@@ -215,7 +215,6 @@ public class Monitors
             catch (JSchException jse)
             {
                 log.log(Level.INFO, "Error setting up portforwarding: " + jse, jse);
-                Messenger.sendEvent(MT.MACHINE_STATUS, "Port Forward Failed");
                 return false;
             }
 
