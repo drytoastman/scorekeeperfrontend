@@ -69,11 +69,17 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
 
+        JMenu file = new JMenu("File");
+        file.add(actions.debugRequest);
+        file.add(actions.importRequest);
+        file.add(new JSeparator());
+        file.add(actions.quit);
 
         JMenu data = new JMenu("Data");
+        data.add(actions.addServer);
+        data.add(actions.deleteServer);
+        data.add(new JSeparator());
         data.add(actions.deleteSeries);
-        data.add(actions.debugRequest);
-        data.add(actions.importRequest);
 
         JMenu adv = new JMenu("Advanced");
         adv.add(new JCheckBoxMenuItem(actions.discovery));
@@ -84,6 +90,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
             launch.add(a);
 
         JMenuBar bar = new JMenuBar();
+        bar.add(file);
         bar.add(data);
         bar.add(adv);
         bar.add(launch);

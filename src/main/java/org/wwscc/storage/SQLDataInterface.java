@@ -1212,6 +1212,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("DELETE FROM results WHERE series=?", newList(seriesname));
             executeUpdate("DROP USER " + seriesname, null);
             commit();
+            return true;
         }
         catch (SQLException ioe)
         {
@@ -1230,6 +1231,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("DELETE FROM drivers", null);
             executeUpdate("DELETE FROM publiclog", null);
             commit();
+            return true;
         }
         catch (SQLException ioe)
         {

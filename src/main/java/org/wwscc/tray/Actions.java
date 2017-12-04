@@ -4,17 +4,22 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
+import javax.swing.FocusManager;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.dialogs.SeriesSelectionDialog;
-import org.wwscc.dialogs.SeriesDialog;
+import org.wwscc.dialogs.ListDialog;
 import org.wwscc.dialogs.SeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
@@ -30,7 +35,7 @@ public class Actions
     List<Action> apps;
     List<Action> others;
     Action debugRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
-    Action deleteSeries, discovery, resetHash, quit, openStatus;
+    Action deleteServer, addServer, deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
@@ -43,15 +48,17 @@ public class Actions
         apps.add(new EventSendAction("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI", null));
         apps.add(new EventSendAction("BWTimer",      MT.LAUNCH_REQUEST, "org.wwscc.bwtimer.Timer", null));
 
-        quit           = new EventSendAction("Quit",               MT.SHUTDOWN_REQUEST);
-        openStatus     = new EventSendAction("Status Window",      MT.OPEN_STATUS_REQUEST);
-        debugRequest   = new EventSendAction("Collect Debug Info", MT.DEBUG_REQUEST);
+        quit           = new EventSendAction("Shutdown",        MT.SHUTDOWN_REQUEST);
+        openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
+        debugRequest   = new EventSendAction("Save Debug Info", MT.DEBUG_REQUEST);
+        importRequest  = addAction(new EventSendAction("Import Backup Data", MT.IMPORT_REQUEST));
 
-        importRequest  = addAction(new EventSendAction("Import Previous Data", MT.IMPORT_REQUEST));
         mergeAll       = addAction(new MergeWithAllLocalAction());
         mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", MergeWithHostAction.class));
         downloadSeries = addAction(new PopupMenuWithMergeServerActions("Download New Series From ...", DownloadFromHostAction.class));
         clearOld       = addAction(new ClearOldDiscoveredAction());
+        deleteServer   = addAction(new DeleteServerAction());
+        addServer      = addAction(new AddServerAction());
         deleteSeries   = addAction(new DeleteLocalSeriesAction());
         discovery      = addAction(new LocalDiscoveryAction());
         resetHash      = addAction(new ResetHashAction());
@@ -203,6 +210,44 @@ public class Actions
         }
     }
 
+    static class DeleteServerAction extends AbstractAction
+    {
+        public DeleteServerAction() {
+            super("Delete Remote Server");
+        }
+        public void actionPerformed(ActionEvent e) {
+            Supplier<Stream<MergeServer>> servers = () -> Database.d.getMergeServers().stream().filter(ms -> ms.isRemote());
+            ListDialog sd = new ListDialog("Select the remote servers to delete",
+                    servers.get().map(ms -> ms.getHostname()).collect(Collectors.toList()),
+                    "\bYou can't delete all remote servers.  There needs to be at least one host server to merge with.");
+            if (!sd.doDialog("Select Series", null))
+                return;
+            List<String> selected = sd.getResult();
+            if (selected.size() == 0)
+                return;
+
+            new Thread() { @Override public void run()  {
+                for (String h : selected)
+                    Database.d.mergeServerDelete(servers.get().filter(ms -> ms.getHostname().equals(h)).findFirst().get().getServerId());
+                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            }}.start();
+        }
+    }
+
+    static class AddServerAction extends AbstractAction
+    {
+        public AddServerAction() {
+            super("Add Remote Server");
+        }
+        public void actionPerformed(ActionEvent e) {
+            String host = JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Enter the remote host name");
+            if ((host != null) && !host.trim().equals("")) {
+                Database.d.mergeServerSetRemote(host, "", 10);
+                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+            }
+        }
+    }
+
 
     static class DeleteLocalSeriesAction extends AbstractAction
     {
@@ -210,7 +255,7 @@ public class Actions
             super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
-            SeriesDialog sd = new SeriesDialog("Select the series to remove locally", PostgresqlDatabase.getSeriesList(null).toArray(new String[0]));
+            ListDialog sd = new ListDialog("Select the series to remove locally", PostgresqlDatabase.getSeriesList(null));
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();
