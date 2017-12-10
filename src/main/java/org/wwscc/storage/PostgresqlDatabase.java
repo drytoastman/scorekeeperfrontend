@@ -28,66 +28,20 @@ import org.postgresql.util.PGobject;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
-public class PostgresqlDatabase extends SQLDataInterface
+public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseable
 {
     private static final Logger log = Logger.getLogger(PostgresqlDatabase.class.getCanonicalName());
     private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public", "template"});
 
-    /**
-     * Static function to wait for the database to start and initialize
-     */
-    static public void waitUntilUp()
-    {
-        while (true) {
-            int countdown = 30;
-            try {
-                Connection c = getConnection(null, false);
-                c.close();
-                return;
-            } catch (SQLException sqle) {
-                String ss = sqle.getSQLState();
-                // give time for creating user, database, etc.
-                if (--countdown > 0) {
-                    log.log(Level.INFO, "Database not available yet ("+ss+"): "+sqle);
-                    try {  Thread.sleep(1000);
-                    } catch (InterruptedException ie) {}
-                    continue;
-                }
+    private volatile Connection conn;
+    private volatile ConnectParam connectParam;
+    private volatile boolean inTransaction;
+    private Map<ResultSet, PreparedStatement> leftovers;
+    private PostgresConnectionWatcher watcher;
 
-                log.log(Level.SEVERE, "\bDatabase unavailable due to error "+sqle+","+ss, sqle);
-                return;
-            }
-        }
-    }
-
-    /**
-     * Static function to get the list of series from a database.  Gets the schema list
-     * from the Postgresql connection metadata using the base scorekeeper user.
-     * @param host a remote host to connect to or null for local database
-     * @return a list of series string names
-     */
-    static public List<String> getSeriesList(String host)
-    {
-        List<String> ret = new ArrayList<String>();
-        try
-        {
-            Connection sconn = getRemoteConnection(host, "nulluser", "nulluser");
-            DatabaseMetaData meta = sconn.getMetaData();
-            ResultSet rs = meta.getSchemas();
-            while (rs.next()) {
-                String s = rs.getString("TABLE_SCHEM");
-                if (!ignore.contains(s))
-                    ret.add(s);
-            }
-            rs.close();
-            sconn.close();
-        }
-        catch (SQLException sqle)
-        {
-            logError("getSeriesList", sqle);
-        }
-
-        return ret;
+    class ConnectParam {
+        String host, user, password, series;
+        int statementtimeout;
     }
 
     /**
@@ -100,8 +54,8 @@ public class PostgresqlDatabase extends SQLDataInterface
     static public boolean checkPassword(String host, String user, String password)
     {
         try {
-            Connection sconn = getRemoteConnection(host, user, password);
-            sconn.close();
+            PostgresqlDatabase db = new PostgresqlDatabase(host, user, password, 0);
+            db.close();
             return true;
         } catch (SQLException sqle) {
             if (sqle.getSQLState().equals("28P01")) {
@@ -116,91 +70,99 @@ public class PostgresqlDatabase extends SQLDataInterface
     }
 
     /**
-     * Static function to get an SSL JDBC Connection to a remote host with a given user
-     * @param host the host to connect to (null is replaced with 127.0.0.1)
-     * @param user the username to use
-     * @param password the password to use
-     * @return a java.sql.Connection object
-     * @throws SQLException if connection fails
-     */
-    private static Connection getRemoteConnection(String host, String user, String password) throws SQLException
-    {
-        Properties props = new Properties();
-        props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
-        props.setProperty("user", user);
-        props.setProperty("password", password);
-        props.setProperty("ssl", "true");
-        props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
-        props.setProperty("loginTimeout", "10");
-        if (host == null)
-            host = "127.0.0.1";
-
-        return DriverManager.getConnection("jdbc:postgresql://"+host+":54329/scorekeeper", props);
-    }
-
-    /**
-     * Wrap the properties and url pieces to get a local PG connection
-     * @param series the series we are interested in
-     * @param superuser true if we should connect as the postgres superuser
-     * @return a java.sql.Connection object
+     * Connect to the localhost with the given user
+     * @param user localuser or postgres
      * @throws SQLException
      */
-    private static Connection getConnection(String series, boolean superuser) throws SQLException
+    public PostgresqlDatabase(String user) throws SQLException
     {
-        Properties props = new Properties();
-        props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
-        props.setProperty("loginTimeout", "1");
-        if (superuser)
-            props.setProperty("user", "postgres");
-        else
-            props.setProperty("user", "localuser");
-        if (series != null)
-            props.setProperty("currentSchema", series+",public");
-
-        return DriverManager.getConnection("jdbc:postgresql://127.0.0.1:6432/scorekeeper", props);
+        this(null, user, null, 0);
     }
 
-
-    private Connection conn;
-    private String series;
-    private boolean superuser;
-    private Map<ResultSet, PreparedStatement> leftovers;
-    private int timeoutms;
 
     /**
-     * Open a connection to the local scorekeeper database
-     * @param series we are interested in
-     * @param superuser true if we should connect as the postgres superuser
-     * @param timeoutms a statement timeout in ms
-     * @throws SQLException if connection fails
+     * Connect to the localhost with the given user and statement timeout
+     * @param user localuser or postgres
+     * @param statementtimeout if > 0, a statement timeout in ms
+     * @throws SQLException
      */
-    public PostgresqlDatabase(String series, boolean superuser, int timeoutms) throws SQLException
+    public PostgresqlDatabase(String user, int statementtimeout) throws SQLException
     {
-        this.conn = null;
-        this.series = series;
-        this.superuser = superuser;
-        this.leftovers = new HashMap<ResultSet, PreparedStatement>();
-        this.timeoutms = timeoutms;
-        init();
+        this(null, user, null, statementtimeout);
     }
 
-    public void reconnect() throws SQLException
+
+    /**
+     * Connect to a local or remote host
+     * @param host if null use localhost, otherwise the remote host to connect to
+     * @param user the username to connect with
+     * @param password if not null, the password to use
+     * @param statementtimeout if > 0, a statement timeout in ms
+     * @throws SQLException
+     */
+    public PostgresqlDatabase(String host, String user, String password, int statementtimeout) throws SQLException
     {
-        init();
+        leftovers = new HashMap<ResultSet, PreparedStatement>();
+        connectParam = new ConnectParam();
+        connectParam.host = host;
+        connectParam.user = user;
+        connectParam.password = password;
+        connectParam.statementtimeout = statementtimeout;
+        connectParam.series = null;
+        conn = internalConnect();
+
+        watcher = new PostgresConnectionWatcher();
+        watcher.setName("PostgresConnectionWatcher-"+watcher.getId());
+        watcher.setDaemon(true);
+        watcher.start();
     }
 
-    private void init() throws SQLException
+
+    /**
+     * Wrap the connect in a state based call so we can reconnect internally as well
+     * @throws SQLException
+     */
+    private Connection internalConnect() throws SQLException
     {
-        if (conn != null)
-            conn.close();
-        conn = getConnection(series, superuser);
-        Statement s = conn.createStatement();
+        String host = null;
+        int port = -1;
+        Properties props = new Properties();
+        props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
+        props.setProperty("user", connectParam.user);
+
+        if ((connectParam.host == null) || connectParam.host.equals("127.0.0.1") || connectParam.host.equals("localhost"))
+        {
+            props.setProperty("loginTimeout", "1");
+            host = "127.0.0.1";
+            port = 6432;
+        }
+        else
+        {
+            if (connectParam.password != null)
+                props.setProperty("password", connectParam.password);
+            props.setProperty("ssl", "true");
+            props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
+            props.setProperty("loginTimeout", "10");
+            host = connectParam.host;
+            port = 54329;
+        }
+
+        String url = String.format("jdbc:postgresql://%s:%d/scorekeeper", host, port);
+        log.log(Level.INFO, "Connecting to postgres @ {0} with param {1}", new Object[] { url, props });
+        Connection c = DriverManager.getConnection(url, props);
+
+        Statement s = c.createStatement();
         s.execute("set time zone 'UTC'");
         s.execute("LISTEN datachange");
-        if (timeoutms > 0)
-            s.execute("SET statement_timeout='"+timeoutms+"'");
+        if (connectParam.statementtimeout > 0)
+            s.execute("SET statement_timeout='"+connectParam.statementtimeout+"'");
+        if (connectParam.series != null)
+            s.execute("SET search_path='"+connectParam.series+"','public'");
+
         s.close();
+        return c;
     }
+
 
     @Override
     public void close()
@@ -210,6 +172,7 @@ public class PostgresqlDatabase extends SQLDataInterface
             if ((conn != null) && (!conn.isClosed()))
             {
                 conn.close();
+                watcher.done = true;
                 conn = null;
             }
         }
@@ -219,39 +182,120 @@ public class PostgresqlDatabase extends SQLDataInterface
         }
     }
 
+
+    /**
+     * Interface for use of connection to check if its up and available, synchronized as callers can
+     * come from multiple threads and we don't want to call internalConnect more than once
+     * @return the connection for this object
+     * @throws SQLException
+     */
+    private synchronized Connection getConnection() throws SQLException
+    {
+        if (conn == null)
+            return null;
+        if (!conn.isValid(1))
+        {
+            if (inTransaction)
+                log.severe("\bThere was a database connection problem in a transaction, you should restart the application");
+            conn = internalConnect();
+        }
+        return conn;
+    }
+
+
+    /**
+     * Thread to do connection and notification checks in the background
+     */
+    private class PostgresConnectionWatcher extends Thread
+    {
+        boolean done = false;
+        public void run()
+        {
+            while (!done) {
+                try {
+                    PGConnection pg = (PGConnection)getConnection();
+                    if (pg == null) {
+                        log.severe("Connection is null, stopping background check thread");
+                        return;
+                    }
+                    PGNotification notifications[] = pg.getNotifications();
+                    if (notifications != null) {
+                        Set<String> changes = new HashSet<String>();
+                        for (PGNotification n : notifications) {
+                            changes.add(n.getParameter());
+                        }
+                        Messenger.sendEvent(MT.DATABASE_NOTIFICATION, changes);
+                    }
+                } catch (Throwable e) {
+                    log.log(Level.WARNING, "ConnectionWatcher exception: " + e, e);
+                }
+
+                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+            }
+        }
+    }
+
+
+    @Override
+    public List<String> getSeriesList()
+    {
+        List<String> ret = new ArrayList<String>();
+        try
+        {
+            DatabaseMetaData meta = getConnection().getMetaData();
+            ResultSet rs = meta.getSchemas();
+            while (rs.next()) {
+                String s = rs.getString("TABLE_SCHEM");
+                if (!ignore.contains(s))
+                    ret.add(s);
+            }
+            rs.close();
+        }
+        catch (SQLException sqle)
+        {
+            logError("getSeriesList", sqle);
+        }
+
+        return ret;
+    }
+
+
+    @Override
+    public void useSeries(String series)
+    {
+        try {
+            Statement s = getConnection().createStatement();
+            s.execute("SET search_path='"+series+"','public'");
+            s.close();
+            connectParam.series = series;
+        } catch (SQLException sqle) {
+            log.log(Level.SEVERE, "\bUnable to set series: " + sqle, sqle);
+        }
+    }
+
+
     @Override
     public void start() throws SQLException
     {
-        conn.setAutoCommit(false);
+        getConnection().setAutoCommit(false);
+        inTransaction = true;
     }
 
     @Override
     public void commit() throws SQLException
     {
-        conn.setAutoCommit(true);
+        inTransaction = false;
+        getConnection().setAutoCommit(true);
     }
 
-    public void checkNotifications()
-    {
-        try {
-            PGNotification notifications[] = ((PGConnection)conn).getNotifications();
-            if (notifications != null) {
-                Set<String> changes = new HashSet<String>();
-                for (PGNotification n : notifications) {
-                    changes.add(n.getParameter());
-                }
-                Messenger.sendEvent(MT.DATABASE_NOTIFICATION, changes);
-            }
-        } catch (SQLException e) {
-            log.log(Level.WARNING, "Failed to process pg notifications: " + e, e);
-        }
-    }
 
     @Override
     public void rollback() {
         try {
-            conn.rollback();
-            conn.setAutoCommit(true);
+            Connection c = getConnection();
+            inTransaction = false;
+            c.rollback();
+            c.setAutoCommit(true);
         } catch (SQLException sqle) {
             log.warning("\bDatabase rollback failed.  You should probably restart the application.");
         }
@@ -293,37 +337,34 @@ public class PostgresqlDatabase extends SQLDataInterface
     @Override
     public void executeUpdate(String sql, List<Object> args) throws SQLException
     {
-        PreparedStatement p = conn.prepareStatement(sql);
+        PreparedStatement p = getConnection().prepareStatement(sql);
         bindParam(p, args);
         p.executeUpdate();
         p.close();
-        checkNotifications();
     }
 
     @Override
     public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException
     {
-        PreparedStatement p = conn.prepareStatement(sql);
+        PreparedStatement p = getConnection().prepareStatement(sql);
         for (List<Object> l : args) {
             bindParam(p, l);
             p.executeUpdate();
         }
         p.close();
-        checkNotifications();
     }
 
 
     @Override
     public ResultSet executeSelect(String sql, List<Object> args) throws SQLException
     {
-        PreparedStatement p = conn.prepareStatement(sql);
+        PreparedStatement p = getConnection().prepareStatement(sql);
         if (args != null)
             bindParam(p, args);
         ResultSet s = p.executeQuery();
         synchronized(leftovers) {
             leftovers.put(s,  p);
         }
-        checkNotifications();
         return s;
     }
 
@@ -362,7 +403,7 @@ public class PostgresqlDatabase extends SQLDataInterface
         try
         {
             List<T> result = new ArrayList<T>();
-            PreparedStatement p = conn.prepareStatement(sql);
+            PreparedStatement p = getConnection().prepareStatement(sql);
             if (args != null)
                 bindParam(p, args);
             ResultSet s = p.executeQuery();
@@ -371,7 +412,6 @@ public class PostgresqlDatabase extends SQLDataInterface
             }
             s.close();
             p.close();
-            checkNotifications();
             return result;
         }
         catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)

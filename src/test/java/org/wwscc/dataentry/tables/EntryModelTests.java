@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
-import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.tray.DockerContainer;
 import org.wwscc.tray.DockerMachine;
 import org.wwscc.util.MT;
@@ -37,7 +36,7 @@ public class EntryModelTests
         db.addPort("54329", "5432");
         db.createNetsAndVolumes();
         db.start();
-        PostgresqlDatabase.waitUntilUp();
+        Database.waitUntilUp();
         Database.openSeries("pro2017", 2000);
     }
 

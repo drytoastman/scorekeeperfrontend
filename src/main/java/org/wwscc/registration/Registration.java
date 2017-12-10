@@ -11,7 +11,6 @@ package org.wwscc.registration;
 import java.awt.BorderLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
@@ -25,8 +24,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import javax.swing.Timer;
-
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
 import org.wwscc.barcodes.BarcodeScannerOptionsAction;
@@ -128,9 +125,6 @@ public class Registration extends JFrame
                     Messenger.sendEvent(MT.EVENT_CHANGED, null); // simple reload all event for registration, event didn't really change
                 }
             });
-            new Timer(1000, new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-                Database.d.ping();
-            }}).start();
         }
         catch (Throwable e)
         {

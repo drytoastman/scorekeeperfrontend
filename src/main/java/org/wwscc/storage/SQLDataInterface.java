@@ -64,17 +64,6 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void ping()
-    {
-        try {
-            executeSelect("select 1", null);
-        } catch (SQLException sqle) {
-            log.log(Level.INFO, "Ping failed? " + sqle, sqle);
-        }
-    }
-
-
-    @Override
     public String getVersion()
     {
         try

@@ -16,7 +16,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
 import org.wwscc.storage.Database;
-import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -109,7 +108,7 @@ public class StateControl
             if (ok)
             {
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Waiting for Database");
-                PostgresqlDatabase.waitUntilUp();
+                Database.waitUntilUp();
                 Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             }

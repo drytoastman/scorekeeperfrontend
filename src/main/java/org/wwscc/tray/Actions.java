@@ -23,7 +23,6 @@ import org.wwscc.dialogs.ListDialog;
 import org.wwscc.dialogs.SeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
-import org.wwscc.storage.PostgresqlDatabase;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -255,7 +254,7 @@ public class Actions
             super("Delete Local Series Copy");
         }
         public void actionPerformed(ActionEvent e) {
-            ListDialog sd = new ListDialog("Select the series to remove locally", PostgresqlDatabase.getSeriesList(null));
+            ListDialog sd = new ListDialog("Select the series to remove locally", Database.d.getSeriesList());
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();

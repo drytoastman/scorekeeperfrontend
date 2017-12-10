@@ -21,8 +21,11 @@ import javax.swing.SwingWorker;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
+import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.storage.PostgresqlDatabase;
+import org.wwscc.util.TextChangeTrigger;
+
 import net.miginfocom.swing.MigLayout;
 
 public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSResult>
@@ -67,6 +70,11 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
                 seriesgetter.execute();
             }
         });
+
+        fields.get("password").getDocument().addDocumentListener(new TextChangeTrigger() {
+            @Override public void changedTo(String txt) {
+                ok.setText("Verify Password");
+        }});
     }
 
     @Override
@@ -120,11 +128,13 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         @Override
         protected List<String> doInBackground() throws Exception
         {
-            List<String> series = PostgresqlDatabase.getSeriesList(server.getConnectEndpoint());
-            series.removeAll(PostgresqlDatabase.getSeriesList(null));
-            if (series.isEmpty())
-                errornote.setText("No additional series on remote server");
-            return series;
+            try (PostgresqlDatabase db = new PostgresqlDatabase(server.getConnectEndpoint(), "nulluser", "nulluser", 0)) {
+                List<String> series = db.getSeriesList();
+                series.removeAll(Database.d.getSeriesList());
+                if (series.isEmpty())
+                    errornote.setText("No additional series on remote server");
+                return series;
+            }
         }
 
         @Override

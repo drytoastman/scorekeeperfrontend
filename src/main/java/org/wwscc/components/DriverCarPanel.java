@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2010 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
  * All rights reserved.
  */
 
@@ -45,7 +45,7 @@ import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.SearchTrigger;
+import org.wwscc.util.TextChangeTrigger;
 
 
 public abstract class DriverCarPanel extends JPanel implements ActionListener, ListSelectionListener, FocusListener
@@ -162,7 +162,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         firstSearch.setText(firstname);
         lastSearch.setText(lastname);
         searchDrivers.enable(true);
-        searchDrivers.search("");
+        searchDrivers.changedTo("");
         drivers.setSelectedIndex(0);
         drivers.ensureIndexIsVisible(0);
     }
@@ -396,10 +396,10 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         tf.select(0,0);
     }
 
-    class SearchDrivers extends SearchTrigger
+    class SearchDrivers extends TextChangeTrigger
     {
         @Override
-        public void search(String txt)
+        public void changedTo(String txt)
         {
             String first = null, last = null;
             if (lastSearch.getDocument().getLength() > 0)

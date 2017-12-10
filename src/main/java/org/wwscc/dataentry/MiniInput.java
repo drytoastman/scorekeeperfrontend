@@ -16,7 +16,7 @@ import org.wwscc.util.IconButton;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.SearchTrigger;
+import org.wwscc.util.TextChangeTrigger;
 
 public abstract class MiniInput extends JPanel implements ActionListener
 {
@@ -74,9 +74,9 @@ public abstract class MiniInput extends JPanel implements ActionListener
 		public FilterEntries()
 		{
 			super("Filter", MT.OPEN_FILTER);
-			entry.getDocument().addDocumentListener(new SearchTrigger() {
+			entry.getDocument().addDocumentListener(new TextChangeTrigger() {
 				@Override
-				public void search(String txt) {
+				public void changedTo(String txt) {
 					Messenger.sendEvent(MT.FILTER_ENTRANT, txt);
 				}
 			});

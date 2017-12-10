@@ -24,23 +24,14 @@ public class Database
 {
     private static final Logger log = Logger.getLogger(Database.class.getCanonicalName());
     public static final Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-    public static DataInterface d;
-
-    static
-    {
-        d = new FakeDatabase();
-    }
+    public static DataInterface d = new FakeDatabase(); // to prevent null pointers
 
     /**
      * Used at startup to open the series that was previously opened
      */
     public static void openDefault()
     {
-        try {
-            openSeries(Prefs.getSeries(""), 0);
-        } catch (Exception ioe) {
-            log.severe("\bFailed to open default: " + ioe);
-        }
+        openSeries(Prefs.getSeries(""), 0);
     }
 
    /**
@@ -56,7 +47,7 @@ public class Database
 
         while (true) {
             try {
-                d = new PostgresqlDatabase(null, superuser, timeoutms);
+                d = new PostgresqlDatabase(superuser?"postgres":"localuser");
                 Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
                 return true;
             } catch (SQLException sqle) {
@@ -78,20 +69,48 @@ public class Database
             d.close();
 
         try {
-            if (series.equals("") || !PostgresqlDatabase.getSeriesList(null).contains(series))
+            d = new PostgresqlDatabase("localuser", timeoutms);
+            if (series.equals("") || !d.getSeriesList().contains(series))
             {
-                d = new FakeDatabase();
                 Messenger.sendEvent(MT.SERIES_CHANGED, "<none>");
             }
             else
             {
-                d = new PostgresqlDatabase(series, false, timeoutms);
+                d.useSeries(series);
                 Messenger.sendEvent(MT.SERIES_CHANGED, series);
             }
             return true;
         } catch (SQLException sqle) {
             log.severe(String.format("\bUnable to open series %s due to error %s", series, sqle));
             return false;
+        }
+    }
+
+
+    /**
+     * Static function to wait for the database to start and initialize
+     */
+    public static void waitUntilUp()
+    {
+        while (true) {
+            int countdown = 30;
+            try {
+                PostgresqlDatabase db = new PostgresqlDatabase("localuser");
+                db.close();
+                return;
+            } catch (SQLException sqle) {
+                String ss = sqle.getSQLState();
+                // give time for creating user, database, etc.
+                if (--countdown > 0) {
+                    log.log(Level.INFO, "Database not available yet ("+ss+"): "+sqle);
+                    try {  Thread.sleep(1000);
+                    } catch (InterruptedException ie) {}
+                    continue;
+                }
+
+                log.log(Level.SEVERE, "\bDatabase unavailable due to error "+sqle+","+ss, sqle);
+                return;
+            }
         }
     }
 }

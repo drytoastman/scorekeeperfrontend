@@ -52,6 +52,8 @@ public class Exec
     public static int execit(ProcessBuilder in, byte[] output, int waitms)
     {
         try {
+            log.log(Level.FINER, "Running {0}", in.command().toString());
+
             Process p = in.start();
             int ret;
 

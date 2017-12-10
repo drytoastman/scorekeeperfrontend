@@ -10,8 +10,6 @@ package org.wwscc.dataentry;
 
 import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
@@ -22,8 +20,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.Timer;
-
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.components.MyIpLabel;
@@ -182,9 +178,6 @@ public class DataEntry extends JFrame implements MessageListener
         {
             AppSetup.appSetup("dataentry");
             new DataEntry();
-            new Timer(1000, new ActionListener() { @Override public void actionPerformed(ActionEvent e) {
-                Database.d.ping();
-            }}).start();
         }
         catch (Throwable e)
         {

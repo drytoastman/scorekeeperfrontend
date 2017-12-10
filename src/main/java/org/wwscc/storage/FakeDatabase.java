@@ -36,19 +36,21 @@ import java.util.Map;
  */
 public class FakeDatabase extends SQLDataInterface
 {
-	public FakeDatabase() {}
-	public void close() {}
-	public void start() throws SQLException {}
-	public void commit() throws SQLException {}
-	public void rollback() {}
-	public void executeUpdate(String sql, List<Object> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
-	public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
-	public ResultSet executeSelect(String sql, List<Object> args) throws SQLException { return new EmptySet(); }
-	public void closeLeftOvers() {}
-	public <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException { return new ArrayList<T>(); }
-	
-	class EmptySet implements ResultSet
-	{
+    public FakeDatabase() {}
+    public void close() {}
+    public List<String> getSeriesList() { return new ArrayList<String>(); }
+    public void useSeries(String series) {}
+    public void start() throws SQLException {}
+    public void commit() throws SQLException {}
+    public void rollback() {}
+    public void executeUpdate(String sql, List<Object> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
+    public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
+    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException { return new EmptySet(); }
+    public void closeLeftOvers() {}
+    public <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException { return new ArrayList<T>(); }
+
+    class EmptySet implements ResultSet
+    {
         public <T> T unwrap(Class<T> iface) throws SQLException {return null;}
         public boolean isWrapperFor(Class<?> iface) throws SQLException {return false;}
         public boolean next() throws SQLException {return false;}
