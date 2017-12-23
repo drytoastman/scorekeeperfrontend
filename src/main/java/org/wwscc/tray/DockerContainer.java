@@ -205,7 +205,7 @@ public class DockerContainer implements DataRetrievalInterface
         p.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("import.log").toFile()));
         if (Exec.execit(p, null) != 0)
             return false;
-        return Exec.execit(Exec.build(machineenv, "docker", "exec", name, "/dbconversion-scripts/upgrade.sh"), null) == 0;
+        return Exec.execit(Exec.build(machineenv, "docker", "exec", name, "/dbconversion-scripts/upgrade.sh", "/dbconversion-scripts"), null) == 0;
     }
 
     @Override
