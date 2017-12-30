@@ -9,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -328,6 +329,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 pgo.setType("json");
                 pgo.setValue(((JSONObject)v).toJSONString());
                 p.setObject(ii+1, pgo);
+            } else if (v instanceof Timestamp) {
+                p.setTimestamp(ii+1, (Timestamp)v);
             } else {
                 throw new SQLException("unexpected param type: " + v.getClass());
             }

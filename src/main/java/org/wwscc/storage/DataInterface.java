@@ -97,7 +97,6 @@ public interface DataInterface
 
     public List<Car> getCarsForDriver(UUID driverid); // get all cars for this driverid
     public Map<String, Set<String>> getCarAttributes(); // get a unique list of possible 'attr' for the car
-    public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid);
 
     /**
      * Upon successful return, the provided car will be in the registered table for the current event.  If overwrite
@@ -110,8 +109,10 @@ public interface DataInterface
      * @throws SQLException if an error occurs into the SQL execution
      */
     public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException;
-
     public void unregisterCar(UUID eventid, Car car) throws SQLException; // remove this car from the current event registration
+
+    public List<Registration> getEventRegistrationForDriver(UUID driverid, UUID eventid);
+
     public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
     public void updateCar(Car d) throws SQLException; // update the car values in the database
     public void deleteCar(Car d) throws SQLException;

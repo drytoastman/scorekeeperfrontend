@@ -11,8 +11,10 @@ package org.wwscc.storage;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -362,21 +364,17 @@ public abstract class SQLDataInterface implements DataInterface
             mc.isInRunOrder = rr.next();
 
             // check for activity outside this event, shortcut to reduce queries needed
-            if (mc.isRegistered || mc.isInRunOrder) {
-                mc.hasActivity = true;
-            } else {
-                ResultSet c1 = executeSelect("select carid from registered where carid=? limit 1", newList(c.getCarId()));
-                if (!c1.next()) {
-                    ResultSet c2 = executeSelect("select carid from runs where carid=? limit 1", newList(c.getCarId()));
-                    if (!c2.next()) {
-                        ResultSet c3 = executeSelect("select carid from runorder where carid=? limit 1", newList(c.getCarId()));
-                        mc.hasActivity = c3.next();
-                    } else {
-                        mc.hasActivity = true;
-                    }
+            ResultSet c1 = executeSelect("select carid from registered where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+            if (!c1.next()) {
+                ResultSet c2 = executeSelect("select carid from runs where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+                if (!c2.next()) {
+                    ResultSet c3 = executeSelect("select carid from runorder where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+                    mc.hasOtherActivity = c3.next();
                 } else {
-                    mc.hasActivity = true;
+                    mc.hasOtherActivity = true;
                 }
+            } else {
+                mc.hasOtherActivity = true;
             }
 
             closeLeftOvers();
@@ -511,43 +509,34 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
-    public List<Double> getOnlinePaymentsForEvent(UUID driverid, UUID eventid)
-    {
-        List<Double> ret = new ArrayList<Double>();
-        try {
-            ResultSet s = executeSelect("select amount from payments where driverid=? and eventid=? and accountid!='onsite'", newList(driverid, eventid));
-            while (s.next())
-                ret.add(s.getDouble(1));
-        } catch (SQLException sqle) {
-            logError("getPaymentsForEvent", sqle);
-        }
-        return ret;
-    }
-
 
     @Override
     public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
     {
-        // eventually record actual amounts here, just 1 cent for now
-        String txid = "onsite-"+car.getCarId();
-        if (paid) // make sure onsite account is present
-            executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('onsite', 'Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
-        else
-            txid = null;
+        Registration reg = new Registration();
+        reg.eventid = eventid;
+        reg.carid   = car.carid;
+        if (paid) {
+            executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('oldonsite', 'Old Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
+            reg.txid     = "old-"+car.getCarId();
+            reg.txtime   = new Timestamp(new Date().getTime());
+            reg.itemname = "onsite";
+            reg.amount   = 0.00;
+        }
 
-        String pay  = "INSERT INTO payments (txid, accountid, driverid, eventid, amount) VALUES (?, 'onsite', ?, ?, 0.01) ON CONFLICT (txid) DO ";
-        String reg  = "INSERT INTO registered (eventid, carid, txid) VALUES (?, ?, ?) ON CONFLICT (eventid, carid) DO ";
+        String sql  = "INSERT INTO registered (eventid, carid, txid, txtime, itemname, amount) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (eventid, carid) DO ";
+        List<Object> val = reg.getValues();
         if (overwrite)
         {
-            if (paid)
-                executeUpdate(pay+"UPDATE SET amount=0.01,modified=now()", newList(txid, car.getDriverId(), eventid));
-            executeUpdate(reg+"UPDATE SET txid=?,modified=now()", newList(eventid, car.getCarId(), txid, txid));
+            val.add(reg.txid);
+            val.add(reg.txtime);
+            val.add(reg.itemname);
+            val.add(reg.amount);
+            executeUpdate(sql+"UPDATE SET txid=?,txtime=?,itemname=?,amount=?,modified=now()", val);
         }
         else
         {
-            if (paid)
-                executeUpdate(pay+"NOTHING", newList(txid, car.getDriverId(), eventid));
-            executeUpdate(reg+"NOTHING", newList(eventid, car.getCarId(), txid));
+            executeUpdate(sql+"NOTHING", val);
         }
     }
 
@@ -557,6 +546,22 @@ public abstract class SQLDataInterface implements DataInterface
         List<Object> vals = newList(eventid, car.getCarId());
         executeUpdate("delete from registered where eventid=? and carid=?", vals);
     }
+
+    @Override
+    public List<Registration> getEventRegistrationForDriver(UUID driverid, UUID eventid)
+    {
+        List<Registration> ret = new ArrayList<Registration>();
+        try {
+            ResultSet rs = executeSelect("SELECT r.* FROM registered r JOIN cars c ON r.carid=c.carid WHERE c.driverid=? AND r.eventid=?", newList(driverid, eventid));
+            while (rs.next()) {
+                ret.add(new Registration(rs));
+            }
+        } catch (SQLException sqle) {
+            logError("getEvenRegistrationForDriver", sqle);
+        }
+        return ret;
+    }
+
 
     @Override
     public void newCar(Car c) throws SQLException
