@@ -127,15 +127,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     }
 
 
-    private JTextArea displayArea(int linecount)
+    protected JTextArea displayArea(int linecount)
     {
         JTextArea ta = new JTextArea();
         ta.setEditable(false);
         ta.setLineWrap(false);
-        ta.setEnabled(false);
-        UIDefaults d = new UIDefaults();
-        d.put("TextArea[Disabled+NotInScrollPane].textForeground", new Color(0, 0, 150));
-        ta.putClientProperty("Nimbus.Overrides", d);
+        ta.setEnabled(true);
 
         // ugly hack to set a preferred height based on lines of text
         ta.setSize(100,Short.MAX_VALUE);

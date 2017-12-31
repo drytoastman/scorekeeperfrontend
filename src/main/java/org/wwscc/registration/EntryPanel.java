@@ -38,6 +38,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
@@ -76,6 +77,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     JComboBox<PrintService> printers;
     Code39 activeLabel;
 
+    JTextArea paymentInfo;
     JLabel mergeWarning;
 
     @SuppressWarnings("deprecation")
@@ -137,6 +139,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
         deletecar = new JButton(new DeleteCarAction());
         deletecar.setEnabled(false);
+
+        paymentInfo = displayArea(4);
 
         membershipwarning = new JLabel("");
         membershipwarning.setForeground(Color.WHITE);
@@ -221,6 +225,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         singleCarPanel.add(registeredandpaid, "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
+        singleCarPanel.add(paymentInfo,       "growx, wrap");
         singleCarPanel.add(paidlabel,         "gaptop 5, split");
         singleCarPanel.add(paidreport,        "growx, wrap");
         singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
