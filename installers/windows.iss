@@ -42,6 +42,7 @@ const
 
 function InitializeSetup(): Boolean;
 var
+ WinVersion: TWindowsVersion;
  Version: String;
  ResultCode: Integer;
  JavaOk: Boolean;
@@ -51,6 +52,17 @@ begin
    JavaOk := false;
    DockerOk := False;
    Result := True;
+
+   GetWindowsVersionEx(WinVersion);
+   if WinVersion.SuiteMask and VER_SUITE_PERSONAL = 0 then
+   begin
+     SuppressibleMsgBox('This installer is intended for Windows Home and Docker Toolbox.'#13#10#13#10 + 
+     'On a Windows Pro machine you must make sure Hyper-V is disabled before installing Docker Toolbox.  ' +
+     'Docker for Windows, based on Hyper-V, is not reliable enough after the computer comes out of hibernate or sleep at this time.'
+     , mbError, MB_OK, IDOK);
+     //Result := False;
+     //Exit;
+   end;
 
    if RegQueryStringValue(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment', 'CurrentVersion', Version) then begin
      if (StrToInt(Version[3]) >= 8) then begin
