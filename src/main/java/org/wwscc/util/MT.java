@@ -18,7 +18,6 @@ public enum MT {
     RUNGROUP_CHANGED,
     SCANNER_OPTIONS_CHANGED,
     BARCODE_SCANNED,
-    CAR_CREATED,
     QUICKID_SEARCH,
 
     // Database events

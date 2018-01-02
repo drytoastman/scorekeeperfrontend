@@ -14,23 +14,29 @@ import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.UUID;
 
-public class Registration
+public class Payment
 {
+    protected UUID payid;
     protected UUID eventid;
     protected UUID carid;
+    protected String refid;
+    protected String txtype;
     protected String txid;
     protected Timestamp txtime;
     protected String itemname;
     protected double amount;
 
-    public Registration()
+    public Payment()
     {
     }
 
-    public Registration(ResultSet rs) throws SQLException
+    public Payment(ResultSet rs) throws SQLException
     {
+        payid    = (UUID)rs.getObject("payid");
         eventid  = (UUID)rs.getObject("eventid");
         carid    = (UUID)rs.getObject("carid");
+        refid    = rs.getString("refid");
+        txtype   = rs.getString("txtype");
         txid     = rs.getString("txid");
         txtime   = rs.getTimestamp("txtime");
         itemname = rs.getString("itemname");
@@ -40,8 +46,11 @@ public class Registration
     public LinkedList<Object> getValues()
     {
         LinkedList<Object> ret = new LinkedList<Object>();
+        ret.add(payid);
         ret.add(eventid);
         ret.add(carid);
+        ret.add(refid);
+        ret.add(txtype);
         ret.add(txid);
         ret.add(txtime);
         ret.add(itemname);
@@ -52,4 +61,5 @@ public class Registration
     public UUID getCarId()    { return carid; }
     public UUID getEventId()  { return eventid; }
     public double getAmount() { return amount; }
+    public String getTxType() { return txtype; }
 }

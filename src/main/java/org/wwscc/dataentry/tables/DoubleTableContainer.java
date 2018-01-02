@@ -176,7 +176,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         c.setNumber(999);
 
         Database.d.newCar(c);
-        Database.d.registerCar(DataEntry.state.getCurrentEventId(), c, false, false);
+        Database.d.registerCar(DataEntry.state.getCurrentEventId(), c);
         event(MT.CAR_ADD, c.getCarId());
     }
 

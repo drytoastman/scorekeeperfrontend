@@ -120,7 +120,7 @@ public class Registration extends JFrame
             Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) ->  {
                 @SuppressWarnings("unchecked")
                 Set<String> tables = (Set<String>)o;
-                if (tables.contains("drivers") || tables.contains("cars") || tables.contains("registered") || tables.contains("runorder") || tables.contains("runs")) {
+                if (tables.contains("drivers") || tables.contains("cars") || tables.contains("registered") || tables.contains("runorder") || tables.contains("runs") || tables.contains("payments")) {
                     log.fine("directing db notification into event changed");
                     Messenger.sendEvent(MT.EVENT_CHANGED, null); // simple reload all event for registration, event didn't really change
                 }

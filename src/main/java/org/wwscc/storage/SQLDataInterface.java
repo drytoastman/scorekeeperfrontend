@@ -11,10 +11,8 @@ package org.wwscc.storage;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -186,8 +184,9 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return loadEntrants(executeSelect("select distinct d.firstname as firstname,d.lastname as lastname,c.*,x.txid from registered as x, cars as c, drivers as d " +
-                        "where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? ORDER BY d.firstname,d.lastname", newList(eventid)), null);
+            return loadEntrants(executeSelect("SELECT DISTINCT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
+                        "FROM registered r LEFT JOIN payments p ON r.carid=p.carid AND r.eventid=p.eventid JOIN cars c ON r.carid=c.carid JOIN drivers d ON c.driverid=d.driverid " +
+                        "WHERE r.eventid=? GROUP BY d.firstname,d.lastname,c.carid ORDER BY d.firstname,d.lastname", newList(eventid)), null);
         }
         catch (Exception ioe)
         {
@@ -225,9 +224,10 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,reg.txid from drivers d " +
-                        "JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid  " +
-                        "where r.eventid=? AND r.course=? AND r.rungroup=? order by r.row", newList(eventid, course, rungroup));
+            ResultSet d = executeSelect("SELECT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
+                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid " +
+                        "LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid LEFT JOIN payments p ON reg.carid=p.carid AND reg.eventid=p.eventid  " +
+                        "WHERE r.eventid=? AND r.course=? AND r.rungroup=? GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup));
             if (d == null)
                 return new ArrayList<Entrant>();
             ResultSet runs = executeSelect("select * from runs where eventid=? and course=? and carid in " +
@@ -249,11 +249,12 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select d.firstname,d.lastname,c.*,r.txid from drivers as d, cars as c LEFT JOIN registered as r on r.carid=c.carid and r.eventid=?  " +
-                        "where c.driverid=d.driverid and c.carid=?", newList(eventid, carid));
+            ResultSet d = executeSelect("select d.firstname, d.lastname, c.*, SUM(p.amount) as paid " +
+                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid LEFT JOIN registered r ON r.carid=c.carid AND r.eventid=? LEFT JOIN payments p ON p.carid=r.carid AND p.eventid=r.eventid " +
+                        "WHERE c.carid=? GROUP BY d.firstname, d.lastname, c.carid ORDER BY d.firstname, d.lastname", newList(eventid, carid));
             ResultSet runs = null;
             if (loadruns)
-                runs = executeSelect("select * from runs where carid=? and eventid=? and course=?", newList(carid, eventid, course));
+                runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=?", newList(carid, eventid, course));
             List<Entrant> e = loadEntrants(d, runs);
             closeLeftOvers();
             if (e.size() > 0)
@@ -350,42 +351,50 @@ public abstract class SQLDataInterface implements DataInterface
     //****************************************************/
 
     @Override
-    public MetaCar loadMetaCar(Car c, UUID eventid, int course)
+    public DecoratedCar decorateCar(Car c, UUID eventid, int course)
     {
         try
         {
-            MetaCar mc = new MetaCar(c);
-            ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-            mc.isRegistered = cr.next();
-            if (mc.isRegistered)
-                mc.paid = cr.getString("txid") != null;
+            DecoratedCar dcar = new DecoratedCar(c);
 
+            // check if registered for this event
+            ResultSet cr = executeSelect("select 1 from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            dcar.registered = cr.next();
+
+            // load any payments made
+            ResultSet cp = executeSelect("select * from payments where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            while (cp.next()) {
+                dcar.addPayment(new Payment(cp));
+            }
+
+            // check if in runorder for the given course
             ResultSet rr = executeSelect("select row from runorder where carid=? and eventid=? and course=? limit 1", newList(c.getCarId(), eventid, course));
-            mc.isInRunOrder = rr.next();
+            dcar.inRunOrder = rr.next();
 
-            // check for activity outside this event, shortcut to reduce queries needed
+            // check for activity outside this event
             ResultSet c1 = executeSelect("select carid from registered where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
             if (!c1.next()) {
                 ResultSet c2 = executeSelect("select carid from runs where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
                 if (!c2.next()) {
                     ResultSet c3 = executeSelect("select carid from runorder where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
-                    mc.hasOtherActivity = c3.next();
+                    dcar.otherActivity = c3.next();
                 } else {
-                    mc.hasOtherActivity = true;
+                    dcar.otherActivity = true;
                 }
             } else {
-                mc.hasOtherActivity = true;
+                dcar.otherActivity = true;
             }
 
             closeLeftOvers();
-            return mc;
+            return dcar;
         }
         catch (Exception ioe)
         {
-            logError("loadMetaCar", ioe);
+            logError("decorateCar", ioe);
             return null;
         }
     }
+
 
     @Override
     public void newDriver(Driver d) throws SQLException
@@ -511,55 +520,22 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException
+    public void registerCar(UUID eventid, Car car) throws SQLException
     {
-        Registration reg = new Registration();
-        reg.eventid = eventid;
-        reg.carid   = car.carid;
-        if (paid) {
-            executeUpdate("INSERT INTO paymentaccounts (accountid, name, type, attr) VALUES ('oldonsite', 'Old Onsite Payment', 'onsite', '{}') ON CONFLICT (accountid) DO NOTHING", null);
-            reg.txid     = "old-"+car.getCarId();
-            reg.txtime   = new Timestamp(new Date().getTime());
-            reg.itemname = "onsite";
-            reg.amount   = 0.00;
-        }
-
-        String sql  = "INSERT INTO registered (eventid, carid, txid, txtime, itemname, amount) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (eventid, carid) DO ";
-        List<Object> val = reg.getValues();
-        if (overwrite)
-        {
-            val.add(reg.txid);
-            val.add(reg.txtime);
-            val.add(reg.itemname);
-            val.add(reg.amount);
-            executeUpdate(sql+"UPDATE SET txid=?,txtime=?,itemname=?,amount=?,modified=now()", val);
-        }
-        else
-        {
-            executeUpdate(sql+"NOTHING", val);
-        }
+        executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, car.getCarId()));
     }
 
     @Override
     public void unregisterCar(UUID eventid, Car car) throws SQLException
     {
-        List<Object> vals = newList(eventid, car.getCarId());
-        executeUpdate("delete from registered where eventid=? and carid=?", vals);
+        executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=?", newList(eventid, car.getCarId()));
     }
 
     @Override
-    public List<Registration> getEventRegistrationForDriver(UUID driverid, UUID eventid)
+    public void registerPayment(UUID eventid, UUID carid, String txtype, String itemname, double amount) throws SQLException
     {
-        List<Registration> ret = new ArrayList<Registration>();
-        try {
-            ResultSet rs = executeSelect("SELECT r.* FROM registered r JOIN cars c ON r.carid=c.carid WHERE c.driverid=? AND r.eventid=?", newList(driverid, eventid));
-            while (rs.next()) {
-                ret.add(new Registration(rs));
-            }
-        } catch (SQLException sqle) {
-            logError("getEvenRegistrationForDriver", sqle);
-        }
-        return ret;
+        executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
+                newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
     }
 
 
@@ -622,8 +598,8 @@ public abstract class SQLDataInterface implements DataInterface
                                     "(SELECT eventid,	 ?, course, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
             executeUpdate("DELETE FROM runs WHERE carid=?", da);
 
-            executeUpdate("INSERT INTO registered (eventid, carid, txid) " +
-                                          "(SELECT eventid,	 ?, txid FROM registered WHERE carid=?)", sa);
+            executeUpdate("INSERT INTO registered (eventid, carid) " +
+                                    "(SELECT eventid,	 ? FROM registered WHERE carid=?)", sa);
             executeUpdate("DELETE FROM registered WHERE carid=?", da);
 
             executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status) " +
@@ -631,6 +607,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
 
             // these we can just swap
+            executeUpdate("update payments set carid=? where carid=?", sa);
             executeUpdate("update runorder set carid=? where carid=?", sa);
             executeUpdate("update challengerounds set car1id=? where car1id=?", sa);
             executeUpdate("update challengerounds set car2id=? where car2id=?", sa);
@@ -644,22 +621,6 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
-    @Override
-    public boolean isRegistered(UUID eventid, UUID carid)
-    {
-        try
-        {
-            ResultSet cr = executeSelect("select txid from registered where carid=? and eventid=?", newList(carid, eventid));
-            boolean ret = cr.next();
-            closeLeftOvers();
-            return ret;
-        }
-        catch (Exception ioe)
-        {
-            logError("isRegistered", ioe);
-            return false;
-        }
-    }
 
     @Override
     public void setRun(Run r) throws SQLException

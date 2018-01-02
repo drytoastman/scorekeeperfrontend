@@ -100,14 +100,10 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
     class EntryModel extends AbstractTableModel
     {
         List<Entrant> entries;
-
         public EntryModel() { entries = Database.d.getRegisteredEntrants(DataEntry.state.getCurrentEventId()); }
-        @Override
-        public int getRowCount() { return entries.size(); }
-        @Override
-        public int getColumnCount() { return 3; }
-        @Override
-        public Object getValueAt(int row, int c) { return entries.get(row); }
+        @Override public int getRowCount()                 { return (entries != null) ? entries.size() : 0; }
+        @Override public int getColumnCount()              { return 3; }
+        @Override public Object getValueAt(int row, int c) { return entries.get(row); }
     }
 
     class EntryRenderer extends DefaultTableCellRenderer
@@ -195,6 +191,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
                 entry.requestFocus();
             case EVENT_CHANGED:
             case ENTRANTS_CHANGED:
+                cars.setRowSorter(null); // clear sorter so its listener based on old model size goes away
                 cars.setModel(new EntryModel());
                 TableColumnModel tcm = cars.getColumnModel();
                 setColumnWidths(tcm.getColumn(0), 80, 160, 320);

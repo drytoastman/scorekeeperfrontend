@@ -16,6 +16,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,23 +39,27 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JSeparator;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.apache.commons.lang3.StringUtils;
 import org.wwscc.barcodes.Code39;
 import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
+import org.wwscc.dialogs.CurrencyDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
+import org.wwscc.storage.Payment;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.MetaCar;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -65,20 +70,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 {
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
 
-    public static final String REGISTERANDPAY = "Registered and Paid";
-    public static final String REGISTERONLY   = "Registered Only";
-    public static final String UNREGISTER     = "Unregister";
-
-    JButton registeredandpaid, registerit, unregisterit;
+    JButton registerandpay, registerit, unregisterit;
     JButton clearSearch, newdriver, editdriver, editnotes;
     JButton newcar, newcarfrom, editcar, deletecar, print;
-    JLabel membershipwarning, noteswarning, paidwarning, paidlabel, paidreport;
+    JLabel membershipwarning, noteswarning, paidwarning, paylistlabel, paidlabel, paidreport, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
+    JList<Payment> paymentInfo;
     JComboBox<PrintService> printers;
     Code39 activeLabel;
-
-    JTextArea paymentInfo;
-    JLabel mergeWarning;
 
     @SuppressWarnings("deprecation")
     public EntryPanel()
@@ -87,7 +86,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         setLayout(new MigLayout("fill, gap 0, ins 0", "[45%, fill][55%, fill]", "fill"));
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
-        Messenger.register(MT.CAR_CREATED, this);
 
         printers = new JComboBox<PrintService>();
         printers.setRenderer(new DefaultListCellRenderer() {
@@ -112,20 +110,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         carInfo.setLineWrap(false);
 
         /* Buttons */
-        registeredandpaid = new JButton(REGISTERANDPAY);
-        registeredandpaid.addActionListener(this);
-        registeredandpaid.setEnabled(false);
-        //registeredandpaid.setFont(registeredandpaid.getFont().deriveFont(12f));
+        registerandpay = new JButton(new RegisterAndPayAction());
+        registerandpay.setEnabled(false);
 
-        registerit = new JButton(REGISTERONLY);
-        registerit.addActionListener(this);
+        registerit = new JButton(new RegisterAction());
         registerit.setEnabled(false);
-        //registerit.setFont(registerit.getFont().deriveFont(12f));
 
-        unregisterit = new JButton(UNREGISTER);
-        unregisterit.addActionListener(this);
+        unregisterit = new JButton(new UnregisterAction());
         unregisterit.setEnabled(false);
-        //unregisterit.setFont(unregisterit.getFont().deriveFont(12f));
 
         clearSearch = smallButton(CLEAR, true);
         newdriver   = smallButton(NEWDRIVER, true);
@@ -140,7 +132,21 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         deletecar = new JButton(new DeleteCarAction());
         deletecar.setEnabled(false);
 
-        paymentInfo = displayArea(4);
+        paymentInfo = new JList<Payment>();
+        paymentInfo.setBackground(new Color(UIManager.getDefaults().getColor("background").getRGB()));
+        paymentInfo.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> jlist, Object e, int i, boolean bln, boolean bln1) {
+                super.getListCellRendererComponent(jlist, e, i, bln, bln1);
+                setFont(getFont().deriveFont(13.0f));
+
+                if ((e != null) && (e instanceof Payment)) {
+                    Payment p = (Payment)e;
+                    setText(String.format("%s: $%.2f\n", StringUtils.capitalize(p.getTxType()), p.getAmount()));
+                }
+                return this;
+            }
+        });
 
         membershipwarning = new JLabel("");
         membershipwarning.setForeground(Color.WHITE);
@@ -150,7 +156,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         noteswarning.setForeground(Color.WHITE);
         noteswarning.setBackground(new Color(249, 157, 27));
 
-        paidlabel = new JLabel("Payments For This Event:");
+        paylistlabel = new JLabel("Payments For Selected Car");
+        paylistlabel.setFont(paylistlabel.getFont().deriveFont(Font.BOLD, 13.0f));
+        paidlabel = new JLabel("All Payments For This Event:");
         paidlabel.setFont(paidlabel.getFont().deriveFont(Font.BOLD, 14.0f));
         paidreport = new JLabel("$0.00");
         paidreport.setFont(paidreport.getFont().deriveFont(14.0f));
@@ -215,21 +223,24 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         rightp.add(cscroll,            "grow");
         rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
         rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
-        rightp.add(paidwarning,        "spanx 2, growx, h 15");
 
-        singleCarPanel.add(newcar,            "growx, wrap");
+        singleCarPanel.add(newcar,            "growx, split");
         singleCarPanel.add(newcarfrom,        "growx, wrap");
-        singleCarPanel.add(editcar,           "growx, wrap");
+        singleCarPanel.add(editcar,           "growx, split");
         singleCarPanel.add(deletecar,         "growx, wrap");
-        singleCarPanel.add(carInfo,           "growx, gap 0 0 5 5, wrap");
-        singleCarPanel.add(registeredandpaid, "growx, wrap");
+        singleCarPanel.add(new JSeparator(),  "growx, gapy 5 5, wrap");
+        singleCarPanel.add(registerandpay,    "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
+        singleCarPanel.add(new JSeparator(),  "growx, gapy 5 5, wrap");
+        singleCarPanel.add(paidwarning,       "growx, wrap");
+        singleCarPanel.add(paylistlabel,      "gapleft 5, wrap");
         singleCarPanel.add(paymentInfo,       "growx, wrap");
-        singleCarPanel.add(paidlabel,         "gaptop 5, split");
+        singleCarPanel.add(paidlabel,         "gapleft 5, split");
         singleCarPanel.add(paidreport,        "growx, wrap");
         singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 
+        carSelectionChanged();
         new Thread(new FindPrinters()).start();
     }
 
@@ -333,6 +344,70 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     }
 
 
+    class RegisterAction extends AbstractAction
+    {
+        public RegisterAction()
+        {
+            super("Register Only");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            try {
+                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
+                reloadCars(selectedCar);
+            } catch (SQLException sqle) {
+                log.log(Level.WARNING, "\bFailed to register car: " + sqle, sqle);
+            }
+        }
+    }
+
+
+    class UnregisterAction extends AbstractAction
+    {
+        public UnregisterAction()
+        {
+            super("Unregister");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            try {
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar);
+                reloadCars(selectedCar);
+            } catch (SQLException sqle) {
+                log.log(Level.WARNING, "\bFailed to unregister car: " + sqle, sqle);
+            }
+        }
+    }
+
+
+    class RegisterAndPayAction extends AbstractAction
+    {
+        public RegisterAndPayAction()
+        {
+            super("Register and Pay");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            try {
+                CurrencyDialog d = new CurrencyDialog("Enter the amount paid onsite:");
+                if (d.doDialog("Payment", null)) {
+                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), "onsite", d.getResult());
+                    Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
+                    reloadCars(selectedCar);
+                }
+            } catch (SQLException sqle) {
+                log.log(Level.WARNING, "\bFailed to register car and payment: " + sqle, sqle);
+            }
+        }
+    }
+
+
     class FindPrinters implements Runnable
     {
         public void run()
@@ -369,18 +444,22 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     public void reloadCars(Car select)
     {
         super.reloadCars(select);
-        setPaidWarning();
+        setPaidDriverInfo();
     }
 
-    protected void setPaidWarning()
+    protected void setPaidDriverInfo()
     {
+        paidreport.setText(String.format("$%.2f", carVector.stream().mapToDouble(x -> x.getPaymentTotal()).sum()));
         paidwarning.setOpaque(false);
         paidwarning.setText("");
 
-        ListModel<Car> m = cars.getModel();
+        if (selectedDriver == null)
+            return;
+
+        ListModel<DecoratedCar> m = cars.getModel();
         if (m.getSize() > 0) {
             for (int ii = 0; ii < m.getSize(); ii++) {
-                MetaCar c = (MetaCar)m.getElementAt(ii);
+                DecoratedCar c = (DecoratedCar)m.getElementAt(ii);
                 if (!c.isInRunOrder() && c.hasPaid()) return;
             }
         }
@@ -400,22 +479,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         String cmd = e.getActionCommand();
         try
         {
-            if (cmd.equals(REGISTERONLY) && (selectedCar != null))
-            {
-                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar, false, true);
-                reloadCars(selectedCar);
-            }
-            else if (cmd.equals(REGISTERANDPAY) && (selectedCar != null))
-            {
-                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar, true, true);
-                reloadCars(selectedCar);
-            }
-            else if (cmd.equals(UNREGISTER) && (selectedCar != null))
-            {
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar);
-                reloadCars(selectedCar);
-            }
-            else if (cmd.equals(EDITNOTES) && (selectedDriver != null))
+            if (cmd.equals(EDITNOTES) && (selectedDriver != null))
             {
                 String ret = (String)JOptionPane.showInputDialog(this, EDITNOTES, noteswarning.getText());
                 if (ret != null)
@@ -430,7 +494,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         }
         catch (SQLException ioe)
         {
-            log.log(Level.SEVERE, "\bRegistation action failed: " + ioe, ioe);
+            log.log(Level.WARNING, "\bRegistation action failed: " + ioe, ioe);
         }
     }
 
@@ -459,7 +523,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         membershipwarning.setOpaque(false);
         noteswarning.setText("");
         noteswarning.setOpaque(false);
-        paidreport.setText("$0.00");
 
         if (selectedDriver != null)
         {
@@ -468,9 +531,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             editnotes.setEnabled(true);
             activeLabel.setValue(selectedDriver.getMembership(), String.format("%s - %s", selectedDriver.getMembership(), selectedDriver.getFullName()));
             activeLabel.repaint();
-
-            List<org.wwscc.storage.Registration> reg = Database.d.getEventRegistrationForDriver(selectedDriver.getDriverId(), Registration.state.getCurrentEvent().getEventId());
-            paidreport.setText(String.format("$%.2f", reg.stream().mapToDouble(x -> x.getAmount()).sum()));
 
             if (!selectedDriver.getMembership().trim().equals(""))
             {
@@ -500,12 +560,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             editnotes.setEnabled(false);
             activeLabel.setValue("", "");
             activeLabel.repaint();
+            carVector.clear();
+            setPaidDriverInfo(); // make sure to clear old data
         }
     }
 
     protected void carSelectionChanged()
     {
-        List<Car> selectedCars = cars.getSelectedValuesList();
+        List<DecoratedCar> selectedCars = cars.getSelectedValuesList();
         if (selectedCars.size() > 1)
         {
             singleCarPanel.setVisible(false);
@@ -536,24 +598,39 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
         if (selectedCar != null)
         {
-            newcarfrom.setEnabled(selectedCar != null);
-            editcar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
-            deletecar.setEnabled(!selectedCar.isRegistered() && !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
-            registeredandpaid.setEnabled((!selectedCar.isRegistered() || !selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
-            registerit.setEnabled((!selectedCar.isRegistered() || selectedCar.hasPaid()) && !selectedCar.isInRunOrder());
-            unregisterit.setEnabled(selectedCar.isRegistered() && !selectedCar.isInRunOrder());
+            newcarfrom.setEnabled(true);
+            editcar.setEnabled(  !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
+            deletecar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
+
+            registerandpay.setEnabled(!selectedCar.isInRunOrder());
+            registerit.setEnabled(    !selectedCar.isRegistered() && !selectedCar.isInRunOrder());
+            unregisterit.setEnabled( ( selectedCar.isRegistered() && !selectedCar.isInRunOrder()) && !selectedCar.hasPaid());
+            paymentInfo.setListData(new Vector<Payment>(selectedCar.getPayments()));
         }
         else
         {
             newcarfrom.setEnabled(false);
             editcar.setEnabled(false);
             deletecar.setEnabled(false);
-            registeredandpaid.setEnabled(false);
+            registerandpay.setEnabled(false);
             registerit.setEnabled(false);
             unregisterit.setEnabled(false);
+            paymentInfo.setListData(new Vector<Payment>());
         }
+
+        paylistlabel.setVisible(paymentInfo.getModel().getSize() > 0);
     }
 
+    protected void carCreated()
+    {
+        if (JOptionPane.showConfirmDialog(this,
+                "Do you wish to mark this newly created car as registered and paid?",
+                "Register Car",
+                JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+        {
+            registerandpay.doClick();
+        }
+    }
 
     @Override
     public void event(MT type, Object o)
@@ -580,22 +657,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                 Driver d = found.get(0);
                 log.info("Focus on driver");
                 focusOnDriver(d.getFirstName(), d.getLastName());
-                break;
-
-            case CAR_CREATED:
-                Car c = (Car)o;
-                if (JOptionPane.showConfirmDialog(this,
-                                        "Do you wish to mark this newly created car as registered and paid?",
-                                        "Register Car",
-                                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
-                {
-                    try {
-                        Database.d.registerCar(Registration.state.getCurrentEventId(), c, true, true);
-                        reloadCars(c);
-                    } catch (SQLException e) {
-                        log.log(Level.WARNING, "\bUnable to register the car: " + e.getMessage(), e);
-                    }
-                }
                 break;
         }
     }

@@ -14,7 +14,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.MetaCar;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.Resources;
 
 
@@ -23,6 +23,10 @@ class CarRenderer implements ListCellRenderer<Object>
     private static ImageIcon[][][] reg = new ImageIcon[2][2][3];
     static {
         reg[0][0][1] = new ImageIcon(Resources.loadImage("reg001.png"));
+        reg[0][0][2] = new ImageIcon(Resources.loadImage("reg002.png"));
+        reg[0][1][0] = new ImageIcon(Resources.loadImage("reg010.png"));
+        reg[0][1][1] = new ImageIcon(Resources.loadImage("reg011.png"));
+        reg[0][1][2] = new ImageIcon(Resources.loadImage("reg012.png"));
         reg[1][0][0] = new ImageIcon(Resources.loadImage("reg100.png"));
         reg[1][0][1] = new ImageIcon(Resources.loadImage("reg101.png"));
         reg[1][0][2] = new ImageIcon(Resources.loadImage("reg102.png"));
@@ -36,7 +40,7 @@ class CarRenderer implements ListCellRenderer<Object>
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
     {
-        MetaCar c = (MetaCar)value;
+        DecoratedCar c = (DecoratedCar)value;
 
         p.setBorder(UIManager.getBorder("List.cellNoFocusBorder"));
         p.setBackground(Color.WHITE);
@@ -78,7 +82,7 @@ class MyPanel extends JPanel
 
     public MyPanel()
     {
-        setLayout(new MigLayout("ins 5, gap 0", "[80!][100:500:10000]", "[15!][15!]"));
+        setLayout(new MigLayout("ins 5, gap 0", "[90!][100:500:10000]", "[15!][15!]"));
         setBorder(new UnderlineBorder(new Color(180, 180, 180)));
 
         status = new JLabel();

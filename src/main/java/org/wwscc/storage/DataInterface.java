@@ -99,27 +99,21 @@ public interface DataInterface
     public Map<String, Set<String>> getCarAttributes(); // get a unique list of possible 'attr' for the car
 
     /**
-     * Upon successful return, the provided car will be in the registered table for the current event.  If overwrite
-     * is true, then the paid value will overwrite the current value in the database if already present, otherwise, the
-     * value in the database already will stay.  If nothing is already present, overwrite is irrelevant.
+     * Upon successful return, the provided car will be in the registered table for the current event.
      * @param eventid the eventid to register the car in
      * @param car the car to register
-     * @param paid true if this registration was paid onsite
-     * @param overwrite true if we should overwrite a current registration entry (i.e. paid flag)
      * @throws SQLException if an error occurs into the SQL execution
      */
-    public void registerCar(UUID eventid, Car car, boolean paid, boolean overwrite) throws SQLException;
+    public void registerCar(UUID eventid, Car car) throws SQLException;
     public void unregisterCar(UUID eventid, Car car) throws SQLException; // remove this car from the current event registration
-
-    public List<Registration> getEventRegistrationForDriver(UUID driverid, UUID eventid);
+    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException;
 
     public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
     public void updateCar(Car d) throws SQLException; // update the car values in the database
     public void deleteCar(Car d) throws SQLException;
     public void deleteCars(Collection<Car> d) throws SQLException;
     public void mergeCar(Car from, Car into) throws SQLException;
-    public boolean isRegistered(UUID eventid, UUID carid);
-    public MetaCar loadMetaCar(Car c, UUID eventid, int course);
+    public DecoratedCar decorateCar(Car c, UUID eventid, int course);
 
     public void setRun(Run r) throws SQLException;
     public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException;

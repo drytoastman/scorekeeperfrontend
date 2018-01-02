@@ -39,124 +39,124 @@ import org.wwscc.util.Messenger;
  */
 class DriverContextMenu extends MouseAdapter
 {
-	JTable target;
-	JPopupMenu menu;
+    JTable target;
+    JPopupMenu menu;
 
-	public DriverContextMenu(JTable tbl)
-	{
-		target = tbl;
-		menu = null;
-	}
+    public DriverContextMenu(JTable tbl)
+    {
+        target = tbl;
+        menu = null;
+    }
 
-	@Override
-	public void mousePressed(MouseEvent e)
-	{
-		if (e.getButton() == MouseEvent.BUTTON3)
-		{  // first right click will show popup, no need to select first
-			Point p = e.getPoint();
-			target.changeSelection(target.rowAtPoint(p), target.columnAtPoint(p), false, false);
-		}
+    @Override
+    public void mousePressed(MouseEvent e)
+    {
+        if (e.getButton() == MouseEvent.BUTTON3)
+        {  // first right click will show popup, no need to select first
+            Point p = e.getPoint();
+            target.changeSelection(target.rowAtPoint(p), target.columnAtPoint(p), false, false);
+        }
 
-		if (e.isPopupTrigger())
-			doPopup(e);
-	}
+        if (e.isPopupTrigger())
+            doPopup(e);
+    }
 
-	@Override
-	public void mouseReleased(MouseEvent e)
-	{
-		if (e.isPopupTrigger())
-			doPopup(e);
-	}
+    @Override
+    public void mouseReleased(MouseEvent e)
+    {
+        if (e.isPopupTrigger())
+            doPopup(e);
+    }
 
-	private void doPopup(MouseEvent e)
-	{
-		int row = target.rowAtPoint(e.getPoint());
-		int col = target.columnAtPoint(e.getPoint());
-		if ((row == -1) || (col == -1)) return;
-		if (target.getSelectedRow() != row) return;
-		if (target.getSelectedColumn() != col) return;
+    private void doPopup(MouseEvent e)
+    {
+        int row = target.rowAtPoint(e.getPoint());
+        int col = target.columnAtPoint(e.getPoint());
+        if ((row == -1) || (col == -1)) return;
+        if (target.getSelectedRow() != row) return;
+        if (target.getSelectedColumn() != col) return;
 
-		Entrant selectedE = (Entrant)target.getValueAt(row, col);
-		List<Car> registered = Database.d.getRegisteredCars(selectedE.getDriverId(), DataEntry.state.getCurrentEventId());
-		List<Car> allcars = Database.d.getCarsForDriver(selectedE.getDriverId());
+        Entrant selectedE = (Entrant)target.getValueAt(row, col);
+        List<Car> registered = Database.d.getRegisteredCars(selectedE.getDriverId(), DataEntry.state.getCurrentEventId());
+        List<Car> allcars = Database.d.getCarsForDriver(selectedE.getDriverId());
 
-		menu = new JPopupMenu("");
-		addTitle("Swap to Registered Car");
-		for (Car c : registered)
-			addCarAction(c);
+        menu = new JPopupMenu("");
+        addTitle("Swap to Registered Car");
+        for (Car c : registered)
+            addCarAction(c);
 
-		addTitle("Swap to Unregistered Car");
-		boolean removelast = true;
-		for (Car c : allcars) {
-			if (!registered.contains(c) && !Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse())) {
-				addCarAction(c);
-				removelast = false;
-			}
-		}
-		if (removelast)
-			menu.remove(menu.getComponentCount()-1);
+        addTitle("Swap to Unregistered Car");
+        boolean removelast = true;
+        for (Car c : allcars) {
+            if (!registered.contains(c) && !Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse())) {
+                addCarAction(c);
+                removelast = false;
+            }
+        }
+        if (removelast)
+            menu.remove(menu.getComponentCount()-1);
 
-		addTitle("Other");
-		menu.add(new JMenuItem(new TextRunAction(selectedE))).setFont(itemFont);
-		menu.add(new JMenuItem(new PaidAction(selectedE))).setFont(itemFont);
+        addTitle("Other");
+        menu.add(new JMenuItem(new TextRunAction(selectedE))).setFont(itemFont);
+        menu.add(new JMenuItem(new PaidAction(selectedE))).setFont(itemFont);
 
-		menu.show(target, e.getX(), e.getY());
-	}
+        menu.show(target, e.getX(), e.getY());
+    }
 
-	private Color superLightGray = new Color(200, 200, 200);
-	private Font itemFont = new Font("sansserif", Font.PLAIN, 12);
+    private Color superLightGray = new Color(200, 200, 200);
+    private Font itemFont = new Font("sansserif", Font.PLAIN, 12);
 
-	private void addTitle(String s)
-	{
-		JMenuItem lbl = new JMenuItem(s);
-		lbl.setFont(new Font("sansserif", Font.BOLD, 13));
-		lbl.setForeground(Color.DARK_GRAY);
-		lbl.setBorder(new UnderlineBorder(2, 0, 0, 0));
-		lbl.setBorderPainted(true);
-		menu.add(lbl);
-	}
+    private void addTitle(String s)
+    {
+        JMenuItem lbl = new JMenuItem(s);
+        lbl.setFont(new Font("sansserif", Font.BOLD, 13));
+        lbl.setForeground(Color.DARK_GRAY);
+        lbl.setBorder(new UnderlineBorder(2, 0, 0, 0));
+        lbl.setBorderPainted(true);
+        menu.add(lbl);
+    }
 
-	private void addCarAction(final Car c)
-	{
-		JMenuItem lbl = new JMenuItem(String.format("%s %s #%s %s %s", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber(), c.getMake(), c.getModel()));
-		lbl.setFont(itemFont);
-		lbl.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent ae) {
-				Messenger.sendEvent(MT.CAR_CHANGE, c.getCarId());
-		}});
+    private void addCarAction(final Car c)
+    {
+        JMenuItem lbl = new JMenuItem(String.format("%s %s #%s %s %s", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber(), c.getMake(), c.getModel()));
+        lbl.setFont(itemFont);
+        lbl.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                Messenger.sendEvent(MT.CAR_CHANGE, c.getCarId());
+        }});
 
-		if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
-		{
-			lbl.setEnabled(false);
-			lbl.setForeground(superLightGray);
-		}
+        if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
+        {
+            lbl.setEnabled(false);
+            lbl.setForeground(superLightGray);
+        }
 
-		menu.add(lbl);
-	}
+        menu.add(lbl);
+    }
 }
 
 
 class PaidAction extends AbstractAction
 {
-	private static final Logger log = Logger.getLogger(PaidAction.class.getCanonicalName());
+    private static final Logger log = Logger.getLogger(PaidAction.class.getCanonicalName());
 
-	Entrant entrant;
-	public PaidAction(Entrant e)
-	{
-		super("Mark Driver Paid");
-		entrant = e;
-	}
+    Entrant entrant;
+    public PaidAction(Entrant e)
+    {
+        super("Mark Driver Paid");
+        entrant = e;
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		try {
-			Database.d.registerCar(DataEntry.state.getCurrentEventId(), entrant.getCar(), true, true);
-			Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
-		} catch (SQLException ioe) {
-			log.severe("\bFailed to mark driver paid: " + ioe.getMessage());
-		}
-	}
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        try {
+            Database.d.registerCar(DataEntry.state.getCurrentEventId(), entrant.getCar()); //, true, true);
+            Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
+        } catch (SQLException ioe) {
+            log.severe("\bFailed to mark driver paid: " + ioe.getMessage());
+        }
+    }
 }
 
 
@@ -164,30 +164,30 @@ class TextRunAction extends AbstractAction
 {
     private static final Logger log = Logger.getLogger(TextRunAction.class.getCanonicalName());
 
-	Entrant entrant;
-	public TextRunAction(Entrant e)
-	{
-		super("Add Text Runs");
-		entrant = e;
-	}
+    Entrant entrant;
+    public TextRunAction(Entrant e)
+    {
+        super("Add Text Runs");
+        entrant = e;
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		TextRunsDialog trd = new TextRunsDialog();
-		trd.doDialog("Textual Run Input", null);
-		List<Run> runs = trd.getResult();
-		if (runs == null) return;
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        TextRunsDialog trd = new TextRunsDialog();
+        trd.doDialog("Textual Run Input", null);
+        List<Run> runs = trd.getResult();
+        if (runs == null) return;
 
-		try {
-			for (Run r : trd.getResult()) {
-				r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
-				Database.d.setRun(r);
-			}
-		} catch (SQLException sqle) {
-			log.log(Level.SEVERE, "\bFailed to set run data: " + sqle, sqle);
-		}
+        try {
+            for (Run r : trd.getResult()) {
+                r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
+                Database.d.setRun(r);
+            }
+        } catch (SQLException sqle) {
+            log.log(Level.SEVERE, "\bFailed to set run data: " + sqle, sqle);
+        }
 
-		Messenger.sendEvent(MT.RUNGROUP_CHANGED, 1);
-	}
+        Messenger.sendEvent(MT.RUNGROUP_CHANGED, 1);
+    }
 }

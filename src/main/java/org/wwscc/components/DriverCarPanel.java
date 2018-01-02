@@ -9,7 +9,6 @@
 
 package org.wwscc.components;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,7 +29,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIDefaults;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
@@ -40,7 +38,7 @@ import org.wwscc.dialogs.DriverDialog;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
-import org.wwscc.storage.MetaCar;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
@@ -70,12 +68,13 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     protected JTextArea driverInfo;
 
     protected JScrollPane cscroll;
-    protected JList<Car> cars;
+    protected JList<DecoratedCar> cars;
+    protected Vector<DecoratedCar> carVector;
     protected JTextArea carInfo;
 
     protected boolean carAddOption = false;
     protected Driver selectedDriver;
-    protected MetaCar selectedCar;
+    protected DecoratedCar selectedCar;
 
     protected SearchDrivers searchDrivers = new SearchDrivers();
     protected ApplicationState state;
@@ -113,7 +112,8 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         driverInfo = displayArea(7);
 
         /* Car Section */
-        cars = new JList<Car>();
+        carVector = new Vector<DecoratedCar>();
+        cars = new JList<DecoratedCar>();
         cars.addListSelectionListener(this);
         cars.setVisibleRowCount(2);
         cars.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -125,7 +125,6 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 
         carInfo = displayArea(3);
     }
-
 
     protected JTextArea displayArea(int linecount)
     {
@@ -171,7 +170,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
      */
     public void focusOnCar(UUID carid)
     {
-        ListModel<Car> lm = cars.getModel();
+        ListModel<DecoratedCar> lm = cars.getModel();
         for (int ii = 0; ii < lm.getSize(); ii++)
         {
             Car c = (Car)lm.getElementAt(ii);
@@ -197,12 +196,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         if (d == null) // nothing to do
             return;
 
-        Vector<MetaCar> touse = new Vector<MetaCar>();
+        carVector.clear();
         for (Car c : Database.d.getCarsForDriver(d.getDriverId())) {
-            touse.add(Database.d.loadMetaCar(c, state.getCurrentEventId(), state.getCurrentCourse()));
+            carVector.add(Database.d.decorateCar(c, state.getCurrentEventId(), state.getCurrentCourse()));
         }
 
-        cars.setListData(touse);
+        cars.setListData(carVector);
         if (select != null)
             focusOnCar(select.getCarId());
         else
@@ -282,8 +281,8 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                         {
                             c.setDriverId(selectedDriver.getDriverId());
                             Database.d.newCar(c);
-                            Messenger.sendEvent(MT.CAR_CREATED, c);
                             reloadCars(c);
+                            carCreated();
                             if (cd.getAddToRunOrder())
                                 Messenger.sendEvent(MT.CAR_ADD, c.getCarId());
                         }
@@ -309,6 +308,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         }
     }
 
+    /**
+     * Called when a new car is created.  The new car should be the selected value in the list
+     */
+    protected void carCreated()
+    {
+    }
 
     /**
      * One of the list value selections has changed.
@@ -333,7 +338,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                 {
                     selectedDriver = null;
                     driverInfo.setText("\n\n\n\n");
-                    cars.setListData(new Car[0]);
+                    cars.setListData(new DecoratedCar[0]);
                     cars.clearSelection();
                 }
             }
@@ -341,9 +346,9 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
             else if (source == cars)
             {
                 Object o = cars.getSelectedValue();
-                if (o instanceof MetaCar)
+                if (o instanceof DecoratedCar)
                 {
-                    selectedCar = (MetaCar)o;
+                    selectedCar = (DecoratedCar)o;
                     carInfo.setText(carDisplay(selectedCar));
                 }
                 else

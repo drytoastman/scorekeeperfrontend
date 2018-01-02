@@ -18,120 +18,119 @@ import java.util.UUID;
 
 public class Entrant
 {
-	UUID driverid;
-	String firstname;
-	String lastname;
-	Car car;
-	Map<Integer, Run> runs;
-	boolean paid = false;
+    UUID driverid;
+    String firstname;
+    String lastname;
+    Car car;
+    Map<Integer, Run> runs;
+    double paid = 0.0;
 
-	public Entrant()
-	{
-		runs = new HashMap<Integer,Run>();
-	}
-	
-	public Entrant(ResultSet rs) throws SQLException
-	{
-		this();
-		car       = new Car(rs);
-		driverid  = (UUID)rs.getObject("driverid");
-		firstname = rs.getString("firstname");
-		lastname  = rs.getString("lastname");
-		try {
-			paid  = rs.getString("txid") != null;  // some queries don't load this?
-		} catch (SQLException pse) {
-			paid  = false;
-		}
-	}
+    public Entrant()
+    {
+        runs = new HashMap<Integer,Run>();
+    }
 
-	static public class NumOrder implements Comparator<Entrant>
-	{
-	    public int compare(Entrant e1, Entrant e2) { return e1.car.number - e2.car.number; }
-	}
+    public Entrant(ResultSet rs) throws SQLException
+    {
+        this();
+        car       = new Car(rs);
+        driverid  = (UUID)rs.getObject("driverid");
+        firstname = rs.getString("firstname");
+        lastname  = rs.getString("lastname");
+        try {
+            paid  = rs.getDouble("paid");
+        } catch (SQLException pse) {
+        }
+    }
 
-	public UUID getDriverId() { return driverid; }
-	public String getName() { return firstname + " " + lastname; }
-	public String getFirstName() { return firstname; }
-	public String getLastName() { return lastname; }
+    static public class NumOrder implements Comparator<Entrant>
+    {
+        public int compare(Entrant e1, Entrant e2) { return e1.car.number - e2.car.number; }
+    }
 
-	public Car  getCar() { return car; }
-	public UUID getCarId() { return car.carid; }
-	public String getCarModel() { return car.getModel(); }
-	public String getCarColor() { return car.getColor(); }
-	public String getCarDesc() { return car.getYear() + " " + car.getModel() + " " + car.getColor(); }
-	public String getClassCode() { return car.classcode; }
-	public int getNumber() { return car.number; }
-	public boolean isPaid() { return paid; }
-	public String getQuickEntryId() { return car.getQuickEntryId(); }
+    public UUID getDriverId() { return driverid; }
+    public String getName() { return firstname + " " + lastname; }
+    public String getFirstName() { return firstname; }
+    public String getLastName() { return lastname; }
+
+    public Car  getCar() { return car; }
+    public UUID getCarId() { return car.carid; }
+    public String getCarModel() { return car.getModel(); }
+    public String getCarColor() { return car.getColor(); }
+    public String getCarDesc() { return car.getYear() + " " + car.getModel() + " " + car.getColor(); }
+    public String getClassCode() { return car.classcode; }
+    public int getNumber() { return car.number; }
+    public boolean isPaid() { return paid > 0; }
+    public String getQuickEntryId() { return car.getQuickEntryId(); }
 
 
-	/*
-	 * @return Get a run based on its run number
-	 */
-	public Run getRun(int num)
-	{
-		return runs.get(num);
-	}
+    /*
+     * @return Get a run based on its run number
+     */
+    public Run getRun(int num)
+    {
+        return runs.get(num);
+    }
 
-	/*
-	 * @return a collection of the runs for this entrant
-	 */
-	public Collection<Run> getRuns()
-	{
-		return runs.values();
-	}
+    /*
+     * @return a collection of the runs for this entrant
+     */
+    public Collection<Run> getRuns()
+    {
+        return runs.values();
+    }
 
-	/**
-	 * @return true if this entrant has any runs entered at all
-	 */
-	public boolean hasRuns()
-	{
-		return (runs.size() > 0);
-	}
+    /**
+     * @return true if this entrant has any runs entered at all
+     */
+    public boolean hasRuns()
+    {
+        return (runs.size() > 0);
+    }
 
-	/**
-	 * @return the number of actual recorded runs (not the max run number recorded)
-	 */
-	public int runCount()
-	{
-		return runs.size();
-	}
+    /**
+     * @return the number of actual recorded runs (not the max run number recorded)
+     */
+    public int runCount()
+    {
+        return runs.size();
+    }
 
-	public void setRun(Run r)
-	{
-		runs.put(r.run, r);
-	}
+    public void setRun(Run r)
+    {
+        runs.put(r.run, r);
+    }
 
-	public void setRuns(Collection<Run> c)
-	{
-	    for (Run r : c)
-	        runs.put(r.run, r);
-	}
+    public void setRuns(Collection<Run> c)
+    {
+        for (Run r : c)
+            runs.put(r.run, r);
+    }
 
-	public void deleteRun(int num)
-	{
-		runs.remove(num);
-	}
+    public void deleteRun(int num)
+    {
+        runs.remove(num);
+    }
 
-	@Override
-	public int hashCode() {
-		return car.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return car.hashCode();
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final Entrant other = (Entrant) obj;
-		if (car == null || !car.carid.equals(other.car.carid)) {
-			return false;
-		}
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Entrant other = (Entrant) obj;
+        if (car == null || !car.carid.equals(other.car.carid)) {
+            return false;
+        }
+        return true;
+    }
 }
 
 

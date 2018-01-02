@@ -26,7 +26,7 @@ import org.wwscc.components.UnderlineBorder;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
-import org.wwscc.storage.MetaCar;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -216,9 +216,9 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
 
 			setForeground(Color.BLACK);
 
-			if (value instanceof MetaCar)
+			if (value instanceof DecoratedCar)
 			{
-				MetaCar c = (MetaCar)value;
+				DecoratedCar c = (DecoratedCar)value;
 				String myclass = c.getClassCode() + " " + Database.d.getEffectiveIndexStr(c);
 				setText(myclass + " #" + c.getNumber() + ": " + c.getYear() + " " + c.getModel() + " " + c.getColor());
 				if (c.isInRunOrder())

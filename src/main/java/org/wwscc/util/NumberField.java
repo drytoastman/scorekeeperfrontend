@@ -14,15 +14,15 @@ import javax.swing.text.*;
 
 public class NumberField extends JTextField
 {
-	public NumberField(int intsize, boolean isDouble)
-	{
-		setHorizontalAlignment(JTextField.LEADING);
-		AbstractDocument doc = (AbstractDocument)getDocument();
+    public NumberField(int intsize, int decimalsize)
+    {
+        setHorizontalAlignment(JTextField.LEADING);
+        AbstractDocument doc = (AbstractDocument)getDocument();
 
-		if (isDouble)
-			doc.setDocumentFilter(new EasyNumFilter(intsize, 3));
-		else
-			doc.setDocumentFilter(new EasyNumFilter(intsize));
-	}
+        if (decimalsize > 0)
+            doc.setDocumentFilter(new EasyNumFilter(intsize, decimalsize));
+        else
+            doc.setDocumentFilter(new EasyNumFilter(intsize));
+    }
 }
 
