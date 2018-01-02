@@ -2,18 +2,20 @@
 
 ## Requirements
 1. A Docker environment
-    * implies a 64bit OS and a processsor that support virtualization (most recent processors do)
-1. Java 8 or above
+    * implies a 64bit OS and a processsor that support virtualization (most recent laptops do)
+1. Java 8 (including JavaFX) or above
 
-## Installing on Windows Home (Docker-Toolbox + Java 8)
+## Installing on Windows (Docker-Toolbox + Java 8)
 1. Download the latest ScorekeeperSetup installer from <https://github.com/drytoastman/scorekeeperfrontend/releases> 
-2. The installer will perform all setup and put an entry in the startup folder and on the desktop
+2. Windows Pro users will get a reminder that Hyper-V must disabled to use Docker-Toolbox (based on Oracle VirtualBox)
+3. The installer will perform all setup and put an entry in the startup folder and on the desktop
     * The installer may foward you to websites to install Java 8 and/or Docker-Toolbox if they are not present already
     * This version has to run a virtual machine which takes about 60 seconds to startup the first time after logging in
 
-## Installing on 64bit Linux, OS X, Windows Pro (Docker + Java 8)
+## Installing on 64bit Linux, OS X
 There is no installer at this point so you need to do a few things manually
-1. Verify that the above requirements are met
+1. Verify that the above requirements for Docker and Java based on your OS distribution
+    * For Docker see the Community Edition at <https://docs.docker.com/engine/installation/>
 1. Download the latest Scorekeeper jar from <https://github.com/drytoastman/scorekeeperfrontend/releases> to your computer
 1. Create a method to run "java -jar \<jarfile\>", which starts Scorekeeper
 1. The first time you run a new version it will download the necessary docker images, showing the following status as it does so:
@@ -31,7 +33,7 @@ There is no installer at this point so you need to do a few things manually
 ## Notes on Application Use
 
 1. Starting and stopping the TrayApplication should be quick as the containers are quick to start and stop
-1. The only long delay is on Windows Home when restarting the virtual machine after a reboot or logoff
+1. The only long delay is on Windows when restarting the virtual machine after a reboot or logoff
 
 ![ContextMenu](images/startingvm.png)
 
