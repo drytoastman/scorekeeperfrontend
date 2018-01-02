@@ -68,7 +68,7 @@ public class EntryModelTests
     {
     }
 
-    @Test
+    //@Test
     public void swapRuns() throws SQLException
     {
         UUID eventid = DataEntry.state.getCurrentEventId();
