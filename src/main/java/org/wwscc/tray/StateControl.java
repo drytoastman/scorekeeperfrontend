@@ -126,12 +126,17 @@ public class StateControl
             @Override
             public void approveSelection(){
                 File f = getSelectedFile();
-                if (!f.getName().contains("schema")) {
-                    JOptionPane.showMessageDialog(active, "This file has no schema information in its name. "
-                            + "This import process is only intended for restoring from automatic backups produced by version 2 software.");
-                    cancelSelection();
+                String pieces[] = f.getName().split("[#._]");
+                if (!pieces[0].equals("date") || !pieces[2].equals("schema")) {
+                    JOptionPane.showMessageDialog(active, f.getName() + " is not a recognized backup filename of the format date_<DATE>#schema_<SCHEMA>");
                     return;
                 }
+
+                if (Integer.parseInt(pieces[3]) < 20180000) {
+                    JOptionPane.showMessageDialog(active, "Unable to import backups with schema earlier than 2018, selected file is " + pieces[3]);
+                    return;
+                }
+
                 super.approveSelection();
             }
         };
