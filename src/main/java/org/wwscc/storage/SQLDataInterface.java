@@ -532,7 +532,7 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void registerPayment(UUID eventid, UUID carid, String txtype, String itemname, double amount) throws SQLException
+    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException
     {
         executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
                 newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
