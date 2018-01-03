@@ -41,7 +41,6 @@ public class Monitors
     private static final Logger log = Logger.getLogger(Monitors.class.getName());
     public static final String RUNNING = "Running";
     public static final String NOTNEEDED = "Not Needed";
-    public static final String HOME_SERVER = "scorekeeper.wwscc.org";
 
 
     /**
@@ -397,32 +396,15 @@ public class Monitors
             Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
         }
 
+
         @Override
         public boolean minit()
         {
             while (!state.isBackendReady())
                 donefornow();
-
-            // Local should always be there
-            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
-
-            // And a remote home server of some type should always be there
-            boolean remotepresent = false;
-            for (MergeServer s : Database.d.getMergeServers()) {
-                if (s.isRemote())
-                    remotepresent = true;
-            }
-            if (!remotepresent) {
-                Database.d.mergeServerSetRemote(HOME_SERVER, "", 10);
-            }
-
-            Database.d.mergeServerInactivateAll();
-
+            Actions.InitServersAction.doinit();
             // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
             updateDiscoverySetting(Prefs.getAllowDiscovery());
-
-            // force an update on start, on the event thread
-            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
 
             return true;
         }

@@ -84,6 +84,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         JMenu adv = new JMenu("Advanced");
         adv.add(new JCheckBoxMenuItem(actions.discovery));
         adv.add(actions.resetHash);
+        adv.add(actions.initServers);
 
         JMenu launch = new JMenu("Launch");
         for (Action a : actions.apps)

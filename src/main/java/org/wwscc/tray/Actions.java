@@ -3,6 +3,8 @@ package org.wwscc.tray;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -25,6 +27,7 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 public class Actions
@@ -34,7 +37,7 @@ public class Actions
     List<Action> apps;
     List<Action> others;
     Action debugRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
-    Action deleteServer, addServer, deleteSeries, discovery, resetHash, quit, openStatus;
+    Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
@@ -58,6 +61,7 @@ public class Actions
         clearOld       = addAction(new ClearOldDiscoveredAction());
         deleteServer   = addAction(new DeleteServerAction());
         addServer      = addAction(new AddServerAction());
+        initServers    = addAction(new InitServersAction());
         deleteSeries   = addAction(new DeleteLocalSeriesAction());
         discovery      = addAction(new LocalDiscoveryAction());
         resetHash      = addAction(new ResetHashAction());
@@ -244,6 +248,37 @@ public class Actions
                 Database.d.mergeServerSetRemote(host, "", 10);
                 Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
             }
+        }
+    }
+
+
+    static class InitServersAction extends AbstractAction
+    {
+        public static final String HOME_SERVER = "scorekeeper.wwscc.org";
+
+        public InitServersAction() {
+            super("Init Server List");
+        }
+        public void actionPerformed(ActionEvent e) {
+            doinit();
+        }
+        public static void doinit() {
+            // Local should always be there
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+
+            // And a remote home server of some type should always be there
+            boolean remotepresent = false;
+            for (MergeServer s : Database.d.getMergeServers()) {
+                if (s.isRemote())
+                    remotepresent = true;
+            }
+            if (!remotepresent) {
+                Database.d.mergeServerSetRemote(HOME_SERVER, "", 10);
+            }
+
+            // inactive all
+            Database.d.mergeServerInactivateAll();
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
     }
 
