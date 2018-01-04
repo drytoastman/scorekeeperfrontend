@@ -32,6 +32,7 @@ import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -64,6 +65,7 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.Resources;
 
 
 public class EntryPanel extends DriverCarPanel implements MessageListener
@@ -224,15 +226,18 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
         rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
 
+        singleCarPanel.add(new JLabel(new ImageIcon(Resources.loadImage("legend.png"))), "growx, wrap");
+        singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
+
         singleCarPanel.add(newcar,            "growx, split");
         singleCarPanel.add(newcarfrom,        "growx, wrap");
         singleCarPanel.add(editcar,           "growx, split");
         singleCarPanel.add(deletecar,         "growx, wrap");
-        singleCarPanel.add(new JSeparator(),  "growx, gapy 5 5, wrap");
+        singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(registerandpay,    "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
-        singleCarPanel.add(new JSeparator(),  "growx, gapy 5 5, wrap");
+        singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(paidwarning,       "growx, wrap");
         singleCarPanel.add(paylistlabel,      "gapleft 5, wrap");
         singleCarPanel.add(paymentInfo,       "growx, wrap");
