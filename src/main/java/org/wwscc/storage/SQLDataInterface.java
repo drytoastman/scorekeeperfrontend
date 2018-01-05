@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.postgresql.util.PSQLException;
 import org.wwscc.util.IdGenerator;
 
 /** */
@@ -104,8 +105,14 @@ public abstract class SQLDataInterface implements DataInterface
         }
         catch (Exception ioe)
         {
+            List<Event> blank = new ArrayList<Event>();
+            if (ioe instanceof PSQLException) {
+                if (((PSQLException)ioe).getSQLState().equals("42P01")) {
+                    return blank;
+                }
+            }
             logError("getEvents", ioe);
-            return null;
+            return new ArrayList<Event>();
         }
     }
 
