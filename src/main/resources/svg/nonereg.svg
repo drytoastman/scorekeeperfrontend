@@ -14,9 +14,9 @@
    viewBox="0 0 130 60"
    version="1.1"
    id="svg8"
-   sodipodi:docname="event.svg"
+   sodipodi:docname="nonereg.svg"
    inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
-   inkscape:export-filename="C:\Users\bwilson\sc\ScorekeeperFrontend\src\main\resources\images\reg02.png"
+   inkscape:export-filename="C:\Users\bwilson\sc\ScorekeeperFrontend\src\main\resources\images\reg00.png"
    inkscape:export-xdpi="10.16"
    inkscape:export-ydpi="10.16">
   <defs
@@ -29,7 +29,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="-69.497727"
+     inkscape:cx="-121.94647"
      inkscape:cy="-135.74803"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -59,45 +59,5 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-0.00237)">
-    <g
-       id="g4148"
-       transform="matrix(1.2515702,0,0,1.3087123,70.001607,-1.3698942)">
-      <path
-         id="path4093"
-         d="m 26.285,2.486 5.407,10.956 c 0.376,0.762 1.103,1.29 1.944,1.412 l 12.091,1.757 c 2.118,0.308 2.963,2.91 1.431,4.403 l -8.749,8.528 c -0.608,0.593 -0.886,1.448 -0.742,2.285 l 2.065,12.042 c 0.362,2.109 -1.852,3.717 -3.746,2.722 L 25.172,40.906 c -0.752,-0.395 -1.651,-0.395 -2.403,0 L 11.955,46.591 C 10.061,47.587 7.847,45.978 8.209,43.869 L 10.274,31.827 C 10.418,30.99 10.14,30.135 9.532,29.542 L 0.783,21.014 C -0.749,19.52 0.096,16.918 2.214,16.611 l 12.091,-1.757 c 0.841,-0.122 1.568,-0.65 1.944,-1.412 L 21.656,2.486 c 0.946,-1.919 3.682,-1.919 4.629,0 z"
-         style="fill:#ed8a19"
-         inkscape:connector-curvature="0" />
-      <g
-         id="g4095" />
-      <g
-         id="g4097" />
-      <g
-         id="g4099" />
-      <g
-         id="g4101" />
-      <g
-         id="g4103" />
-      <g
-         id="g4105" />
-      <g
-         id="g4107" />
-      <g
-         id="g4109" />
-      <g
-         id="g4111" />
-      <g
-         id="g4113" />
-      <g
-         id="g4115" />
-      <g
-         id="g4117" />
-      <g
-         id="g4119" />
-      <g
-         id="g4121" />
-      <g
-         id="g4123" />
-    </g>
-  </g>
+     transform="translate(-0.00237)" />
 </svg>

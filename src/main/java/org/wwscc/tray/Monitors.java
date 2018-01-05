@@ -17,7 +17,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wwscc.storage.Database;
-import org.wwscc.storage.MergeServer;
 import org.json.simple.JSONObject;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.util.Discovery;

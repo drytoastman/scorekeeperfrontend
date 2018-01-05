@@ -23,7 +23,7 @@ public class CurrencyDialog extends BaseDialog<Double>
     {
         super(new MigLayout(""), false);
         mainPanel.add(label(txt, false), "wrap");
-        mainPanel.add(amount, "w 150!, gapleft 10, wrap");
+        mainPanel.add(amount, "wmin 150, growx, gapleft 10, wrap");
         result = null;
     }
 

@@ -9,14 +9,14 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="199.99763mm"
+   width="130mm"
    height="60mm"
-   viewBox="0 0 199.99763 60"
+   viewBox="0 0 130 60"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    sodipodi:docname="reg.svg"
-   inkscape:export-filename="C:\Users\bwilson\Desktop\product\reg.png"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   inkscape:export-filename="C:\Users\bwilson\sc\ScorekeeperFrontend\src\main\resources\images\reg10.png"
    inkscape:export-xdpi="10.16"
    inkscape:export-ydpi="10.16">
   <defs
@@ -28,8 +28,8 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="223.99104"
+     inkscape:zoom="0.70710678"
+     inkscape:cx="-121.94647"
      inkscape:cy="-135.74803"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -38,11 +38,11 @@
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:window-width="1920"
-     inkscape:window-height="1001"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
-     inkscape:window-maximized="1" />
+     inkscape:window-width="1452"
+     inkscape:window-height="904"
+     inkscape:window-x="2149"
+     inkscape:window-y="20"
+     inkscape:window-maximized="0" />
   <metadata
      id="metadata5">
     <rdf:RDF>

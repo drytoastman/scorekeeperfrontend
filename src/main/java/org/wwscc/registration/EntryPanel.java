@@ -40,6 +40,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
@@ -72,10 +73,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 {
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
 
-    JButton registerandpay, registerit, unregisterit;
+    JButton registerandpay, registerit, unregisterit, movepayment;
     JButton clearSearch, newdriver, editdriver, editnotes;
     JButton newcar, newcarfrom, editcar, deletecar, print;
-    JLabel membershipwarning, noteswarning, paidwarning, paylistlabel, paidlabel, paidreport, mergeWarning;
+    JLabel membershipwarning, noteswarning, paidwarning, paylistlabel, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
     JList<Payment> paymentInfo;
     JComboBox<PrintService> printers;
@@ -121,6 +122,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         unregisterit = new JButton(new UnregisterAction());
         unregisterit.setEnabled(false);
 
+        movepayment = new JButton(new MovePaymentMenuAction());
+        movepayment.setEnabled(false);
+
         clearSearch = smallButton(CLEAR, true);
         newdriver   = smallButton(NEWDRIVER, true);
         editdriver  = smallButton(EDITDRIVER, false);
@@ -140,7 +144,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             @Override
             public Component getListCellRendererComponent(JList<?> jlist, Object e, int i, boolean bln, boolean bln1) {
                 super.getListCellRendererComponent(jlist, e, i, bln, bln1);
-                setFont(getFont().deriveFont(13.0f));
+                setFont(getFont().deriveFont(14.0f));
 
                 if ((e != null) && (e instanceof Payment)) {
                     Payment p = (Payment)e;
@@ -159,11 +163,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         noteswarning.setBackground(new Color(249, 157, 27));
 
         paylistlabel = new JLabel("Payments For Selected Car");
-        paylistlabel.setFont(paylistlabel.getFont().deriveFont(Font.BOLD, 13.0f));
-        paidlabel = new JLabel("All Payments For This Event:");
-        paidlabel.setFont(paidlabel.getFont().deriveFont(Font.BOLD, 14.0f));
-        paidreport = new JLabel("$0.00");
-        paidreport.setFont(paidreport.getFont().deriveFont(14.0f));
+        paylistlabel.setFont(paylistlabel.getFont().deriveFont(Font.BOLD, 14.0f));
 
         paidwarning = new JLabel("");
         paidwarning.setForeground(Color.WHITE);
@@ -226,7 +226,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
         rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
 
-        singleCarPanel.add(new JLabel(new ImageIcon(Resources.loadImage("legend.png"))), "growx, wrap");
+        singleCarPanel.add(new JLabel(new ImageIcon(Resources.loadImage("legend.png"))), "gaptop 10, growx, wrap");
         singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
 
         singleCarPanel.add(newcar,            "growx, split");
@@ -235,14 +235,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         singleCarPanel.add(deletecar,         "growx, wrap");
         singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(registerandpay,    "growx, wrap");
+        singleCarPanel.add(movepayment,       "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
         singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(paidwarning,       "growx, wrap");
         singleCarPanel.add(paylistlabel,      "gapleft 5, wrap");
         singleCarPanel.add(paymentInfo,       "growx, wrap");
-        singleCarPanel.add(paidlabel,         "gapleft 5, split");
-        singleCarPanel.add(paidreport,        "growx, wrap");
         singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 
         carSelectionChanged();
@@ -393,14 +392,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     {
         public RegisterAndPayAction()
         {
-            super("Register and Pay");
+            super("Register/Make Payment");
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
             try {
-                CurrencyDialog d = new CurrencyDialog("Enter the amount paid onsite:");
+                CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
                 if (d.doDialog("Payment", null)) {
                     Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), "onsite", d.getResult());
                     Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
@@ -409,6 +408,58 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             } catch (SQLException sqle) {
                 log.log(Level.WARNING, "\bFailed to register car and payment: " + sqle, sqle);
             }
+        }
+    }
+
+
+    class MovePaymentAction extends AbstractAction
+    {
+        DecoratedCar dest;
+        public MovePaymentAction(DecoratedCar d)
+        {
+            dest = d;
+            String display = "<html><div><b>" + (dest.getIndexCode().equals("") ?
+                    dest.getClassCode() + " #" +dest.getNumber() :
+                    dest.getClassCode() + " (" + dest.getIndexCode() + ") #" +dest.getNumber());
+            display += String.format("</b></div> %s %s %s %s", dest.getYear(), dest.getMake(), dest.getModel(), dest.getColor());
+            this.putValue(NAME, display);
+        }
+
+        public void actionPerformed(ActionEvent ev)
+        {
+            try {
+                Database.d.movePayments(Registration.state.getCurrentEventId(), selectedCar.getCarId(), dest.getCarId());
+                Database.d.registerCar(Registration.state.getCurrentEventId(), dest);
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar);
+            } catch (Exception e) {
+                log.log(Level.WARNING, "\bFailed to move payments: " + e, e);
+            }
+        }
+    }
+
+
+    /**
+     * Action that creates a popup menu population with Actions created from the list
+     * of cars we can move the payments to.
+     */
+    class MovePaymentMenuAction extends AbstractAction
+    {
+        public MovePaymentMenuAction()
+        {
+            super("Move Registration/Payments To \u2BC6"); // down arrow
+        }
+
+        public void actionPerformed(ActionEvent e)
+        {
+            JPopupMenu menu = new JPopupMenu();
+            for (DecoratedCar car : carVector)
+            {
+                if (car.getCarId().equals(selectedCar.getCarId()) || car.isInRunOrder())
+                    continue;
+                menu.add(new MovePaymentAction(car));
+            }
+            Component c = (Component)e.getSource();
+            menu.show(c, 5, c.getHeight()-5);
         }
     }
 
@@ -454,7 +505,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
     protected void setPaidDriverInfo()
     {
-        paidreport.setText(String.format("$%.2f", carVector.stream().mapToDouble(x -> x.getPaymentTotal()).sum()));
         paidwarning.setOpaque(false);
         paidwarning.setText("");
 
@@ -469,7 +519,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             }
         }
 
-        paidwarning.setText("No unused paid cars are present");
+        paidwarning.setText("No cars paid and not in runorder");
         paidwarning.setOpaque(true);
     }
 
@@ -604,23 +654,26 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         if (selectedCar != null)
         {
             newcarfrom.setEnabled(true);
-            editcar.setEnabled(  !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
-            deletecar.setEnabled(!selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
-
-            registerandpay.setEnabled(!selectedCar.isInRunOrder());
-            registerit.setEnabled(    !selectedCar.isRegistered() && !selectedCar.isInRunOrder());
-            unregisterit.setEnabled( ( selectedCar.isRegistered() && !selectedCar.isInRunOrder()) && !selectedCar.hasPaid());
             paymentInfo.setListData(new Vector<Payment>(selectedCar.getPayments()));
+
+            editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
+            deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
+            registerandpay.setEnabled(!selectedCar.isInRunOrder());
+            movepayment.setEnabled(   !selectedCar.isInRunOrder() && selectedCar.hasPaid());
+            registerit.setEnabled(    !selectedCar.isInRunOrder() && !selectedCar.isRegistered());
+            unregisterit.setEnabled(  !selectedCar.isInRunOrder() && selectedCar.isRegistered() && !selectedCar.hasPaid());
         }
         else
         {
             newcarfrom.setEnabled(false);
+            paymentInfo.setListData(new Vector<Payment>());
+
             editcar.setEnabled(false);
             deletecar.setEnabled(false);
             registerandpay.setEnabled(false);
+            movepayment.setEnabled(false);
             registerit.setEnabled(false);
             unregisterit.setEnabled(false);
-            paymentInfo.setListData(new Vector<Payment>());
         }
 
         paylistlabel.setVisible(paymentInfo.getModel().getSize() > 0);

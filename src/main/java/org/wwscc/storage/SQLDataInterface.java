@@ -538,6 +538,12 @@ public abstract class SQLDataInterface implements DataInterface
                 newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
     }
 
+    @Override
+    public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws SQLException
+    {
+        executeUpdate("UPDATE payments SET carid=?,modified=now() WHERE eventid=? and carid=?", newList(dstcarid, eventid, srccarid));
+    }
+
 
     @Override
     public void newCar(Car c) throws SQLException

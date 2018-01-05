@@ -20,19 +20,14 @@ import org.wwscc.util.Resources;
 
 class CarRenderer implements ListCellRenderer<Object>
 {
-    private static ImageIcon[][][] reg = new ImageIcon[2][2][3];
+    private static ImageIcon[][] reg = new ImageIcon[2][3];
     static {
-        reg[0][0][1] = new ImageIcon(Resources.loadImage("reg001.png"));
-        reg[0][0][2] = new ImageIcon(Resources.loadImage("reg002.png"));
-        reg[0][1][0] = new ImageIcon(Resources.loadImage("reg010.png"));
-        reg[0][1][1] = new ImageIcon(Resources.loadImage("reg011.png"));
-        reg[0][1][2] = new ImageIcon(Resources.loadImage("reg012.png"));
-        reg[1][0][0] = new ImageIcon(Resources.loadImage("reg100.png"));
-        reg[1][0][1] = new ImageIcon(Resources.loadImage("reg101.png"));
-        reg[1][0][2] = new ImageIcon(Resources.loadImage("reg102.png"));
-        reg[1][1][0] = new ImageIcon(Resources.loadImage("reg110.png"));
-        reg[1][1][1] = new ImageIcon(Resources.loadImage("reg111.png"));
-        reg[1][1][2] = new ImageIcon(Resources.loadImage("reg112.png"));
+        reg[0][0] = new ImageIcon(Resources.loadImage("reg00.png"));
+        reg[0][1] = new ImageIcon(Resources.loadImage("reg01.png"));
+        reg[0][2] = new ImageIcon(Resources.loadImage("reg02.png"));
+        reg[1][0] = new ImageIcon(Resources.loadImage("reg10.png"));
+        reg[1][1] = new ImageIcon(Resources.loadImage("reg11.png"));
+        reg[1][2] = new ImageIcon(Resources.loadImage("reg12.png"));
     }
 
     private MyPanel p = new MyPanel();
@@ -54,21 +49,20 @@ class CarRenderer implements ListCellRenderer<Object>
             }
         }
 
+        p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
         p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber()));
         p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
 
         int c0 = 0;
         int c1 = 0;
-        int c2 = 0;
 
         if (c.isRegistered()) c0 = 1;
-        if (c.hasPaid())      c1 = 1;
         if (c.isInRunOrder()) {
-            c2 = 2;
+            c1 = 2;
         } else if (c.hasOtherActivity()) {
-            c2 = 1;
+            c1 = 1;
         }
-        p.status.setIcon(reg[c0][c1][c2]);
+        p.status.setIcon(reg[c0][c1]);
         p.setOpaque(true);
         return p;
     }
@@ -77,18 +71,23 @@ class CarRenderer implements ListCellRenderer<Object>
 class MyPanel extends JPanel
 {
     JLabel status;
+    JLabel payment;
     JLabel carinfo;
     JLabel cardesc;
 
     public MyPanel()
     {
-        setLayout(new MigLayout("ins 5, gap 0", "[90!][100:500:10000]", "[15!][15!]"));
+        setLayout(new MigLayout("ins 5, gapx 15", "[][40!][100:500:10000]", "[15!][15!]"));
         setBorder(new UnderlineBorder(new Color(180, 180, 180)));
 
         status = new JLabel();
         status.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         status.setOpaque(false);
         add(status, "ay center, spany 2");
+
+        payment = new JLabel();
+        payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        add(payment, "ax right, spany 2");
 
         carinfo = new JLabel();
         carinfo.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));

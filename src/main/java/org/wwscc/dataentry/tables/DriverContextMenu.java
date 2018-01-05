@@ -143,7 +143,7 @@ class PaidAction extends AbstractAction
     Entrant entrant;
     public PaidAction(Entrant e)
     {
-        super("Mark Driver Paid");
+        super("Mark Entrant Paid");
         entrant = e;
     }
 
@@ -151,7 +151,7 @@ class PaidAction extends AbstractAction
     public void actionPerformed(ActionEvent e)
     {
         try {
-            Database.d.registerCar(DataEntry.state.getCurrentEventId(), entrant.getCar()); //, true, true);
+            Database.d.registerPayment(DataEntry.state.getCurrentEventId(), entrant.getCarId(), "dataentry", 0.01);
             Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
         } catch (SQLException ioe) {
             log.severe("\bFailed to mark driver paid: " + ioe.getMessage());
