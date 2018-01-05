@@ -8,6 +8,9 @@
 
 package org.wwscc.dialogs;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -16,16 +19,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import net.miginfocom.swing.MigLayout;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.ClassData;
 import org.wwscc.storage.Database;
+import org.wwscc.util.TextChangeTrigger;
 
 
 /**
@@ -39,6 +46,9 @@ public class CarDialog extends BaseDialog<Car>
     protected boolean addToRunOrder;
     protected JCheckBox override;
     protected JCheckBox classmult;
+    protected UUID driverid;
+    protected StatusIcon numberok;
+    protected List<Integer> usednumbers;
     protected List<ClassData.Index> indexlist;
     protected ActionListener classChange;
     protected ActionListener indexChange;
@@ -49,10 +59,11 @@ public class CarDialog extends BaseDialog<Car>
      * @param cd		the classdata to use for classes/indexes
      * @param addoption whether to add the create and add button
      */
-    public CarDialog(Car car, ClassData cd, boolean addoption)
+    public CarDialog(UUID did, Car car, ClassData cd, boolean addoption)
     {
         super(new MigLayout("fillx, gap 5", "[right, grow 0][grow 100, fill, 130]"), false);
 
+        driverid = did;
         if (car == null)
             car = new Car();
 
@@ -102,15 +113,14 @@ public class CarDialog extends BaseDialog<Car>
         mainPanel.add(label("Class", true), "");
         mainPanel.add(select("classcode", cd.getClass(car.getClassCode()), classlist, classChange), "wrap");
 
-        mainPanel.add(label("Number", true), "");
-        mainPanel.add(ientry("number", (car.getNumber()>0)?car.getNumber():null), "split, w 50%");
-
-        JButton used = new JButton("Used Numbers");
-        used.setFont(used.getFont().deriveFont(11.0f));
-        mainPanel.add(used, "wrap");
-
         mainPanel.add(label("Index", true), "");
         mainPanel.add(select("indexcode", cd.getIndex(car.getIndexCode()), indexlist, indexChange), "wrap");
+
+        mainPanel.add(label("Number", true), "");
+        mainPanel.add(ientry("number", (car.getNumber()>0)?car.getNumber():null), "split, growx");
+        numberok = new StatusIcon();
+        mainPanel.add(new JLabel(numberok), "wrap");
+        fields.get("number").getDocument().addDocumentListener(new TextChangeTrigger() { @Override public void changedTo(String txt) { checkNumberUse(); }});
 
         override = new JCheckBox("Override Index Restrictions");
         override.setToolTipText("Some classes restrict the available indexes, this lets you override that restriction, only for use in rare circumstances");
@@ -127,6 +137,23 @@ public class CarDialog extends BaseDialog<Car>
         result = car;
     }
 
+    class StatusIcon implements Icon
+    {
+        private int size = 16;
+        private Color color = Color.gray;
+        @Override public int getIconWidth() { return size; }
+        @Override public int getIconHeight() { return size; }
+        @Override public void paintIcon(Component c, Graphics g, int x, int y)
+        {
+            g.setColor(color);
+            g.fillRect(x, y, size, size);
+            g.setColor(Color.DARK_GRAY);
+            g.drawRect(x, y, size-1, size-1);
+        }
+        public void setUnknown() { color = Color.gray; repaint(); }
+        public void setOk()      { color = Color.green; repaint(); }
+        public void setWarning() { color = Color.yellow; repaint(); }
+    }
 
     public void setOkButtonText(String text)
     {
@@ -157,6 +184,7 @@ public class CarDialog extends BaseDialog<Car>
         }
     }
 
+
     class ClassChange implements ActionListener
     {
         public void actionPerformed(ActionEvent ae)
@@ -168,6 +196,7 @@ public class CarDialog extends BaseDialog<Car>
                 selects.get("indexcode").setEnabled(false);
                 selects.get("indexcode").setSelectedIndex(0);
                 classmult.setEnabled(false);
+                numberok.setUnknown();
                 return;
             }
 
@@ -176,6 +205,8 @@ public class CarDialog extends BaseDialog<Car>
             if (!c.carsNeedIndex())
                 selects.get("indexcode").setSelectedIndex(0);
             override.setEnabled(c.carsNeedIndex());
+            usednumbers = Database.d.getUnavailableNumbers(driverid, c.getCode());
+            checkNumberUse();
             updateIndexList(c);
             indexChange.actionPerformed(new ActionEvent(this, 1, ""));
         }
@@ -198,6 +229,20 @@ public class CarDialog extends BaseDialog<Car>
                 }
             }
             classmult.setEnabled(false);
+        }
+    }
+
+
+    public void checkNumberUse()
+    {
+        try {
+            if ((usednumbers == null) || (!usednumbers.contains(getEntryInt("number")))) {
+                numberok.setOk();
+            } else {
+                numberok.setWarning();
+            }
+        } catch (Exception e) {
+            numberok.setUnknown();
         }
     }
 
@@ -285,6 +330,7 @@ public class CarDialog extends BaseDialog<Car>
 
         try
         {
+            result.setDriverId(driverid);
             result.setYear(getEntryText("year"));
             result.setMake(getEntryText("make"));
             result.setModel(getEntryText("model"));
@@ -307,7 +353,6 @@ public class CarDialog extends BaseDialog<Car>
                 result.setUseClsMult(classmult.isSelected());
             else
                 result.setUseClsMult(false);
-
 
             result.setNumber(Integer.parseInt(getEntryText("number")));
             return result;

@@ -527,6 +527,33 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
+    public List<Integer> getUnavailableNumbers(UUID driverid, String classcode)
+    {
+        List<Integer> ret = new ArrayList<Integer>();
+        try
+        {
+            boolean superunique = Integer.parseInt(getSetting("superuniquenumbers")) != 0;
+            ResultSet rs;
+
+            if (superunique) {
+                rs = executeSelect("select distinct number from cars where number not in (select number from cars where driverid=?)", newList(driverid));
+            } else {
+                rs = executeSelect("select distinct number from cars where classcode=? and number not in (select number from cars where classcode=? and driverid=?)", newList(classcode, classcode, driverid));
+            }
+
+            while (rs.next())
+                ret.add(rs.getInt(1));
+        }
+        catch (Exception e)
+        {
+            logError("getUnavailableNumbers", e);
+        }
+
+        return ret;
+    }
+
+
+    @Override
     public void registerCar(UUID eventid, Car car) throws SQLException
     {
         executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, car.getCarId()));

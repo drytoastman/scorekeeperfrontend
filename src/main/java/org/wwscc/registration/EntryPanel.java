@@ -282,7 +282,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             if (selectedCar == null) return;
-            final CarDialog cd = new CarDialog(selectedCar, Database.d.getClassData(), false);
+            final CarDialog cd = new CarDialog(selectedDriver.getDriverId(), selectedCar, Database.d.getClassData(), false);
             cd.setOkButtonText("Edit");
             cd.doDialog(EDITCAR, new DialogFinisher<Car>() {
                 @Override

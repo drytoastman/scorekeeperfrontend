@@ -263,11 +263,11 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
             {
                 Car initial = new Car(selectedCar);
                 initial.setCarId(IdGenerator.generateId());  // Need a new id
-                cd = new CarDialog(initial, Database.d.getClassData(), carAddOption);
+                cd = new CarDialog(selectedDriver.getDriverId(), initial, Database.d.getClassData(), carAddOption);
             }
             else
             {
-                cd = new CarDialog(null, Database.d.getClassData(), carAddOption);
+                cd = new CarDialog(selectedDriver.getDriverId(), null, Database.d.getClassData(), carAddOption);
             }
 
             cd.doDialog(NEWCAR, new DialogFinisher<Car>() {
@@ -279,7 +279,6 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                     {
                         if (selectedDriver != null)
                         {
-                            c.setDriverId(selectedDriver.getDriverId());
                             Database.d.newCar(c);
                             reloadCars(c);
                             carCreated();
