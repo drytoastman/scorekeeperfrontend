@@ -23,28 +23,28 @@ public class EntryModelTests
     static DockerContainer db;
 
     EntryModel model;
-    UUID driver0 = UUID.fromString("8cf4ac4c-bfa0-11e7-a8b3-0c4de9c60d73");
-    UUID car0 = UUID.fromString("a22a4824-bfa0-11e7-806f-0c4de9c60d73");
+    UUID driver0 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    UUID car0 = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception
     {
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
-        db = new DockerContainer("drytoastman/scdb:pro2017", "testdb");
+        db = new DockerContainer("drytoastman/scdb:testdb", "testdb");
         db.setMachineEnv(DockerMachine.machineenv());
         db.addPort("127.0.0.1:6432", "6432");
         db.addPort("54329", "5432");
         db.createNetsAndVolumes();
         db.start();
         Database.waitUntilUp();
-        Database.openSeries("pro2017", 2000);
+        Database.openSeries("testseries", 2000);
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception
     {
         Database.d.close();
-        db.stop();  // comment out to leave container running after tests
+        db.kill();  // comment out to leave container running after tests
     }
 
     @Before
@@ -59,8 +59,8 @@ public class EntryModelTests
 
         // Sanity check our initial pro2017 data
         Entrant e = (Entrant) model.getValueAt(0, 0);
-        Assert.assertEquals("invalid pro2017 database", driver0, e.getDriverId());
-        Assert.assertEquals("invalid pro2017 database", car0, e.getCarId());
+        Assert.assertEquals("invalid testseries database", driver0, e.getDriverId());
+        Assert.assertEquals("invalid testseries database", car0, e.getCarId());
     }
 
     @After
@@ -68,11 +68,11 @@ public class EntryModelTests
     {
     }
 
-    //@Test
+    @Test
     public void swapRuns() throws SQLException
     {
         UUID eventid = DataEntry.state.getCurrentEventId();
-        UUID carnew = UUID.fromString("a2440a1e-bfa0-11e7-a7be-0c4de9c60d73");
+        UUID carnew = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
         model.replaceCar(carnew, 0);
 

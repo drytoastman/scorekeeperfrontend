@@ -174,6 +174,11 @@ public class DockerContainer implements DataRetrievalInterface
         return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) == 0;
     }
 
+    public boolean kill()
+    {
+        return Exec.execit(Exec.build(machineenv, "docker", "kill", name), null) == 0;
+    }
+
     @Override
     public boolean dumpDatabase(Path path, boolean compress)
     {
