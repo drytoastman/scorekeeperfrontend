@@ -30,6 +30,7 @@ import org.wwscc.barcodes.BarcodeScannerOptionsAction;
 import org.wwscc.barcodes.BarcodeScannerWatcher;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
+import org.wwscc.util.BrowserControl;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -72,10 +73,15 @@ public class Registration extends JFrame
         JMenu options = new JMenu("Options");
         options.add(new BarcodeScannerOptionsAction());
 
+        JMenu reports = new JMenu("Reports");
+        reports.add(new OpenReportAction("Numbers Report", "numbers"));
+        reports.add(new OpenReportAction("Payments Report", "payments"));
+
         JMenuBar bar = new JMenuBar();
         bar.add(file);
         bar.add(find);
         bar.add(options);
+        bar.add(reports);
         setJMenuBar(bar);
 
         setBounds(Prefs.getWindowBounds("registration"));
@@ -106,6 +112,22 @@ public class Registration extends JFrame
                 Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != 'M') ? prefix+o.toString() : o);
         }
     }
+
+    final static class OpenReportAction extends AbstractAction
+    {
+        String report;
+        public OpenReportAction(String name, String r)
+        {
+            super(name);
+            report = r;
+        }
+
+        public void actionPerformed(ActionEvent e)
+        {
+            BrowserControl.openReport(Registration.state, report);
+        }
+    }
+
 
     /**
      * Main

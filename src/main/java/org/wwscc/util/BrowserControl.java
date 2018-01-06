@@ -44,6 +44,11 @@ public class BrowserControl
         openURL(String.format("http://127.0.0.1/admin/%s/event/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
     }
 
+    public static void openReport(ApplicationState state, String selection)
+    {
+        openURL(String.format("http://127.0.0.1/admin/%s/%s", state.getCurrentSeries(), selection));
+    }
+
     public static void openURL(String url)
     {
         // If we get here from the FX Thread, we need to push it back to the event thread

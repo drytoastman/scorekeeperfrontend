@@ -3,6 +3,7 @@ package org.wwscc.registration;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -77,7 +78,7 @@ class MyPanel extends JPanel
 
     public MyPanel()
     {
-        setLayout(new MigLayout("ins 5, gapx 15", "[][40!][100:500:10000]", "[15!][15!]"));
+        setLayout(new MigLayout("ins 5, gapx 12, gapy 1", "[][35!][100:500:10000]", ""));
         setBorder(new UnderlineBorder(new Color(180, 180, 180)));
 
         status = new JLabel();
@@ -91,11 +92,11 @@ class MyPanel extends JPanel
 
         carinfo = new JLabel();
         carinfo.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-        add(carinfo, "wrap");
+        add(carinfo, "gap 0, wrap");
 
         cardesc = new JLabel();
         cardesc.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-        add(cardesc, "");
+        add(cardesc, "gap 0");
     }
 
     @Override

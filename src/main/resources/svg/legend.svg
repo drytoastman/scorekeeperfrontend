@@ -10,15 +10,15 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="284.86465mm"
-   height="76.027748mm"
-   viewBox="0 0 284.86465 76.027747"
+   height="78.144417mm"
+   viewBox="0 0 284.86465 78.144416"
    version="1.1"
    id="svg8"
    sodipodi:docname="legend.svg"
    inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
    inkscape:export-filename="C:\Users\bwilson\sc\ScorekeeperFrontend\src\main\resources\images\legend.png"
-   inkscape:export-xdpi="19.678928"
-   inkscape:export-ydpi="19.678928">
+   inkscape:export-xdpi="16.704428"
+   inkscape:export-ydpi="16.704428">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -29,8 +29,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.70710678"
-     inkscape:cx="488.38889"
-     inkscape:cy="119.01879"
+     inkscape:cx="619.41448"
+     inkscape:cy="127.01881"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -197,11 +197,11 @@
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.93333244px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="194.20363"
-       y="13.270556"
+       y="15.387221"
        id="text3799"><tspan
          sodipodi:role="line"
          x="194.20363"
-         y="13.270556"
+         y="15.387221"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.11111069px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;baseline-shift:baseline;text-anchor:middle;stroke-width:0.26458332"
          id="tspan3805">Used in</tspan></text>
     <text
@@ -219,12 +219,12 @@
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:10.58333302px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="150.21753"
-       y="26.726217"
+       y="28.842886"
        id="text3813"><tspan
          sodipodi:role="line"
          id="tspan3811"
          x="150.21753"
-         y="26.726217"
+         y="28.842886"
          style="font-size:14.11111069px;stroke-width:0.26458332">Other Events</tspan></text>
   </g>
 </svg>

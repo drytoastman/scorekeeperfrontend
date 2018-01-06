@@ -47,7 +47,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
-
 import net.miginfocom.swing.MigLayout;
 
 import org.apache.commons.lang3.StringUtils;
@@ -418,10 +417,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public MovePaymentAction(DecoratedCar d)
         {
             dest = d;
-            String display = "<html><div><b>" + (dest.getIndexCode().equals("") ?
+            String display = "<html><div style='margin-top: 2px;'><b>" + (dest.getIndexCode().equals("") ?
                     dest.getClassCode() + " #" +dest.getNumber() :
                     dest.getClassCode() + " (" + dest.getIndexCode() + ") #" +dest.getNumber());
-            display += String.format("</b></div> %s %s %s %s", dest.getYear(), dest.getMake(), dest.getModel(), dest.getColor());
+            display += String.format("</b></div><div style='margin-bottom: 2px;'>%s %s %s %s</div>", dest.getYear(), dest.getMake(), dest.getModel(), dest.getColor());
             this.putValue(NAME, display);
         }
 
@@ -452,6 +451,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             JPopupMenu menu = new JPopupMenu();
+
+            // nothing seems to work for HTML based MenuItem, its part of the HTML editor kit or something else without an interface
+            //UIDefaults overrides = new UIDefaults();
+            //overrides.put("MenuItem[MouseOver].backgroundPainter", OtherPainterHere);
+            //menu.putClientProperty("Nimbus.Overrides", overrides);
+            //menu.putClientProperty("Nimbus.Overrides.InheritDefaults", false);
+
             for (DecoratedCar car : carVector)
             {
                 if (car.getCarId().equals(selectedCar.getCarId()) || car.isInRunOrder())

@@ -194,7 +194,7 @@ public class CarDialog extends BaseDialog<Car>
             {
                 labels.get("Index").setEnabled(false);
                 selects.get("indexcode").setEnabled(false);
-                selects.get("indexcode").setSelectedIndex(0);
+                selects.get("indexcode").setSelectedIndex(-1);
                 classmult.setEnabled(false);
                 numberok.setUnknown();
                 return;
@@ -203,7 +203,7 @@ public class CarDialog extends BaseDialog<Car>
             labels.get("Index").setEnabled(c.carsNeedIndex());
             selects.get("indexcode").setEnabled(c.carsNeedIndex());
             if (!c.carsNeedIndex())
-                selects.get("indexcode").setSelectedIndex(0);
+                selects.get("indexcode").setSelectedIndex(-1);
             override.setEnabled(c.carsNeedIndex());
             usednumbers = Database.d.getUnavailableNumbers(driverid, c.getCode());
             checkNumberUse();
@@ -296,7 +296,7 @@ public class CarDialog extends BaseDialog<Car>
             if (c.carsNeedIndex())
             {
                 ClassData.Index i = (ClassData.Index)getSelect("indexcode");
-                if (i.getCode().equals(""))
+                if ((i == null) || i.getCode().equals(""))
                 {
                     errorMessage = "Selected class requires an index";
                     return false;
