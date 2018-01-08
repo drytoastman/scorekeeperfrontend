@@ -22,7 +22,6 @@ import javax.swing.border.BevelBorder;
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.components.CurrentSeriesLabel;
-import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
 import org.wwscc.util.MT;
