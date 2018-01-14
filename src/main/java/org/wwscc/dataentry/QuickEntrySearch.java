@@ -177,6 +177,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         if (idx >= 0) {
             Entrant ent = (Entrant)cars.getValueAt(idx, 0);
             Messenger.sendEvent(MT.CAR_ADD, ent.getCarId());
+            entry.setText("");
         }
     }
 
