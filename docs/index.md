@@ -1,6 +1,7 @@
 - [Changes From V1](changes.md)
 - [Install/First Use](install.md)
 - [Status/Synchronization](sync.md)
+- [Backups](backup.md)
 - [DataEntry](dataentry.md)
 - [Registration](registration.md)
 - [Registration Admin Online](onlineregadmin.md)

@@ -13,7 +13,7 @@ accidental event selection does not occur during registration activity.
 
 ## Standard Actions
 
-1. Enter part of the first and/or last name.  More information produces a shorter list of drivers in the next step.
+1. Either enter part of the first and/or last name OR scan the driver's barcode.  More name information produces a shorter list of drivers in the next step.
 
 ![SearchBox](images/regsearch.png)
 
@@ -27,17 +27,28 @@ accidental event selection does not occur during registration activity.
     * If a barcode is needed, click Print Label to print to the selected printer device - make sure correct printer is selected.
 
 4. Verify the correct car(s), class(es) and index are registered. 
-    * Default status for preregistered drivers is **Registered** or **Reg/Paid** if they paid online
+    * Default status icons for preregistered drivers is the black checkmark as seen in the legend.  If they paid online, an amount will show next to the car.
     * Cars can be created, edited or deleted. 
-        * **New From** prefills the data with the selected car - which can then be edited as needed (saves having to enter all car info if only needs a different class or car number) 
-    * To change a car entry, select it and click **Registered** and **Paid**, **Registered Only** or **Unregister**
-        * **Registered** means the car was registered but has not been paid for yet
-        * **Reg/Paid** means that the car was registered and marked as paid
-        * **In Event** means the car already has times recorded in the event
-        * **Other** means that the car is registered or has runs in another event
-    * Entries that are not marked as **Reg/Paid** can be flagged in data entry, and pulled out of the grid line
+        * **New From** prefills the data with the selected car - which can then be edited as needed (saves having to enter all car info if it only needs a different class or car number) 
+        * The car dialog number field includes a colored square indicator to aid the registration worker
+            * Green - number is avaiable
+            * Yellow - number is used by another driver though the application won't stop the worker from using it
+            * Gray - no data or number provided
+
+    * To change a car entry, select it and click one of the activity buttons
+        * **Register/Make Payment** sets the car status to registered and will ask for the amount paid
+        * **Register Only** sets the car status to registered only
+        * **Unregister** will unregister the car and is only available if the car is registered and *NOT* paid for yet
+        * **Move Registration/Payments** is a special case to move payments from one car to another (i.e. they paid online for one car but moved to another onsite)
+
+    * Entries that have a paid amount of $0.00 can be flagged in data entry
+    * The list of payments for a car are listed on the right panel
 
 ![CarEntry](images/regcars.png)
+
+## Reports
+
+The number use and payment reports are available from the admin page.  Quick access to these pages are available under the Reports menu in registration.
 
 ## Merging
 
