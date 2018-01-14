@@ -38,6 +38,6 @@
    are still rather long so a list of registered users is shown that gets smaller as you type digits.  Once it reduces to one,
    you can hit enter to add the entrant rather than typing the whole number.
 
-1. Paypal support has not been carried over yet but online payments with a Square account is now supported.
+1. **Online payments are supported** through authorizing a Square application and/or the new Paypal REST API.
 
 
