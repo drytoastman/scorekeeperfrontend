@@ -5,6 +5,7 @@
 - [DataEntry](dataentry.md)
 - [Registration](registration.md)
 - [Registration Admin Online](onlineregadmin.md)
+- [Settings Up Payment Accounts](paymentaccounts.md)
 - [Running a ProSolo](runningpro.md)
 - [Challenge GUI](challenge.md)
 - [JSON/XML](jsonxmlfeed.md)
