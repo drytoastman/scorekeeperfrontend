@@ -46,6 +46,7 @@ public class StateControl
 
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
+        Messenger.register(MT.BACKUP_REQUEST,   (t,d) -> backupRequest());
         Messenger.register(MT.IMPORT_REQUEST,   (t,d) -> importRequest());
         Messenger.register(MT.LAUNCH_REQUEST,   (t,d) -> launchRequest((String)d));
         Messenger.register(MT.SHUTDOWN_REQUEST, (t,d) -> shutdownRequest());
@@ -117,6 +118,29 @@ public class StateControl
             pmonitor.setPause(!ok);
             _backendready = ok;
         }
+    }
+
+    public void backupRequest()
+    {
+        String msg = "Backup failed. See logs.";
+        if (doBackup())
+            msg = "Backup complete";
+        JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg);
+    }
+
+    public boolean doBackup()
+    {
+        String ver = Database.d.getVersion();
+        boolean success = false;
+        try {
+            if (!ver.equals("unknown")) {
+                String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(new Date());
+                success = cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Error backing up data: " + e, e);
+        }
+        return success;
     }
 
     public void importRequest()
@@ -234,14 +258,8 @@ public class StateControl
             }
 
             pmonitor.setPause(true);
-            String ver = Database.d.getVersion();
+            doBackup();
             Database.d.close();
-
-            // second backup the database, but only if we've connected to something real
-            if (!ver.equals("unknown")) {
-                String date = new SimpleDateFormat("yyyyMMddHH").format(new Date());
-                cmonitor.dumpDatabase(Prefs.getBackupDirectory().resolve(String.format("date_%s#schema_%s.pgdump", date, ver)), true);
-            }
 
             // note the shutdown flag and wake up our monitors to finish up
             _applicationdone = true;

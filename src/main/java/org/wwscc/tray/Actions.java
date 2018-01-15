@@ -36,7 +36,7 @@ public class Actions
 
     List<Action> apps;
     List<Action> others;
-    Action debugRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
+    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
     Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
@@ -53,6 +53,7 @@ public class Actions
         quit           = new EventSendAction("Shutdown",        MT.SHUTDOWN_REQUEST);
         openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
         debugRequest   = new EventSendAction("Save Debug Info", MT.DEBUG_REQUEST);
+        backupRequest  = new EventSendAction("Backup Database", MT.BACKUP_REQUEST);
         importRequest  = addAction(new EventSendAction("Import Backup Data", MT.IMPORT_REQUEST));
 
         mergeAll       = addAction(new MergeWithAllLocalAction());

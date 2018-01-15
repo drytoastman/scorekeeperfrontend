@@ -71,6 +71,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 
         JMenu file = new JMenu("File");
         file.add(actions.debugRequest);
+        file.add(actions.backupRequest);
         file.add(actions.importRequest);
         file.add(new JSeparator());
         file.add(actions.quit);
