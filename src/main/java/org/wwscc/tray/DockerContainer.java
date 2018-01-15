@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -150,6 +151,10 @@ public class DockerContainer implements DataRetrievalInterface
     public boolean start(int waitms)
     {
         List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
+        cmd.add("-e");
+        cmd.add("UI_TIME_ZONE="+TimeZone.getDefault().getID());
+        cmd.add("-e");
+        cmd.add("SECRET='"+Prefs.getCookieSecret()+"'");
         if (Prefs.isDebug()) {
             cmd.add("-e");
             cmd.add("DEBUG=1");

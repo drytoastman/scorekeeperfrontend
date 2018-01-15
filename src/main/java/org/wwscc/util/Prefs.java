@@ -13,8 +13,10 @@ import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -134,6 +136,18 @@ public class Prefs
             ret = UUID.fromString(s);
         }
 
+        return ret;
+    }
+
+    public static String getCookieSecret()
+    {
+        String ret = prefs.get("cookiesecret", "");
+        if (ret.equals("")) {
+            byte[] bytes = new byte[32];
+            new Random().nextBytes(bytes);
+            ret = new String(Base64.getEncoder().encode(bytes));
+            prefs.put("cookiesecret", ret);
+        }
         return ret;
     }
 

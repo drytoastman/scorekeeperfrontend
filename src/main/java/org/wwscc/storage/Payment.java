@@ -11,7 +11,6 @@ package org.wwscc.storage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.LinkedList;
 import java.util.UUID;
 
 public class Payment
@@ -38,24 +37,9 @@ public class Payment
         refid    = rs.getString("refid");
         txtype   = rs.getString("txtype");
         txid     = rs.getString("txid");
-        txtime   = rs.getTimestamp("txtime");
+        txtime   = rs.getTimestamp("txtime", Database.utc);
         itemname = rs.getString("itemname");
         amount   = rs.getDouble("amount");
-    }
-
-    public LinkedList<Object> getValues()
-    {
-        LinkedList<Object> ret = new LinkedList<Object>();
-        ret.add(payid);
-        ret.add(eventid);
-        ret.add(carid);
-        ret.add(refid);
-        ret.add(txtype);
-        ret.add(txid);
-        ret.add(txtime);
-        ret.add(itemname);
-        ret.add(amount);
-        return ret;
     }
 
     public UUID getCarId()    { return carid; }
