@@ -112,10 +112,13 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         connectParam.series = null;
         conn = internalConnect();
 
-        watcher = new PostgresConnectionWatcher();
-        watcher.setName("PostgresConnectionWatcher-"+watcher.getId());
-        watcher.setDaemon(true);
-        watcher.start();
+        if (password == null) {
+            // only start watcher for local connections, remotes are only used to check series and password
+            watcher = new PostgresConnectionWatcher();
+            watcher.setName("PostgresConnectionWatcher-"+watcher.getId());
+            watcher.setDaemon(true);
+            watcher.start();
+        }
     }
 
 
@@ -173,7 +176,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
             if ((conn != null) && (!conn.isClosed()))
             {
                 conn.close();
-                watcher.done = true;
+                if (watcher != null)
+                    watcher.done = true;
                 conn = null;
             }
         }
