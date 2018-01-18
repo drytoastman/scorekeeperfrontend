@@ -216,6 +216,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         boolean done = false;
         public void run()
         {
+            try { Thread.sleep(5000); } catch (InterruptedException ie) {}
+
             while (!done) {
                 try {
                     PGConnection pg = (PGConnection)getConnection();
