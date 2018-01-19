@@ -216,14 +216,14 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         boolean done = false;
         public void run()
         {
-            try { Thread.sleep(5000); } catch (InterruptedException ie) {}
-
+            trysleep(5000);
             while (!done) {
                 try {
                     PGConnection pg = (PGConnection)getConnection();
                     if (pg == null) {
-                        log.severe("Connection is null, stopping background check thread");
-                        return;
+                        log.info("watcher: connection was null");
+                        trysleep(5000);
+                        continue;
                     }
                     PGNotification notifications[] = pg.getNotifications();
                     if (notifications != null) {
@@ -237,7 +237,15 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                     log.log(Level.WARNING, "ConnectionWatcher exception: " + e, e);
                 }
 
-                try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+                trysleep(1);
+            }
+        }
+
+        private void trysleep(long ms)
+        {
+            try {
+                sleep(ms);
+            } catch (InterruptedException ie) {
             }
         }
     }
