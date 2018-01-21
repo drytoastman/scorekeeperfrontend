@@ -43,6 +43,7 @@ public class AppSetup
         for(Handler handler : root.getHandlers()) { root.removeHandler(handler); }
 
         //Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
+        Logger.getLogger("org.postgresql.jdbc").setLevel(Level.OFF);
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
         Logger.getLogger("org.wwscc").setLevel(Level.ALL);
         
@@ -79,6 +80,7 @@ public class AppSetup
         // Set prefs levels before windows preference load barfs useless data on the user
         Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
         // postgres JDBC spits out a lot of data even though we catch the exception
+        Logger.getLogger("org.postgresql.jdbc").setLevel(Level.OFF);
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
 
         // Add console handler if running in debug mode

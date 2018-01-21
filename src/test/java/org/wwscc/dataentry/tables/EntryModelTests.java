@@ -2,50 +2,25 @@ package org.wwscc.dataentry.tables;
 
 import java.sql.SQLException;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
-import org.wwscc.tray.DockerContainer;
-import org.wwscc.tray.DockerMachine;
+import org.wwscc.storage.TestDatabaseContainer;
 import org.wwscc.util.MT;
 
 public class EntryModelTests
 {
-    static DockerContainer db;
+    @ClassRule
+    public static TestDatabaseContainer db = new TestDatabaseContainer();
 
     EntryModel model;
     UUID driver0 = UUID.fromString("00000000-0000-0000-0000-000000000001");
     UUID car0 = UUID.fromString("00000000-0000-0000-0000-000000000002");
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception
-    {
-        Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
-        db = new DockerContainer("drytoastman/scdb:testdb", "testdb");
-        db.setMachineEnv(DockerMachine.machineenv());
-        db.addPort("127.0.0.1:6432", "6432");
-        db.addPort("54329", "5432");
-        db.createNetsAndVolumes();
-        db.start();
-        Database.waitUntilUp();
-        Database.openSeries("testseries", 2000);
-    }
-
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception
-    {
-        Database.d.close();
-        db.kill();  // comment out to leave container running after tests
-    }
 
     @Before
     public void setUp() throws Exception

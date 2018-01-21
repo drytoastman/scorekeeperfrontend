@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.storage;
 
 import java.lang.reflect.Constructor;
@@ -198,7 +206,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     {
         if (conn == null)
             return null;
-        if (!conn.isValid(1))
+        if (!conn.isValid(0))
         {
             if (inTransaction)
                 log.severe("\bThere was a database connection problem in a transaction, you should restart the application");
@@ -216,7 +224,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         boolean done = false;
         public void run()
         {
-            trysleep(5000);
+            trysleep(2000);
             while (!done) {
                 try {
                     PGConnection pg = (PGConnection)getConnection();
@@ -237,7 +245,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                     log.log(Level.WARNING, "ConnectionWatcher exception: " + e, e);
                 }
 
-                trysleep(1);
+                trysleep(500);
             }
         }
 
