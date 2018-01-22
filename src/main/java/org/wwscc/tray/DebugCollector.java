@@ -11,15 +11,19 @@ package org.wwscc.tray;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -38,13 +42,13 @@ public class DebugCollector extends Thread
 
     List<Path> files;
     DataRetrievalInterface retrieval;
-    
+
     public DebugCollector(DataRetrievalInterface rt)
     {
         files = new ArrayList<Path>();
         retrieval = rt;
     }
-    
+
     public void run()
     {
         final JFileChooser fc = new JFileChooser() {
@@ -66,29 +70,40 @@ public class DebugCollector extends Thread
                     }
                 }
                 super.approveSelection();
-            }    
+            }
         };
-        
+
         fc.setDialogTitle("Specify a zip file to save files in");
         fc.setSelectedFile(new File("debug-" + new SimpleDateFormat("yyyy-MM-dd_HH-mm").format(new Date()) + ".zip"));
         int returnVal = fc.showSaveDialog(null);
         if (returnVal != JFileChooser.APPROVE_OPTION)
             return;
-        
+
         File zipfile = fc.getSelectedFile();
         if (zipfile.exists() && !zipfile.canWrite())
         {
             log.warning("\b" + zipfile + " is not writable");
             return;
         }
-        
+
         ProgressMonitor monitor = new ProgressMonitor(null, "Extracting and compressing files", "initializing", 0, 100);
         monitor.setMillisToDecideToPopup(0);
         monitor.setMillisToPopup(10);
         monitor.setProgress(5);
-        try 
+        try
         {
             Path temp = Files.createTempDirectory("sc_debug_");
+            monitor.setProgress(10);
+            monitor.setNote("creating info.txt");
+
+            Path info = Files.createFile(temp.resolve("info.txt"));
+            Map<String, String> machineenv = DockerMachine.machineenv();
+            OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+            out.write("Java version = " + System.getProperty("java.version") + "\n");
+            out.write("Docker version = " + DockerContainer.version(machineenv) + "\n");
+            out.write("Machine Env = " + Arrays.toString(machineenv.entrySet().toArray()) + "\n");
+            out.close();
+
             monitor.setProgress(20);
             monitor.setNote("copying backend files");
             retrieval.copyLogs(temp);
@@ -98,7 +113,7 @@ public class DebugCollector extends Thread
             String ver = Database.d.getVersion();
             retrieval.dumpDatabase(temp.resolve(String.format("database#schema_%s.pgdump", ver)), false);
 
-            // second backup the database            
+            // second backup the database
             monitor.setProgress(60);
             monitor.setNote("adding backend logs to zipfile");
             addLogs(temp);
@@ -108,7 +123,7 @@ public class DebugCollector extends Thread
             monitor.setProgress(80);
             monitor.setNote("saving zipfile to disk");
             zipfiles(zipfile);
-            
+
             // Just me being worried, make sure someone doesn't hand us "/", "/tmp/asdf" is count == 2
             monitor.setProgress(90);
             if (temp.getNameCount() >= 2)
@@ -124,9 +139,9 @@ public class DebugCollector extends Thread
 
         monitor.close();
     }
-    
+
     /**
-     *  Zip all the files in our 
+     *  Zip all the files in our
      * @param dest
      * @throws IOException
      */
@@ -147,14 +162,14 @@ public class DebugCollector extends Thread
             zos.closeEntry();
         }
         zos.close();
-        fos.close();        
+        fos.close();
     }
-    
+
     /**
      * Collects all file names in the directory and puts in our files list.
      */
-    private void addLogs(Path directory) throws IOException 
-    {        
+    private void addLogs(Path directory) throws IOException
+    {
         Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!file.toString().endsWith(".lck")) {
@@ -164,7 +179,7 @@ public class DebugCollector extends Thread
             }
         });
     }
-    
+
     /**
      * Test entry point.
      * @param args the command line args, ignored
