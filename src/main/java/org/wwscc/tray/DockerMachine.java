@@ -58,13 +58,23 @@ public class DockerMachine
     public static boolean machinepresent()
     {
         if (Exec.testit(Exec.build(null, "docker-machine", "-h"))) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                return Exec.testit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"));
-            } else {
-                return Exec.testit(Exec.build(null, "vboxmanage", "-v"));
-            }
+            return vboxversion().length() > 3;
         }
         return false;
+    }
+
+    /**
+     * @return the version information for vbox if installed
+     */
+    public static String vboxversion()
+    {
+        byte[] ver = new byte[128];
+        if (SystemUtils.IS_OS_WINDOWS) {
+            Exec.execit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"), ver);
+        } else {
+            Exec.execit(Exec.build(null, "vboxmanage", "-v"), ver);
+        }
+        return new String(ver).trim();
     }
 
     /**

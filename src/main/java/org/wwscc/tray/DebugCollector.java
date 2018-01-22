@@ -93,17 +93,10 @@ public class DebugCollector extends Thread
         try
         {
             Path temp = Files.createTempDirectory("sc_debug_");
+
             monitor.setProgress(10);
             monitor.setNote("creating info.txt");
-
-            Path info = Files.createFile(temp.resolve("info.txt"));
-            Map<String, String> machineenv = DockerMachine.machineenv();
-            OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-            out.write("Java version = " + System.getProperty("java.version") + "\n");
-            out.write("Docker version = " + DockerContainer.version(machineenv) + "\n");
-            out.write("Machine Env = " + Arrays.toString(machineenv.entrySet().toArray()) + "\n");
-            out.close();
-
+            createInfoFile(temp);
             monitor.setProgress(20);
             monitor.setNote("copying backend files");
             retrieval.copyLogs(temp);
@@ -139,6 +132,19 @@ public class DebugCollector extends Thread
 
         monitor.close();
     }
+
+    private void createInfoFile(Path dir) throws IOException
+    {
+        Path info = Files.createFile(dir.resolve("info.txt"));
+        Map<String, String> machineenv = DockerMachine.machineenv();
+        OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+        out.write("Java version = " + System.getProperty("java.version") + "\n");
+        out.write("Docker version = " + DockerContainer.version(machineenv) + "\n");
+        out.write("VBoxVersion version = " + DockerMachine.vboxversion() + "\n");
+        out.write("Machine Env = " + Arrays.toString(machineenv.entrySet().toArray()) + "\n");
+        out.close();
+    }
+
 
     /**
      *  Zip all the files in our
