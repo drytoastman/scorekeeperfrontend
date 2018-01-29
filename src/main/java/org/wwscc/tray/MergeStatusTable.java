@@ -187,25 +187,25 @@ public class MergeStatusTable extends JTable {
             return !testhash.equals(lhash);
         }
 
-        private String getToolTip(String error, String hash)
+        private String getToolTip(String error, String hash, boolean isActive)
         {
-            String head = "<html>" + hash + "<br/>" + error + "<br/><br/>";
-            if (error.contains("timeout expired"))
-                return head + "The remote database is visible via UDP:5454 but we can't connect to the database at TCP:54329<br/>" +
+            String head = "<html>Hash = " + hash + "<br/>Error = " + error;
+            if (isActive && error.contains("timeout expired"))
+                return head + "<br/><br/>The remote database is visible via UDP:5454 but we can't connect to the database at TCP:54329<br/>" +
                               "Are the firewall rules for 54329 in effect?";
-            else if (error.contains("could not connect to server"))
-                return head + "The remote database actively refused the connection.  This means we can reach the server but<br/>"+
+            else if (isActive && error.contains("could not connect to server"))
+                return head + "<br/><br/>The remote database actively refused the connection.  This means we can reach the server but<br/>"+
                               "nothing is listening on port 54329";
             else if (error.contains("Unable to obtain locks"))
-                return head + "With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
-                              "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" + 
+                return head + "<br/><br/>With multiple active computers, we sometimes can't obtain a lock in a reasonable time<br/>"+
+                              "and will then wait for 60 seconds before trying again.  You can click 'Sync All Active Now'<br/>" +
                               "to try again now";
             else if (error.contains("Different schema"))
-                return head + "The remote machine has a software that is newer (or older) than this computer and<br/>" + 
-                              "cannot be merged with due to database schema differences.  The older machine should<br/>" + 
+                return head + "<br/><br/>The remote machine has a software that is newer (or older) than this computer and<br/>" +
+                              "cannot be merged with due to database schema differences.  The older machine should<br/>" +
                               "be updated with the latest software.";
             else if (error.contains("No password"))
-                return head + "There is no open password in the local database with which to connect to the remote<br/>" +
+                return head + "<br/><br/>There is no open password in the local database with which to connect to the remote<br/>" +
                               "machine.  This is a rare occurence that needs manual intervention and should be reported";
             else
                 return head;
@@ -266,7 +266,7 @@ public class MergeStatusTable extends JTable {
                     String hash = (String)seriesstatus.get("totalhash");
 
                     if (error != null) {
-                        setToolTipText(getToolTip(error, textLimit(hash, 12)));
+                        setToolTipText(getToolTip(error, textLimit(hash, 12), server.isActive()));
                         setText(error);
                         setColors(server.isActive(), true);
                     } else if (progress != null) {
@@ -277,7 +277,7 @@ public class MergeStatusTable extends JTable {
                         setText(textLimit(hash, 12));
                         setFont(bold);
                     }
-                    
+
                     if (seriesstatus.containsKey("syncing"))
                         setIcon(syncing);
 
