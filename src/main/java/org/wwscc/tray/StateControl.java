@@ -5,6 +5,7 @@ import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,8 @@ public class StateControl
     private static final Logger log = Logger.getLogger(Monitors.class.getName());
 
     private volatile Map<String, String> _machineenv;
-    private volatile boolean _machineready, _portsforwarded, _shutdownstarted, _applicationdone, _shutdownmachine, _usingmachine, _backendready;
+    private volatile boolean _machineready, _shutdownstarted, _applicationdone, _shutdownmachine, _usingmachine, _backendready;
+    private volatile boolean _dbportsforwarded, _webportforwarded;
 
     List<Process> launched;
     Monitors.MachineMonitor   mmonitor;
@@ -38,11 +40,12 @@ public class StateControl
     public StateControl()
     {
         _machineready      = false;
-        _portsforwarded    = false;
+        _dbportsforwarded  = false;
+        _webportforwarded  = false;
         _shutdownstarted   = false;
         _applicationdone   = false;
         _shutdownmachine   = false;
-        _backendready          = false;
+        _backendready      = false;
 
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
@@ -81,7 +84,8 @@ public class StateControl
     public boolean isBackendReady()             { return _backendready;    }
     public Map<String, String> getMachineEnv()  { return _machineenv;      }
 
-    public void signalPortsReady(boolean ready)        { _portsforwarded = ready; }
+    public void signalDbPortsReady(boolean ready)      { _dbportsforwarded = ready; }
+    public void signalWebPortReady(boolean web)        { _webportforwarded = web; }
     public void setMachineEnv(Map<String, String> env) { _machineenv = env; }
 
     public void setUsingMachine(boolean using)
@@ -103,7 +107,7 @@ public class StateControl
 
     public void signalContainersReady(boolean ready)
     {
-        boolean ok = (ready && _portsforwarded);
+        boolean ok = (ready && _dbportsforwarded);
         if (ok != _backendready) // the following should only occur on state change
         {
             if (ok)
@@ -114,6 +118,7 @@ public class StateControl
                 Messenger.sendEvent(MT.BACKEND_STATUS, Monitors.RUNNING);
             }
             Messenger.sendEvent(MT.BACKEND_READY, ok);
+            Messenger.sendEvent(MT.WEB_READY, _webportforwarded);
             mmonitor.poke();
             pmonitor.setPause(!ok);
             _backendready = ok;

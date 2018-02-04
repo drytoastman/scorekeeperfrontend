@@ -23,6 +23,7 @@ import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
+import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
@@ -73,7 +74,9 @@ public class TrayApplication
         trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
         trayIcon.setImageAutoSize(true);
 
-        Messenger.register(MT.BACKEND_READY, (type, data) -> trayIcon.setImage(((boolean)data) ? coneok : conewarn));
+        IconChoice ic = new IconChoice();
+        Messenger.register(MT.BACKEND_READY, ic);
+        Messenger.register(MT.WEB_READY, ic);
 
         try {
             SystemTray.getSystemTray().add(trayIcon);
@@ -83,6 +86,20 @@ public class TrayApplication
         }
 
         statuswindow.setVisible(true);
+    }
+
+
+    class IconChoice implements MessageListener
+    {
+        boolean backend = false;
+        boolean web = false;
+        @Override public void event(MT type, Object data) {
+            switch (type) {
+                case BACKEND_READY: backend = (boolean)data; break;
+                case WEB_READY: web = (boolean)data; break;
+            }
+            trayIcon.setImage(backend&&web ? coneok : conewarn);
+        }
     }
 
 

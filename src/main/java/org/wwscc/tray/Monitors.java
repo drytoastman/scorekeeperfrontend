@@ -113,7 +113,8 @@ public class Monitors
         {
             if (!DockerMachine.machinepresent())
             {
-                state.signalPortsReady(true);
+                state.signalDbPortsReady(true);
+                state.signalWebPortReady(true);
                 state.signalMachineReady(true);
                 state.setUsingMachine(false);
                 Messenger.sendEvent(MT.MACHINE_STATUS, NOTNEEDED);
@@ -184,7 +185,7 @@ public class Monitors
 
                 if ((portforward == null) || (!portforward.isConnected()))
                 {
-                    state.signalPortsReady(false);
+                    state.signalDbPortsReady(false);
                     Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding ports 6432,59432");
 
                     portforward = jsch.getSession("docker", machinehost);
@@ -194,13 +195,14 @@ public class Monitors
                     portforward.setPortForwardingL("*",        54329, "127.0.0.1", 54329);
                     portforward.setPortForwardingL("127.0.0.1", 6432, "127.0.0.1",  6432);
                     portforward.connect();
-                    state.signalPortsReady(true);
+                    state.signalDbPortsReady(true);
                 }
 
                 // This one is the most likely to be blocked by another service, separate it so everything
                 // else (i.e. database) can at least connect in the mean time
                 if ((port80forward == null) || (!port80forward.isConnected()))
                 {
+                    state.signalWebPortReady(false);
                     Messenger.sendEvent(MT.MACHINE_STATUS, "Forwarding port 80");
                     port80forward = jsch.getSession("docker", machinehost);
                     port80forward.setConfig("StrictHostKeyChecking", "no");
@@ -208,6 +210,7 @@ public class Monitors
                     port80forward.setConfig("PreferredAuthentications", "publickey");
                     port80forward.setPortForwardingL("*", 80, "127.0.0.1", 80);
                     port80forward.connect();
+                    state.signalWebPortReady(true);
                 }
             }
             catch (JSchException jse)
