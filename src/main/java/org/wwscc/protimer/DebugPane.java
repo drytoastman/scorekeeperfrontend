@@ -93,7 +93,7 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
         switch (type)
         {
             case SERIAL_GENERIC_DATA:
-                newText(new String((byte[])o), true);
+                newText((String)o, true);
                 break;
 
             case SENDING_SERIAL:

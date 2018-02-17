@@ -156,10 +156,13 @@ public class Prefs
     public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
     public static boolean useReorderingTable() { return prefs.getBoolean("reorderingtable", false); }
     public static int getLightCount() { return prefs.getInt("lights", 2); }
-    public static String getScannerConfig() { return prefs.get("scannerconfig", ""); }
     public static String getDefaultPrinter() { return prefs.get("defaultprinter", ""); }
     public static boolean usePaidFlag() { return prefs.getBoolean("paidflag", false); }
     public static boolean getAllowDiscovery() { return prefs.getBoolean("allowdiscovery", true); }
+
+    public static String getScannerConfig(String type) { return prefs.get("scannerconfig-"+type, ""); }
+    public static String getScannerInput() { return prefs.get("scannerinput", ""); }
+
     public static Rectangle getWindowBounds(String p)
     {
         Rectangle r = new Rectangle();
@@ -175,10 +178,13 @@ public class Prefs
     public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }
     public static void setReorderingTable(boolean b) { prefs.putBoolean("reorderingtable", b); }
     public static void setLightCount(int i) { prefs.putInt("lights", i); }
-    public static void setScannerConfig(String s) { prefs.put("scannerconfig", s); }
     public static void setDefaultPrinter(String s) { prefs.put("defaultprinter", s); }
     public static void setUsePaidFlag(boolean b) { prefs.putBoolean("paidflag", b); }
     public static void setAllowDiscovery(boolean b) { prefs.putBoolean("allowdiscovery", b); }
+
+    public static void setScannerConfig(String type, String s) { prefs.put("scannerconfig-"+type, s); }
+    public static void setScannerInput(String s) { prefs.put("scannerinput", s); }
+
     public static void setWindowBounds(String p, Rectangle r)
     {
         prefs.putInt(p + ".x", r.x);

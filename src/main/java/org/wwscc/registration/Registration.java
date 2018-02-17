@@ -9,7 +9,6 @@
 package org.wwscc.registration;
 
 import java.awt.BorderLayout;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.Set;
@@ -26,8 +25,8 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
-import org.wwscc.barcodes.BarcodeScannerOptionsAction;
-import org.wwscc.barcodes.BarcodeScannerWatcher;
+import org.wwscc.barcodes.BarcodeSetupMenu;
+import org.wwscc.barcodes.KeyboardBarcodeWatcher;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BrowserControl;
@@ -49,7 +48,9 @@ public class Registration extends JFrame
     {
         super("Registration");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
+
+        KeyboardBarcodeWatcher w = new KeyboardBarcodeWatcher();
+        w.start();
 
         setupBar = new SelectionBar();
         driverEntry = new EntryPanel();
@@ -70,9 +71,6 @@ public class Registration extends JFrame
         JMenu find = new JMenu("Find By...");
         find.add(new FindByAction("Membership", 'M'));
 
-        JMenu options = new JMenu("Options");
-        options.add(new BarcodeScannerOptionsAction());
-
         JMenu reports = new JMenu("Reports");
         reports.add(new OpenReportAction("Numbers Report", "numbers"));
         reports.add(new OpenReportAction("Payments Report", "payments"));
@@ -80,7 +78,7 @@ public class Registration extends JFrame
         JMenuBar bar = new JMenuBar();
         bar.add(file);
         bar.add(find);
-        bar.add(options);
+        bar.add(new BarcodeSetupMenu());
         bar.add(reports);
         setJMenuBar(bar);
 

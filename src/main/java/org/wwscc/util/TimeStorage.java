@@ -6,11 +6,10 @@
  * All rights reserved.
  */
 
-package org.wwscc.bwtimer;
+package org.wwscc.util;
 
 import javax.swing.ListModel;
 import org.wwscc.storage.Run;
-import org.wwscc.util.MessageListener;
 
 /**
  */

@@ -18,53 +18,53 @@ import net.miginfocom.swing.MigLayout;
  */
 public class PortDialog extends BaseDialog<String>
 {
-	//private static Logger log = Logger.getLogger(PortDialog.class.getCanonicalName());
+    //private static Logger log = Logger.getLogger(PortDialog.class.getCanonicalName());
 
-	/**
-	 * Create the dialog
-	 * @param def the default radio to select
-	 * @param available the radios to show as available
-	 * @param unavailable  the radios to show as not available
-	 */
+    /**
+     * Create the dialog
+     * @param def the default radio to select
+     * @param available the radios to show as available
+     * @param unavailable  the radios to show as not available
+     */
     public PortDialog(String def, Collection<String> available, Collection<String> unavailable)
-	{
-		super(new MigLayout(""), false);
+    {
+        super(new MigLayout(""), false);
 
-		ArrayList<String> ports = new ArrayList<String>();
-		ports.addAll(available);
-		ports.addAll(unavailable);
-		Collections.sort(ports);
+        ArrayList<String> ports = new ArrayList<String>();
+        ports.addAll(available);
+        ports.addAll(unavailable);
+        Collections.sort(ports);
 
-		for (String p : ports)
-		{
-			mainPanel.add(radio(p), "w 150!, gapleft 20, wrap");
-			if (unavailable.contains(p))
-				radioEnable(p, false);
-		}
+        for (String p : ports)
+        {
+            mainPanel.add(radio(p), "w 150!, gapleft 20, wrap");
+            if (unavailable.contains(p))
+                radioEnable(p, false);
+        }
 
-		result = null;
-		setSelectedRadio(def);
+        result = null;
+        setSelectedRadio(def);
     }
 
-	/**
-	 * Called after OK to verify data before closing.
-	 */ 
-	@Override
-	public boolean verifyData()
-	{
-		result = getSelectedRadio();
-		return (result != null);
-	}
+    /**
+     * Called after OK to verify data before closing.
+     */
+    @Override
+    public boolean verifyData()
+    {
+        result = getSelectedRadio();
+        return (result != null);
+    }
 
 
-	/**
-	 * Data is good, return it.
-	 */
-	@Override
-	public String getResult()
-	{
-		return result;
-	}
+    /**
+     * Data is good, return it.
+     */
+    @Override
+    public String getResult()
+    {
+        return result;
+    }
 }
 
 

@@ -22,7 +22,7 @@ import org.wwscc.timercomm.RunServiceInterface;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
-import org.wwscc.util.TimerTimestamp;
+import org.wwscc.util.TimeStorage;
 
 /**
  *

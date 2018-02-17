@@ -52,8 +52,6 @@ import javax.swing.event.ListSelectionListener;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.wwscc.bwtimer.TimeStorage;
-import org.wwscc.bwtimer.TimerModel;
 import org.wwscc.dialogs.SimpleFinderDialog;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.SerialDataInterface;
@@ -64,6 +62,8 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.NF;
+import org.wwscc.util.SerialPortUtil;
+import org.wwscc.util.TimeStorage;
 import org.wwscc.util.TimeTextField;
 
 
@@ -72,708 +72,690 @@ import org.wwscc.util.TimeTextField;
  */
 public class TimeEntry extends JPanel implements ActionListener, ListSelectionListener, ListDataListener, MessageListener, KeyListener
 {
-	private static final Logger log = Logger.getLogger(TimeEntry.class.getCanonicalName());
-	public static final int SEGMENTS = 5;
+    private static final Logger log = Logger.getLogger(TimeEntry.class.getCanonicalName());
+    public static final int SEGMENTS = 5;
 
-	/**
-	 * The timer input mode
-	 */
-	public enum Mode { 
-		/** manual input only  */    OFF,
-		/** serial line timers */    BASIC_SERIAL, 
-		/** bwtimer serial line */   BWTIMER_SERIAL, 
-		/** bwtimer over network */  BWTIMER_NETWORK, 
-		/** protimer over network */ PROTIMER_NETWORK 
-	};
+    /**
+     * The timer input mode
+     */
+    public enum Mode {
+        /** manual input only  */    OFF,
+        /** serial line timers */    BASIC_SERIAL,
+        /** bwtimer over network */  BWTIMER_NETWORK,
+        /** protimer over network */ PROTIMER_NETWORK
+    };
 
-	Mode mode;
-	TimerClient tclient;
-	String commPort;
-	JList<Run> timeList;
-	TimeStorage activeModel;
-	TimeStorage defaultModel;
-	TimeStorage course2Model;
+    Mode mode;
+    TimerClient tclient;
+    String commPortName;
+    SerialDataInterface commPort;
+    JList<Run> timeList;
+    TimeStorage activeModel;
+    TimeStorage defaultModel;
+    TimeStorage course2Model;
 
-	JLabel reactionLabel;
-	JLabel sixtyLabel;
-	TimeTextField reaction;
-	TimeTextField sixty;
-	TimeTextField time;
-	IntTextField cones;
-	IntTextField gates;
-	TimeTextField segVal[];
-	JLabel segLabel[];
-	JComboBox<String> status;
-	JLabel errorLabel;
+    JLabel reactionLabel;
+    JLabel sixtyLabel;
+    TimeTextField reaction;
+    TimeTextField sixty;
+    TimeTextField time;
+    IntTextField cones;
+    IntTextField gates;
+    TimeTextField segVal[];
+    JLabel segLabel[];
+    JComboBox<String> status;
+    JLabel errorLabel;
 
-	JButton del;
-	JButton enter;
+    JButton del;
+    JButton enter;
 
-	JLabel connectionStatus;
-	ModeButtonGroup modeGroup;
+    JLabel connectionStatus;
+    ModeButtonGroup modeGroup;
 
-	
-	/**
-	 * Special focus listener for cones and gates entry
-	 */
-	final static class SelectAllFocusListener implements FocusListener
-	{
-		@Override
-		public void focusGained(FocusEvent e) {
-			JTextField tf = (JTextField)e.getComponent();
-			tf.selectAll();
-		}
 
-		@Override
-		public void focusLost(FocusEvent e) {
-			JTextField tf = (JTextField)e.getComponent();
-			tf.select(0,0);
-		}
-	}
-	
-	/**
-	 * Create a new timer entry widget
-	 */
-	public TimeEntry() 
-	{
-		super();
-		Messenger.register(MT.TIMER_TAKES_FOCUS, this);
-		Messenger.register(MT.TIMER_SERVICE_CONNECTION, this);
-		Messenger.register(MT.OBJECT_DCLICKED, this);
-		Messenger.register(MT.EVENT_CHANGED, this);
-		Messenger.register(MT.COURSE_CHANGED, this);
-		Messenger.register(MT.TIME_ENTER_REQUEST, this);
+    /**
+     * Special focus listener for cones and gates entry
+     */
+    final static class SelectAllFocusListener implements FocusListener
+    {
+        @Override
+        public void focusGained(FocusEvent e) {
+            JTextField tf = (JTextField)e.getComponent();
+            tf.selectAll();
+        }
 
-		connectionStatus = new JLabel("");
-		modeGroup = new ModeButtonGroup();
-		
-		mode = Mode.OFF;
-		tclient = null;
-		commPort = null;
-		defaultModel = new SimpleTimeListModel(0);
-		course2Model = defaultModel;
-		activeModel = defaultModel;
-		activeModel.addListDataListener(this);
+        @Override
+        public void focusLost(FocusEvent e) {
+            JTextField tf = (JTextField)e.getComponent();
+            tf.select(0,0);
+        }
+    }
 
-		timeList = new JList<Run>(activeModel);
-		timeList.addListSelectionListener(this);
-		timeList.setCellRenderer(new RunListRenderer());
-		timeList.setFixedCellHeight(26);
+    /**
+     * Create a new timer entry widget
+     */
+    public TimeEntry()
+    {
+        super();
+        Messenger.register(MT.TIMER_TAKES_FOCUS, this);
+        Messenger.register(MT.TIMER_SERVICE_CONNECTION, this);
+        Messenger.register(MT.OBJECT_DCLICKED, this);
+        Messenger.register(MT.EVENT_CHANGED, this);
+        Messenger.register(MT.COURSE_CHANGED, this);
+        Messenger.register(MT.TIME_ENTER_REQUEST, this);
 
-		reactionLabel = new JLabel("Reac");
-		sixtyLabel = new JLabel("Sixty");
+        connectionStatus = new JLabel("");
+        modeGroup = new ModeButtonGroup();
 
-		reaction = new TimeTextField("", 6);
-		sixty = new TimeTextField("", 6);
-		segVal = new TimeTextField[SEGMENTS];
-		segLabel = new JLabel[SEGMENTS];
-		for (int ii = 0; ii < SEGMENTS; ii++)
-		{
-			segVal[ii] = new TimeTextField("", 6);
-			segLabel[ii] = new JLabel("Seg" + (ii+1));
-		}
-		time = new TimeTextField("", 6);
-		time.setToolTipText("Enter Time Here. Press c or g here to add cones or gates, shift+c/g to remove them");
-		cones = new IntTextField("0", 2);
-		gates = new IntTextField("0", 2);
+        mode = Mode.OFF;
+        tclient = null;
+        commPort = null;
+        defaultModel = new SimpleTimeListModel(0);
+        course2Model = defaultModel;
+        activeModel = defaultModel;
+        activeModel.addListDataListener(this);
 
-		cones.addFocusListener(new SelectAllFocusListener());
-		gates.addFocusListener(new SelectAllFocusListener());
+        timeList = new JList<Run>(activeModel);
+        timeList.addListSelectionListener(this);
+        timeList.setCellRenderer(new RunListRenderer());
+        timeList.setFixedCellHeight(26);
 
-		// set ` key as tab for mistypes in time/penalty fields
-		Set<AWTKeyStroke> s = new HashSet<AWTKeyStroke>(
-			time.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
-		s.add(AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_BACK_QUOTE, 0));
+        reactionLabel = new JLabel("Reac");
+        sixtyLabel = new JLabel("Sixty");
 
-		for (JComponent c : new JComponent[] { reaction, sixty, time, cones, gates })
-			c.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);
-		for (int ii = 0; ii < SEGMENTS; ii++)
-			segVal[ii].setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);
-		
-		registerKeyboardAction(
-			this,
-			"Enter Time",
-			KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-			JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-		);
-		
-		status = new JComboBox<String>(new String[] { "OK", "DNF", "DNS", "RL", "NS", "DSQ" });
-		enter = new JButton("Enter Time");
-		enter.addActionListener(this);
-		enter.setDefaultCapable(true);
-		del = new JButton("Delete From List");
-		del.setFont(new Font(null, Font.PLAIN, 11));
-		del.setMargin(new Insets(0,0,0,0));
-		del.addActionListener(this);
+        reaction = new TimeTextField("", 6);
+        sixty = new TimeTextField("", 6);
+        segVal = new TimeTextField[SEGMENTS];
+        segLabel = new JLabel[SEGMENTS];
+        for (int ii = 0; ii < SEGMENTS; ii++)
+        {
+            segVal[ii] = new TimeTextField("", 6);
+            segLabel[ii] = new JLabel("Seg" + (ii+1));
+        }
+        time = new TimeTextField("", 6);
+        time.setToolTipText("Enter Time Here. Press c or g here to add cones or gates, shift+c/g to remove them");
+        cones = new IntTextField("0", 2);
+        gates = new IntTextField("0", 2);
 
-		errorLabel = new JLabel("");
-		errorLabel.setForeground(Color.RED);
-		errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        cones.addFocusListener(new SelectAllFocusListener());
+        gates.addFocusListener(new SelectAllFocusListener());
 
-		JScrollPane scroll = new JScrollPane(timeList);
-		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		
-		setLayout(new MigLayout("ins 0 0 0 4, hidemode 3, fillx", "[al right, 50!][fill,grow]", ""));
-		add(connectionStatus, "spanx 2, al center, wrap");
-		add(del, "spanx 2, growx, wrap");
-		add(scroll, "spanx 2, growx, h 50:300:500, wrap");
-		add(reactionLabel, "");
-		add(reaction, "wrap");
-		add(sixtyLabel, "");
-		add(sixty, "wrap");
-		for (int ii = 0; ii < SEGMENTS; ii++)
-		{
-			add(segLabel[ii], "");
-			add(segVal[ii], "wrap");
-		}
-		add(new JLabel("Time"), "");
-		add(time, "wrap");
-		add(new JLabel("Cones"), "");
-		add(cones, "wrap");
-		add(new JLabel("Gates"), "");
-		add(gates, "wrap");
-		add(new JLabel("Status"), "");
-		add(status, "wrap");
-		add(enter, "spanx 2, growx, wrap");
-		add(errorLabel, "spanx 2, growx, growy 0, wrap");
-		add(new JLabel(""), "pushy 100");
+        // set ` key as tab for mistypes in time/penalty fields
+        Set<AWTKeyStroke> s = new HashSet<AWTKeyStroke>(
+            time.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+        s.add(AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_BACK_QUOTE, 0));
 
-		switchTimerMode(Mode.OFF);
-		
-		timeList.addKeyListener(this);
-		time.addKeyListener(this);
-		cones.addKeyListener(this);
-		gates.addKeyListener(this);
-		reaction.addKeyListener(this);
-		sixty.addKeyListener(this);
-		enter.addKeyListener(this);
-	}
-	/**
+        for (JComponent c : new JComponent[] { reaction, sixty, time, cones, gates })
+            c.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);
+        for (int ii = 0; ii < SEGMENTS; ii++)
+            segVal[ii].setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);
 
-	 * @return the default enter button for use by the application
-	 */
-	public JButton getEnterButton()
-	{
-		return enter;
-	}
-	
-	public void setError(String txt)
-	{
-	    errorLabel.setText("<html>"+txt+"</html>"); // force it to wrap
-	}
+        registerKeyboardAction(
+            this,
+            "Enter Time",
+            KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+        );
 
-	/**
-	 * Get the menu used for this timer
-	 * @return a JMenu for use by the application
-	 */
-	public JMenu getTimerMenu()
-	{
-		JMenu timerMenu = new JMenu("Timer");
-		for (Mode m : Mode.values())
-		{
-			JRadioButtonMenuItem bm = new JRadioButtonMenuItem();
-			bm.setActionCommand(m.name());
-			bm.addActionListener(this);
-			timerMenu.add(bm);
-			modeGroup.add(bm);
-			switch (m)
-			{
-				case OFF: bm.setText("Off"); break;
-				case BASIC_SERIAL: bm.setText("FarmTek/RaceAmerica/JACircuits"); break;
-				case BWTIMER_SERIAL: bm.setText("BWTimer Serial"); break;
-				case BWTIMER_NETWORK: bm.setText("BWTimer Network"); break;
-				case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
-			}
-		}
+        status = new JComboBox<String>(new String[] { "OK", "DNF", "DNS", "RL", "NS", "DSQ" });
+        enter = new JButton("Enter Time");
+        enter.addActionListener(this);
+        enter.setDefaultCapable(true);
+        del = new JButton("Delete From List");
+        del.setFont(new Font(null, Font.PLAIN, 11));
+        del.setMargin(new Insets(0,0,0,0));
+        del.addActionListener(this);
 
-		modeGroup.setSelected(Mode.OFF);
-		return timerMenu;
-	}
+        errorLabel = new JLabel("");
+        errorLabel.setForeground(Color.RED);
+        errorLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-	/**
-	 * Change the timer input mode for the this TimeEntry box
-	 * @param newMode the mode to switch to
-	 */
-	private void switchTimerMode(Mode newMode)
-	{
-		try
-		{
-			String newCommPort = "";
-			InetSocketAddress newAddr = null;
+        JScrollPane scroll = new JScrollPane(timeList);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-			/* First see if they can provide the necessary details */
-			switch (newMode)
-			{
-				case BASIC_SERIAL:
-					if ((newCommPort = SerialDataInterface.selectPort("BasicSerial")) == null)
-						throw new Exception("cancel");
-					break;
-				case BWTIMER_SERIAL:
-					if ((newCommPort = SerialDataInterface.selectPort("BWSerial")) == null)
-						throw new Exception("cancel");
-					break;
-				case BWTIMER_NETWORK:
-					SimpleFinderDialog dialog = new SimpleFinderDialog(Discovery.BWTIMER_TYPE);
-					dialog.doDialog("Find BW Timers", null);
-					if ((newAddr = dialog.getResult()) == null)
-						throw new Exception("cancel");
-					break;
-				case PROTIMER_NETWORK:					
-					SimpleFinderDialog dialog2 = new SimpleFinderDialog(Discovery.PROTIMER_TYPE);
-					dialog2.doDialog("Find Pro Timers", null);
-					if ((newAddr = dialog2.getResult()) == null)
-						throw new Exception("cancel");
-					break;
-			}
+        setLayout(new MigLayout("ins 0 0 0 4, hidemode 3, fillx", "[al right, 50!][fill,grow]", ""));
+        add(connectionStatus, "spanx 2, al center, wrap");
+        add(del, "spanx 2, growx, wrap");
+        add(scroll, "spanx 2, growx, h 50:300:500, wrap");
+        add(reactionLabel, "");
+        add(reaction, "wrap");
+        add(sixtyLabel, "");
+        add(sixty, "wrap");
+        for (int ii = 0; ii < SEGMENTS; ii++)
+        {
+            add(segLabel[ii], "");
+            add(segVal[ii], "wrap");
+        }
+        add(new JLabel("Time"), "");
+        add(time, "wrap");
+        add(new JLabel("Cones"), "");
+        add(cones, "wrap");
+        add(new JLabel("Gates"), "");
+        add(gates, "wrap");
+        add(new JLabel("Status"), "");
+        add(status, "wrap");
+        add(enter, "spanx 2, growx, wrap");
+        add(errorLabel, "spanx 2, growx, growy 0, wrap");
+        add(new JLabel(""), "pushy 100");
 
-			/* Turn current stuff off */
-			Messenger.unregisterAll(defaultModel);
-			Messenger.unregisterAll(course2Model);
-			switch (mode)
-			{
-				case BASIC_SERIAL:
-					SerialDataInterface.close(commPort);
-					commPort = null;
-					break;
-					
-				case BWTIMER_SERIAL:
-					SerialDataInterface.close(commPort);
-					commPort = null;
-					break;
+        switchTimerMode(Mode.OFF);
 
-				case BWTIMER_NETWORK:
-				case PROTIMER_NETWORK:
-					tclient.stop();
-					tclient = null;
-					break;
-			}
+        timeList.addKeyListener(this);
+        time.addKeyListener(this);
+        cones.addKeyListener(this);
+        gates.addKeyListener(this);
+        reaction.addKeyListener(this);
+        sixty.addKeyListener(this);
+        enter.addKeyListener(this);
+    }
+    /**
 
-			/* Reset switchable components */
-			for (int ii = 0; ii < SEGMENTS; ii++)
-			{
-				segVal[ii].setVisible(false);
-				segLabel[ii].setVisible(false);
-			}
+     * @return the default enter button for use by the application
+     */
+    public JButton getEnterButton()
+    {
+        return enter;
+    }
 
-			/* Now try and setup the new model */
-			switch (newMode)
-			{
-				case OFF:
-					break;
-					
-				case BASIC_SERIAL:
-					commPort = newCommPort;
-					SerialDataInterface.open(commPort);
-					defaultModel = new SimpleTimeListModel(0);
-					course2Model = defaultModel;
-					break;
+    public void setError(String txt)
+    {
+        errorLabel.setText("<html>"+txt+"</html>"); // force it to wrap
+    }
 
-				case BWTIMER_SERIAL:
-					commPort = newCommPort;
-					SerialDataInterface.open(commPort);
-					defaultModel = new TimerModel();
-					course2Model = defaultModel;
-					break;
+    /**
+     * Get the menu used for this timer
+     * @return a JMenu for use by the application
+     */
+    public JMenu getTimerMenu()
+    {
+        JMenu timerMenu = new JMenu("Timer");
+        for (Mode m : Mode.values())
+        {
+            JRadioButtonMenuItem bm = new JRadioButtonMenuItem();
+            bm.setActionCommand(m.name());
+            bm.addActionListener(this);
+            timerMenu.add(bm);
+            modeGroup.add(bm);
+            switch (m)
+            {
+                case OFF: bm.setText("Off"); break;
+                case BASIC_SERIAL: bm.setText("FarmTek/RaceAmerica/JACircuits"); break;
+                case BWTIMER_NETWORK: bm.setText("BWTimer Network"); break;
+                case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
+            }
+        }
 
-				case BWTIMER_NETWORK:
-					tclient = new TimerClient(newAddr);
-					tclient.start();
-					defaultModel = new SimpleTimeListModel(0);
-					course2Model = defaultModel;
-					break;
+        modeGroup.setSelected(Mode.OFF);
+        return timerMenu;
+    }
 
-				case PROTIMER_NETWORK:
-					tclient = new TimerClient(newAddr);
-					tclient.start();
-					defaultModel = new SimpleTimeListModel(1);
-					course2Model = new SimpleTimeListModel(2);
-					break;
-			}
+    /**
+     * Change the timer input mode for the this TimeEntry box
+     * @param newMode the mode to switch to
+     */
+    private void switchTimerMode(Mode newMode)
+    {
+        try
+        {
+            String newCommPort = "";
+            InetSocketAddress newAddr = null;
 
-			mode = newMode;
-			event(MT.COURSE_CHANGED, null);
-		}
-		catch (Exception ioe) // IOError, etc, warn and go to off mode
-		{
-			String msg = ioe.getMessage();
-			if ((msg != null) && !msg.equals("cancel"))
-			{
-				log.log(Level.WARNING, "\bTimer Select Failed ({0}), turning Off", ioe.getMessage());
-				mode = Mode.OFF;				
-			}
+            /* First see if they can provide the necessary details */
+            switch (newMode)
+            {
+                case BASIC_SERIAL:
+                    if ((newCommPort = SerialPortUtil.userPortSelection()) == null)
+                        throw new Exception("cancel");
+                    break;
+                case BWTIMER_NETWORK:
+                    SimpleFinderDialog dialog = new SimpleFinderDialog(Discovery.BWTIMER_TYPE);
+                    dialog.doDialog("Find BW Timers", null);
+                    if ((newAddr = dialog.getResult()) == null)
+                        throw new Exception("cancel");
+                    break;
+                case PROTIMER_NETWORK:
+                    SimpleFinderDialog dialog2 = new SimpleFinderDialog(Discovery.PROTIMER_TYPE);
+                    dialog2.doDialog("Find Pro Timers", null);
+                    if ((newAddr = dialog2.getResult()) == null)
+                        throw new Exception("cancel");
+                    break;
+            }
 
-			if (modeGroup != null)
-				modeGroup.setSelected(mode);  // Select off or previous mode if we canceled early.
-		}
+            /* Turn current stuff off */
+            Messenger.unregisterAll(defaultModel);
+            Messenger.unregisterAll(course2Model);
+            switch (mode)
+            {
+                case BASIC_SERIAL:
+                    commPort.close();
+                    commPort = null;
+                    break;
 
-		String msg = modeGroup.getSelected();
-		if ((msg == null) || msg.equals("") || msg.equals("Off"))
-		{
-			msg = "Not Connected";
-			connectionStatus.setForeground(Color.RED);
-		}
-		else
-			connectionStatus.setForeground(Color.BLACK);
-		connectionStatus.setText(msg);
-	}
+                case BWTIMER_NETWORK:
+                case PROTIMER_NETWORK:
+                    tclient.stop();
+                    tclient = null;
+                    break;
+            }
 
-	/**
-	 * Called when there is a request (button/program) to enter the current time/penalties
-	 */
-	private void enterTime()
-	{
-		String sStatus = (String)status.getSelectedItem();
-		double dTime = time.getTime();
+            /* Reset switchable components */
+            for (int ii = 0; ii < SEGMENTS; ii++)
+            {
+                segVal[ii].setVisible(false);
+                segLabel[ii].setVisible(false);
+            }
 
-		try
-		{
-			/* Beep and exit if status is OK and we don't have a time */
-			if (Double.isNaN(dTime) && sStatus.equals("OK"))
-				throw new IndexOutOfBoundsException("No time or status entered");
+            /* Now try and setup the new model */
+            switch (newMode)
+            {
+                case OFF:
+                    break;
 
-			/* Create a run from the text boxes and send */
-			Run val = new Run(dTime, cones.getInt(), gates.getInt(), sStatus);
-			
-			/* Only set other values if visible and seen by the user */
-			if (reaction.isVisible())
-				val.setReaction(reaction.getTime());
-			
-			if (sixty.isVisible())
-				val.setSixty(sixty.getTime());
-				
-			for (int ii = 0; ii < SEGMENTS; ii++) {
-				if (segVal[ii].isVisible()) {
-					val.setSegment(ii+1, segVal[ii].getTime());  // only set segments if they are visible
-				}
-			}
+                case BASIC_SERIAL:
+                    commPort = new SerialDataInterface(newCommPort);
+                    defaultModel = new SimpleTimeListModel(0);
+                    course2Model = defaultModel;
+                    break;
 
-			Messenger.sendEventNow(MT.TIME_ENTERED, val);
+                case BWTIMER_NETWORK:
+                    tclient = new TimerClient(newAddr);
+                    tclient.start();
+                    defaultModel = new SimpleTimeListModel(0);
+                    course2Model = defaultModel;
+                    break;
 
-			/* If everything progressed okay remove any times from the serial port
-				if they were selected and used, ... */
-			Object o = timeList.getSelectedValue();
-			if (o instanceof Run)
-			{
-				Run r = (Run)o;
-				if ((r != null) && (r.getRaw() == dTime))
-				{
-					activeModel.remove(timeList.getSelectedIndex());
-				}
-			}
-			/* ... select the next value if one exists */
-			selectNext(0);
-		}
-		catch (Exception e)
-		{
-			String msg = e.getMessage();
-			setError((msg != null)?msg : "Unknown error, see log trace");
-			log.log(Level.INFO, "Time entry failed: " + e.getMessage(), e);
+                case PROTIMER_NETWORK:
+                    tclient = new TimerClient(newAddr);
+                    tclient.start();
+                    defaultModel = new SimpleTimeListModel(1);
+                    course2Model = new SimpleTimeListModel(2);
+                    break;
+            }
+
+            mode = newMode;
+            event(MT.COURSE_CHANGED, null);
+        }
+        catch (Exception ioe) // IOError, etc, warn and go to off mode
+        {
+            String msg = ioe.getMessage();
+            if ((msg != null) && !msg.equals("cancel"))
+            {
+                log.log(Level.WARNING, "\bTimer Select Failed ({0}), turning Off", ioe.getMessage());
+                mode = Mode.OFF;
+            }
+
+            if (modeGroup != null)
+                modeGroup.setSelected(mode);  // Select off or previous mode if we canceled early.
+        }
+
+        String msg = modeGroup.getSelected();
+        if ((msg == null) || msg.equals("") || msg.equals("Off"))
+        {
+            msg = "Not Connected";
+            connectionStatus.setForeground(Color.RED);
+        }
+        else
+            connectionStatus.setForeground(Color.BLACK);
+        connectionStatus.setText(msg);
+    }
+
+    /**
+     * Called when there is a request (button/program) to enter the current time/penalties
+     */
+    private void enterTime()
+    {
+        String sStatus = (String)status.getSelectedItem();
+        double dTime = time.getTime();
+
+        try
+        {
+            /* Beep and exit if status is OK and we don't have a time */
+            if (Double.isNaN(dTime) && sStatus.equals("OK"))
+                throw new IndexOutOfBoundsException("No time or status entered");
+
+            /* Create a run from the text boxes and send */
+            Run val = new Run(dTime, cones.getInt(), gates.getInt(), sStatus);
+
+            /* Only set other values if visible and seen by the user */
+            if (reaction.isVisible())
+                val.setReaction(reaction.getTime());
+
+            if (sixty.isVisible())
+                val.setSixty(sixty.getTime());
+
+            for (int ii = 0; ii < SEGMENTS; ii++) {
+                if (segVal[ii].isVisible()) {
+                    val.setSegment(ii+1, segVal[ii].getTime());  // only set segments if they are visible
+                }
+            }
+
+            Messenger.sendEventNow(MT.TIME_ENTERED, val);
+
+            /* If everything progressed okay remove any times from the serial port
+                if they were selected and used, ... */
+            Object o = timeList.getSelectedValue();
+            if (o instanceof Run)
+            {
+                Run r = (Run)o;
+                if ((r != null) && (r.getRaw() == dTime))
+                {
+                    activeModel.remove(timeList.getSelectedIndex());
+                }
+            }
+            /* ... select the next value if one exists */
+            selectNext(0);
+        }
+        catch (Exception e)
+        {
+            String msg = e.getMessage();
+            setError((msg != null)?msg : "Unknown error, see log trace");
+            log.log(Level.INFO, "Time entry failed: " + e.getMessage(), e);
             Toolkit.getDefaultToolkit().beep();
-		}
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		String cmd = e.getActionCommand();
-		if (cmd.equals("Enter Time"))
-		{
-			enterTime();
-		}
-		else if (cmd.equals("Delete From List"))
-		{
-			int index = timeList.getSelectedIndex();
-			if (index >= 0)
-			{
-				activeModel.remove(index);
-				selectNext(index);
-			}
-		}
+        }
+    }
 
-		else
-		{
-			try {
-				switchTimerMode(Mode.valueOf(cmd));
-			} catch (IllegalArgumentException iae) {
-				log.log(Level.INFO, "Unknown command: {0}", cmd);
-			}
-		}
-	}
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        String cmd = e.getActionCommand();
+        if (cmd.equals("Enter Time"))
+        {
+            enterTime();
+        }
+        else if (cmd.equals("Delete From List"))
+        {
+            int index = timeList.getSelectedIndex();
+            if (index >= 0)
+            {
+                activeModel.remove(index);
+                selectNext(index);
+            }
+        }
 
-	/**
-	 * A new time came in via the connected timer
-	 * @param e only use the source of the list event data
-	 */
-	@Override
+        else
+        {
+            try {
+                switchTimerMode(Mode.valueOf(cmd));
+            } catch (IllegalArgumentException iae) {
+                log.log(Level.INFO, "Unknown command: {0}", cmd);
+            }
+        }
+    }
+
+    /**
+     * A new time came in via the connected timer
+     * @param e only use the source of the list event data
+     */
+    @Override
     public void intervalAdded(ListDataEvent e)
-	{
-		// Select first item if its brand new and we aren't editing another time
-		TimeStorage s = (TimeStorage)e.getSource();
-		if ((s.getFinishedCount() == 1) && (time.getText().equals("")))
-		{
-			Component compFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-			while (compFocusOwner != null)
-			{
-				if ((compFocusOwner instanceof TimeEntry) || (compFocusOwner instanceof RunsTable))
-				{
-					selectNext(0);  // only select and pull focus if users isn't 'focused' doing something else
-					break;
-				}
-				compFocusOwner = compFocusOwner.getParent();
-			}
-		}
-		
-		// regardless, note the last timer data as the announcer panel wants it
-		if (s.getFinishedCount() > 0) // should always be true but just in case
-		{
-		    Messenger.sendEvent(MT.TIME_RECEIVED, s.getRun(s.getFinishedCount()-1));
-		}
-	}
+    {
+        // Select first item if its brand new and we aren't editing another time
+        TimeStorage s = (TimeStorage)e.getSource();
+        if ((s.getFinishedCount() == 1) && (time.getText().equals("")))
+        {
+            Component compFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            while (compFocusOwner != null)
+            {
+                if ((compFocusOwner instanceof TimeEntry) || (compFocusOwner instanceof RunsTable))
+                {
+                    selectNext(0);  // only select and pull focus if users isn't 'focused' doing something else
+                    break;
+                }
+                compFocusOwner = compFocusOwner.getParent();
+            }
+        }
+
+        // regardless, note the last timer data as the announcer panel wants it
+        if (s.getFinishedCount() > 0) // should always be true but just in case
+        {
+            Messenger.sendEvent(MT.TIME_RECEIVED, s.getRun(s.getFinishedCount()-1));
+        }
+    }
 
 
-	@Override
+    @Override
     public void intervalRemoved(ListDataEvent e) {}
-	@Override
+    @Override
     public void contentsChanged(ListDataEvent e) {}
 
-	
-	/**
-	 * Reset the selection in the index list, taking into account list size
-	 * @param index 
-	 */
-	protected void selectNext(int index)
-	{
-		int size = activeModel.getFinishedCount();
-		if (size > 0)
-		{
-			timeList.clearSelection();
-			timeList.setSelectedIndex(0);
 
-			if (index >= size)
-				timeList.setSelectedIndex(size-1);
-			else
-				timeList.setSelectedIndex(index);
-		}
-		else
-		{
-			clearValues();
-		}
-	}
+    /**
+     * Reset the selection in the index list, taking into account list size
+     * @param index
+     */
+    protected void selectNext(int index)
+    {
+        int size = activeModel.getFinishedCount();
+        if (size > 0)
+        {
+            timeList.clearSelection();
+            timeList.setSelectedIndex(0);
 
-	
-	/**
-	 * Clear the values in all of the available entry boxes
-	 */
-	protected void clearValues()
-	{
-		reaction.setTime(0);
-		sixty.setTime(0);
-		for (int ii = 0; ii < SEGMENTS; ii++)
-			segVal[ii].setTime(0);
-		time.setText("");
-		cones.setInt(0);
-		gates.setInt(0);
-		status.setSelectedIndex(0);
-		setError("");
-	}
+            if (index >= size)
+                timeList.setSelectedIndex(size-1);
+            else
+                timeList.setSelectedIndex(index);
+        }
+        else
+        {
+            clearValues();
+        }
+    }
 
 
-	/**
-	 * Set all the values in all of the available entry boxes
-	 * @param r the Run to take the values from
-	 */
-	protected void setValues(Run r)
-	{
-		clearValues();
-		reaction.setTime(r.getReaction());
-		sixty.setTime(r.getSixty());
-		for (int ii = 0; ii < SEGMENTS; ii++)
-		{
-			double d = r.getSegment(ii+1);
-			if (d > 0)
-			{
-				segVal[ii].setVisible(true);
-				segLabel[ii].setVisible(true);
-			}
-			segVal[ii].setTime(d);
-		}
-		time.setTime(r.getRaw());
-		cones.setInt(r.getCones());
-		gates.setInt(r.getGates());
-		status.setSelectedItem(r.getStatus());
-		setError("");
-	}
+    /**
+     * Clear the values in all of the available entry boxes
+     */
+    protected void clearValues()
+    {
+        reaction.setTime(0);
+        sixty.setTime(0);
+        for (int ii = 0; ii < SEGMENTS; ii++)
+            segVal[ii].setTime(0);
+        time.setText("");
+        cones.setInt(0);
+        gates.setInt(0);
+        status.setSelectedIndex(0);
+        setError("");
+    }
 
 
-	@Override
-	public void valueChanged(ListSelectionEvent e) 
-	{
-		if (!e.getValueIsAdjusting() && (e.getSource() == timeList))
-		{
-			Object o = timeList.getSelectedValue();
-			if (o instanceof Run)
-			{
-				setValues((Run)o);
-				cones.requestFocusInWindow();
-			}
-			else if (o != null)  // null is passed in in some instances, do not clear values
-			{
-				clearValues();
-			}
-		}
-	}
+    /**
+     * Set all the values in all of the available entry boxes
+     * @param r the Run to take the values from
+     */
+    protected void setValues(Run r)
+    {
+        clearValues();
+        reaction.setTime(r.getReaction());
+        sixty.setTime(r.getSixty());
+        for (int ii = 0; ii < SEGMENTS; ii++)
+        {
+            double d = r.getSegment(ii+1);
+            if (d > 0)
+            {
+                segVal[ii].setVisible(true);
+                segLabel[ii].setVisible(true);
+            }
+            segVal[ii].setTime(d);
+        }
+        time.setTime(r.getRaw());
+        cones.setInt(r.getCones());
+        gates.setInt(r.getGates());
+        status.setSelectedItem(r.getStatus());
+        setError("");
+    }
 
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-			case OBJECT_DCLICKED:
-				if (o instanceof Run)
-				{
-					timeList.clearSelection();
-					setValues((Run)o);
-					time.requestFocusInWindow();
-					time.selectAll();
-				}
-				else if (o == null)
-				{
-					timeList.clearSelection();
-					time.requestFocusInWindow();
-					clearValues();
-				}
-				break;
-				
-			case EVENT_CHANGED:
-				if (DataEntry.state.getCurrentEvent().isPro())
-				{
-					reaction.setVisible(true);
-					reactionLabel.setVisible(true);
-					sixty.setVisible(true);
-					sixtyLabel.setVisible(true);
-				}
-				else
-				{
-					reaction.setVisible(false);
-					reactionLabel.setVisible(false);
-					sixty.setVisible(false);
-					sixtyLabel.setVisible(false);
-				}
-				break;
 
-			case COURSE_CHANGED:
-				if (activeModel != null)
-					activeModel.removeListDataListener(this);
-				if (DataEntry.state.getCurrentCourse() == 2)
-					activeModel = course2Model;
-				else
-					activeModel = defaultModel;
-				activeModel.addListDataListener(this);
-				timeList.setModel(activeModel);
-				break;
+    @Override
+    public void valueChanged(ListSelectionEvent e)
+    {
+        if (!e.getValueIsAdjusting() && (e.getSource() == timeList))
+        {
+            Object o = timeList.getSelectedValue();
+            if (o instanceof Run)
+            {
+                setValues((Run)o);
+                cones.requestFocusInWindow();
+            }
+            else if (o != null)  // null is passed in in some instances, do not clear values
+            {
+                clearValues();
+            }
+        }
+    }
 
-			case TIMER_SERVICE_CONNECTION:
-				Object[] a = (Object[])o;
-				if ((a[0] == tclient) && (!(Boolean)a[1]))
-				{
-					connectionStatus.setForeground(Color.RED);
-					connectionStatus.setText("Not Connected");
-				}
-				break;
-				
-			case TIME_ENTER_REQUEST:
-				enterTime();
-				break;
-		}
-	}
-	
-	@Override
-	public void keyTyped(KeyEvent e)
-	{
-		Object o = e.getSource();
-		if(o instanceof JTextField || o == enter || o == timeList)
-		{
-			int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
-			
-			switch(e.getKeyChar())
-			{
-				case 'c':
-				case 'C':
-					cones.setText(Integer.toString(cones.getInt() + increment));
-					e.consume();
-					break;
-				case 'g':
-				case 'G':
-					gates.setText(Integer.toString(gates.getInt() + increment));
-					e.consume();
-					break;
-			}
-		}
-	}
-	@Override
-	public void keyPressed(KeyEvent e) { /* do nothing */ }
-	@Override
-	public void keyReleased(KeyEvent e) { /* do nothing */ }
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case OBJECT_DCLICKED:
+                if (o instanceof Run)
+                {
+                    timeList.clearSelection();
+                    setValues((Run)o);
+                    time.requestFocusInWindow();
+                    time.selectAll();
+                }
+                else if (o == null)
+                {
+                    timeList.clearSelection();
+                    time.requestFocusInWindow();
+                    clearValues();
+                }
+                break;
+
+            case EVENT_CHANGED:
+                if (DataEntry.state.getCurrentEvent().isPro())
+                {
+                    reaction.setVisible(true);
+                    reactionLabel.setVisible(true);
+                    sixty.setVisible(true);
+                    sixtyLabel.setVisible(true);
+                }
+                else
+                {
+                    reaction.setVisible(false);
+                    reactionLabel.setVisible(false);
+                    sixty.setVisible(false);
+                    sixtyLabel.setVisible(false);
+                }
+                break;
+
+            case COURSE_CHANGED:
+                if (activeModel != null)
+                    activeModel.removeListDataListener(this);
+                if (DataEntry.state.getCurrentCourse() == 2)
+                    activeModel = course2Model;
+                else
+                    activeModel = defaultModel;
+                activeModel.addListDataListener(this);
+                timeList.setModel(activeModel);
+                break;
+
+            case TIMER_SERVICE_CONNECTION:
+                Object[] a = (Object[])o;
+                if ((a[0] == tclient) && (!(Boolean)a[1]))
+                {
+                    connectionStatus.setForeground(Color.RED);
+                    connectionStatus.setText("Not Connected");
+                }
+                break;
+
+            case TIME_ENTER_REQUEST:
+                enterTime();
+                break;
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e)
+    {
+        Object o = e.getSource();
+        if(o instanceof JTextField || o == enter || o == timeList)
+        {
+            int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
+
+            switch(e.getKeyChar())
+            {
+                case 'c':
+                case 'C':
+                    cones.setText(Integer.toString(cones.getInt() + increment));
+                    e.consume();
+                    break;
+                case 'g':
+                case 'G':
+                    gates.setText(Integer.toString(gates.getInt() + increment));
+                    e.consume();
+                    break;
+            }
+        }
+    }
+    @Override
+    public void keyPressed(KeyEvent e) { /* do nothing */ }
+    @Override
+    public void keyReleased(KeyEvent e) { /* do nothing */ }
 }
 
 
 class ModeButtonGroup extends ButtonGroup
 {
-	public void setSelected(TimeEntry.Mode m)
-	{
-		for (AbstractButton b : buttons)
-		{
-			if (b.getActionCommand().equals(m.name()))
-			{
-				setSelected(b.getModel(), true);
-				break;
-			}
-		}
-	}
+    public void setSelected(TimeEntry.Mode m)
+    {
+        for (AbstractButton b : buttons)
+        {
+            if (b.getActionCommand().equals(m.name()))
+            {
+                setSelected(b.getModel(), true);
+                break;
+            }
+        }
+    }
 
-	public String getSelected()
-	{
-		ButtonModel m = getSelection();
-		for (AbstractButton b : buttons)
-		{
-			if (b.getModel() == m)
-			{
-				return b.getText();
-			}
-		}
-		return null;
-	}
+    public String getSelected()
+    {
+        ButtonModel m = getSelection();
+        for (AbstractButton b : buttons)
+        {
+            if (b.getModel() == m)
+            {
+                return b.getText();
+            }
+        }
+        return null;
+    }
 }
 
 
 class RunListRenderer extends DefaultListCellRenderer
 {
-	protected Font font;
+    protected Font font;
 
-	public RunListRenderer()
-	{
-		font = new Font("sansserif", Font.PLAIN, 22);
-	}
+    public RunListRenderer()
+    {
+        font = new Font("sansserif", Font.PLAIN, 22);
+    }
 
-	@Override
-	public Component getListCellRendererComponent(JList<?> l, Object o, int i, boolean is, boolean f) 
-	{
-		super.getListCellRendererComponent(l, o, i, is, f);
+    @Override
+    public Component getListCellRendererComponent(JList<?> l, Object o, int i, boolean is, boolean f)
+    {
+        super.getListCellRendererComponent(l, o, i, is, f);
 
-		if (o instanceof Run)
-		{
-			Run r = (Run)o;
-			setText(NF.format(r.getRaw()));
-		}
-		else if (o instanceof Double)
-		{
-			setText(NF.format((Double)o));
-		}
+        if (o instanceof Run)
+        {
+            Run r = (Run)o;
+            setText(NF.format(r.getRaw()));
+        }
+        else if (o instanceof Double)
+        {
+            setText(NF.format((Double)o));
+        }
 
-		setFont(font);
-		return this;
-	}
+        setFont(font);
+        return this;
+    }
 }
 
 

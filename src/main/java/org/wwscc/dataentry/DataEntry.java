@@ -9,7 +9,6 @@
 package org.wwscc.dataentry;
 
 import java.awt.Dimension;
-import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
@@ -21,7 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import net.miginfocom.swing.MigLayout;
-import org.wwscc.barcodes.BarcodeScannerWatcher;
+import org.wwscc.barcodes.SerialPortBarcodeWatcher;
 import org.wwscc.components.MyIpLabel;
 import org.wwscc.dataentry.tables.DoubleTableContainer;
 import org.wwscc.storage.Database;
@@ -85,7 +84,9 @@ public class DataEntry extends JFrame implements MessageListener
     {
         super("DataEntry");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new BarcodeScannerWatcher());
+
+        SerialPortBarcodeWatcher w = new SerialPortBarcodeWatcher("COM3");
+        w.start();
 
         menus = new Menus();
         setJMenuBar(menus);

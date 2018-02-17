@@ -10,10 +10,11 @@ package org.wwscc.dataentry;
 
 import java.util.Vector;
 import javax.swing.AbstractListModel;
-import org.wwscc.bwtimer.TimeStorage;
+
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.TimeStorage;
 
 /**
  *
