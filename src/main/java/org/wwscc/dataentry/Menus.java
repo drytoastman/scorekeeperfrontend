@@ -28,7 +28,6 @@ import javax.swing.KeyStroke;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.actions.QuitAction;
-import org.wwscc.barcodes.BarcodeSetupMenu;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.GroupDialog;
 import org.wwscc.storage.Database;
@@ -107,8 +106,6 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         results.add(audit);
         results.add(createItem("Results Page", null));
         results.add(createItem("Admin Page", null));
-
-        add(new BarcodeSetupMenu());
     }
 
     protected final JMenuItem createItem(String title, KeyStroke ks)

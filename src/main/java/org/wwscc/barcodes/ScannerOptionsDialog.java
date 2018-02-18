@@ -29,6 +29,7 @@ public class ScannerOptionsDialog extends BaseDialog<ScannerConfig>
     {
         super(new MigLayout(""), true);
 
+        result = config;
         mainPanel.add(label("Start Character", true), "");
         mainPanel.add(select("stx", soptions.get(smatches.indexOf(config.stx)), soptions, null), "growx, wrap");
         mainPanel.add(label("End Character", true), "");
@@ -49,7 +50,6 @@ public class ScannerOptionsDialog extends BaseDialog<ScannerConfig>
     @Override
     public ScannerConfig getResult()
     {
-        result = new ScannerConfig();
         result.stx = smatches.get(soptions.indexOf(getSelect("stx")));
         result.etx = ematches.get(eoptions.indexOf(getSelect("etx")));
         result.delay = getEntryInt("delay");

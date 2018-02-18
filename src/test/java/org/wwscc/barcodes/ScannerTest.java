@@ -33,7 +33,8 @@ public class ScannerTest {
     public static void init() {
         AppSetup.unitLogging();
         Prefs.setTestMode();
-        Prefs.setScannerConfig("keyboard", new ScannerConfig(start, end, 200).encode());
+        Prefs.setScannerConfig(KeyboardBarcodeWatcher.TYPE, ScannerConfig.defaultFor(KeyboardBarcodeWatcher.TYPE).encode());
+        Prefs.setScannerConfig(SerialPortBarcodeWatcher.TYPE, ScannerConfig.defaultFor(SerialPortBarcodeWatcher.TYPE).encode());
         Messenger.setTestMode();
         Messenger.register(MT.BARCODE_SCANNED, listener);
     }

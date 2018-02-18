@@ -79,7 +79,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         add(seriesLabel, "gapright 20");
 
         add(createLabel("Event:", f), "");
-        add(eventSelect, "gapright 20");
+        add(eventSelect, "gapright 10");
 
         add(createLabel("Course:", f));
         add(courseSelect, "gapright 10");
@@ -93,7 +93,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         add(new JLabel(""), "growx 100, pushx 100");
 
         add(refreshButton, "");
-        add(resultsButton, "gapright 20");
+        add(resultsButton, "gapright 10");
     }
 
 

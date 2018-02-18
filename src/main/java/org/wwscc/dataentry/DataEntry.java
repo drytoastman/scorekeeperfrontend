@@ -20,7 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import net.miginfocom.swing.MigLayout;
-import org.wwscc.barcodes.SerialPortBarcodeWatcher;
+
+import org.wwscc.barcodes.BarcodeController;
 import org.wwscc.components.MyIpLabel;
 import org.wwscc.dataentry.tables.DoubleTableContainer;
 import org.wwscc.storage.Database;
@@ -85,9 +86,6 @@ public class DataEntry extends JFrame implements MessageListener
         super("DataEntry");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        SerialPortBarcodeWatcher w = new SerialPortBarcodeWatcher("COM3");
-        w.start();
-
         menus = new Menus();
         setJMenuBar(menus);
 
@@ -106,6 +104,7 @@ public class DataEntry extends JFrame implements MessageListener
 
         DoubleTableContainer tableScroll = new DoubleTableContainer();
         timeEntry = new TimeEntry();
+        menus.add(new BarcodeController());
         menus.add(timeEntry.getTimerMenu());
 
         HelpPanel help = new HelpPanel();

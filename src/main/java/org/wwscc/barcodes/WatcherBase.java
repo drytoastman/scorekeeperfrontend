@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2012 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
  * All rights reserved.
  */
 package org.wwscc.barcodes;
@@ -76,7 +76,8 @@ public abstract class WatcherBase
      */
     private void applyConfig()
     {
-        config = new ScannerConfig(Prefs.getScannerConfig(inputtype));
+        config = ScannerConfig.defaultFor(inputtype);
+        config.decode(Prefs.getScannerConfig(inputtype));
         queuePush.setInitialDelay(config.delay);
         queuePush.setDelay(config.delay);
     }

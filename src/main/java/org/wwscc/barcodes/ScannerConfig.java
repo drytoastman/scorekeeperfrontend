@@ -1,6 +1,9 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * This software is licensed under the GPLv3 license, included
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
  */
 package org.wwscc.barcodes;
 
@@ -15,24 +18,18 @@ public class ScannerConfig
     char etx;
     int delay;
 
-    public ScannerConfig()
-    {
-        stx = '\002';
-        etx = '\003';
-        delay = 100;
-    }
-
-    public ScannerConfig(char s, char e, int d)
+    private ScannerConfig(char s, char e, int d)
     {
         stx = s;
         etx = e;
         delay = d;
     }
 
-    public ScannerConfig(String s)
+    public static ScannerConfig defaultFor(String type)
     {
-        this();
-        decode(s);
+        if (type == SerialPortBarcodeWatcher.TYPE)
+            return new ScannerConfig('\uFFFF', '\r', 100);
+        return new ScannerConfig('\002', '\003', 100);
     }
 
     public String encode()

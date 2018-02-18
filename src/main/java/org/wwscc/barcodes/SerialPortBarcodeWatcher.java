@@ -16,6 +16,7 @@ import gnu.io.SerialPortEventListener;
  */
 public class SerialPortBarcodeWatcher extends WatcherBase implements SerialPortEventListener
 {
+    public static final String TYPE = "SerialPort";
     private static final Logger log = Logger.getLogger(SerialPortBarcodeWatcher.class.getCanonicalName());
     private static JLabel dummy = new JLabel();
     protected String portName;
@@ -23,7 +24,7 @@ public class SerialPortBarcodeWatcher extends WatcherBase implements SerialPortE
 
     public SerialPortBarcodeWatcher(String portName)
     {
-        super("serial");
+        super(TYPE);
         this.portName = portName;
     }
 

@@ -35,7 +35,8 @@ public class SerialPortUtil
 
         if (a.isEmpty())
         {
-            log.info("There are no available serial ports to open");
+            log.warning("\bThere are no available serial ports to open");
+            return null;
         }
 
         PortDialog d = new PortDialog("", a, u);

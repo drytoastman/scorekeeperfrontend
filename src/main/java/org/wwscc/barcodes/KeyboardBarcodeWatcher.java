@@ -9,9 +9,11 @@ import java.awt.event.KeyEvent;
  */
 public class KeyboardBarcodeWatcher extends WatcherBase implements KeyEventDispatcher
 {
+    public static final String TYPE = "Keyboard";
+
     public KeyboardBarcodeWatcher()
     {
-        super("keyboard");
+        super(TYPE);
     }
 
     public void start()

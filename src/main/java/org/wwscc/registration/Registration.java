@@ -25,8 +25,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.QuitAction;
-import org.wwscc.barcodes.BarcodeSetupMenu;
-import org.wwscc.barcodes.KeyboardBarcodeWatcher;
+import org.wwscc.barcodes.BarcodeController;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BrowserControl;
@@ -48,9 +47,6 @@ public class Registration extends JFrame
     {
         super("Registration");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        KeyboardBarcodeWatcher w = new KeyboardBarcodeWatcher();
-        w.start();
 
         setupBar = new SelectionBar();
         driverEntry = new EntryPanel();
@@ -78,7 +74,7 @@ public class Registration extends JFrame
         JMenuBar bar = new JMenuBar();
         bar.add(file);
         bar.add(find);
-        bar.add(new BarcodeSetupMenu());
+        bar.add(new BarcodeController());
         bar.add(reports);
         setJMenuBar(bar);
 
