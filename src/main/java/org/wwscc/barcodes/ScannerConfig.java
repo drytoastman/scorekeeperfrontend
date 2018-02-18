@@ -28,8 +28,8 @@ public class ScannerConfig
     public static ScannerConfig defaultFor(String type)
     {
         if (type == SerialPortBarcodeWatcher.TYPE)
-            return new ScannerConfig('\uFFFF', '\r', 100);
-        return new ScannerConfig('\002', '\003', 100);
+            return new ScannerConfig('\uFFFF', '\r', 200);
+        return new ScannerConfig('\002', '\003', 200);
     }
 
     public String encode()
