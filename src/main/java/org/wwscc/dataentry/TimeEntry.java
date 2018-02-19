@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2008,2009 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
  * All rights reserved.
  */
 
@@ -54,7 +54,6 @@ import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.dialogs.SimpleFinderDialog;
 import org.wwscc.storage.Run;
-import org.wwscc.timercomm.SerialDataInterface;
 import org.wwscc.timercomm.TimerClient;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.IntTextField;
@@ -63,6 +62,7 @@ import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.NF;
 import org.wwscc.util.SerialPortUtil;
+import org.wwscc.util.SerialPortUtil.LineBasedSerialPort;
 import org.wwscc.util.TimeStorage;
 import org.wwscc.util.TimeTextField;
 
@@ -88,7 +88,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
     Mode mode;
     TimerClient tclient;
     String commPortName;
-    SerialDataInterface commPort;
+    LineBasedSerialPort commPort;
     JList<Run> timeList;
     TimeStorage activeModel;
     TimeStorage defaultModel;
@@ -214,7 +214,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        setLayout(new MigLayout("ins 0 0 0 4, hidemode 3, fillx", "[al right, 50!][fill,grow]", ""));
+        setLayout(new MigLayout("ins 0, gap 0 2, hidemode 3, fillx", "[al right, 50!]4[fill,grow, 90!]", ""));
         add(connectionStatus, "spanx 2, al center, wrap");
         add(del, "spanx 2, growx, wrap");
         add(scroll, "spanx 2, growx, h 50:300:500, wrap");
@@ -235,7 +235,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         add(gates, "wrap");
         add(new JLabel("Status"), "");
         add(status, "wrap");
-        add(enter, "spanx 2, growx, wrap");
+        add(enter, "spanx 2, growx, gaptop 5, wrap");
         add(errorLabel, "spanx 2, growx, growy 0, wrap");
         add(new JLabel(""), "pushy 100");
 
@@ -280,7 +280,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
             switch (m)
             {
                 case OFF: bm.setText("Off"); break;
-                case BASIC_SERIAL: bm.setText("FarmTek/RaceAmerica/JACircuits"); break;
+                case BASIC_SERIAL: bm.setText("FarmTek / RaceAmerica / JACircuits"); break;
                 case BWTIMER_NETWORK: bm.setText("BWTimer Network"); break;
                 case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
             }
@@ -353,7 +353,12 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
                     break;
 
                 case BASIC_SERIAL:
-                    commPort = new SerialDataInterface(newCommPort);
+                    commPort = new LineBasedSerialPort(newCommPort, buf -> {
+                            // Common serial format is [0x80, ms, ms, ms, s ... ]
+                            if (((int)buf[0] & 0xFF) != 0x80) return;
+                            String strtime = new StringBuilder(new String(buf, 1, buf.length-1)).reverse().toString();
+                            Messenger.sendEvent(MT.SERIAL_TIMER_DATA, new Run(Double.valueOf(strtime) / 1000));
+                        });
                     defaultModel = new SimpleTimeListModel(0);
                     course2Model = defaultModel;
                     break;

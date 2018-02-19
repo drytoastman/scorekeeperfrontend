@@ -69,7 +69,6 @@ public enum MT {
 
     // Serial Timer Input
     SERIAL_TIMER_DATA,
-    SERIAL_TIMESTAMP,
     SERIAL_GENERIC_DATA,
     SERIAL_PORT_OPEN,
     SERIAL_PORT_CLOSED,

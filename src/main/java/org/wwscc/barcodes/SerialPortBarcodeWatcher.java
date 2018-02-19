@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.barcodes;
 
 import java.awt.event.KeyEvent;
@@ -6,7 +14,8 @@ import java.util.logging.Logger;
 
 import javax.swing.JLabel;
 
-import gnu.io.CommPortIdentifier;
+import org.wwscc.util.SerialPortUtil;
+
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
@@ -32,13 +41,9 @@ public class SerialPortBarcodeWatcher extends WatcherBase implements SerialPortE
     public void start()
     {
         try {
-            port = CommPortIdentifier.getPortIdentifier(portName).open("BarcodeInterface-"+portName, 4000);
-            port.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-            port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
-            port.addEventListener(this);
-            port.notifyOnDataAvailable(true);
+            port = SerialPortUtil.openPort(portName, this);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.log(Level.WARNING, "\bFailed to open serial port: " + e, e);
         }
     }
 

@@ -8,20 +8,19 @@
 
 package org.wwscc.protimer;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.wwscc.storage.LeftRightDialin;
-import org.wwscc.timercomm.SerialDataInterface;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.SerialPortUtil.LineBasedSerialPort;
 
 
 public class TimingInterface implements MessageListener
 {
     private static Logger log = Logger.getLogger(TimingInterface.class.getCanonicalName());
-    SerialDataInterface serial;
+    LineBasedSerialPort serial;
 
     public TimingInterface()
     {
@@ -54,12 +53,10 @@ public class TimingInterface implements MessageListener
     public void openPort(String port)
     {
         if (serial != null) {
-            try {
-                serial.close();
-            } catch (IOException ioe) {}
+            serial.close();
         }
         try {
-            serial = new SerialDataInterface(port);
+            serial = new LineBasedSerialPort(port, buf -> Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, new String(buf)));
         } catch (Exception e) {
             log.log(Level.WARNING, "\bUnable to open " + port + ": " + e, e);
         }
