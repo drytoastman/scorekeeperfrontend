@@ -13,7 +13,9 @@ accidental event selection does not occur during registration activity.
 
 ## Standard Actions
 
-1. Either enter part of the first and/or last name OR scan the driver's barcode.  More name information produces a shorter list of drivers in the next step.
+1. Do one of the following:
+    * enter part of the first and/or last name, more name information produces a shorter list of drivers in the next step
+    * scan the driver's barcode to go directly to the driver's information
 
 ![SearchBox](images/regsearch.png)
 
