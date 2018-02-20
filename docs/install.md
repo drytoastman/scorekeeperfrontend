@@ -12,7 +12,7 @@
     * The installer may foward you to websites to install Java 8 and/or Docker-Toolbox if they are not present already
     * This version has to run a virtual machine which takes about 60 seconds to startup the first time after logging in
 
-## Installing on 64bit Linux, OS X
+## Installing on 64bit Linux or Mac OS X
 There is no installer at this point so you need to do a few things manually
 1. Verify that the above requirements for Docker and Java based on your OS distribution
     * For Docker see the Community Edition at <https://docs.docker.com/engine/installation/>
@@ -35,7 +35,7 @@ There is no installer at this point so you need to do a few things manually
 1. Starting and stopping the TrayApplication should be quick as the containers are quick to start and stop
 1. The only long delay is on Windows when restarting the virtual machine after a reboot or logoff
 
-![ContextMenu](images/startingvm.png)
+    ![ContextMenu](images/startingvm.png)
 
 3. All Scorekeeper applications should be started from the tray menu or status window menu
 3. If the TrayApplication isn't running, the database is 99% most likely not running so applications will not work anyhow

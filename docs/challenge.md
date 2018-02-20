@@ -1,5 +1,7 @@
 # Challenge
 
+!! **THIS IS SOMEWHAT DATED, NEEDS TO BE UPDATED** !!
+
 ## Initial Setup
 
 Open the challenge GUI. Open the correct series if not already selected. Select the appropriate

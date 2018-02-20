@@ -14,15 +14,15 @@ accidental event selection does not occur during registration activity.
 ## Standard Actions
 
 1. Do one of the following:
-    * enter part of the first and/or last name, more name information produces a shorter list of drivers in the next step
     * scan the driver's barcode to go directly to the driver's information
+    * enter part of the first and/or last name, more name information produces a shorter list of drivers in the next step
 
-![SearchBox](images/regsearch.png)
+    ![SearchBox](images/regsearch.png)
 
-2. Select the driver from the list of drivers.  
+2. If not scanning a barcode, select the driver from the list of drivers
     * If the name is not present, you must click New Driver to create a new driver entry 
 
-![DriverEntry](images/regdriver.png)
+    ![DriverEntry](images/regdriver.png)
 
 3. You can **Edit Driver** to update the member information
     * The membership number is important if you intend to use barcode scanning 
@@ -46,7 +46,7 @@ accidental event selection does not occur during registration activity.
     * Entries that have a paid amount of $0.00 can be flagged in data entry
     * The list of payments for a car are listed on the right panel
 
-![CarEntry](images/regcars.png)
+    ![CarEntry](images/regcars.png)
 
 ## Reports
 

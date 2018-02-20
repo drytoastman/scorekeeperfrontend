@@ -39,12 +39,12 @@ and you don't want to wait, you can click **Sync All Active Now** which tells th
 1. Click **Download New Series From ...** and then select **scorekeeper.wwscc.org**.  As you can see, you can also download
    a new series from a local machine that has already downloaded the series earlier.
 
-![DownloadFrom](images/downloadfrom.png)
+    ![DownloadFrom](images/downloadfrom.png)
 
 2. Remote series that are not present on the machine will be loaded, after which you can select one
 3. Enter the password for the series and click **Verify Password**
 
-![Password](images/password.png)
+    ![Password](images/password.png)
 
 4. If the password is correct, the button will change to **Download**, otherwise try the password again
 5. Click **Download** and let it finish
@@ -54,5 +54,5 @@ and you don't want to wait, you can click **Sync All Active Now** which tells th
    you can select a non-active remote host.  In this case, there are no local servers we are in contact with, so only
    scorekeeper.wwscc.org shows up.
 
-![SyncWith](images/syncwith.png)
+    ![SyncWith](images/syncwith.png)
 
