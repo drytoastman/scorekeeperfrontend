@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/drytoastman/scorekeeperfrontend.svg?branch=master)](https://travis-ci.org/drytoastman/scorekeeperfrontend)
 [![Known Vulnerabilities](https://snyk.io/test/github/drytoastman/scorekeeperfrontend/badge.svg)](https://snyk.io/test/github/drytoastman/scorekeeperfrontend)
 
-User docs are generated from the docs/ folder and posted at https://drytoastman.github.io/scorekeeperfrontend/
+User docs are generated from and for the backend.  See https://scorekeeper.wwscc.org/docs/
 
 Building the frontend makes use of gradle for dependency downloads, compilation and jaring.  The project also
 includes project files for eclipse which makes development easier but still integrates with gradle.
