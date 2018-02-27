@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.mutable.MutableLong;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -38,10 +39,16 @@ public class Discovery
     public static final String PROTIMER_TYPE   = "PROTIMER";
     public static final String DATABASE_TYPE   = "DATABASE";
 
+    private static final int READ_TIMEOUT_MS = 1000;
+    private static final int COOLOFF_MS      = 3000;
+    private static final int MULTICAST_TTL   = 6;
+
     public interface DiscoveryListener
     {
         public void serviceChange(UUID serverid, String service, JSONObject data, boolean up);
     }
+
+    class NoInternetException extends IOException {}
 
     public static Discovery get()
     {
@@ -52,12 +59,12 @@ public class Discovery
         return singleton;
     }
 
-    private MulticastSocket socket;
     private JSONArray announcements;
     private byte[] annoucementBytes;
     private Map<DiscoveryListener, StateAwareListener> listeners;
     private JSONParser parser;
     private long timeoutms;
+    private boolean resetFlag;
 
     protected Discovery()
     {
@@ -66,12 +73,12 @@ public class Discovery
         listeners = new HashMap<DiscoveryListener, StateAwareListener>();
         parser = new JSONParser();
         timeoutms = DEFAULT_TIMEOUT;
+        Messenger.register(MT.NETWORK_CHANGED, (e,o) -> { singleton.resetFlag = true; });
     }
 
     protected void startThreads()
     {
-        new Thread(new ReceiverThread(), "DiscoveryReceiver").start();
-        new Thread(new SenderThread(), "DiscoverySender").start();
+        new Thread(new DiscoveryThread(), "DiscoveryThread").start();
     }
 
     protected void setTimeout(long ms)
@@ -207,9 +214,24 @@ public class Discovery
         }
     }
 
-
-    class SenderThread implements Runnable
+    class DiscoveryThread implements Runnable
     {
+        MutableLong  sendms = new MutableLong();
+        MutableLong  checkms = new MutableLong();
+        boolean reset = false;
+        byte[] buf = new byte[512];
+        DatagramPacket packet = new DatagramPacket(buf, buf.length);
+        MulticastSocket socket;
+
+        public boolean timeout(MutableLong  m)
+        {
+            if (System.currentTimeMillis() >= m.longValue()+READ_TIMEOUT_MS) {
+                m.setValue(System.currentTimeMillis());
+                return true;
+            }
+            return false;
+        }
+
         @Override
         public void run()
         {
@@ -217,84 +239,53 @@ public class Discovery
             {
                 try
                 {
-                    if (announcements.size() > 0)
-                    {
-                        checkSocket();
-                        DatagramPacket packet = new DatagramPacket(annoucementBytes, annoucementBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT);
-                        socket.send(packet);
+                    if (timeout(checkms))
+                        checkForTimeouts();
+
+                    if (resetFlag) {
+                        if (socket != null) {
+                            socket.close();
+                            socket = null;
+                        }
+                        resetFlag = false;
                     }
 
-                    Thread.sleep(3000);
-                }
-                catch (Exception e)
-                {
-                    log.log(Level.WARNING, "error in senderthread: " + e, e);
-                    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
-                }
-            }
-        }
-    }
+                    if ((socket == null) || (socket.isClosed())) {
+                        InetAddress bind = Network.getPrimaryAddress(null);
+                        if (bind == null)
+                            throw new NoInternetException();
+                        socket = new MulticastSocket(DISCOVERY_PORT);
+                        socket.setTimeToLive(MULTICAST_TTL);
+                        socket.setSoTimeout(READ_TIMEOUT_MS);
+                        socket.setInterface(bind);
+                        socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
+                        log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getInterface()));
+                    }
 
-
-    class ReceiverThread implements Runnable
-    {
-        @Override
-        public void run()
-        {
-            byte[] buf = new byte[512];
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-
-            while (true)
-            {
-                try
-                {
-                    checkSocket();
-                    packet.setData(buf);
                     try {
+                        packet.setData(buf);
                         socket.receive(packet);
                         processNetworkData(packet.getAddress(), buf, packet.getLength());
-                    } catch (SocketTimeoutException ste) {
-                    }
+                    } catch (SocketTimeoutException ste) {}
 
-                    checkForTimeouts();
+                    if ((announcements.size() > 0) && timeout(sendms))
+                        socket.send(new DatagramPacket(annoucementBytes, annoucementBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT));
+                }
+                catch (NoInternetException nie)
+                {
+                    try { Thread.sleep(COOLOFF_MS); } catch (InterruptedException ie) {}
+                }
+                catch (IOException ioe)
+                {
+                    log.log(Level.WARNING, "IO Error in discoverythread: " + ioe, ioe);
+                    resetFlag = true;
+                    try { Thread.sleep(COOLOFF_MS); } catch (InterruptedException ie) {}
                 }
                 catch (Exception e)
                 {
-                    log.log(Level.WARNING, "error in receiverthread: " + e, e);
-                    try { Thread.sleep(1000); } catch (InterruptedException ie) {}
+                    log.log(Level.WARNING, "General exception in discoverythread: " + e, e);
                 }
             }
-        }
-    }
-
-    private synchronized void checkSocket() throws IOException
-    {
-        if ((socket == null) || (socket.isClosed()))
-            openSocket();
-    }
-
-    private void openSocket() throws IOException
-    {
-        closeSocket();
-        socket = new MulticastSocket(DISCOVERY_PORT);
-        socket.setTimeToLive(10);
-        socket.setSoTimeout(1);
-        socket.setInterface(Network.getPrimaryAddress());
-        socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
-        log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getInterface()));
-    }
-
-    private void closeSocket()
-    {
-        if (socket != null)
-        {
-            try {
-                socket.leaveGroup(InetAddress.getByName(DISCOVERY_GROUP));
-            } catch (IOException ioe1) {
-                log.log(Level.FINER, "leavegroup: " + ioe1, ioe1);
-            }
-            socket.close();
-            socket = null;
         }
     }
 }

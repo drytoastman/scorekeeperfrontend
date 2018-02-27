@@ -2,6 +2,7 @@ package org.wwscc.tray;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -265,7 +266,9 @@ public class Actions
         }
         public static void doinit() {
             // Local should always be there
-            Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+            InetAddress a = Network.getPrimaryAddress(null);
+            if (a == null) a = InetAddress.getLoopbackAddress();
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
 
             // And a remote home server of some type should always be there
             boolean remotepresent = false;

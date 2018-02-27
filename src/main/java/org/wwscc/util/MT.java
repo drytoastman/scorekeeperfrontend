@@ -1,6 +1,9 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
  */
 
 package org.wwscc.util;
@@ -19,6 +22,7 @@ public enum MT {
     SCANNER_OPTIONS_CHANGED,
     BARCODE_SCANNED,
     QUICKID_SEARCH,
+    NETWORK_CHANGED,
 
     // Database events
     DATABASE_NOTIFICATION,

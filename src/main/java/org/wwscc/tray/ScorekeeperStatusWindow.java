@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
  * All rights reserved.
  */
 
@@ -10,6 +10,7 @@ package org.wwscc.tray;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
@@ -51,10 +52,12 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
 
-        content.add(header("Machine"), "split");
-        content.add(new StatusLabel(MT.MACHINE_STATUS), "growy, w 200!");
+        content.add(header("VM"), "split");
+        content.add(new StatusLabel(MT.MACHINE_STATUS), "growy, w 150!");
         content.add(header("Backend"), "split");
-        content.add(new StatusLabel(MT.BACKEND_STATUS), "growy, w 200!, wrap");
+        content.add(new StatusLabel(MT.BACKEND_STATUS), "growy, w 150!");
+        content.add(header("Network"), "split");
+        content.add(new StatusLabel(MT.NETWORK_CHANGED), "growy, w 150!, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Active Hosts"), "split");
@@ -143,6 +146,16 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         @Override
         public void event(MT type, Object data)
         {
+            if (data instanceof InetAddress) {
+                setBackground(okbg);
+                setForeground(okfg);
+                setText(((InetAddress)data).getHostAddress());
+                return;
+            } else if (data == null) {
+                setBackground(notokbg);
+                setForeground(notokfg);
+                return;
+            }
             String txt = (String)data;
             setText(txt);
             if (txt.equals(Monitors.RUNNING)) {

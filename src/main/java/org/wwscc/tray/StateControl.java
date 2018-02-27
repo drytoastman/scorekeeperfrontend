@@ -3,6 +3,7 @@ package org.wwscc.tray;
 import java.awt.Window;
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,6 +31,7 @@ public class StateControl
     private volatile Map<String, String> _machineenv;
     private volatile boolean _machineready, _shutdownstarted, _applicationdone, _shutdownmachine, _usingmachine, _backendready;
     private volatile boolean _dbportsforwarded, _webportforwarded;
+    private volatile InetAddress _serverAddress;
 
     List<Process> launched;
     Monitors.MachineMonitor   mmonitor;
@@ -45,6 +47,7 @@ public class StateControl
         _applicationdone   = false;
         _shutdownmachine   = false;
         _backendready      = false;
+        _serverAddress     = null;
 
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
@@ -82,10 +85,28 @@ public class StateControl
     public boolean isMachineReady()             { return _machineready;    }
     public boolean isBackendReady()             { return _backendready;    }
     public Map<String, String> getMachineEnv()  { return _machineenv;      }
+    public InetAddress getServerAddress()       { return _serverAddress;   }
 
     public void signalDbPortsReady(boolean ready)      { _dbportsforwarded = ready; }
     public void signalWebPortReady(boolean web)        { _webportforwarded = web; }
     public void setMachineEnv(Map<String, String> env) { _machineenv = env; }
+
+    public void setServerAddress(InetAddress addr)
+    {
+        if (addr == null) {
+            if (_serverAddress != null) {
+                _serverAddress = null;
+                log.info("Network is down");
+                Messenger.sendEvent(MT.NETWORK_CHANGED, _serverAddress);
+            }
+        } else {
+            if (!addr.equals(_serverAddress)) {
+                _serverAddress = addr;
+                log.info("Network is up: " + _serverAddress);
+                Messenger.sendEvent(MT.NETWORK_CHANGED, _serverAddress);
+            }
+        }
+    }
 
     public void setUsingMachine(boolean using)
     {

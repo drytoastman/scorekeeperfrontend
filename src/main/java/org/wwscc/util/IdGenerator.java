@@ -41,29 +41,13 @@ public class IdGenerator
         if (hwseq != 0)
             return hwseq;
 
-        for (int ii = 0; ii < 50; ii++)
-        {
-            try
-            {
-                NetworkInterface ni = NetworkInterface.getByIndex(ii);
-                if (ni != null) // real interface
-                {
-                    byte[] hwaddr = ni.getHardwareAddress();
-                    if (hwaddr == null) continue;
-
-                    String dname  = ni.getDisplayName();
-                    if (dname.startsWith("Microsoft"))  continue;
-                    if (dname.startsWith("VMware"))     continue;
-                    if (dname.startsWith("VirtualBox")) continue;
-                    if (dname.contains("Tunneling"))    continue;
-
-                    // HW will be somewhat unique, we use the above to skip things that generally are not
-                    hwseq = (VARIANT1 & VARIANT_MASK)| (new Random().nextLong() & CLKSEQ_MASK) | (new BigInteger(1, hwaddr).longValue() & NODE_MASK);
-                    break;
-                }
+        try {
+            NetworkInterface ni = Network.getPrimaryInterface();
+            if (ni != null) {
+                byte hwaddr[] = ni.getHardwareAddress();
+                hwseq = (VARIANT1 & VARIANT_MASK)| (new Random().nextLong() & CLKSEQ_MASK) | (new BigInteger(1, hwaddr).longValue() & NODE_MASK);
             }
-            catch (SocketException se) {}
-        }
+        } catch (SocketException se) {}
 
         return hwseq;
     }

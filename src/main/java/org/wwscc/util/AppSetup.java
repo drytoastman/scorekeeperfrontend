@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2008 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
  * All rights reserved.
  */
 
@@ -46,28 +46,28 @@ public class AppSetup
         Logger.getLogger("org.postgresql.jdbc").setLevel(Level.OFF);
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
         Logger.getLogger("org.wwscc").setLevel(Level.ALL);
-        
+
         ConsoleHandler ch = new ConsoleHandler();
         ch.setLevel(Level.ALL);
         ch.setFormatter(new SingleLineFormatter());
         root.addHandler(ch);
     }
-    
+
     /**
      * Do some common setup for all applications at startup
      * @param name the application name used for Java logging and database logging
      */
     public static void appSetup(String name)
     {
-        // Set our platform wide L&F 
+        // Set our platform wide L&F
         System.setProperty("swing.defaultlaf", "javax.swing.plaf.nimbus.NimbusLookAndFeel");
         UIDefaults defaults = UIManager.getLookAndFeelDefaults();
         defaults.put("Table.gridColor", new Color(140,140,140));
         defaults.put("Table.showGrid", true);
-        
+
         // Set the program name which is used by PostgresqlDatabase to identify the app in logs
         System.setProperty("program.name", name);
-        
+
         // Start with a fresh root set at warning
         Logger root = LogManager.getLogManager().getLogger("");
         Formatter format = new SingleLineFormatter();
@@ -93,7 +93,7 @@ public class AppSetup
 
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
-        applog.setLevel(Prefs.isDebug() ? Level.FINEST : Level.INFO);
+        applog.setLevel(Prefs.isDebug() ? Level.FINE : Level.INFO);
         applog.addHandler(new AlertHandler());
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {

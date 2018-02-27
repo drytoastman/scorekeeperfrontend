@@ -404,6 +404,8 @@ public class Monitors
         {
             while (!state.isBackendReady())
                 donefornow();
+            state.setServerAddress(Network.getPrimaryAddress(null));
+
             Actions.InitServersAction.doinit();
             // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
             updateDiscoverySetting(Prefs.getAllowDiscovery());
@@ -414,9 +416,11 @@ public class Monitors
         @Override
         public boolean mloop()
         {
+            InetAddress a = Network.getPrimaryAddress(null);
+            state.setServerAddress(a);
             // we update with our current address which causes the database to send us a NOTICE event which causes the GUI to update
-            if (!paused) {
-                Database.d.mergeServerSetLocal(Network.getLocalHostName(), Network.getPrimaryAddress().getHostAddress(), 10);
+            if (!paused && (a != null)) {
+                Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
             }
             return true;
         }
@@ -456,9 +460,8 @@ public class Monitors
             if (!service.equals(Discovery.DATABASE_TYPE))
                 return;
             InetAddress ip = (InetAddress)data.get("ip");
-            if (ip.equals(Network.getPrimaryAddress()))
+            if (ip.equals(state.getServerAddress()))
                 return;
-            System.out.println(ip + ", " + data + ", " + up);
             if (up) {
                 Database.d.mergeServerActivate(serverid, (String)data.get("hostname"), ip.getHostAddress());
             } else {
