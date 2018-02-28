@@ -154,40 +154,53 @@ public class DockerContainer implements DataRetrievalInterface
         return start(-1);
     }
 
-    public boolean start(int waitms)
+    public synchronized boolean start(int waitms)
     {
-        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
-        cmd.add("-e");
-        cmd.add("UI_TIME_ZONE="+TimeZone.getDefault().getID());
-        cmd.add("-e");
-        cmd.add("SECRET='"+Prefs.getCookieSecret()+"'");
-        if (Prefs.isDebug()) {
+        synchronized (DockerContainer.class) {
+            List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "run", "--rm", "-d", "--name="+name, "--net="+NET_NAME));
             cmd.add("-e");
-            cmd.add("DEBUG=1");
+            cmd.add("UI_TIME_ZONE="+TimeZone.getDefault().getID());
             cmd.add("-e");
-            cmd.add("LOG_LEVEL=DEBUG");
-        }
-        for (String k : volumes.keySet()) {
-            cmd.add("-v");
-            cmd.add(k+":"+volumes.get(k));
-        }
-        for (String k : ports.keySet()) {
-            cmd.add("-p");
-            cmd.add(k+":"+ports.get(k));
-        }
-        cmd.add(image);
+            cmd.add("SECRET='"+Prefs.getCookieSecret()+"'");
+            if (Prefs.isDebug()) {
+                cmd.add("-e");
+                cmd.add("DEBUG=1");
+                cmd.add("-e");
+                cmd.add("LOG_LEVEL=DEBUG");
+            }
+            for (String k : volumes.keySet()) {
+                cmd.add("-v");
+                cmd.add(k+":"+volumes.get(k));
+            }
+            for (String k : ports.keySet()) {
+                cmd.add("-p");
+                cmd.add(k+":"+ports.get(k));
+            }
+            cmd.add(image);
 
-        return Exec.execit(Exec.build(machineenv, cmd), waitms) == 0;
+            return Exec.execit(Exec.build(machineenv, cmd), waitms) == 0;
+        }
     }
 
-    public boolean stop()
+    public synchronized boolean restart()
     {
-        return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) == 0;
+        synchronized (DockerContainer.class) {
+            return Exec.execit(Exec.build(machineenv, "docker", "restart", name), null) == 0;
+        }
+    }
+
+    public synchronized boolean stop()
+    {
+        synchronized (DockerContainer.class) {
+            return Exec.execit(Exec.build(machineenv, "docker", "stop", name), null) == 0;
+        }
     }
 
     public boolean kill()
     {
-        return Exec.execit(Exec.build(machineenv, "docker", "kill", name), null) == 0;
+        synchronized (DockerContainer.class) {
+            return Exec.execit(Exec.build(machineenv, "docker", "kill", name), null) == 0;
+        }
     }
 
     @Override
@@ -246,18 +259,20 @@ public class DockerContainer implements DataRetrievalInterface
      */
     public static Set<String> finddown(Map<String, String> machineenv, Set<String> tosearch)
     {
-        Set<String> dead = new HashSet<String>(tosearch);
-        byte buf[] = new byte[4096];
-        if (Exec.execit(Exec.build(machineenv, "docker", "ps", "--format", "{{.Names}}"), buf, 750) != 0)
+        synchronized (DockerContainer.class) {
+            Set<String> dead = new HashSet<String>(tosearch);
+            byte buf[] = new byte[4096];
+            if (Exec.execit(Exec.build(machineenv, "docker", "ps", "--format", "{{.Names}}"), buf, 3000) != 0)
+                return dead;
+
+            try (Scanner scan = new Scanner(new String(buf))) {
+                while (scan.hasNextLine()) {
+                    dead.remove(scan.next());
+                    scan.nextLine();
+                }
+            } catch (NoSuchElementException nse) {}
+
             return dead;
-
-        try (Scanner scan = new Scanner(new String(buf))) {
-            while (scan.hasNextLine()) {
-                dead.remove(scan.next());
-                scan.nextLine();
-            }
-        } catch (NoSuchElementException nse) {}
-
-        return dead;
+        }
     }
 }

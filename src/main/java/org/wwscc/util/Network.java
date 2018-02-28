@@ -34,7 +34,12 @@ public class Network
                 try
                 {
                     NetworkInterface ni = nie.nextElement();
-                    if (ni.getHardwareAddress() == null) continue; // this filters most of the junk
+                    try {
+                        if (ni.getHardwareAddress() == null)
+                            continue; // this filters most of the junk
+                    } catch (Throwable e) { // sometimes fails on windows
+                        continue;
+                    }
                     String dname = ni.getDisplayName();
                     if (dname.contains("VirtualBox")) continue;
                     if (dname.contains("VMware")) continue;

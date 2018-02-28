@@ -302,7 +302,7 @@ public class Monitors
                 Messenger.sendEvent(MT.BACKEND_STATUS, "Restarting " + dead);
                 for (DockerContainer c : containers.values()) {
                     if (dead.contains(c.getName())) {
-                        if (!c.start(750)) {
+                        if (!c.start(5000)) {
                             log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
                         } else {
                             quickrecheck = true;
@@ -355,6 +355,15 @@ public class Monitors
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
 
+        /**
+         * Restart the sync container.
+         * @return true if the stop succeeded
+         */
+        public boolean networkChanged()
+        {
+            return containers.get("sync").restart();
+        }
+
         @Override
         public boolean dumpDatabase(Path file, boolean compress)
         {
@@ -404,9 +413,10 @@ public class Monitors
         {
             while (!state.isBackendReady())
                 donefornow();
-            state.setServerAddress(Network.getPrimaryAddress(null));
 
+            state.setServerAddress(Network.getPrimaryAddress(null));
             Actions.InitServersAction.doinit();
+
             // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
             updateDiscoverySetting(Prefs.getAllowDiscovery());
 
@@ -416,11 +426,10 @@ public class Monitors
         @Override
         public boolean mloop()
         {
-            InetAddress a = Network.getPrimaryAddress(null);
-            state.setServerAddress(a);
+            state.setServerAddress(Network.getPrimaryAddress(null));
             // we update with our current address which causes the database to send us a NOTICE event which causes the GUI to update
-            if (!paused && (a != null)) {
-                Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
+            if (!paused && (state.getServerAddress() != null)) {
+                Database.d.mergeServerSetLocal(Network.getLocalHostName(), state.getServerAddress().getHostAddress(), 10);
             }
             return true;
         }

@@ -32,6 +32,7 @@ import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 import net.miginfocom.swing.MigLayout;
@@ -57,7 +58,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         content.add(header("Backend"), "split");
         content.add(new StatusLabel(MT.BACKEND_STATUS), "growy, w 150!");
         content.add(header("Network"), "split");
-        content.add(new StatusLabel(MT.NETWORK_CHANGED), "growy, w 150!, wrap");
+        content.add(new NetworkStatusLabel(MT.NETWORK_CHANGED), "growy, w 150!, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Active Hosts"), "split");
@@ -131,10 +132,10 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         Color nnbg = new Color(200, 200, 200);
         Color nnfg = new Color( 70,  70,  70);
 
-        public StatusLabel(MT event)
+        public StatusLabel(MT e)
         {
             super();
-            Messenger.register(event, this);
+            Messenger.register(e, this);
             setHorizontalAlignment(SwingConstants.CENTER);
             setFont(getFont().deriveFont(13.0f));
             setOpaque(true);
@@ -146,16 +147,6 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         @Override
         public void event(MT type, Object data)
         {
-            if (data instanceof InetAddress) {
-                setBackground(okbg);
-                setForeground(okfg);
-                setText(((InetAddress)data).getHostAddress());
-                return;
-            } else if (data == null) {
-                setBackground(notokbg);
-                setForeground(notokfg);
-                return;
-            }
             String txt = (String)data;
             setText(txt);
             if (txt.equals(Monitors.RUNNING)) {
@@ -171,6 +162,28 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         }
     }
 
+    class NetworkStatusLabel extends StatusLabel
+    {
+        public NetworkStatusLabel(MT e)
+        {
+            super(e);
+            event(e, Network.getPrimaryAddress(null));
+        }
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            if (data instanceof InetAddress) {
+                setBackground(okbg);
+                setForeground(okfg);
+                setText(((InetAddress)data).getHostAddress());
+            } else if (data == null) {
+                setBackground(notokbg);
+                setForeground(notokfg);
+                setText("network down");
+            }
+        }
+    }
 
     @SuppressWarnings("unchecked")
     @Override

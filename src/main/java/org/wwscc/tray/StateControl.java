@@ -19,6 +19,7 @@ import javax.swing.JOptionPane;
 import org.wwscc.storage.Database;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 /**
@@ -47,7 +48,7 @@ public class StateControl
         _applicationdone   = false;
         _shutdownmachine   = false;
         _backendready      = false;
-        _serverAddress     = null;
+        _serverAddress     = Network.getPrimaryAddress(null);
 
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());
@@ -93,18 +94,23 @@ public class StateControl
 
     public void setServerAddress(InetAddress addr)
     {
+        boolean change = false;
         if (addr == null) {
             if (_serverAddress != null) {
                 _serverAddress = null;
                 log.info("Network is down");
-                Messenger.sendEvent(MT.NETWORK_CHANGED, _serverAddress);
+                change = true;
             }
-        } else {
-            if (!addr.equals(_serverAddress)) {
-                _serverAddress = addr;
-                log.info("Network is up: " + _serverAddress);
-                Messenger.sendEvent(MT.NETWORK_CHANGED, _serverAddress);
-            }
+        } else if (!addr.equals(_serverAddress)) {
+            _serverAddress = addr;
+            log.info("Network is up: " + _serverAddress);
+            change = true;
+        }
+
+        if (change) {
+            Messenger.sendEvent(MT.NETWORK_CHANGED, _serverAddress);
+            if (isBackendReady()) // if change occurred after containers are already up, reset sync
+                cmonitor.networkChanged();
         }
     }
 
