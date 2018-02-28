@@ -60,7 +60,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         cars = new JTable();
         cars.setDefaultRenderer(Object.class, new EntryRenderer());
         cars.setRowHeight(25);
-        cars.setIntercellSpacing(new Dimension(5, 5));
+        cars.setIntercellSpacing(new Dimension(3, 3));
         cars.setFont(cars.getFont().deriveFont(12.0f));
         cars.setBorder(LineBorder.createGrayLineBorder());
         cars.setGridColor(new Color(230,230,230));
@@ -117,7 +117,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
             else if (col == 1)
                 setText(e.getClassCode());
             else if (col == 2)
-                setText(""+e.getNumber());
+                setText(""+e.getQuickEntryId());
             return this;
         }
     }
@@ -195,9 +195,9 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
                 cars.setRowSorter(null); // clear sorter so its listener based on old model size goes away
                 cars.setModel(new EntryModel());
                 TableColumnModel tcm = cars.getColumnModel();
-                setColumnWidths(tcm.getColumn(0), 80, 160, 320);
-                setColumnWidths(tcm.getColumn(1), 40, 80, 160);
-                setColumnWidths(tcm.getColumn(2), 40, 80, 160);
+                setColumnWidths(tcm.getColumn(0), 50, 80, 120);
+                setColumnWidths(tcm.getColumn(1), 25, 40, 60);
+                setColumnWidths(tcm.getColumn(2), 35, 65, 105);
                 break;
         }
     }
