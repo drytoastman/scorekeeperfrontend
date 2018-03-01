@@ -42,6 +42,7 @@ public class Payment
         amount   = rs.getDouble("amount");
     }
 
+    public UUID getPayId()    { return payid; }
     public UUID getCarId()    { return carid; }
     public UUID getEventId()  { return eventid; }
     public double getAmount() { return amount; }

@@ -78,7 +78,7 @@ class MyPanel extends JPanel
 
     public MyPanel()
     {
-        setLayout(new MigLayout("ins 5, gapx 12, gapy 1", "[][35!][100:500:10000]", ""));
+        setLayout(new MigLayout("ins 5, gapx 12, gapy 1", "[][40!][100:500:10000]", ""));
         setBorder(new UnderlineBorder(new Color(180, 180, 180)));
 
         status = new JLabel();
@@ -87,7 +87,7 @@ class MyPanel extends JPanel
         add(status, "ay center, spany 2");
 
         payment = new JLabel();
-        payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         add(payment, "ax right, spany 2");
 
         carinfo = new JLabel();

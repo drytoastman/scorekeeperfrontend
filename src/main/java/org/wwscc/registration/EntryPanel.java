@@ -16,7 +16,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,11 +44,9 @@ import javax.swing.JSeparator;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import net.miginfocom.swing.MigLayout;
 
-import org.apache.commons.lang3.StringUtils;
 import org.wwscc.barcodes.Code39;
 import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
@@ -71,13 +68,13 @@ import org.wwscc.util.Resources;
 public class EntryPanel extends DriverCarPanel implements MessageListener
 {
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
+    public static final String ONSITE_PAYMENT = "onsite";
 
-    JButton registerandpay, registerit, unregisterit, movepayment;
+    JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
     JButton clearSearch, newdriver, editdriver, editnotes;
     JButton newcar, newcarfrom, editcar, deletecar, print;
-    JLabel membershipwarning, noteswarning, paidwarning, paylistlabel, mergeWarning;
+    JLabel membershipwarning, noteswarning, paidwarning, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
-    JList<Payment> paymentInfo;
     JComboBox<PrintService> printers;
     Code39 activeLabel;
 
@@ -124,6 +121,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         movepayment = new JButton(new MovePaymentMenuAction());
         movepayment.setEnabled(false);
 
+        deletepayment = new JButton(new DeletePaymentMenuAction());
+        deletepayment.setEnabled(false);
+
         clearSearch = smallButton(CLEAR, true);
         newdriver   = smallButton(NEWDRIVER, true);
         editdriver  = smallButton(EDITDRIVER, false);
@@ -137,22 +137,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         deletecar = new JButton(new DeleteCarAction());
         deletecar.setEnabled(false);
 
-        paymentInfo = new JList<Payment>();
-        paymentInfo.setBackground(new Color(UIManager.getDefaults().getColor("background").getRGB()));
-        paymentInfo.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> jlist, Object e, int i, boolean bln, boolean bln1) {
-                super.getListCellRendererComponent(jlist, e, i, bln, bln1);
-                setFont(getFont().deriveFont(14.0f));
-
-                if ((e != null) && (e instanceof Payment)) {
-                    Payment p = (Payment)e;
-                    setText(String.format("%s: $%.2f\n", StringUtils.capitalize(p.getTxType()), p.getAmount()));
-                }
-                return this;
-            }
-        });
-
         membershipwarning = new JLabel("");
         membershipwarning.setForeground(Color.WHITE);
         membershipwarning.setBackground(Color.RED);
@@ -160,9 +144,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         noteswarning = new JLabel("");
         noteswarning.setForeground(Color.WHITE);
         noteswarning.setBackground(new Color(249, 157, 27));
-
-        paylistlabel = new JLabel("Payments For Selected Car");
-        paylistlabel.setFont(paylistlabel.getFont().deriveFont(Font.BOLD, 14.0f));
 
         paidwarning = new JLabel("");
         paidwarning.setForeground(Color.WHITE);
@@ -235,12 +216,11 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(registerandpay,    "growx, wrap");
         singleCarPanel.add(movepayment,       "growx, wrap");
+        singleCarPanel.add(deletepayment,     "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
         singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
         singleCarPanel.add(paidwarning,       "growx, wrap");
-        singleCarPanel.add(paylistlabel,      "gapleft 5, wrap");
-        singleCarPanel.add(paymentInfo,       "growx, wrap");
         singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 
         carSelectionChanged();
@@ -400,7 +380,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             try {
                 CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
                 if (d.doDialog("Payment", null)) {
-                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), "onsite", d.getResult());
+                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), ONSITE_PAYMENT, d.getResult());
                     Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
                     reloadCars(selectedCar);
                 }
@@ -451,19 +431,54 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             JPopupMenu menu = new JPopupMenu();
-
-            // nothing seems to work for HTML based MenuItem, its part of the HTML editor kit or something else without an interface
-            //UIDefaults overrides = new UIDefaults();
-            //overrides.put("MenuItem[MouseOver].backgroundPainter", OtherPainterHere);
-            //menu.putClientProperty("Nimbus.Overrides", overrides);
-            //menu.putClientProperty("Nimbus.Overrides.InheritDefaults", false);
-
             for (DecoratedCar car : carVector)
             {
                 if (car.getCarId().equals(selectedCar.getCarId()) || car.isInRunOrder())
                     continue;
                 menu.add(new MovePaymentAction(car));
             }
+            Component c = (Component)e.getSource();
+            menu.show(c, 5, c.getHeight()-5);
+        }
+    }
+
+
+    class DeletePaymentAction extends AbstractAction
+    {
+        Payment p;
+        public DeletePaymentAction(Payment p)
+        {
+            this.p = p;
+            this.putValue(NAME, String.format("<html><font size=+0><b>%s</b> - $%.2f", p.getTxType(), p.getAmount()));
+            this.setEnabled(p.getTxType().equals(ONSITE_PAYMENT));
+        }
+
+        public void actionPerformed(ActionEvent ev)
+        {
+            try {
+                Database.d.deletePayment(p.getPayId());
+            } catch (Exception e) {
+                log.log(Level.WARNING, "\bFailed to delete payment: " + e, e);
+            }
+        }
+    }
+
+    /**
+     * Action that creates a popup menu population with Actions created from the list
+     * of payments we can delete.
+     */
+    class DeletePaymentMenuAction extends AbstractAction
+    {
+        public DeletePaymentMenuAction()
+        {
+            super("Delete A Payment \u2BC6"); // down arrow
+        }
+
+        public void actionPerformed(ActionEvent e)
+        {
+            JPopupMenu menu = new JPopupMenu();
+            for (Payment p : selectedCar.getPayments())
+                menu.add(new DeletePaymentAction(p));
             Component c = (Component)e.getSource();
             menu.show(c, 5, c.getHeight()-5);
         }
@@ -660,29 +675,25 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         if (selectedCar != null)
         {
             newcarfrom.setEnabled(true);
-            paymentInfo.setListData(new Vector<Payment>(selectedCar.getPayments()));
-
             editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
             deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
             registerandpay.setEnabled(!selectedCar.isInRunOrder());
             movepayment.setEnabled(   !selectedCar.isInRunOrder() && selectedCar.hasPaid());
+            deletepayment.setEnabled( !selectedCar.isInRunOrder() && selectedCar.hasPaid());
             registerit.setEnabled(    !selectedCar.isInRunOrder() && !selectedCar.isRegistered());
             unregisterit.setEnabled(  !selectedCar.isInRunOrder() && selectedCar.isRegistered() && !selectedCar.hasPaid());
         }
         else
         {
             newcarfrom.setEnabled(false);
-            paymentInfo.setListData(new Vector<Payment>());
-
             editcar.setEnabled(false);
             deletecar.setEnabled(false);
             registerandpay.setEnabled(false);
             movepayment.setEnabled(false);
+            deletepayment.setEnabled(false);
             registerit.setEnabled(false);
             unregisterit.setEnabled(false);
         }
-
-        paylistlabel.setVisible(paymentInfo.getModel().getSize() > 0);
     }
 
     protected void carCreated()

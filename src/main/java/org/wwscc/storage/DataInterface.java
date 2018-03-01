@@ -109,6 +109,7 @@ public interface DataInterface
     public void unregisterCar(UUID eventid, Car car) throws SQLException; // remove this car from the current event registration
     public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException;
     public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws SQLException;
+    public void deletePayment(UUID payid) throws SQLException;
 
     public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
     public void updateCar(Car d) throws SQLException; // update the car values in the database

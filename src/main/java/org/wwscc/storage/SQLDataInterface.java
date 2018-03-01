@@ -578,6 +578,11 @@ public abstract class SQLDataInterface implements DataInterface
         executeUpdate("UPDATE payments SET carid=?,modified=now() WHERE eventid=? and carid=?", newList(dstcarid, eventid, srccarid));
     }
 
+    @Override
+    public void deletePayment(UUID payid) throws SQLException
+    {
+        executeUpdate("DELETE FROM payments WHERE payid=?", newList(payid));
+    }
 
     @Override
     public void newCar(Car c) throws SQLException
