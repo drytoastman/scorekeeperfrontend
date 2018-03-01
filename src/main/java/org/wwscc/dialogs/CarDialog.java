@@ -61,7 +61,7 @@ public class CarDialog extends BaseDialog<Car>
      */
     public CarDialog(UUID did, Car car, ClassData cd, boolean addoption)
     {
-        super(new MigLayout("fillx, gap 5", "[right, grow 0][grow 100, fill, 130]"), false);
+        super(new MigLayout("fillx, gap 5", "[right, grow 0][grow 100, fill, 130]"), true);
 
         driverid = did;
         if (car == null)
