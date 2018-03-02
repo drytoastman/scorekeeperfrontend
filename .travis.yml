@@ -12,6 +12,7 @@ cache:
 script:
   - ./gradlew check
   - ./gradlew shadowJar
+  - ./gradlew createUbuntuSetup
 deploy:
   provider: releases
   api_key:
@@ -19,6 +20,7 @@ deploy:
   file_glob: true
   file:
     - "build/libs/scorekeeper-*.jar"
+    - "build/ubuntusetup-*.sh"
   skip_cleanup: true
   on:
     tags: true

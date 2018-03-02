@@ -47,6 +47,14 @@ shadowJar.classifier = ""
 shadowJar.baseName = "scorekeeper"
 defaultTasks 'shadowJar'
 
+task createUbuntuSetup(type: Copy) {
+    from 'installers'
+    into "$buildDir"
+    include 'ubuntu.template'
+	rename('ubuntu.template', "ubuntusetup-${version}.sh")
+    expand(git_version: version)
+}
+
 jar {
     manifest {
         attributes("Implementation-Version": version)
