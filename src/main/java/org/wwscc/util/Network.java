@@ -10,6 +10,8 @@ import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.SystemUtils;
+
 public class Network
 {
     private static final Logger log = Logger.getLogger(Network.class.getName());
@@ -41,10 +43,16 @@ public class Network
                         continue;
                     }
                     String dname = ni.getDisplayName();
-                    if (dname.contains("VirtualBox")) continue;
-                    if (dname.contains("VMware")) continue;
-                    if (dname.contains("Tunneling")) continue;
-                    if (dname.contains("Microsoft")) continue;
+                    if (SystemUtils.IS_OS_WINDOWS) {
+	                    if (dname.contains("VirtualBox")) continue;
+	                    if (dname.contains("VMware")) continue;
+	                    if (dname.contains("Tunneling")) continue;
+	                    if (dname.contains("Microsoft")) continue;
+                    } else if (SystemUtils.IS_OS_LINUX) {
+	                    if (dname.startsWith("veth")) continue;
+	                    if (dname.startsWith("docker")) continue;
+	                    if (dname.startsWith("br-")) continue;
+                    }
                     if (!ni.isUp()) continue;
                     return ni;
                 } catch (SocketException se) {}
@@ -55,13 +63,11 @@ public class Network
 
     /**
      * Attempt to find the InetAddress of the primary interface.
-     * @param intf the interface to get an address from or null to lookup the primary interface first
      * @return an InetAddress for the primary address or null if nothing is available
      */
-    public static InetAddress getPrimaryAddress(NetworkInterface intf)
+    public static InetAddress getPrimaryAddress()
     {
-        if (intf == null)
-            intf = getPrimaryInterface();
+        NetworkInterface intf = getPrimaryInterface();
         if (intf != null) {
             for (InterfaceAddress a : intf.getInterfaceAddresses()) {
                 InetAddress ia = a.getAddress();

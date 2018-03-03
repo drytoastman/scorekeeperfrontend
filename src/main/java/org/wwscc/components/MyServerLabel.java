@@ -33,7 +33,7 @@ public class MyServerLabel extends JLabel implements MessageListener
         {
             case TIMER_SERVICE_LISTENING:
                 Object a[] = (Object[])o;
-                InetAddress ip = Network.getPrimaryAddress(null);
+                InetAddress ip = Network.getPrimaryAddress();
                 if (a != null)
                     setText("Server On: " + ip.getHostAddress() + ":" + a[1]);
                 else

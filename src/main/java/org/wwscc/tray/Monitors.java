@@ -414,7 +414,7 @@ public class Monitors
             while (!state.isBackendReady())
                 donefornow();
 
-            state.setServerAddress(Network.getPrimaryAddress(null));
+            state.setServerAddress(Network.getPrimaryAddress());
             Actions.InitServersAction.doinit();
 
             // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
@@ -426,7 +426,7 @@ public class Monitors
         @Override
         public boolean mloop()
         {
-            state.setServerAddress(Network.getPrimaryAddress(null));
+            state.setServerAddress(Network.getPrimaryAddress());
             // we update with our current address which causes the database to send us a NOTICE event which causes the GUI to update
             if (!paused && (state.getServerAddress() != null)) {
                 Database.d.mergeServerSetLocal(Network.getLocalHostName(), state.getServerAddress().getHostAddress(), 10);

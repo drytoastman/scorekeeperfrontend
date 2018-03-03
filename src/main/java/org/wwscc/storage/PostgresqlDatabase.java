@@ -154,7 +154,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 props.setProperty("password", connectParam.password);
             props.setProperty("ssl", "true");
             props.setProperty("sslfactory", "org.postgresql.ssl.NonValidatingFactory");
-            props.setProperty("loginTimeout", "10");
+            props.setProperty("loginTimeout", "20");
             host = connectParam.host;
             port = 54329;
         }

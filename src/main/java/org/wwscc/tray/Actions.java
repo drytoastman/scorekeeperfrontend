@@ -266,7 +266,7 @@ public class Actions
         }
         public static void doinit() {
             // Local should always be there
-            InetAddress a = Network.getPrimaryAddress(null);
+            InetAddress a = Network.getPrimaryAddress();
             if (a == null) a = InetAddress.getLoopbackAddress();
             Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
 

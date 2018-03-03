@@ -184,7 +184,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         public NetworkStatusLabel(MT e)
         {
             super(e);
-            event(e, Network.getPrimaryAddress(null));
+            event(e, Network.getPrimaryAddress());
         }
 
         @Override

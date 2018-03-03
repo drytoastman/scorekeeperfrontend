@@ -251,7 +251,7 @@ public class Discovery
                     }
 
                     if ((socket == null) || (socket.isClosed())) {
-                        InetAddress bind = Network.getPrimaryAddress(null);
+                        InetAddress bind = Network.getPrimaryAddress();
                         if (bind == null)
                             throw new NoInternetException();
                         socket = new MulticastSocket(DISCOVERY_PORT);

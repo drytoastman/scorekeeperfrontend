@@ -141,11 +141,12 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         protected void done()
         {
             try {
-            selects.get("series").setModel(new DefaultComboBoxModel<Object>(get().toArray()));
-            if (currentDialog != null)
-                currentDialog.pack();
+                selects.get("series").setModel(new DefaultComboBoxModel<Object>(get().toArray()));
+                if (currentDialog != null)
+                    currentDialog.pack();
             } catch (Exception e) {
-                log.log(Level.INFO, "Get series execution error " + e, e);
+                log.log(Level.WARNING, "\bError getting series list: " + e, e);
+                close();
             }
         }
     }

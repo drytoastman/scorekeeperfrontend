@@ -48,7 +48,7 @@ public class StateControl
         _applicationdone   = false;
         _shutdownmachine   = false;
         _backendready      = false;
-        _serverAddress     = Network.getPrimaryAddress(null);
+        _serverAddress     = Network.getPrimaryAddress();
 
         launched = new ArrayList<Process>();
         Messenger.register(MT.DEBUG_REQUEST,    (t,d) -> new DebugCollector(cmonitor).start());

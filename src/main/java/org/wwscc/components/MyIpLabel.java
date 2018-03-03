@@ -30,7 +30,7 @@ public class MyIpLabel extends JLabel implements ActionListener
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        InetAddress a = Network.getPrimaryAddress(null);
+        InetAddress a = Network.getPrimaryAddress();
         setText("My IP: " + ((a != null) ? a.getHostAddress() : "network down"));
     }
 }
