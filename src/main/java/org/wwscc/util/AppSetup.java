@@ -107,7 +107,7 @@ public class AppSetup
             if (!logdir.exists())
                 if (!logdir.mkdirs())
                     throw new IOException("Can't create log directory " + logdir);
-            FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 1000000, 10, true);
+            FileHandler fh = new FileHandler(new File(logdir, name+".%g.log").getAbsolutePath(), 10000000, 10, true);
             fh.setFormatter(format);
             fh.setLevel(Level.ALL);
             root.addHandler(fh);
