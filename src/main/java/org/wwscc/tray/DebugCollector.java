@@ -138,6 +138,7 @@ public class DebugCollector extends Thread
         Path info = Files.createFile(dir.resolve("info.txt"));
         Map<String, String> machineenv = DockerMachine.machineenv();
         OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+        out.write("Scorekeeper version = " + Prefs.getVersion() + "\n");
         out.write("Java version = " + System.getProperty("java.version") + "\n");
         out.write("Docker version = " + DockerContainer.version(machineenv) + "\n");
         out.write("VBoxVersion version = " + DockerMachine.vboxversion() + "\n");
