@@ -47,42 +47,40 @@ public class TrayApplication
 
     public TrayApplication(String args[])
     {
-        if (!SystemTray.isSupported())
-        {
-            log.severe("\bTrayIcon is not supported, unable to run Scorekeeper monitor application.");
-            System.exit(-1);
-        }
-
         if (!ensureSingleton())
         {
-            log.warning("Another TrayApplication is running, quitting now.");
+            log.warning("Another Scorekeeper instance is already running, quitting now.");
             System.exit(-1);
         }
 
+        boolean usetray = SystemTray.isSupported();
         actions = new Actions();
         state = new StateControl();
-        statuswindow = new ScorekeeperStatusWindow(actions);
+        statuswindow = new ScorekeeperStatusWindow(actions, usetray);
 
-        PopupMenu trayPopup = new PopupMenu();
-        trayPopup.add(new WrappedAWTMenuItem(actions.openStatus));
-        trayPopup.addSeparator();
-        for (Action a : actions.apps)
-            trayPopup.add(new WrappedAWTMenuItem(a));
-        trayPopup.addSeparator();
-        trayPopup.add(new WrappedAWTMenuItem(actions.quit));
+        if (usetray)
+        {
+            PopupMenu trayPopup = new PopupMenu();
+            trayPopup.add(new WrappedAWTMenuItem(actions.openStatus));
+            trayPopup.addSeparator();
+            for (Action a : actions.apps)
+                trayPopup.add(new WrappedAWTMenuItem(a));
+            trayPopup.addSeparator();
+            trayPopup.add(new WrappedAWTMenuItem(actions.quit));
 
-        trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
-        trayIcon.setImageAutoSize(true);
+            trayIcon = new TrayIcon(conewarn, "Scorekeeper Monitor", trayPopup);
+            trayIcon.setImageAutoSize(true);
 
-        IconChoice ic = new IconChoice();
-        Messenger.register(MT.BACKEND_READY, ic);
-        Messenger.register(MT.WEB_READY, ic);
+            IconChoice ic = new IconChoice();
+            Messenger.register(MT.BACKEND_READY, ic);
+            Messenger.register(MT.WEB_READY, ic);
 
-        try {
-            SystemTray.getSystemTray().add(trayIcon);
-        } catch (AWTException e) {
-            log.severe("\bFailed to create TrayIcon: " + e);
-            System.exit(-2);
+            try {
+                SystemTray.getSystemTray().add(trayIcon);
+            } catch (AWTException e) {
+                log.severe("\bFailed to create TrayIcon: " + e);
+                System.exit(-2);
+            }
         }
 
         statuswindow.setVisible(true);

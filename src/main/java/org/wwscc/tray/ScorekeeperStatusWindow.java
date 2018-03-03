@@ -10,17 +10,21 @@ package org.wwscc.tray;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
 import javax.swing.Action;
+import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -42,10 +46,9 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
     MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
 
-    public ScorekeeperStatusWindow(Actions actions)
+    public ScorekeeperStatusWindow(Actions actions, boolean hastrayicon)
     {
         super("Scorekeeper Status");
-        setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         model = new MergeServerModel();
         activetable = new MergeStatusTable(model, true);
@@ -104,6 +107,20 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 
         setBounds(Prefs.getWindowBounds("datasync"));
         Prefs.trackWindowBounds(this, "datasync");
+
+        if (hastrayicon) {
+            setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        } else {
+            setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            this.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                            "As the tray icon is not supported on this system, this window cannot be closed."+
+                            "It can minimized or you can select shutdown from the File menu",
+                            "Unsupported Operation", JOptionPane.WARNING_MESSAGE);
+                }
+            });
+        }
 
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         Messenger.register(MT.OPEN_STATUS_REQUEST, this);
@@ -217,7 +234,7 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
         Database.openPublic(true, 5000);
         Actions a = new Actions();
         a.backendReady(true);
-        ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(a);
+        ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(a, false);
         v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         v.setVisible(true);
         v.model.setData(Database.d.getMergeServers());
