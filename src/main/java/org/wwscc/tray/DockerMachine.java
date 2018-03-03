@@ -20,26 +20,32 @@ public class DockerMachine
     private static final Logger log = Logger.getLogger(DockerMachine.class.getName());
 
     /**
-     * Sets and returns the environment variables used by docker-compose if docker-machine is present
+     * Returns the environment variables used by docker-compose if docker-machine is present
      * @return a map of the environment variables that were set
      */
     public static Map<String,String> machineenv()
     {
-        Map<String,String> dockerenv = new HashMap<String, String>();
         byte buf[] = new byte[4096];
         if (Exec.execit(Exec.build(null, "docker-machine", "env", "--shell", "cmd"), buf) != 0) {
             log.severe(new String(buf).trim());
-            return dockerenv;
+            return new HashMap<String, String>();
         }
-        try (Scanner scan = new Scanner(new String(buf)))
+        return scanenv(new String(buf));
+    }
+
+    protected static Map<String,String> scanenv(String buf)
+    {
+        Map<String,String> dockerenv = new HashMap<String, String>();
+
+        try (Scanner scan = new Scanner(buf))
         {
             while (scan.hasNext())
             {
                 String set = scan.next();
-                String var = scan.next();
+                String var = scan.nextLine();
                 if (set.equals("SET")) {
                     String p[] = var.split("=");
-                    dockerenv.put(p[0], p[1]);
+                    dockerenv.put(p[0].trim(), p[1].trim());
                 } else {
                     scan.nextLine();
                 }
