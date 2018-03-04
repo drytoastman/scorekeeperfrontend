@@ -8,13 +8,16 @@
 
 package org.wwscc.tray;
 
+import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.SystemTray;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.swing.Action;
 import javax.swing.FocusManager;
@@ -38,18 +41,25 @@ import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.SingletonProcessTest;
 
 import net.miginfocom.swing.MigLayout;
 
-public class ScorekeeperStatusWindow extends JFrame implements MessageListener
+public class ScorekeeperSystem extends JFrame implements MessageListener
 {
+    private static final Logger log = Logger.getLogger(ScorekeeperTrayIcon.class.getName());
+
+    Actions actions;
+    StateControl state;
     MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
 
-    public ScorekeeperStatusWindow(Actions actions, boolean hastrayicon)
+    public ScorekeeperSystem(boolean hastrayicon)
     {
         super("Scorekeeper Status");
 
+        actions = new Actions();
+        state = new StateControl();
         model = new MergeServerModel();
         activetable = new MergeStatusTable(model, true);
         inactivetable = new MergeStatusTable(model, false);
@@ -124,6 +134,11 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
 
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         Messenger.register(MT.OPEN_STATUS_REQUEST, this);
+    }
+
+    public void startAndWaitForThreads()
+    {
+        state.startAndWaitForThreads();
     }
 
     private JLabel header(String s)
@@ -230,17 +245,23 @@ public class ScorekeeperStatusWindow extends JFrame implements MessageListener
      */
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
-        AppSetup.appSetup("statuswindow");
-        Database.openPublic(true, 5000);
-        Actions a = new Actions();
-        a.backendReady(true);
-        ScorekeeperStatusWindow v = new ScorekeeperStatusWindow(a, false);
-        v.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        v.setVisible(true);
-        v.model.setData(Database.d.getMergeServers());
-        while (true)
-        {
-            Thread.sleep(2000);
+        AppSetup.appSetup("scorekeepersystem");
+        if (!SingletonProcessTest.ensureSingleton("ScorekeeperSystem")) {
+            log.warning("Another Scorekeeper instance is already running, quitting now.");
+            System.exit(-1);
         }
+
+        boolean usetray = SystemTray.isSupported();
+        ScorekeeperSystem system = new ScorekeeperSystem(usetray);
+        if (usetray) {
+            try {
+                new ScorekeeperTrayIcon(system.actions);
+            } catch (AWTException e) {
+                log.warning("Unable to install trayicon: " + e);
+            }
+        }
+        system.setVisible(true);
+        system.startAndWaitForThreads();
+        System.exit(0);
     }
 }

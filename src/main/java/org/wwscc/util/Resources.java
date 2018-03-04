@@ -5,11 +5,11 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.util.logging.Logger;
 
-import org.wwscc.tray.TrayApplication;
+import org.wwscc.tray.ScorekeeperTrayIcon;
 
 public class Resources 
 {	
-	private static final Logger log = Logger.getLogger(TrayApplication.class.getName());
+	private static final Logger log = Logger.getLogger(ScorekeeperTrayIcon.class.getName());
 	
 	public static Image loadImage(String name)
 	{
