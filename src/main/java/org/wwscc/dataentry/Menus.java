@@ -63,14 +63,14 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         file.add(new QuitAction());
 
         /* Edit Menu */
-        edit = new JMenu("Edit");
+        edit = new JMenu("Tools");
         add(edit);
+        edit.add(new EventSendAction("Manual Barcode Entry", MT.OPEN_BARCODE_ENTRY, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK)));
         edit.add(new EventSendAction("Quick Entry", MT.QUICKID_SEARCH, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK)));
         edit.add(new EventSendAction("Filter Table", MT.OPEN_FILTER, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction("Manual Barcode Entry", MT.OPEN_BARCODE_ENTRY, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.CTRL_MASK)));
 
         /* Event Menu */
-        event = new JMenu("Event Options");
+        event = new JMenu("Options");
         add(event);
 
         /* Runs Submenu */
