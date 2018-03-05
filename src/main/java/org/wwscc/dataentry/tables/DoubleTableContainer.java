@@ -121,24 +121,24 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
     public void processBarcode(String barcode) throws SQLException, IOException
     {
-        List<Driver> found = Database.d.findDriverByMembership(barcode);
+        List<Driver> found = Database.d.findDriverByBarcode(barcode);
         Driver d = null;
 
         if (found.size() > 0)
         {
             if (found.size() > 1)
-                log.log(Level.WARNING, "{0} drivers exist with the membership value {1}, using the first", new Object[] {found.size(), barcode});
+                log.log(Level.WARNING, "{0} drivers exist with the barcode value {1}, using the first", new Object[] {found.size(), barcode});
             d = found.get(0);
         }
         else if (found.size() == 0)
         {
-            log.log(Level.WARNING, "Unable to locate a driver using membership {0}, creating a default", barcode);
+            log.log(Level.WARNING, "Unable to locate a driver using barcode {0}, creating a default", barcode);
             d = Driver.getPlaceHolder(barcode);
             Database.d.newDriver(d);
         }
         else
         {
-            log.severe("\bNegative elements in list of drivers?!");
+            log.severe("\bNegative number of elements in list of drivers?!");
             return;
         }
 

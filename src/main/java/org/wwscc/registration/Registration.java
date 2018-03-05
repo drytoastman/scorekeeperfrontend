@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
+import javax.swing.FocusManager;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -65,7 +66,8 @@ public class Registration extends JFrame
         file.add(new QuitAction());
 
         JMenu find = new JMenu("Find By...");
-        find.add(new FindByAction("Membership", 'M'));
+        find.add(new FindByAction("Barcode", 'B', null));
+        find.add(new FindByAction("QuickEntryId", 'Q', 'Q'));
 
         JMenu reports = new JMenu("Reports");
         reports.add(new OpenReportAction("Numbers Report", "numbers"));
@@ -89,21 +91,21 @@ public class Registration extends JFrame
     final static class FindByAction extends AbstractAction
     {
         String type;
-        char prefix;
-        public FindByAction(String t, char key)
+        Character prefix;
+        public FindByAction(String type, Character key, Character prefix)
         {
             super();
-            type = t;
-            prefix = key;
+            this.type = type;
+            this.prefix = prefix;
             putValue(NAME, type);
-            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyStroke.getAWTKeyStroke(prefix).getKeyChar(), ActionEvent.CTRL_MASK));
+            putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyStroke.getAWTKeyStroke(key).getKeyChar(), ActionEvent.CTRL_MASK));
         }
 
         public void actionPerformed(ActionEvent e)
         {
-            Object o = JOptionPane.showInputDialog("Enter " + type);
+            Object o = JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Enter " + type);
             if (o != null)
-                Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != 'M') ? prefix+o.toString() : o);
+                Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != null) ? prefix+o.toString() : o);
         }
     }
 

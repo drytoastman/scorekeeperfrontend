@@ -73,7 +73,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
     JButton clearSearch, newdriver, editdriver, editnotes;
     JButton newcar, newcarfrom, editcar, deletecar, print;
-    JLabel membershipwarning, noteswarning, paidwarning, mergeWarning;
+    JLabel barcodewarning, noteswarning, paidwarning, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
     JComboBox<PrintService> printers;
     Code39 activeLabel;
@@ -137,9 +137,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         deletecar = new JButton(new DeleteCarAction());
         deletecar.setEnabled(false);
 
-        membershipwarning = new JLabel("");
-        membershipwarning.setForeground(Color.WHITE);
-        membershipwarning.setBackground(Color.RED);
+        barcodewarning = new JLabel("");
+        barcodewarning.setForeground(Color.WHITE);
+        barcodewarning.setBackground(Color.RED);
 
         noteswarning = new JLabel("");
         noteswarning.setForeground(Color.WHITE);
@@ -190,7 +190,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         driverp.add(editdriver,        "growx, wrap");
         driverp.add(editnotes,         "growx, wrap");
         driverp.add(driverInfo,        "growx, wrap");
-        driverp.add(membershipwarning, "growx, h 18, wrap");
+        driverp.add(barcodewarning, "growx, h 18, wrap");
         driverp.add(noteswarning,      "growx, h 18, wrap");
         driverp.add(activeLabel,       "gapy 4 4, center, wrap");
         driverp.add(printers,          "growx, wrap");
@@ -595,8 +595,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
     protected void driverSelectionChanged()
     {
-        membershipwarning.setText("");
-        membershipwarning.setOpaque(false);
+        barcodewarning.setText("");
+        barcodewarning.setOpaque(false);
         noteswarning.setText("");
         noteswarning.setOpaque(false);
 
@@ -605,20 +605,20 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             newcar.setEnabled(true);
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
-            activeLabel.setValue(selectedDriver.getMembership(), String.format("%s - %s", selectedDriver.getMembership(), selectedDriver.getFullName()));
+            activeLabel.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
             activeLabel.repaint();
 
-            if (!selectedDriver.getMembership().trim().equals(""))
+            if (!selectedDriver.getBarcode().trim().equals(""))
             {
-                List<Driver> dups = Database.d.findDriverByMembership(selectedDriver.getMembership());
+                List<Driver> dups = Database.d.findDriverByBarcode(selectedDriver.getBarcode());
                 dups.remove(selectedDriver);
                 if (dups.size() > 0)
                 {
                     StringBuffer buf = new StringBuffer(dups.get(0).getFullName());
                     for (int ii = 1; ii < dups.size(); ii++)
                         buf.append(", ").append(dups.get(ii).getFullName());
-                    membershipwarning.setText("Duplicate Membership - " + buf);
-                    membershipwarning.setOpaque(true);
+                    barcodewarning.setText("Duplicate Barcode - " + buf);
+                    barcodewarning.setOpaque(true);
                 }
             }
 
@@ -719,7 +719,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
             case BARCODE_SCANNED:
                 String barcode = (String)o;
-                List<Driver> found = Database.d.findDriverByMembership(barcode);
+                List<Driver> found = Database.d.findDriverByBarcode(barcode);
                 if (found.size() == 0)
                 {
                     log.log(Level.WARNING, "\bUnable to locate a driver using barcode {0}", barcode);
@@ -727,7 +727,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                 }
 
                 if (found.size() > 1)
-                    log.log(Level.WARNING, "\b{0} drivers exist with the membership value {1}, using the first", new Object[] {found.size(), barcode});
+                    log.log(Level.WARNING, "\b{0} drivers exist with the barcode value {1}, using the first", new Object[] {found.size(), barcode});
 
                 Driver d = found.get(0);
                 log.info("Focus on driver");

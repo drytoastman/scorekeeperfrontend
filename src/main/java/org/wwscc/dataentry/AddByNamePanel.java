@@ -123,7 +123,7 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
         StringBuilder ret = new StringBuilder();
         ret.append(d.getDriverId()).append("\n");
         ret.append(d.getFullName());
-        ret.append(", #").append(d.getMembership());
+        ret.append(", #").append(d.getBarcode());
         return ret.toString();
     }
 

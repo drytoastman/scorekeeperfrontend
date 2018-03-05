@@ -20,93 +20,98 @@ import org.json.simple.parser.ParseException;
 @SuppressWarnings("unchecked")
 public class AttrBase
 {
-	private static Logger log = Logger.getLogger(AttrBase.class.getCanonicalName());
-	
-	protected JSONObject attr;
+    private static Logger log = Logger.getLogger(AttrBase.class.getCanonicalName());
 
-	public AttrBase()
-	{
-		attr = new JSONObject();
-	}
-	
-	public AttrBase(JSONObject o)
-	{
-		attr = (JSONObject)o.clone();
-	}
+    protected JSONObject attr;
 
-	public AttrBase(ResultSet rs) throws SQLException
-	{
-		try {
-			attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
-		} catch (ParseException e) {
-			attr = new JSONObject();
-		}
-	}
-	
-	/**
-	 * Try and purge unnecessary keys that have no information from the database
-	 */
-	public void attrCleanup()
-	{
-		for (Object key : attr.keySet())
-		{
-			Object val = attr.get(key);
-			if (    (val == null)
-				|| ((val instanceof String)  && (val.equals("")))
-				|| ((val instanceof Integer) && ((Integer)val == 0))
-				|| ((val instanceof Double)  && ((Double)val <= 0.0))
-				|| ((val instanceof Boolean) && (!(Boolean)val))
-			   ) {
-				attr.remove(key);
-			}
-		}
-	}
-	
-	public String getAttrS(String name) 
-	{ 
-		String ret = null;
-		try {
-			ret = (String)attr.get(name);
-			if (ret != null)
-				return ret;
-		} catch (Exception e) {
-			log.info(String.format("Failed to load string named %s from %s: %s", name, ret, e)); 
-		}
-		return "";
-	}
-	
-	public double getAttrD(String name)
-	{
-		Double ret = null;
-		try {
-			ret = (Double)attr.get(name);
-			if (ret != null)
-				return ret;
-		} catch (Exception e) {
-			log.info(String.format("Failed to load double named %s from %s: %s", name, ret, e)); 
-		}
-		return -1.0;
-	}
-	
-	public Set<String> getAttrKeys()
-	{
-		return (Set<String>)attr.keySet();
-	}
+    public AttrBase()
+    {
+        attr = new JSONObject();
+    }
 
-	public void setAttrS(String name, String val) 
-	{ 
-		if ((val == null) || (val.trim().length() == 0))
-			attr.remove(name);
-		else
-			attr.put(name, val);
-	}
-	
-	public void setAttrD(String name, Double val)
-	{
-		if ((val == null) || (val <= 0.0) || Double.isNaN(val))
-			attr.remove(name);
-		else
-			attr.put(name, val);
-	}
+    public AttrBase(JSONObject o)
+    {
+        attr = (JSONObject)o.clone();
+    }
+
+    public AttrBase(ResultSet rs) throws SQLException
+    {
+        try {
+            attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
+        } catch (ParseException e) {
+            attr = new JSONObject();
+        }
+    }
+
+    /**
+     * Try and purge unnecessary keys that have no information from the database
+     */
+    public void attrCleanup()
+    {
+        for (Object key : attr.keySet())
+        {
+            Object val = attr.get(key);
+            if (    (val == null)
+                || ((val instanceof String)  && (val.equals("")))
+                || ((val instanceof Integer) && ((Integer)val == 0))
+                || ((val instanceof Double)  && ((Double)val <= 0.0))
+                || ((val instanceof Boolean) && (!(Boolean)val))
+               ) {
+                attr.remove(key);
+            }
+        }
+    }
+
+    public boolean hasAttr(String name)
+    {
+        return attr.containsKey(name) && !attr.get(name).equals("");
+    }
+
+    public String getAttrS(String name)
+    {
+        String ret = null;
+        try {
+            ret = (String)attr.get(name);
+            if (ret != null)
+                return ret;
+        } catch (Exception e) {
+            log.info(String.format("Failed to load string named %s from %s: %s", name, ret, e));
+        }
+        return "";
+    }
+
+    public double getAttrD(String name)
+    {
+        Double ret = null;
+        try {
+            ret = (Double)attr.get(name);
+            if (ret != null)
+                return ret;
+        } catch (Exception e) {
+            log.info(String.format("Failed to load double named %s from %s: %s", name, ret, e));
+        }
+        return -1.0;
+    }
+
+    public Set<String> getAttrKeys()
+    {
+        return (Set<String>)attr.keySet();
+    }
+
+    public void setAttrS(String name, String val)
+    {
+        if ((val == null) || (val.trim().length() == 0))
+            attr.remove(name);
+        else
+            attr.put(name, val);
+    }
+
+    public void setAttrD(String name, Double val)
+    {
+        if ((val == null) || (val <= 0.0) || Double.isNaN(val))
+            attr.remove(name);
+        else
+            attr.put(name, val);
+    }
 }
 

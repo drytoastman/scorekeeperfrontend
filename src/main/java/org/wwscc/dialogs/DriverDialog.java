@@ -48,8 +48,8 @@ public class DriverDialog extends BaseDialog<Driver>
         esub.add(checkbox("optoutmail", d.getOptOutMail()), "");
         mainPanel.add(esub, "spanx 3, wrap");
 
-        mainPanel.add(label("Membership", false), "");
-        mainPanel.add(entry("membership", d.getMembership()), "spanx 3, wrap");
+        mainPanel.add(label("Barcode", false), "");
+        mainPanel.add(entry("barcode", d.getBarcode()), "spanx 3, wrap");
 
         mainPanel.add(new JSeparator(), "spanx 4, growx, h 2!, wrap");
 
@@ -116,7 +116,7 @@ public class DriverDialog extends BaseDialog<Driver>
         result.setLastName(getEntryText("lastname"));
         result.setEmail(getEntryText("email"));
         result.setOptOutMail(isChecked("optoutmail"));
-        result.setMembership(getEntryText("membership"));
+        result.setBarcode(getEntryText("barcode"));
         for (String attr : ATTRLIST) {
             result.setAttrS(attr, getEntryText(attr));
         }

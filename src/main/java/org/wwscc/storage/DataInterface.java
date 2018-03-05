@@ -92,7 +92,7 @@ public interface DataInterface
     public void deleteDriver(UUID driverid) throws SQLException;
     public void deleteDrivers(Collection<Driver> d) throws SQLException;
     public Driver getDriver(UUID driverid);
-    public List<Driver> findDriverByMembership(String membership);
+    public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
 
     public List<Car> getCarsForDriver(UUID driverid); // get all cars for this driverid

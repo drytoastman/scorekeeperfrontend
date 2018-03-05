@@ -463,17 +463,17 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public List<Driver> findDriverByMembership(String membership)
+    public List<Driver> findDriverByBarcode(String barcode)
     {
         List<Driver> ret = new ArrayList<Driver>();
         try
         {
-            return executeSelect("select * from drivers where membership like ? order by driverid", newList(membership),
+            return executeSelect("select * from drivers where membership like ? order by driverid", newList(barcode),
                     Driver.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)
         {
-            logError("findDriverByMembership", ioe);
+            logError("findDriverByBarcode", ioe);
         }
         return ret;
     }

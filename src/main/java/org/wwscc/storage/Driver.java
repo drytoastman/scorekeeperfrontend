@@ -24,7 +24,7 @@ public class Driver extends AttrBase
     protected String email;
     protected String username;
     protected String password;
-    protected String membership;
+    protected String barcode;
     protected boolean optoutmail;
 
     public Driver()
@@ -36,7 +36,7 @@ public class Driver extends AttrBase
         email = "";
         username = driverid.toString();
         password = "";
-        membership = "";
+        barcode = "";
         optoutmail = false;
     }
 
@@ -56,7 +56,7 @@ public class Driver extends AttrBase
         email      = rs.getString("email");
         username   = rs.getString("username");
         password   = rs.getString("password");
-        membership = rs.getString("membership");
+        barcode = rs.getString("membership");
         optoutmail = rs.getBoolean("optoutmail");
     }
 
@@ -69,7 +69,7 @@ public class Driver extends AttrBase
         ret.add(email);
         ret.add(username);
         ret.add(password);
-        ret.add(membership);
+        ret.add(barcode);
         ret.add(optoutmail);
         attrCleanup();
         ret.add(attr);
@@ -81,13 +81,13 @@ public class Driver extends AttrBase
     public String getFirstName()  { return firstname; }
     public String getLastName()   { return lastname; }
     public String getEmail()      { return email; }
-    public String getMembership() { return membership; }
+    public String getBarcode()    { return barcode; }
     public boolean getOptOutMail(){ return optoutmail; }
 
     public void setFirstName(String s)  { firstname = s; }
     public void setLastName(String s)   { lastname = s; }
     public void setEmail(String s)      { email = s; }
-    public void setMembership(String s) { membership = s; }
+    public void setBarcode(String s)    { barcode = s; }
     public void setUsername(String s)   { username = s; }
     public void setOptOutMail(boolean b){ optoutmail = b; }
 
@@ -111,7 +111,7 @@ public class Driver extends AttrBase
     public static Driver getPlaceHolder(String barcode)
     {
         Driver ret = new Driver(PLACEHOLDER, barcode);
-        ret.setMembership(barcode);
+        ret.setBarcode(barcode);
         return ret;
     }
 
