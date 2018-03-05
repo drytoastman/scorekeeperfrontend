@@ -34,9 +34,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.AbstractDocument;
 
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
+import org.wwscc.util.EasyNumFilter;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -56,6 +58,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
 
         entry = new JTextField();
         entry.getDocument().addDocumentListener(this);
+        ((AbstractDocument)entry.getDocument()).setDocumentFilter(new EasyNumFilter(10));
 
         cars = new JTable();
         cars.setDefaultRenderer(Object.class, new EntryRenderer());
@@ -154,7 +157,7 @@ public class QuickEntrySearch extends JPanel implements MessageListener, Documen
         try
         {
             if (carText.length() > 0)
-                Integer.parseInt(carText);
+                Long.parseLong(carText);
             TableRowSorter<EntryModel> sorter = new TableRowSorter<EntryModel>((EntryModel)cars.getModel());
             sorter.setRowFilter(new QuickEntryFilter(carText));
             cars.setRowSorter(sorter);
