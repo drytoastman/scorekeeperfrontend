@@ -31,7 +31,7 @@ public class BrowserControl
 
     public static void openAuditReport(ApplicationState state, String order)
     {
-        openResults(state, String.format("audit?order=%s", order));
+        openResults(state, String.format("audit?order=%s&course=%s&group=%s", order, state.getCurrentCourse(), state.getCurrentRunGroup()));
     }
 
     public static void openResults(ApplicationState state, String selection)
