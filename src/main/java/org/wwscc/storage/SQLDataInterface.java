@@ -452,14 +452,15 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return executeSelect("select * from drivers where driverid=?", newList(driverid),
-                                Driver.class.getConstructor(ResultSet.class)).get(0);
+            List<Driver> ret = executeSelect("select * from drivers where driverid=?", newList(driverid), Driver.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0)
+                return ret.get(0);
         }
         catch (Exception ioe)
         {
             logError("getDriver", ioe);
-            return null;
         }
+        return null;
     }
 
     @Override
@@ -476,6 +477,22 @@ public abstract class SQLDataInterface implements DataInterface
             logError("findDriverByBarcode", ioe);
         }
         return ret;
+    }
+
+    @Override
+    public Car getCar(UUID carid)
+    {
+        try
+        {
+            List<Car> ret = executeSelect("select * from cars where carid=?", newList(carid), Car.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0)
+                return ret.get(0);
+        }
+        catch (Exception e)
+        {
+            logError("getCar", e);
+        }
+        return null;
     }
 
     @Override
@@ -845,7 +862,10 @@ public abstract class SQLDataInterface implements DataInterface
 
         try
         {
-            Event e      = executeSelect("select * from events where eventid=?", newList(eventid), Event.class.getConstructor(ResultSet.class)).get(0);
+            List<Event> el = executeSelect("select * from events where eventid=?", newList(eventid), Event.class.getConstructor(ResultSet.class));
+            if (el.size() == 0)
+                throw new Exception("No event found for eventid " + eventid);
+            Event e = el.get(0);
             ResultSet rs = executeSelect(sql, newList(eventid));
 
             Dialins ret         = new Dialins();

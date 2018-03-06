@@ -55,6 +55,7 @@ import org.wwscc.dialogs.CurrencyDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
+import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Payment;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;
@@ -85,6 +86,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         setLayout(new MigLayout("fill, gap 0, ins 0", "[45%, fill][55%, fill]", "fill"));
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
+        Messenger.register(MT.OBJECT_SCANNED, this);
 
         printers = new JComboBox<PrintService>();
         printers.setRenderer(new DefaultListCellRenderer() {
@@ -715,6 +717,17 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             case EVENT_CHANGED:
                 driverSelectionChanged();
                 reloadCars(selectedCar);
+                break;
+
+            case OBJECT_SCANNED:
+                if (o instanceof Car) {
+                    Car c = (Car)o;
+                    Driver d = Database.d.getDriver(c.getDriverId());
+                    focusOnDriver(d.getFirstName(), d.getLastName());
+                    focusOnCar(c.getCarId());
+                }
+                if (o instanceof Driver)
+                    focusOnDriver(((Driver)o).getFirstName(), ((Driver)o).getLastName());
                 break;
 
             case BARCODE_SCANNED:

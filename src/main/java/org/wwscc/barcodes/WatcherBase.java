@@ -8,12 +8,18 @@
 package org.wwscc.barcodes;
 
 import java.awt.event.KeyEvent;
+import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.Timer;
+
+import org.wwscc.storage.Car;
+import org.wwscc.storage.Database;
+import org.wwscc.storage.Driver;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -83,6 +89,31 @@ public abstract class WatcherBase
     }
 
     /**
+     * A 40 digit input was scanned, this is our CODE128C encoding of a UUID
+     * @param digits the 40 digits
+     */
+    private void processUUID(String digits)
+    {
+        String s = String.format("%032x", new BigInteger(digits.toString()));
+        UUID uuid = UUID.fromString(String.format("%s-%s-%s-%s-%s", s.substring(0,8), s.substring(8,12), s.substring(12,16), s.substring(16,20), s.substring(20,32)));
+        log.log(Level.INFO, "UUID scanned - {0}", uuid);
+
+        Car c = Database.d.getCar(uuid);
+        if (c != null) {
+            Messenger.sendEvent(MT.OBJECT_SCANNED, c);
+            return;
+        }
+
+        Driver d = Database.d.getDriver(uuid);
+        if (d != null) {
+            Messenger.sendEvent(MT.OBJECT_SCANNED, d);
+            return;
+        }
+
+        log.log(Level.WARNING, "\bNothing found for scanned UUID {0}", uuid);
+    }
+
+    /**
      * Primary logic.
      * Run through the queue to see if we got a possible match of:
      * [0] stx, [1 - (n-1)] Integers within time frame, [n]
@@ -115,13 +146,17 @@ public abstract class WatcherBase
 
             if (c == config.etx) {
                 queue.clear();
-                log.log(Level.FINE, "Scanned barcode {0}", barcode);
-                Messenger.sendEvent(MT.BARCODE_SCANNED, barcode.toString());
+                if (barcode.length() == 40) { // encoded UUID, decode
+                    processUUID(barcode.toString());
+                } else {
+                    log.log(Level.INFO, "Barcode scanned {0}", barcode);
+                    Messenger.sendEvent(MT.BARCODE_SCANNED, barcode.toString());
+                }
                 return iter.nextIndex();  // time to dump
             }
 
             barcode.append(c);
-            if (barcode.length() > 20) {
+            if (barcode.length() > 40) {
                 log.log(Level.FINE, "Barcode too long, ignoring");
                 return iter.nextIndex(); // time to dump
             }

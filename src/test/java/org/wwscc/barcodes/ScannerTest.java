@@ -1,6 +1,8 @@
 package org.wwscc.barcodes;
 
 import java.awt.event.KeyEvent;
+import java.util.UUID;
+
 import javax.swing.JLabel;
 
 import org.junit.AfterClass;
@@ -19,12 +21,12 @@ public class ScannerTest {
     static char start = 2;
     static char end   = 3;
     static JLabel ignore = new JLabel();
-    static String scanned = "";
+    static Object scanned = "";
     static MessageListener listener = new MessageListener() {
         @Override
         public void event(MT type, Object data) {
             if (type == MT.BARCODE_SCANNED) {
-                scanned = (String)data;
+                scanned = data;
             }
         }
     };
@@ -85,9 +87,9 @@ public class ScannerTest {
     }
 
     @Test
-    public void longBarcodes() throws InterruptedException {
-        String    okay = "12345678901234567890";
-        String toolong = "123456789012345678901";
+    public void longBarcodes() {
+        String    okay = "1234567890123456789012345678901234567890";
+        String toolong = "12345678901234567890123456789012345678901";
 
         scanned = "";
         sendString(okay);
@@ -99,21 +101,36 @@ public class ScannerTest {
     }
 
     @Test
-    public void doubleStart() throws InterruptedException {
+    public void encodedUUID() {
+        scanned = "";
+        sendString("0039147042491687017526368347237630738434");
+        Assert.assertEquals("encoded uuid", UUID.fromString("1d737236-0709-11e8-b6d2-0242ac120002"), scanned);
+
+        scanned = "";
+        sendString("0000000000000000000000000000000000000000");
+        Assert.assertEquals("encoded uuid", UUID.fromString("00000000-0000-0000-0000-000000000000"), scanned);
+
+        scanned = "";
+        sendString("0340282366920938463463374607431768211455");
+        Assert.assertEquals("encoded uuid", UUID.fromString("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), scanned);
+    }
+
+    @Test
+    public void doubleStart() {
         for (char c : new char[] { start, '1', start, '1', '2', '3', end })
             watcher.processEvent(new KeyEvent(ignore, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0,  KeyEvent.VK_UNDEFINED, c));
         Assert.assertEquals("123", scanned);
     }
 
     @Test
-    public void doubleEnd() throws InterruptedException {
+    public void doubleEnd() {
         for (char c : new char[] { start, '1', '2', '3', end, end })
             watcher.processEvent(new KeyEvent(ignore, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0,  KeyEvent.VK_UNDEFINED, c));
         Assert.assertEquals("123", scanned);
     }
 
     @Test
-    public void nonTypedExtras() throws InterruptedException {
+    public void nonTypedExtras() {
         for (char c : new char[] { start, '1', '2', '3', end, end }) {
             watcher.processEvent(new KeyEvent(ignore, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0,  KeyEvent.VK_UNDEFINED, c));
             watcher.processEvent(new KeyEvent(ignore, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0,  KeyEvent.VK_UNDEFINED, c));

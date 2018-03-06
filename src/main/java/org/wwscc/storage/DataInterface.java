@@ -95,6 +95,7 @@ public interface DataInterface
     public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
 
+    public Car getCar(UUID carid);
     public List<Car> getCarsForDriver(UUID driverid); // get all cars for this driverid
     public Map<String, Set<String>> getCarAttributes(); // get a unique list of possible 'attr' for the car
     public List<Integer> getUnavailableNumbers(UUID driverid, String classcode);

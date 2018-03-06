@@ -11,7 +11,6 @@ package org.wwscc.dataentry.tables;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
@@ -96,6 +95,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         Messenger.register(MT.CAR_CHANGE, this);
         Messenger.register(MT.FILTER_ENTRANT, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
+        Messenger.register(MT.OBJECT_SCANNED, this);
     }
 
     public RunsTable getRunsTable() { return runsTable; }
@@ -119,7 +119,14 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         }
     }
 
-    public void processBarcode(String barcode) throws SQLException, IOException
+    /**
+     * The logic for processing a scanned object
+     *   1. Search driver barcode fields
+     *   2. If found, pass first result to driver function
+     *   3. If not found, created a placeholder driver and pass to driver function
+     * @param barcode the scanned barcode string
+     */
+    public void processBarcode(String barcode)
     {
         List<Driver> found = Database.d.findDriverByBarcode(barcode);
         Driver d = null;
@@ -134,7 +141,11 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         {
             log.log(Level.WARNING, "Unable to locate a driver using barcode {0}, creating a default", barcode);
             d = Driver.getPlaceHolder(barcode);
-            Database.d.newDriver(d);
+            try {
+                Database.d.newDriver(d);
+            } catch (SQLException e) {
+                log.log(Level.WARNING, "\bUnable to create driver placeholder entry: " + e, e);
+            }
         }
         else
         {
@@ -142,6 +153,20 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
             return;
         }
 
+        driverScanned(d);
+    }
+
+    /**
+     * The logic for when a driver is scanned rather than a car entry:
+     *  1. Find all registered cars that are not in use in another rungroup
+     *  2. If the list contains a car that is already in the current rungroup, select that one
+     *  3. If the list length ==1, select it by default
+     *  4. If the list length > 1, select the non second runs car first (TOPM, ITO2)
+     *  5. If nothing is found, create a placeholder entry
+     * @param d the matched driver
+     */
+    public void driverScanned(Driver d)
+    {
         List<Car> available = Database.d.getRegisteredCars(d.getDriverId(), DataEntry.state.getCurrentEventId());
         Iterator<Car> iter = available.iterator();
 
@@ -175,8 +200,12 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         c.setClassCode(ClassData.PLACEHOLDER_CLASS);
         c.setNumber(999);
 
-        Database.d.newCar(c);
-        Database.d.registerCar(DataEntry.state.getCurrentEventId(), c);
+        try {
+            Database.d.newCar(c);
+            Database.d.registerCar(DataEntry.state.getCurrentEventId(), c);
+        } catch (SQLException sqle) {
+            log.log(Level.WARNING, "\bUnable to create a placeholder car entry: " + sqle, sqle);
+        }
         event(MT.CAR_ADD, c.getCarId());
     }
 
@@ -203,13 +232,15 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                 runsTable.repaint();
                 break;
 
-            case BARCODE_SCANNED:
-                try {
-                    processBarcode((String)o);
-                } catch (IOException | SQLException be) {
-                    log.log(Level.SEVERE, be.getMessage());
-                }
+            case OBJECT_SCANNED:
+                if (o instanceof Car)
+                    event(MT.CAR_ADD, ((Car)o).getCarId());
+                if (o instanceof Driver)
+                    driverScanned((Driver)o);
+                break;
 
+            case BARCODE_SCANNED:
+                processBarcode((String)o);
                 break;
 
             case CAR_CHANGE:
