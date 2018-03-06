@@ -10,7 +10,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.components.UnderlineBorder;
@@ -53,6 +52,7 @@ class CarRenderer implements ListCellRenderer<Object>
         p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
         p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber()));
         p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
+        p.quickid.setText(c.getQuickEntryId());
 
         int c0 = 0;
         int c1 = 0;
@@ -75,6 +75,8 @@ class MyPanel extends JPanel
     JLabel payment;
     JLabel carinfo;
     JLabel cardesc;
+    JLabel quicklbl;
+    JLabel quickid;
 
     public MyPanel()
     {
@@ -84,11 +86,11 @@ class MyPanel extends JPanel
         status = new JLabel();
         status.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         status.setOpaque(false);
-        add(status, "ay center, spany 2");
+        add(status, "ay center, spany 3");
 
         payment = new JLabel();
         payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        add(payment, "ax right, spany 2");
+        add(payment, "ax right, spany 3");
 
         carinfo = new JLabel();
         carinfo.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
@@ -96,7 +98,15 @@ class MyPanel extends JPanel
 
         cardesc = new JLabel();
         cardesc.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-        add(cardesc, "gap 0");
+        add(cardesc, "gap 0, wrap");
+
+        quicklbl = new JLabel("Quick  ");
+        quicklbl.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+        add(quicklbl, "gap 0, split");
+
+        quickid = new JLabel("");
+        quickid.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+        add(quickid, "gap 0, wrap");
     }
 
     @Override
@@ -106,6 +116,7 @@ class MyPanel extends JPanel
         if (status != null) status.setForeground(f);
         if (carinfo != null) carinfo.setForeground(f);
         if (cardesc != null) cardesc.setForeground(f);
+        if (quickid != null) quickid.setForeground(f);
     }
 
     @Override
@@ -115,5 +126,6 @@ class MyPanel extends JPanel
         if (status != null) status.setBackground(f);
         if (carinfo != null) carinfo.setBackground(f);
         if (cardesc != null) cardesc.setBackground(f);
+        if (quickid != null) quickid.setBackground(f);
     }
 }
