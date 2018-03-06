@@ -55,7 +55,6 @@ import org.wwscc.dialogs.CurrencyDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
-import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Payment;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;

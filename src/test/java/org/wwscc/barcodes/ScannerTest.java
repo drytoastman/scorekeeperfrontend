@@ -21,12 +21,15 @@ public class ScannerTest {
     static char start = 2;
     static char end   = 3;
     static JLabel ignore = new JLabel();
-    static Object scanned = "";
+    static String scanned = "";
+    static Object object = null;
     static MessageListener listener = new MessageListener() {
         @Override
         public void event(MT type, Object data) {
             if (type == MT.BARCODE_SCANNED) {
-                scanned = data;
+                scanned = (String)data;
+            } else if (type == MT.OBJECT_SCANNED) {
+                object = data;
             }
         }
     };
@@ -39,11 +42,13 @@ public class ScannerTest {
         Prefs.setScannerConfig(SerialPortBarcodeWatcher.TYPE, ScannerConfig.defaultFor(SerialPortBarcodeWatcher.TYPE).encode());
         Messenger.setTestMode();
         Messenger.register(MT.BARCODE_SCANNED, listener);
+        Messenger.register(MT.OBJECT_SCANNED, listener);
     }
 
     @AfterClass
     public static void fini() throws Exception {
         Messenger.unregister(MT.BARCODE_SCANNED, listener);
+        Messenger.unregister(MT.OBJECT_SCANNED, listener);
     }
 
     WatcherBase watcher;
@@ -88,12 +93,12 @@ public class ScannerTest {
 
     @Test
     public void longBarcodes() {
-        String    okay = "1234567890123456789012345678901234567890";
+        String lessthanuuid = "123456789012345678901234567890123456789";
         String toolong = "12345678901234567890123456789012345678901";
 
         scanned = "";
-        sendString(okay);
-        Assert.assertEquals("long but okay", okay, scanned);
+        sendString(lessthanuuid);
+        Assert.assertEquals("long but okay", lessthanuuid, scanned);
 
         scanned = "";
         sendString(toolong);
@@ -102,17 +107,21 @@ public class ScannerTest {
 
     @Test
     public void encodedUUID() {
+        object = null;
         scanned = "";
         sendString("0039147042491687017526368347237630738434");
-        Assert.assertEquals("encoded uuid", UUID.fromString("1d737236-0709-11e8-b6d2-0242ac120002"), scanned);
+        Assert.assertEquals("encoded uuid", UUID.fromString("1d737236-0709-11e8-b6d2-0242ac120002"), object);
+        Assert.assertEquals("encoded uuid", "", scanned);
 
-        scanned = "";
+        object = null;
         sendString("0000000000000000000000000000000000000000");
-        Assert.assertEquals("encoded uuid", UUID.fromString("00000000-0000-0000-0000-000000000000"), scanned);
+        Assert.assertEquals("null uuid", UUID.fromString("00000000-0000-0000-0000-000000000000"), object);
+        Assert.assertEquals("null uuid", "", scanned);
 
-        scanned = "";
+        object = null;
         sendString("0340282366920938463463374607431768211455");
-        Assert.assertEquals("encoded uuid", UUID.fromString("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), scanned);
+        Assert.assertEquals("max uuid", UUID.fromString("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"), object);
+        Assert.assertEquals("max uuid", "", scanned);
     }
 
     @Test

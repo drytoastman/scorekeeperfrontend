@@ -79,6 +79,11 @@ public class Prefs
         prefs = new TestMemoryPrefs();
     }
 
+    public static boolean isTestMode()
+    {
+        return (prefs instanceof TestMemoryPrefs);
+    }
+
 
     /* ***************************************************************************** */
 
