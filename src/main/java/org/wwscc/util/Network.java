@@ -44,14 +44,15 @@ public class Network
                     }
                     String dname = ni.getDisplayName();
                     if (SystemUtils.IS_OS_WINDOWS) {
-	                    if (dname.contains("VirtualBox")) continue;
-	                    if (dname.contains("VMware")) continue;
-	                    if (dname.contains("Tunneling")) continue;
-	                    if (dname.contains("Microsoft")) continue;
+                        if (dname.contains("VirtualBox")) continue;
+                        if (dname.contains("VMware")) continue;
+                        if (dname.contains("Tunneling")) continue;
+                        if (dname.contains("Microsoft")) continue;
+                        if (dname.contains("Hyper-V")) continue;
                     } else if (SystemUtils.IS_OS_LINUX) {
-	                    if (dname.startsWith("veth")) continue;
-	                    if (dname.startsWith("docker")) continue;
-	                    if (dname.startsWith("br-")) continue;
+                        if (dname.startsWith("veth")) continue;
+                        if (dname.startsWith("docker")) continue;
+                        if (dname.startsWith("br-")) continue;
                     }
                     if (!ni.isUp()) continue;
                     return ni;
