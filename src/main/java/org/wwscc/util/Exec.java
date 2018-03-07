@@ -34,22 +34,21 @@ public class Exec
         return p;
     }
 
-    public static int execit(ProcessBuilder in)
-    {
-        return execit(in, null, -1);
-    }
-
-    public static int execit(ProcessBuilder in, byte[] output)
-    {
-        return execit(in, output, -1);
-    }
-
-    public static int execit(ProcessBuilder in, int waitms)
-    {
-        return execit(in, null, waitms);
-    }
-
+    // Sigh.. if only we had kwargs
+    public static int execit(ProcessBuilder in, int waitms) { return execit(in, null, waitms); }
     public static int execit(ProcessBuilder in, byte[] output, int waitms)
+    {
+        return execit(in, output, waitms, false);
+    }
+
+    public static int execit(ProcessBuilder in, byte[] output)        { return execit(in, output, false); }
+    public static int execit(ProcessBuilder in, boolean ignoreerrors) { return execit(in,   null, ignoreerrors); }
+    public static int execit(ProcessBuilder in, byte[] output, boolean ignoreerrors)
+    {
+        return execit(in, output, -1, ignoreerrors);
+    }
+
+    public static int execit(ProcessBuilder in, byte[] output, int waitms, boolean ignoreerrors)
     {
         try {
             log.log(Level.FINER, "Running {0}", in.command().toString());
@@ -81,7 +80,8 @@ public class Exec
                 is.close();
                 if (len > 0) {
                     if (ret != 0) {
-                        log.log(Level.INFO, "Docker Error:\n " + new String(output, 0, len));
+                        if (!ignoreerrors)
+                            log.log(Level.INFO, "Exec Error: ({0}): {1}", new Object[] { in.command().toString(), new String(output, 0, len).trim() });
                     } else {
                         sublog.log(Level.FINEST, "Execution Output:\n " + new String(output, 0, len));
                     }
@@ -93,24 +93,9 @@ public class Exec
             p.destroy();
             return ret;
         } catch (InterruptedException | IOException ie) {
-            log.log(Level.WARNING, "Exec failed " + ie, ie);
+            if (!ignoreerrors)
+                log.log(Level.WARNING, "Exec Exception: ({0}): {1}", new Object[] { in.command().toString(), ie });
         }
         return -1;
-    }
-
-    /**
-     * Just testing to see if it executes cleanly or not.  Don't log errors or look at output
-     * @param in the process to test
-     * @return true if execution was successful, false if not
-     */
-    public static boolean testit(ProcessBuilder in)
-    {
-        try {
-            log.log(Level.FINE, "testing {0}", in.command().toString());
-            Process p = in.start();
-            return p.waitFor() == 0;
-        } catch (InterruptedException | IOException ie) {
-        }
-        return false;
     }
 }

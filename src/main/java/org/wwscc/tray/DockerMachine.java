@@ -63,7 +63,7 @@ public class DockerMachine
      */
     public static boolean machinepresent()
     {
-        if (Exec.testit(Exec.build(null, "docker-machine", "-h"))) {
+        if (Exec.execit(Exec.build(null, "docker-machine", "-h"), true) == 0) {
             return vboxversion().length() > 3;
         }
         return false;
@@ -76,9 +76,9 @@ public class DockerMachine
     {
         byte[] ver = new byte[128];
         if (SystemUtils.IS_OS_WINDOWS) {
-            Exec.execit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"), ver);
+            Exec.execit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"), ver, true);
         } else {
-            Exec.execit(Exec.build(null, "vboxmanage", "-v"), ver);
+            Exec.execit(Exec.build(null, "vboxmanage", "-v"), ver, true);
         }
         return new String(ver).trim();
     }
