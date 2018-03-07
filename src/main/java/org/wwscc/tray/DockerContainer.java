@@ -87,13 +87,6 @@ public class DockerContainer implements DataRetrievalInterface
         return Exec.execit(Exec.build(env, cmd), null) == 0;
     }
 
-    public static String version(Map<String, String> env)
-    {
-        byte[] ver = new byte[1024];
-        Exec.execit(Exec.build(env, "docker", "version"), ver);
-        return new String(ver).trim();
-    }
-
     String image;
     String name;
     Map<String, String> volumes;
