@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,6 +18,8 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.FocusManager;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -30,6 +33,7 @@ import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.Resources;
 
 public class Actions
 {
@@ -37,7 +41,7 @@ public class Actions
 
     List<Action> apps;
     List<Action> others;
-    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
+    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, makeActive, makeInactive, clearOld;
     Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
@@ -58,8 +62,26 @@ public class Actions
         importRequest  = addAction(new EventSendAction("Import Backup Data", MT.IMPORT_REQUEST));
 
         mergeAll       = addAction(new MergeWithAllLocalAction());
-        mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", MergeWithHostAction.class));
-        downloadSeries = addAction(new PopupMenuWithMergeServerActions("Download New Series From ...", DownloadFromHostAction.class));
+        mergeWith      = addAction(new PopupMenuWithMergeServerActions(
+                                    "Sync With ...",
+                                    p -> p.isActive() || p.isRemote(),
+                                    MergeWithHostAction.class,
+                                    null));
+        downloadSeries = addAction(new PopupMenuWithMergeServerActions(
+                                    "Download New Series From ...",
+                                    p -> p.isActive() || p.isRemote(),
+                                    DownloadFromHostAction.class,
+                                    null));
+        makeActive     = addAction(new PopupMenuWithMergeServerActions(
+                                    "Make Remote Persistant ...",
+                                    p -> !p.isActive() && p.isRemote(),
+                                    SetRemoteActiveAction.class,
+                                    new ImageIcon(Resources.loadImage("server.png"))));
+        makeInactive   = addAction(new PopupMenuWithMergeServerActions(
+                                    "Deactivate Remote ...",
+                                    p -> p.isActive() && p.isRemote(),
+                                    SetRemoteInactiveAction.class,
+                                    new ImageIcon(Resources.loadImage("server.png"))));
         clearOld       = addAction(new ClearOldDiscoveredAction());
         deleteServer   = addAction(new DeleteServerAction());
         addServer      = addAction(new AddServerAction());
@@ -86,6 +108,9 @@ public class Actions
             a.setEnabled(b);
     }
 
+    static Predicate<MergeServer> inactiveAndRemote() { return p -> !p.isActive() && p.isRemote(); }
+    static Predicate<MergeServer> activeAndRemote()   { return p -> p.isActive()  && p.isRemote(); }
+
 
     /**
      * Action that creates a popup menu population with Actions created from the list
@@ -93,24 +118,28 @@ public class Actions
      */
     static class PopupMenuWithMergeServerActions extends AbstractAction
     {
-        Class<? extends Action> template;
-        public PopupMenuWithMergeServerActions(String s, Class<? extends Action> c)
+        Class<? extends PopupHostAction> template;
+        Predicate<MergeServer> filter;
+
+        public PopupMenuWithMergeServerActions(String title, Predicate<MergeServer> filter, Class<? extends PopupHostAction> template, Icon icon)
         {
-            super(s + "\u2BC6"); // down arrow
-            template = c;
+            super(title + "\u2BC6", icon); // u2bc6 = down arrow
+            this.filter = filter;
+            this.template = template;
         }
 
         public void actionPerformed(ActionEvent e) {
             JPopupMenu menu = new JPopupMenu();
-            for (MergeServer server : Database.d.getMergeServers())
-            {
-                if ((server.isLocalHost()) || (!server.isActive() && !server.isRemote()))
-                    continue;
+            Database.d.getMergeServers().stream().filter(filter).forEach(m -> {
                 try {
-                    menu.add(new JMenuItem((Action)template.getConstructor(MergeServer.class).newInstance(server)));
-                } catch (Exception ex) {
-                    log.log(Level.WARNING, "can't build action: " + ex, ex);
+                    menu.add(new JMenuItem((PopupHostAction)template.getConstructor(MergeServer.class).newInstance(m)));
+                } catch (Exception e1) {
+                    log.log(Level.WARNING, "\bcan't build action: " + e1, e1);
                 }
+            });
+
+            if (menu.getSubElements().length == 0) {
+                menu.add(new JMenuItem(""));
             }
 
             Component c = (Component)e.getSource();
@@ -118,11 +147,10 @@ public class Actions
         }
     }
 
-
-    public static class DownloadFromHostAction extends AbstractAction
+    public static abstract class PopupHostAction extends AbstractAction
     {
         MergeServer server;
-        public DownloadFromHostAction(MergeServer s) {
+        public PopupHostAction(MergeServer s) {
             super();
             server = s;
             if (server.getAddress().equals(""))
@@ -130,7 +158,11 @@ public class Actions
             else
                 putValue(NAME, server.getHostname() + "/" + server.getAddress());
         }
+    }
 
+    public static class DownloadFromHostAction extends PopupHostAction
+    {
+        public DownloadFromHostAction(MergeServer s) { super(s); }
         public void actionPerformed(ActionEvent e) {
             SeriesSelectionDialog hd = new SeriesSelectionDialog(server);
             if (!hd.doDialog("Select Host and Series", null))
@@ -144,25 +176,32 @@ public class Actions
         }
     }
 
-
-    public static class MergeWithHostAction extends AbstractAction
+    public static class MergeWithHostAction extends PopupHostAction
     {
-        MergeServer server;
-        public MergeWithHostAction(MergeServer s) {
-            super();
-            server = s;
-            if (server.getAddress().equals(""))
-                putValue(NAME, server.getHostname());
-            else
-                putValue(NAME, server.getHostname() + "/" + server.getAddress());
-        }
-
+        public MergeWithHostAction(MergeServer s) { super(s); }
         public void actionPerformed(ActionEvent e) {
             Database.d.mergeServerUpdateNow(server.getServerId());
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
 
+    public static class SetRemoteActiveAction extends PopupHostAction
+    {
+        public SetRemoteActiveAction(MergeServer s) { super(s); }
+        public void actionPerformed(ActionEvent e) {
+            Database.d.mergeServerActivate(server.getServerId(), server.getHostname(), server.getAddress());
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
+
+    public static class SetRemoteInactiveAction extends PopupHostAction
+    {
+        public SetRemoteInactiveAction(MergeServer s) { super(s); }
+        public void actionPerformed(ActionEvent e) {
+            Database.d.mergeServerDeactivate(server.getServerId());
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
 
     static class MergeWithAllLocalAction extends AbstractAction
     {
@@ -201,7 +240,7 @@ public class Actions
     static class ClearOldDiscoveredAction extends AbstractAction
     {
         public ClearOldDiscoveredAction() {
-            super("Clear Old Discovered Entries");
+            super("Clear Old Peers", new ImageIcon(Resources.loadImage("group.png")));
         }
         public void actionPerformed(ActionEvent e) {
             new Thread() { @Override public void run()  {

@@ -16,6 +16,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -35,6 +36,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 import org.wwscc.storage.Database;
+import org.wwscc.storage.MergeServer;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -75,14 +77,16 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Active Hosts"), "split");
+        content.add(button(actions.mergeAll), "gapleft 10");
         content.add(button(actions.mergeWith), "gapleft 10");
         content.add(button(actions.downloadSeries), "gapleft 10");
-        content.add(button(actions.mergeAll), "gapleft 10, wrap");
+        content.add(button(actions.makeInactive), "gapleft 10, wrap");
         content.add(new JScrollPane(activetable), "grow, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Inactive Hosts"), "split");
-        content.add(button(actions.clearOld), "gapleft 10, wrap");
+        content.add(button(actions.clearOld), "gapleft 10");
+        content.add(button(actions.makeActive), "gapleft 10, wrap");
         content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
 
@@ -230,8 +234,12 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
 
             case DATABASE_NOTIFICATION:
                 Set<String> tables = (Set<String>)data;
-                if (tables.contains("mergeservers"))
-                    model.setData(Database.d.getMergeServers());
+                if (tables.contains("mergeservers")) {
+                    List<MergeServer> s = Database.d.getMergeServers();
+                    model.setData(s);
+                    actions.makeActive.setEnabled(  s.stream().filter(m -> !m.isActive() && m.isRemote()).count() > 0);
+                    actions.makeInactive.setEnabled(s.stream().filter(m ->  m.isActive() && m.isRemote()).count() > 0);
+                }
                 break;
         }
     }
