@@ -2,6 +2,7 @@ package org.wwscc.tray;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,8 +19,8 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.FocusManager;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -40,20 +41,20 @@ public class Actions
     private static final Logger log = Logger.getLogger(Actions.class.getName());
 
     List<Action> apps;
-    List<Action> others;
-    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, makeActive, makeInactive, clearOld;
+    List<Action> actions;
+    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
     Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
+    DynamicHostMenu makeActive, makeInactive;
 
     public Actions()
     {
-        apps = new ArrayList<Action>();
-        others = new ArrayList<Action>();
+        apps    = new ArrayList<Action>();
+        actions = new ArrayList<Action>();
 
         apps.add(new EventSendAction("DataEntry",    MT.LAUNCH_REQUEST, "org.wwscc.dataentry.DataEntry", null));
         apps.add(new EventSendAction("Registration", MT.LAUNCH_REQUEST, "org.wwscc.registration.Registration", null));
         apps.add(new EventSendAction("ProTimer",     MT.LAUNCH_REQUEST, "org.wwscc.protimer.ProSoloInterface", null));
         apps.add(new EventSendAction("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI", null));
-        //apps.add(new EventSendAction("BWTimer",      MT.LAUNCH_REQUEST, "org.wwscc.bwtimer.Timer", null));
 
         quit           = new EventSendAction("Shutdown",        MT.SHUTDOWN_REQUEST);
         openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
@@ -62,26 +63,10 @@ public class Actions
         importRequest  = addAction(new EventSendAction("Import Backup Data", MT.IMPORT_REQUEST));
 
         mergeAll       = addAction(new MergeWithAllLocalAction());
-        mergeWith      = addAction(new PopupMenuWithMergeServerActions(
-                                    "Sync With ...",
-                                    p -> p.isActive() || p.isRemote(),
-                                    MergeWithHostAction.class,
-                                    null));
-        downloadSeries = addAction(new PopupMenuWithMergeServerActions(
-                                    "Download New Series From ...",
-                                    p -> p.isActive() || p.isRemote(),
-                                    DownloadFromHostAction.class,
-                                    null));
-        makeActive     = addAction(new PopupMenuWithMergeServerActions(
-                                    "Make Remote Persistant ...",
-                                    p -> !p.isActive() && p.isRemote(),
-                                    SetRemoteActiveAction.class,
-                                    new ImageIcon(Resources.loadImage("server.png"))));
-        makeInactive   = addAction(new PopupMenuWithMergeServerActions(
-                                    "Deactivate Remote ...",
-                                    p -> p.isActive() && p.isRemote(),
-                                    SetRemoteInactiveAction.class,
-                                    new ImageIcon(Resources.loadImage("server.png"))));
+        mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", p -> p.isActive() || p.isRemote(), MergeWithHostAction.class));
+        downloadSeries = addAction(new PopupMenuWithMergeServerActions("Download New Series From ...", p -> p.isActive() || p.isRemote(), DownloadFromHostAction.class));
+        makeActive     = new DynamicHostMenu("Make Remote Persistant", p -> !p.isActive() && p.isRemote(), SetRemoteActiveAction.class);
+        makeInactive   = new DynamicHostMenu("Deactivate Remote",      p ->  p.isActive() && p.isRemote(), SetRemoteInactiveAction.class);
         clearOld       = addAction(new ClearOldDiscoveredAction());
         deleteServer   = addAction(new DeleteServerAction());
         addServer      = addAction(new AddServerAction());
@@ -96,7 +81,7 @@ public class Actions
 
     public Action addAction(Action a)
     {
-        others.add(a);
+        actions.add(a);
         return a;
     }
 
@@ -104,13 +89,35 @@ public class Actions
     {
         for (Action a : apps)
             a.setEnabled(b);
-        for (Action a : others)
+        for (Action a : actions)
             a.setEnabled(b);
     }
 
-    static Predicate<MergeServer> inactiveAndRemote() { return p -> !p.isActive() && p.isRemote(); }
-    static Predicate<MergeServer> activeAndRemote()   { return p -> p.isActive()  && p.isRemote(); }
+    static class DynamicHostMenu extends JMenu
+    {
+        Predicate<MergeServer> filter;
+        Class<? extends Action> template;
 
+        public DynamicHostMenu(String title, Predicate<MergeServer> filter, Class<? extends Action> template)
+        {
+            super(title);
+            this.filter = filter;
+            this.template = template;
+        }
+
+        public void setServers(List<MergeServer> servers)
+        {
+            removeAll();
+            servers.stream().filter(filter).forEach(m -> {
+                try {
+                    add((Action)template.getConstructor(MergeServer.class).newInstance(m));
+                } catch (Exception e) {
+                    log.log(Level.WARNING, "\bcan't build action: " + e, e);
+                }
+             });
+            setEnabled(getMenuComponentCount() > 0);
+        }
+    }
 
     /**
      * Action that creates a popup menu population with Actions created from the list
@@ -121,9 +128,9 @@ public class Actions
         Class<? extends PopupHostAction> template;
         Predicate<MergeServer> filter;
 
-        public PopupMenuWithMergeServerActions(String title, Predicate<MergeServer> filter, Class<? extends PopupHostAction> template, Icon icon)
+        public PopupMenuWithMergeServerActions(String title, Predicate<MergeServer> filter, Class<? extends PopupHostAction> template)
         {
-            super(title + "\u2BC6", icon); // u2bc6 = down arrow
+            super(title + "\u2BC6"); // u2bc6 = down arrow
             this.filter = filter;
             this.template = template;
         }

@@ -79,14 +79,12 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
         content.add(header("Active Hosts"), "split");
         content.add(button(actions.mergeAll), "gapleft 10");
         content.add(button(actions.mergeWith), "gapleft 10");
-        content.add(button(actions.downloadSeries), "gapleft 10");
-        content.add(button(actions.makeInactive), "gapleft 10, wrap");
+        content.add(button(actions.downloadSeries), "gapleft 10, wrap");
         content.add(new JScrollPane(activetable), "grow, wrap");
 
         content.add(new JSeparator(), "growx, wrap");
         content.add(header("Inactive Hosts"), "split");
-        content.add(button(actions.clearOld), "gapleft 10");
-        content.add(button(actions.makeActive), "gapleft 10, wrap");
+        content.add(button(actions.clearOld), "gapleft 10, wrap");
         content.add(new JScrollPane(inactivetable), "grow");
         setContentPane(content);
 
@@ -103,6 +101,10 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
         data.add(new JSeparator());
         data.add(actions.deleteSeries);
 
+        JMenu remote = new JMenu("Remote");
+        remote.add(actions.makeActive);
+        remote.add(actions.makeInactive);
+
         JMenu adv = new JMenu("Advanced");
         adv.add(new JCheckBoxMenuItem(actions.discovery));
         adv.add(actions.resetHash);
@@ -115,6 +117,7 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
         JMenuBar bar = new JMenuBar();
         bar.add(file);
         bar.add(data);
+        bar.add(remote);
         bar.add(adv);
         bar.add(launch);
         setJMenuBar(bar);
@@ -237,8 +240,8 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
                 if (tables.contains("mergeservers")) {
                     List<MergeServer> s = Database.d.getMergeServers();
                     model.setData(s);
-                    actions.makeActive.setEnabled(  s.stream().filter(m -> !m.isActive() && m.isRemote()).count() > 0);
-                    actions.makeInactive.setEnabled(s.stream().filter(m ->  m.isActive() && m.isRemote()).count() > 0);
+                    actions.makeActive.setServers(s);
+                    actions.makeInactive.setServers(s);
                 }
                 break;
         }
