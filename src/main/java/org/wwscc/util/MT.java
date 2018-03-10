@@ -24,8 +24,6 @@ public enum MT {
     OBJECT_SCANNED,
     QUICKID_SEARCH,
     NETWORK_CHANGED,
-
-    // Database events
     DATABASE_NOTIFICATION,
 
     // ScorekeeperSystem
@@ -39,21 +37,15 @@ public enum MT {
     // Containers
     BACKEND_STATUS,
     BACKEND_READY,
-
     // Other
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,
-    WEB_READY,
     IMPORT_REQUEST,
     DEBUG_REQUEST,
     LAUNCH_REQUEST,
     OPEN_STATUS_REQUEST,
     BACKUP_REQUEST,
     SHUTDOWN_REQUEST,
-
-
-    // Admin
-    //DELETE_SELECTED,
 
     // Data Entry
     OBJECT_CLICKED,

@@ -46,21 +46,27 @@ public class ScorekeeperTrayIcon
         trayIcon.setImageAutoSize(true);
 
         IconChoice ic = new IconChoice();
-        Messenger.register(MT.BACKEND_READY, ic);
-        Messenger.register(MT.WEB_READY, ic);
+        Messenger.register(MT.USING_MACHINE,  ic);
+        Messenger.register(MT.BACKEND_READY,  ic);
+        Messenger.register(MT.WEB_PORT_READY, ic);
         SystemTray.getSystemTray().add(trayIcon);
     }
 
     class IconChoice implements MessageListener
     {
+        boolean usingmachine = true;
         boolean backend = false;
         boolean web = false;
-        @Override public void event(MT type, Object data) {
-            switch (type) {
-                case BACKEND_READY: backend = (boolean)data; break;
-                case WEB_READY: web = (boolean)data; break;
+        @Override public void event(MT type, Object data)
+        {
+            switch (type)
+            {
+                case USING_MACHINE:  usingmachine = (boolean)data; break;
+                case BACKEND_READY:  backend      = (boolean)data; break;
+                case WEB_PORT_READY: web          = (boolean)data; break;
             }
-            trayIcon.setImage(backend&&web ? coneok : conewarn);
+
+            trayIcon.setImage(backend && (!usingmachine || web) ? coneok : conewarn);
         }
     }
 }

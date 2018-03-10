@@ -113,6 +113,7 @@ public class Actions
             super(title);
             this.filter = filter;
             this.template = template;
+            setEnabled(false);
         }
 
         public void setServers(List<MergeServer> servers)
