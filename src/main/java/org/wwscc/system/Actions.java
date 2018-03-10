@@ -18,19 +18,15 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -52,9 +48,8 @@ public class Actions
 
     List<Action> apps;
     List<Action> actions;
-    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld;
+    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
     Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
-    DynamicHostMenu makeActive, makeInactive;
 
     public Actions()
     {
@@ -75,8 +70,8 @@ public class Actions
         mergeAll       = addAction(new MergeWithAllLocalAction());
         mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", p -> p.isActive() || p.isRemote(), MergeWithHostAction.class));
         downloadSeries = addAction(new PopupMenuWithMergeServerActions("Download New Series From ...", p -> p.isActive() || p.isRemote(), DownloadFromHostAction.class));
-        makeActive     = new DynamicHostMenu("Make Remote Persistant", p -> !p.isActive() && p.isRemote(), SetRemoteActiveAction.class);
-        makeInactive   = new DynamicHostMenu("Deactivate Remote",      p ->  p.isActive() && p.isRemote(), SetRemoteInactiveAction.class);
+        makeActive     = addAction(new SetRemoteActiveAction());
+        makeInactive   = addAction(new SetRemoteInactiveAction());
         clearOld       = addAction(new ClearOldDiscoveredAction());
         deleteServer   = addAction(new DeleteServerAction());
         addServer      = addAction(new AddServerAction());
@@ -101,33 +96,6 @@ public class Actions
             a.setEnabled(b);
         for (Action a : actions)
             a.setEnabled(b);
-    }
-
-    static class DynamicHostMenu extends JMenu
-    {
-        Predicate<MergeServer> filter;
-        Class<? extends Action> template;
-
-        public DynamicHostMenu(String title, Predicate<MergeServer> filter, Class<? extends Action> template)
-        {
-            super(title);
-            this.filter = filter;
-            this.template = template;
-            setEnabled(false);
-        }
-
-        public void setServers(List<MergeServer> servers)
-        {
-            removeAll();
-            servers.stream().filter(filter).forEach(m -> {
-                try {
-                    add((Action)template.getConstructor(MergeServer.class).newInstance(m));
-                } catch (Exception e) {
-                    log.log(Level.WARNING, "\bcan't build action: " + e, e);
-                }
-             });
-            setEnabled(getMenuComponentCount() > 0);
-        }
     }
 
     /**
@@ -203,24 +171,6 @@ public class Actions
         }
     }
 
-    public static class SetRemoteActiveAction extends PopupHostAction
-    {
-        public SetRemoteActiveAction(MergeServer s) { super(s); }
-        public void actionPerformed(ActionEvent e) {
-            Database.d.mergeServerActivate(server.getServerId(), server.getHostname(), server.getAddress());
-            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
-        }
-    }
-
-    public static class SetRemoteInactiveAction extends PopupHostAction
-    {
-        public SetRemoteInactiveAction(MergeServer s) { super(s); }
-        public void actionPerformed(ActionEvent e) {
-            Database.d.mergeServerDeactivate(server.getServerId());
-            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
-        }
-    }
-
     static class MergeWithAllLocalAction extends AbstractAction
     {
         public MergeWithAllLocalAction() {
@@ -242,13 +192,13 @@ public class Actions
         public LocalDiscoveryAction() {
             boolean on = Prefs.getAllowDiscovery();
             putValue(Action.SELECTED_KEY, on);
-            putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
+            putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
         }
 
         public void actionPerformed(ActionEvent e) {
             boolean on = ((AbstractButton)e.getSource()).getModel().isSelected();
             putValue(Action.SELECTED_KEY, on);
-            putValue(Action.NAME, "Local Discovery " + (on ? "On":"Off"));
+            putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
             Prefs.setAllowDiscovery(on);
             Messenger.sendEvent(MT.DISCOVERY_CHANGE, on);
         }
@@ -272,29 +222,6 @@ public class Actions
         }
     }
 
-    static class DeleteServerAction extends AbstractAction
-    {
-        public DeleteServerAction() {
-            super("Delete Remote Server");
-        }
-        public void actionPerformed(ActionEvent e) {
-            Supplier<Stream<MergeServer>> servers = () -> Database.d.getMergeServers().stream().filter(ms -> ms.isRemote());
-            ListDialog sd = new ListDialog("Select the remote servers to delete",
-                    servers.get().map(ms -> ms.getHostname()).collect(Collectors.toList()),
-                    "\bYou can't delete all remote servers.  There needs to be at least one host server to merge with.");
-            if (!sd.doDialog("Select Series", null))
-                return;
-            List<String> selected = sd.getResult();
-            if (selected.size() == 0)
-                return;
-
-            new Thread() { @Override public void run()  {
-                for (String h : selected)
-                    Database.d.mergeServerDelete(servers.get().filter(ms -> ms.getHostname().equals(h)).findFirst().get().getServerId());
-                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
-            }}.start();
-        }
-    }
 
     static class AddServerAction extends AbstractAction
     {
@@ -307,6 +234,84 @@ public class Actions
                 Database.d.mergeServerSetRemote(host, "", 10);
                 Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
             }
+        }
+    }
+
+    static abstract class ServerListAction extends AbstractAction
+    {
+        String title;
+        String label;
+        String selectAllWarning;
+        Predicate<MergeServer> filter;
+
+        public ServerListAction(String name, String title, String label, String selectAllWarning, Predicate<MergeServer> filter) {
+            super(name);
+            this.title = title;
+            this.label = label;
+            this.selectAllWarning = selectAllWarning;
+            this.filter = filter;
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            ListDialog<MergeServer> sd = new ListDialog<MergeServer>(label,
+                    Database.d.getMergeServers().stream().filter(filter).collect(Collectors.toList()), selectAllWarning);
+            if (!sd.doDialog(title, null))
+                return;
+            List<MergeServer> selected = sd.getResult();
+            if (selected.size() == 0)
+                return;
+
+            new Thread() { @Override public void run()  {
+                processSelection(selected);
+            }}.start();
+        }
+
+        protected abstract void processSelection(List<MergeServer> servers);
+    }
+
+
+    static class DeleteServerAction extends ServerListAction
+    {
+        public DeleteServerAction() {
+            super("Delete Remote Server",
+                    "Select Servers",
+                    "Select the remote servers to delete",
+                    "\bYou can't delete all remote servers.  There needs to be at least one host server to merge with.",
+                    ms -> ms.isRemote());
+        }
+
+        protected void processSelection(List<MergeServer> servers) {
+            for (MergeServer s : servers)
+                Database.d.mergeServerDelete(s.getServerId());
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
+
+
+    static class SetRemoteInactiveAction extends ServerListAction
+    {
+        public SetRemoteInactiveAction() {
+            super("Set Remote On Demand", "Select Servers", "Select the servers to stop", null, ms -> ms.isRemote() && ms.isActive());
+        }
+
+        protected void processSelection(List<MergeServer> servers) {
+            for (MergeServer s : servers)
+                Database.d.mergeServerDeactivate(s.getServerId());
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
+
+
+    static class SetRemoteActiveAction extends ServerListAction
+    {
+        public SetRemoteActiveAction() {
+            super("Set Remote Persistent", "Select Servers", "Select the servers to persist", null, ms -> ms.isRemote() && !ms.isActive());
+        }
+
+        protected void processSelection(List<MergeServer> servers) {
+            for (MergeServer s : servers)
+                Database.d.mergeServerActivate(s.getServerId(), s.getHostname(), s.getAddress());
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
 
@@ -347,10 +352,10 @@ public class Actions
     static class DeleteLocalSeriesAction extends AbstractAction
     {
         public DeleteLocalSeriesAction() {
-            super("Delete Local Series Copy");
+            super("Delete Local Series");
         }
         public void actionPerformed(ActionEvent e) {
-            ListDialog sd = new ListDialog("Select the series to remove locally", Database.d.getSeriesList());
+            ListDialog<String> sd = new ListDialog<String>("Select the series to remove locally", Database.d.getSeriesList());
             if (!sd.doDialog("Select Series", null))
                 return;
             List<String> selected = sd.getResult();

@@ -320,6 +320,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
         currentDialog.pack();
         currentDialog.setTitle(title);
         currentDialog.setLocationRelativeTo(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
+        currentDialog.setResizable(false);
         currentDialog.setVisible(true);
         return isValid();
     }

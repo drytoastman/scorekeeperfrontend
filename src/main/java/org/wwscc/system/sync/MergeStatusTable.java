@@ -271,7 +271,7 @@ public class MergeStatusTable extends JTable
                         setColors(server.isActive(), true);
                     } else if (progress != null) {
                         setText(progress);
-                    } else {
+                    } else if (hash != null) {
                         if (isMismatchedWithLocal(table, col, hash))
                             setColors(server.isActive(), true);
                         setText(textLimit(hash, 12));

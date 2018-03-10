@@ -29,24 +29,29 @@ public class MergeServer
         INACTIVE,
         UNKNOWN,
     };
-    
+
     protected UUID       serverid;
     protected String     hostname;
     protected String     address;
     protected Timestamp  lastcheck;
-    protected Timestamp  nextcheck;    
+    protected Timestamp  nextcheck;
     protected int        waittime;
     protected int        ctimeout;
     protected int        cfailures;
     protected HostState  hoststate;
     protected Map<String, JSONObject> seriesstate;
-        
+
     @Override
     public String toString()
     {
-        return String.format("%s/%s", serverid, hostname);
+        if (!hostname.equals(""))
+            return hostname;
+        else if (!address.equals(""))
+            return address;
+        else
+            return serverid.toString();
     }
-    
+
     public MergeServer(MergeServer m)
     {
         serverid    = m.serverid;
@@ -60,7 +65,7 @@ public class MergeServer
         hoststate   = m.hoststate;
         seriesstate = m.seriesstate;
     }
-    
+
     public MergeServer(ResultSet rs) throws SQLException
     {
         serverid    = (UUID)rs.getObject("serverid");
@@ -99,30 +104,30 @@ public class MergeServer
     public HostState getHostState()   { return hoststate; }
     public Set<String> getSeriesSet() { return seriesstate.keySet(); }
     public boolean isLocalHost()      { return serverid.equals(IdGenerator.nullid); }
-    
+
     public boolean isActive()         { return ((hoststate == HostState.ACTIVE) || (hoststate == HostState.ONESHOT)); }
     public boolean isRemote()         { return address.equals(""); }
-    
-    public String getConnectEndpoint() 
+
+    public String getConnectEndpoint()
     {
         if (address.equals(""))
             return hostname;
         return address;
     }
-    
-    public JSONObject getSeriesState(String series) 
-    { 
-        return seriesstate.get(series); 
+
+    public JSONObject getSeriesState(String series)
+    {
+        return seriesstate.get(series);
     }
-    
+
     public String getDriversState()
     {
-        for (JSONObject o : seriesstate.values()) 
+        for (JSONObject o : seriesstate.values())
         {  // just find any active series and get the drivers table hash from there
             JSONObject hashes = (JSONObject)o.get("hashes");
             if (hashes.isEmpty()) continue;
             return (String)hashes.get("drivers");
         }
         return "";
-    }    
+    }
 }

@@ -81,8 +81,8 @@ public class ScorekeeperSystem
     {
         List<MergeServer> s = Database.d.getMergeServers();
         model.setData(s);
-        actions.makeActive.setServers(s);
-        actions.makeInactive.setServers(s);
+        actions.makeActive.setEnabled(s.stream().filter(m -> m.isRemote() && !m.isActive()).count() > 0);
+        actions.makeInactive.setEnabled(s.stream().filter(m -> m.isRemote() && m.isActive()).count() > 0);
     }
 
     public void importRequest(File f)

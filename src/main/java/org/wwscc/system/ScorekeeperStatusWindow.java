@@ -78,21 +78,21 @@ public class ScorekeeperStatusWindow extends JFrame
         file.add(actions.debugRequest);
         file.add(actions.backupRequest);
         file.add(actions.importRequest);
+        file.add(actions.deleteSeries);
         file.add(new JSeparator());
         file.add(actions.quit);
 
-        JMenu data = new JMenu("Data");
-        data.add(actions.addServer);
-        data.add(actions.deleteServer);
-        data.add(new JSeparator());
-        data.add(actions.deleteSeries);
+        JMenu servers = new JMenu("Servers");
+        servers.add(actions.makeActive);
+        servers.add(actions.makeInactive);
+        servers.add(actions.addServer);
+        servers.add(actions.deleteServer);
+        servers.add(new JSeparator());
+        servers.add(new JCheckBoxMenuItem(actions.discovery));
 
-        JMenu adv = new JMenu("Advanced");
-        adv.add(new JCheckBoxMenuItem(actions.discovery));
-        adv.add(actions.resetHash);
-        adv.add(actions.initServers);
-        adv.add(actions.makeActive);
-        adv.add(actions.makeInactive);
+        JMenu debug = new JMenu("Debug");
+        debug.add(actions.resetHash);
+        debug.add(actions.initServers);
 
         JMenu launch = new JMenu("Launch");
         for (Action a : actions.apps)
@@ -100,9 +100,9 @@ public class ScorekeeperStatusWindow extends JFrame
 
         JMenuBar bar = new JMenuBar();
         bar.add(file);
-        bar.add(data);
-        bar.add(adv);
         bar.add(launch);
+        bar.add(servers);
+        bar.add(debug);
         setJMenuBar(bar);
 
         statusLayout(false);

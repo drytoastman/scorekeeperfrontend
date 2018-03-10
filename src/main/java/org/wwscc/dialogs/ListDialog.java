@@ -14,14 +14,14 @@ import java.util.logging.Logger;
 
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.ScrollPaneConstants;
 
 import net.miginfocom.swing.MigLayout;
 
 /**
  * Simple dialog with a JList, could use JOptionPane but this allows for multiple selection.
+ * @param <T>
  */
-public class ListDialog extends BaseDialog<List<String>>
+public class ListDialog<T> extends BaseDialog<List<T>>
 {
     private static final Logger log = Logger.getLogger(ListDialog.class.getCanonicalName());
 
@@ -31,25 +31,26 @@ public class ListDialog extends BaseDialog<List<String>>
      * @param options the possible options to select
      */
 
-    JList<String> theList;
-    String deleteAllWarning;
+    JList<T> theList;
+    String selectAllWarning;
 
-    public ListDialog(String toplabel, List<String> options)
+    public ListDialog(String toplabel, List<T> options)
     {
-        super(new MigLayout("", "", "[grow 0][grow 100]"), true);
-        mainPanel.add(label(toplabel, false), "wrap");
+        super(new MigLayout("fill", "", "[grow 0][grow 100, fill]"), true);
 
-        theList = new JList<String>(new Vector<String>(options));
+        theList = new JList<T>(new Vector<T>(options));
         JScrollPane scroll = new JScrollPane(theList);
-        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        mainPanel.add(scroll, "growx");
+
+        mainPanel.add(label(toplabel, false), "wmin 200, wrap");
+        mainPanel.add(scroll, "grow");
     }
 
-    public ListDialog(String toplabel, List<String> options, String deleteallwarning)
+    public ListDialog(String toplabel, List<T> options, String selectallwarning)
     {
         this(toplabel, options);
-        deleteAllWarning = deleteallwarning;
+        selectAllWarning = selectallwarning;
     }
+
 
 
     /**
@@ -58,8 +59,8 @@ public class ListDialog extends BaseDialog<List<String>>
     @Override
     public boolean verifyData()
     {
-        if (deleteAllWarning != null && allSelected()) {
-            log.warning(deleteAllWarning);
+        if (selectAllWarning != null && allSelected()) {
+            log.warning(selectAllWarning);
             return false;
         }
         return true;
@@ -69,7 +70,7 @@ public class ListDialog extends BaseDialog<List<String>>
      * OK was pressed, data was verified, now return it.
      */
     @Override
-    public List<String> getResult()
+    public List<T> getResult()
     {
         return theList.getSelectedValuesList();
     }
