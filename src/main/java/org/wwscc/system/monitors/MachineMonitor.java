@@ -37,7 +37,7 @@ public class MachineMonitor extends Monitor
     private BroadcastState<Map<String,String>> machineenv;
     private BroadcastState<Boolean> dbportsready, webportready, machineready, usingmachine;
     private BroadcastState<String> status;
-    private boolean shouldStopMachine;
+    private boolean shouldStopMachine, backendready;
 
     public MachineMonitor()
     {
@@ -49,8 +49,9 @@ public class MachineMonitor extends Monitor
         usingmachine = new BroadcastState<Boolean>(MT.USING_MACHINE, null);
         status       = new BroadcastState<String>(MT.MACHINE_STATUS, "");
         shouldStopMachine = false;
+        backendready = false;
 
-        Messenger.register(MT.BACKEND_READY, (m, o) -> poke());
+        Messenger.register(MT.BACKEND_READY, (m, o) -> { backendready = (boolean)o; poke(); });
     }
 
     public void stopMachine(boolean yes)
@@ -181,6 +182,9 @@ public class MachineMonitor extends Monitor
             portforward.disconnect();
         }
         if (shouldStopMachine) {
+            status.set("Waiting for backend shutdown");
+            while (backendready)
+                donefornow();
             status.set("Shutting down machine");
             DockerMachine.stopmachine();
         }

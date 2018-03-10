@@ -70,7 +70,7 @@ public class ContainerMonitor extends Monitor
 
     public boolean minit()
     {
-        status.set("Waiting for machine");
+        status.set("Waiting for VM");
         while (!machineready)
             donefornow();
 
@@ -94,7 +94,7 @@ public class ContainerMonitor extends Monitor
         boolean ok = true;
 
         if (!machineready) {
-            status.set("Waiting for machine");
+            status.set("Waiting for VM");
             ready.set(false);
             lastcheck = false;
             return;
@@ -143,10 +143,11 @@ public class ContainerMonitor extends Monitor
 
     public void mshutdown()
     {
-        status.set("Shutting down");
+        status.set("Shutting down ...");
         if (!DockerContainer.stopAll(containers.values())) {
             log.severe("\bUnable to stop the web and database services. See logs.");
         }
+        ready.set(false);
         status.set("Done");
     }
 

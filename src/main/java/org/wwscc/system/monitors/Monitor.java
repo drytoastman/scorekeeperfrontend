@@ -10,8 +10,6 @@ package org.wwscc.system.monitors;
 
 import java.util.logging.Logger;
 
-import org.wwscc.system.DebugCollector;
-
 /**
  * Abstract class to define the basic init, loop/wait and shutdown phases of our monitors
  */
