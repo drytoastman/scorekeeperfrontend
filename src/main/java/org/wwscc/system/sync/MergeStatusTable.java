@@ -20,6 +20,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.ToolTipManager;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -56,6 +57,9 @@ public class MergeStatusTable extends JTable
 
         ToolTipManager.sharedInstance().setInitialDelay(100);
         ToolTipManager.sharedInstance().setDismissDelay(30000);
+
+        // Since we are display a time since, repaint periodically
+        new Timer(3000, e -> repaint()).start();
     }
 
     @Override
@@ -82,8 +86,8 @@ public class MergeStatusTable extends JTable
             {
                 case 0:  setColumnWidthMin(tcm.getColumn(ii),  25); break;
                 case 1:  setColumnWidthMin(tcm.getColumn(ii), 200); break;
-                case 2:  setColumnWidthMin(tcm.getColumn(ii), 150); break;
-                case 3:  setColumnWidthMin(tcm.getColumn(ii), 150); break;
+                case 2:  setColumnWidthMin(tcm.getColumn(ii),  80); break;
+                case 3:  setColumnWidthMin(tcm.getColumn(ii),  80); break;
                 default: setColumnWidthMax(tcm.getColumn(ii), 200); break;
             }
         }
@@ -163,10 +167,16 @@ public class MergeStatusTable extends JTable
             setBackground(use[1]);
         }
 
-        private void setToDate(Timestamp time)
+        private void setToTimeDiff(long seconds)
         {
-            if (time.before(epoch)) setText("");
-            else setText(dformat.format(time));
+            if (seconds < 60)
+                setText(seconds+"s");
+            else if (seconds < 3600)
+                setText(seconds/60+"m");
+            else if (seconds < 86400)
+                setText(seconds/3600+"h "+seconds%3600/60+"m");
+            else
+                setText((seconds/86400)+"d "+seconds%86400/3600+"h");
         }
 
         private String textLimit(String s, int limit)
@@ -243,16 +253,21 @@ public class MergeStatusTable extends JTable
                     else
                         setText(server.getHostname()+"/"+server.getAddress());
                     break;
+
                 case 2:
-                    // set date but also mark colors if the last check has been too long (2x the server waittime)
+                    // set date but also mark colors if the last check has been too long (10x the server waittime)
                     Timestamp last = server.getLastCheck();
-                    setToDate(last);
-                    if (!server.isLocalHost() && !last.before(epoch) && (System.currentTimeMillis() - last.getTime() > server.getWaitTime()*2000))
-                        setColors(server.isActive(), true);
+                    if (!last.before(epoch) && !server.isLocalHost()) {
+                        long seconds = (System.currentTimeMillis() - last.getTime()) / 1000;
+                        setToTimeDiff(seconds);
+                        if (seconds > server.getWaitTime()*10)
+                            setColors(server.isActive(), true);
+                    }
                     break;
+
                 case 3:
                     if (server.isActive())
-                        setToDate(server.getNextCheck());
+                        setToTimeDiff((server.getNextCheck().getTime() - System.currentTimeMillis()) / 1000);
                     break;
 
                 default: // a series hash column

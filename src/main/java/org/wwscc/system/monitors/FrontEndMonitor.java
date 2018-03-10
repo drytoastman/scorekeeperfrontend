@@ -33,7 +33,7 @@ public class FrontEndMonitor extends Monitor implements DiscoveryListener
 
     public FrontEndMonitor()
     {
-        super("FrontEndMonitor", 1000);
+        super("FrontEndMonitor", 3000);
         paused = true; // we start in the 'paused' state
         backendready = false;
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
