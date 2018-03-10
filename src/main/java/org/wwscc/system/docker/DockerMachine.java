@@ -1,4 +1,12 @@
-package org.wwscc.tray;
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
+package org.wwscc.system.docker;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,7 +31,7 @@ public class DockerMachine
      * Returns the environment variables used by docker-compose if docker-machine is present
      * @return a map of the environment variables that were set
      */
-    public static Map<String,String> machineenv()
+    public static Map<String, String> machineenv()
     {
         byte buf[] = new byte[4096];
         if (Exec.execit(Exec.build(null, "docker-machine", "env", "--shell", "cmd"), buf) != 0) {
@@ -33,9 +41,9 @@ public class DockerMachine
         return scanenv(new String(buf));
     }
 
-    protected static Map<String,String> scanenv(String buf)
+    protected static Map<String, String> scanenv(String buf)
     {
-        Map<String,String> dockerenv = new HashMap<String, String>();
+        HashMap<String, String> ret = new HashMap<String, String>();
 
         try (Scanner scan = new Scanner(buf))
         {
@@ -45,7 +53,7 @@ public class DockerMachine
                 String var = scan.nextLine();
                 if (set.equals("SET")) {
                     String p[] = var.split("=");
-                    dockerenv.put(p[0].trim(), p[1].trim());
+                    ret.put(p[0].trim(), p[1].trim());
                 } else {
                     scan.nextLine();
                 }
@@ -55,7 +63,7 @@ public class DockerMachine
         {
         }
 
-        return dockerenv;
+        return ret;
     }
 
     /**

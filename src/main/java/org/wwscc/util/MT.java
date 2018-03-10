@@ -28,13 +28,21 @@ public enum MT {
     // Database events
     DATABASE_NOTIFICATION,
 
-    // TrayApplication
-    POKE_SYNC_SERVER,
-    DISCOVERY_CHANGE,
+    // ScorekeeperSystem
+    // Machine
     USING_MACHINE,
+    DB_PORTS_READY,
+    WEB_PORT_READY,
+    MACHINE_READY,
     MACHINE_STATUS,
+    MACHINE_ENV,
+    // Containers
     BACKEND_STATUS,
     BACKEND_READY,
+
+    // Other
+    POKE_SYNC_SERVER,
+    DISCOVERY_CHANGE,
     WEB_READY,
     IMPORT_REQUEST,
     DEBUG_REQUEST,

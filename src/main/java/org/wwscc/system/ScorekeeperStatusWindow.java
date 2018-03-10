@@ -6,20 +6,13 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.system;
 
-import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.SystemTray;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.InetAddress;
-import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import javax.swing.Action;
 import javax.swing.FocusManager;
 import javax.swing.JButton;
@@ -35,36 +28,25 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
-import org.wwscc.storage.Database;
-import org.wwscc.storage.MergeServer;
-import org.wwscc.util.AppSetup;
+import org.wwscc.system.sync.MergeServerModel;
+import org.wwscc.system.sync.MergeStatusTable;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
-import org.wwscc.util.SingletonProcessTest;
-
 import net.miginfocom.swing.MigLayout;
 
-public class ScorekeeperSystem extends JFrame implements MessageListener
+public class ScorekeeperStatusWindow extends JFrame
 {
-    private static final Logger log = Logger.getLogger(ScorekeeperTrayIcon.class.getName());
-
-    Actions actions;
-    StateControl state;
-    MergeServerModel model;
     MergeStatusTable activetable, inactivetable;
 
-    public ScorekeeperSystem(boolean hastrayicon)
+    public ScorekeeperStatusWindow(Actions actions, MergeServerModel serverModel, boolean hastrayicon)
     {
         super("Scorekeeper Status");
 
-        actions = new Actions();
-        state = new StateControl();
-        model = new MergeServerModel();
-        activetable = new MergeStatusTable(model, true);
-        inactivetable = new MergeStatusTable(model, false);
+        activetable = new MergeStatusTable(serverModel, true);
+        inactivetable = new MergeStatusTable(serverModel, false);
 
         JPanel content = new JPanel(new MigLayout("fill", "", "[grow 0][fill]"));
 
@@ -139,13 +121,7 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
             });
         }
 
-        Messenger.register(MT.DATABASE_NOTIFICATION, this);
-        Messenger.register(MT.OPEN_STATUS_REQUEST, this);
-    }
-
-    public void startAndWaitForThreads()
-    {
-        state.startAndWaitForThreads();
+        Messenger.register(MT.OPEN_STATUS_REQUEST, (t,o) -> { setVisible(true); toFront(); });
     }
 
     private JLabel header(String s)
@@ -188,10 +164,10 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
         {
             String txt = (String)data;
             setText(txt);
-            if (txt.equals(Monitors.RUNNING)) {
+            if (txt.equals("Running")) {
                 setBackground(okbg);
                 setForeground(okfg);
-            } else if (txt.equalsIgnoreCase(Monitors.NOTNEEDED)) {
+            } else if (txt.equalsIgnoreCase("Not Needed")) {
                 setBackground(nnbg);
                 setForeground(nnfg);
             } else {
@@ -222,57 +198,5 @@ public class ScorekeeperSystem extends JFrame implements MessageListener
                 setText("network down");
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void event(MT type, Object data)
-    {
-        switch (type)
-        {
-            case OPEN_STATUS_REQUEST:
-                setVisible(true);
-                toFront();
-                break;
-
-            case DATABASE_NOTIFICATION:
-                Set<String> tables = (Set<String>)data;
-                if (tables.contains("mergeservers")) {
-                    List<MergeServer> s = Database.d.getMergeServers();
-                    model.setData(s);
-                    actions.makeActive.setServers(s);
-                    actions.makeInactive.setServers(s);
-                }
-                break;
-        }
-    }
-
-
-    /**
-     * A main interface for testing datasync interface by itself
-     * @param args ignored
-     * @throws InterruptedException ignored
-     * @throws NoSuchAlgorithmException ignored
-     */
-    public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
-    {
-        AppSetup.appSetup("scorekeepersystem");
-        if (!SingletonProcessTest.ensureSingleton("ScorekeeperSystem")) {
-            log.warning("Another Scorekeeper instance is already running, quitting now.");
-            System.exit(-1);
-        }
-
-        boolean usetray = SystemTray.isSupported();
-        ScorekeeperSystem system = new ScorekeeperSystem(usetray);
-        if (usetray) {
-            try {
-                new ScorekeeperTrayIcon(system.actions);
-            } catch (AWTException e) {
-                log.warning("Unable to install trayicon: " + e);
-            }
-        }
-        system.setVisible(true);
-        system.startAndWaitForThreads();
-        System.exit(0);
     }
 }

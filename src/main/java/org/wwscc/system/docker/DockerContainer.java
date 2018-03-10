@@ -6,16 +6,18 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.system.docker;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,10 +32,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.wwscc.storage.Database;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
-public class DockerContainer implements DataRetrievalInterface
+public class DockerContainer
 {
     private static final Logger log = Logger.getLogger(DockerContainer.class.getCanonicalName());
 
@@ -110,7 +113,7 @@ public class DockerContainer implements DataRetrievalInterface
         return name;
     }
 
-    public void setMachineEnv(Map<String, String> env)
+    public void setMachineEnv(Map<String,String> env)
     {
         machineenv = env;
     }
@@ -196,9 +199,15 @@ public class DockerContainer implements DataRetrievalInterface
         }
     }
 
-    @Override
-    public boolean dumpDatabase(Path path, boolean compress)
+    public boolean dumpDatabase(Path dir, boolean compress)
     {
+        String ver = Database.d.getVersion();
+        if (ver.equals("unknown"))
+            return false;
+
+        String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(new Date());
+        Path path = dir.resolve(String.format("date_%s#schema_%s.pgdump", date, ver));
+
         ProcessBuilder p = Exec.build(machineenv, "docker", "exec", name, "pg_dumpall", "-U", "postgres", "-c");
         p.redirectOutput(Redirect.appendTo(path.toFile()));
         int ret = Exec.execit(p, null);
@@ -230,7 +239,6 @@ public class DockerContainer implements DataRetrievalInterface
         return Exec.execit(Exec.build(machineenv, "docker", "exec", name, "/dbconversion-scripts/upgrade.sh", "/dbconversion-scripts"), null) == 0;
     }
 
-    @Override
     public boolean copyLogs(Path dir)
     {
         return Exec.execit(Exec.build(machineenv, "docker", "cp", name+":/var/log", dir.toString()), null) == 0;

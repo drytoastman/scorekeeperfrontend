@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.dialogs;
 
 import javax.swing.JLabel;
@@ -7,32 +15,32 @@ import net.miginfocom.swing.MigLayout;
 
 public class StatusDialog extends BaseDialog<Object>
 {
-	JProgressBar bar;
-	JLabel status;
-	
-	public StatusDialog()
-	{
-		super(new MigLayout("fill", "fill", "fill"), true);
-		
-		bar = new JProgressBar();
-		bar.setMinimum(0);
-		bar.setMaximum(100);
-		status = new JLabel("status here");
-		mainPanel.add(status, "wmin 300, wrap");
-		mainPanel.add(bar, "");
-		
-		buttonPanel.remove(ok);
-		cancel.setText("Close");
-	}
-	
-	public void setStatus(String s, int val)
-	{
-		status.setText(s);
-		if (val < 0) {
-			bar.setIndeterminate(true);
-		} else {
-			bar.setIndeterminate(false);
-			bar.setValue(val);
-		}
-	}	
+    JProgressBar bar;
+    JLabel status;
+
+    public StatusDialog()
+    {
+        super(new MigLayout("fill", "fill", "fill"), true);
+
+        bar = new JProgressBar();
+        bar.setMinimum(0);
+        bar.setMaximum(100);
+        status = new JLabel("status here");
+        mainPanel.add(status, "wmin 300, wrap");
+        mainPanel.add(bar, "");
+
+        buttonPanel.remove(ok);
+        cancel.setText("Close");
+    }
+
+    public void setStatus(String s, int val)
+    {
+        status.setText(s);
+        if (val < 0) {
+            bar.setIndeterminate(true);
+        } else {
+            bar.setIndeterminate(false);
+            bar.setValue(val);
+        }
+    }
 }

@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.system;
 
 import java.awt.AWTException;
 import java.awt.Image;
@@ -14,6 +14,7 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import javax.swing.Action;
+
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;

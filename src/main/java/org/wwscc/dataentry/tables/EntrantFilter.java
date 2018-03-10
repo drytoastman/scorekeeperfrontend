@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.dataentry.tables;
 
 import java.util.regex.Matcher;
@@ -13,7 +21,7 @@ import org.wwscc.util.NF;
 public class EntrantFilter extends RowFilter<EntryModel, Integer> {
 
     Matcher matcher;
-    
+
     public EntrantFilter(String s)
     {
         super();
@@ -22,22 +30,22 @@ public class EntrantFilter extends RowFilter<EntryModel, Integer> {
         else
             matcher = Pattern.compile(s.trim(), Pattern.CASE_INSENSITIVE).matcher("");
     }
-    
+
     @Override
-    public boolean include(Entry<? extends EntryModel, ? extends Integer> entry) 
+    public boolean include(Entry<? extends EntryModel, ? extends Integer> entry)
     {
         if (matcher == null)
             return true;
-        
+
         Entrant e = (Entrant)entry.getValue(0);
-        if (e == null) 
+        if (e == null)
             return true;
-        
+
         // Run through the text conversions done by the renderers looking for matches
-        
+
         matcher.reset(e.getClassCode());
         if (matcher.find()) return true;
-        
+
         matcher.reset(""+e.getNumber());
         if (matcher.find()) return true;
 
@@ -46,12 +54,12 @@ public class EntrantFilter extends RowFilter<EntryModel, Integer> {
 
         matcher.reset(e.getCarDesc() + " " +  Database.d.getEffectiveIndexStr(e.getCar()));
         if (matcher.find()) return true;
-        
+
         for (Run r : e.getRuns()) {
             matcher.reset(NF.format(r.getRaw()));
             if (matcher.find()) return true;
         }
-        
+
         return false;
     }
 }

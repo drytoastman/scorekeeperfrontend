@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.actions;
 
 import java.awt.event.ActionEvent;
@@ -5,15 +13,15 @@ import javax.swing.AbstractAction;
 
 public class QuitAction extends AbstractAction
 {
-	public QuitAction()
-	{
-		super("Quit");
-		//putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		System.exit(0);
-	}
+    public QuitAction()
+    {
+        super("Quit");
+        //putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        System.exit(0);
+    }
 }

@@ -9,8 +9,8 @@
 package org.wwscc.storage;
 
 import org.junit.rules.ExternalResource;
-import org.wwscc.tray.DockerContainer;
-import org.wwscc.tray.DockerMachine;
+import org.wwscc.system.docker.DockerContainer;
+import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.util.AppSetup;
 
 public class TestDatabaseContainer extends ExternalResource

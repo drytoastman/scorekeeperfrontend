@@ -51,7 +51,7 @@ task createUbuntuSetup(type: Copy) {
     from 'installers'
     into "$buildDir"
     include 'ubuntu.template'
-	rename('ubuntu.template', "ubuntusetup-${version}.sh")
+    rename('ubuntu.template', "ubuntusetup-${version}.sh")
     expand(git_version: version)
 }
 
@@ -72,6 +72,7 @@ dependencies {
     compile 'org.postgresql:postgresql:42.1.4'
     compile 'com.jcraft:jsch:0.1.54'
     compile 'org.apache.commons:commons-io:1.3.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
 
     testRuntime 'junit:junit:4.12'
 }

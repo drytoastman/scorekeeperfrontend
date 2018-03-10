@@ -11,6 +11,7 @@ package org.wwscc.util;
 
 import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +20,7 @@ import javax.swing.SwingUtilities;
 public class Messenger
 {
     private static final Logger log = Logger.getLogger(Messenger.class.getCanonicalName());
-    private static EnumMap<MT, HashSet<MessageListener>> listPtrs = new EnumMap<MT, HashSet<MessageListener>>(MT.class);
+    private static EnumMap<MT, Set<MessageListener>> listPtrs = new EnumMap<MT, Set<MessageListener>>(MT.class);
     private static boolean testMode = false;
 
     static public void setTestMode()
@@ -27,22 +28,22 @@ public class Messenger
         testMode = true;
     }
 
-    static public void unregisterAll(MessageListener listener)
+    static public synchronized void unregisterAll(MessageListener listener)
     {
-        for (HashSet<MessageListener> s : listPtrs.values())
+        for (Set<MessageListener> s : listPtrs.values())
             s.remove(listener);
     }
 
-    public static void unregister(MT type, MessageListener listener)
+    public static synchronized void unregister(MT type, MessageListener listener)
     {
-        HashSet<MessageListener> h = listPtrs.get(type);
+        Set<MessageListener> h = listPtrs.get(type);
         if (h != null)
             h.remove(listener);
     }
 
-    public static void register(MT type, MessageListener listener)
+    public static synchronized void register(MT type, MessageListener listener)
     {
-        HashSet<MessageListener> h = listPtrs.get(type);
+        Set<MessageListener> h = listPtrs.get(type);
         if (h == null)
         {
             h = new HashSet<MessageListener>();
@@ -67,10 +68,10 @@ public class Messenger
         }});
     }
 
-    public static void sendEventNow(MT type, Object data)
+    public static synchronized void sendEventNow(MT type, Object data)
     {
-        HashSet<MessageListener> h = listPtrs.get(type);
-        if (h == null) return;        
+        Set<MessageListener> h = listPtrs.get(type);
+        if (h == null) return;
         for (MessageListener ml : h) {
             ml.event(type, data);
         }

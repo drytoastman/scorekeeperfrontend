@@ -1,9 +1,10 @@
-package org.wwscc.tray;
+package org.wwscc.system.docker;
 
 import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.wwscc.system.docker.DockerMachine;
 
 public class DockerMachineTests
 {

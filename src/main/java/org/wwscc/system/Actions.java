@@ -1,8 +1,17 @@
-package org.wwscc.tray;
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
+package org.wwscc.system;
 
 import java.awt.Component;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.lang.reflect.InvocationTargetException;
+import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +29,7 @@ import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -60,7 +70,7 @@ public class Actions
         openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
         debugRequest   = new EventSendAction("Save Debug Info", MT.DEBUG_REQUEST);
         backupRequest  = new EventSendAction("Backup Database", MT.BACKUP_REQUEST);
-        importRequest  = addAction(new EventSendAction("Import Backup Data", MT.IMPORT_REQUEST));
+        importRequest  = addAction(new ImportAction());
 
         mergeAll       = addAction(new MergeWithAllLocalAction());
         mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", p -> p.isActive() || p.isRemote(), MergeWithHostAction.class));
@@ -300,7 +310,7 @@ public class Actions
     }
 
 
-    static class InitServersAction extends AbstractAction
+    public static class InitServersAction extends AbstractAction
     {
         public static final String HOME_SERVER = "scorekeeper.wwscc.org";
 
@@ -366,6 +376,48 @@ public class Actions
         public void actionPerformed(ActionEvent e) {
             Database.d.mergeServerResetAll();
             Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }
+    }
+
+
+    static class ImportAction extends AbstractAction
+    {
+        public ImportAction() {
+            super("Import Backup Data");
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            Window active = FocusManager.getCurrentManager().getActiveWindow();
+            final JFileChooser fc = new JFileChooser() {
+                @Override
+                public void approveSelection(){
+                    File f = getSelectedFile();
+                    String pieces[] = f.getName().split("[#._]");
+                    if (!pieces[0].equals("date") || !pieces[2].equals("schema")) {
+                        JOptionPane.showMessageDialog(active, f.getName() + " is not a recognized backup filename of the format date_<DATE>#schema_<SCHEMA>");
+                        return;
+                    }
+
+                    if (Integer.parseInt(pieces[3]) < 20180000) {
+                        JOptionPane.showMessageDialog(active, "Unable to import backups with schema earlier than 2018, selected file is " + pieces[3]);
+                        return;
+                    }
+
+                    super.approveSelection();
+                }
+            };
+
+            fc.setDialogTitle("Specify a backup file to import");
+            fc.setCurrentDirectory(Prefs.getRootDir().toFile());
+            int returnVal = fc.showOpenDialog(active);
+            if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
+                return;
+
+            if (JOptionPane.showConfirmDialog(active, "This will overwrite any data in the current database, is that okay?",
+                                                "Import Data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
+                return;
+
+            Messenger.sendEvent(MT.IMPORT_REQUEST, fc.getSelectedFile());
         }
     }
 }

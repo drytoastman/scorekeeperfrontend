@@ -1,3 +1,11 @@
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
 package org.wwscc.util;
 
 import java.io.IOException;
@@ -54,7 +62,7 @@ public class Discovery
     {
         if (singleton == null) {
             singleton = new Discovery();
-            singleton.startThreads();
+            new Thread(singleton.new DiscoveryThread(), "DiscoveryThread").start();
         }
         return singleton;
     }
@@ -73,12 +81,7 @@ public class Discovery
         listeners = new HashMap<DiscoveryListener, StateAwareListener>();
         parser = new JSONParser();
         timeoutms = DEFAULT_TIMEOUT;
-        Messenger.register(MT.NETWORK_CHANGED, (e,o) -> { singleton.resetFlag = true; });
-    }
-
-    protected void startThreads()
-    {
-        new Thread(new DiscoveryThread(), "DiscoveryThread").start();
+        Messenger.register(MT.NETWORK_CHANGED, (e,o) -> singleton.resetFlag = true);
     }
 
     protected void setTimeout(long ms)

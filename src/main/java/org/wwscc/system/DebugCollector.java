@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.system;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,7 +21,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +34,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
-import org.wwscc.storage.Database;
+import org.wwscc.system.docker.DockerContainer;
+import org.wwscc.system.docker.DockerMachine;
+import org.wwscc.system.monitors.ContainerMonitor;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
@@ -45,12 +46,12 @@ public class DebugCollector extends Thread
     private static final Logger log = Logger.getLogger(DebugCollector.class.getName());
 
     List<Path> files;
-    DataRetrievalInterface retrieval;
+    ContainerMonitor cmonitor;
 
-    public DebugCollector(DataRetrievalInterface rt)
+    public DebugCollector(ContainerMonitor rt)
     {
         files = new ArrayList<Path>();
-        retrieval = rt;
+        cmonitor = rt;
     }
 
     public void run()
@@ -103,12 +104,11 @@ public class DebugCollector extends Thread
             createInfoFile(temp);
             monitor.setProgress(20);
             monitor.setNote("copying backend files");
-            retrieval.copyLogs(temp);
+            cmonitor.copyLogs(temp);
             monitor.setProgress(30);
             monitor.setNote("dump database data");
 
-            String ver = Database.d.getVersion();
-            retrieval.dumpDatabase(temp.resolve(String.format("database#schema_%s.pgdump", ver)), false);
+            cmonitor.backupNow(temp, false);
 
             // second backup the database
             monitor.setProgress(60);
@@ -151,7 +151,7 @@ public class DebugCollector extends Thread
             "Scorekeeper version = "   + Prefs.getVersion() +
             "\nJava version = "        + System.getProperty("java.version") +
             "\nVBoxVersion version = " + DockerMachine.vboxversion() +
-            "\n=== Machine Env ===\n"  + Arrays.toString(machineenv.entrySet().toArray()) +
+            "\n=== Machine Env ===\n"  + machineenv +
             "\n=== Docker version ===\n"
             );
 
@@ -233,6 +233,6 @@ public class DebugCollector extends Thread
         AppSetup.appSetup("debugcollector");
         DockerContainer.Db db = new DockerContainer.Db();
         db.setMachineEnv(DockerMachine.machineenv());
-        new DebugCollector(db).start();
+        new DebugCollector(new ContainerMonitor()).start();
     }
 }

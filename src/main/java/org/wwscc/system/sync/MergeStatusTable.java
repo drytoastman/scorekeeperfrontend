@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.tray;
+package org.wwscc.system.sync;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -32,8 +32,8 @@ import org.wwscc.storage.MergeServer;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Resources;
 
-public class MergeStatusTable extends JTable {
-
+public class MergeStatusTable extends JTable
+{
     public static final int BASE_COL_COUNT = 4;
 
     public MergeStatusTable(MergeServerModel model, boolean active)

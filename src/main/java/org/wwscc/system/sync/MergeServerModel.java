@@ -1,4 +1,12 @@
-package org.wwscc.tray;
+/*
+ * This software is licensed under the GPLv3 license, included as
+ * ./GPLv3-LICENSE.txt in the source distribution.
+ *
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * All rights reserved.
+ */
+
+package org.wwscc.system.sync;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,25 +15,25 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import org.wwscc.storage.MergeServer;
-import org.wwscc.tray.MergeStatusTable.DecoratedMergeServer;
+import org.wwscc.system.sync.MergeStatusTable.DecoratedMergeServer;
 import org.wwscc.util.IdGenerator;
 
-class MergeServerModel extends AbstractTableModel
+public class MergeServerModel extends AbstractTableModel
 {
     List<DecoratedMergeServer> servers;
     List<String> series;
-    
+
     public MergeServerModel()
     {
         servers = new ArrayList<DecoratedMergeServer>();
         series = new ArrayList<String>();
     }
-    
+
     public void setData(List<MergeServer> data)
     {
-        servers.clear();            
+        servers.clear();
         series.clear();
-        
+
         // Figure out columns
         if (data != null)
         {
@@ -36,16 +44,16 @@ class MergeServerModel extends AbstractTableModel
                 }
             }
             Collections.sort(series);
-            
+
             // Then create our decorated MergeServers
             for (MergeServer s : data)
                 servers.add(new DecoratedMergeServer(s, series));
             Collections.sort(servers);
         }
-        
+
         fireTableStructureChanged();
     }
-    
+
     @Override
     public String getColumnName(int col) {
         switch (col) {
@@ -58,7 +66,7 @@ class MergeServerModel extends AbstractTableModel
             return series.get(col-MergeStatusTable.BASE_COL_COUNT);
         return "";
     }
-    
+
     @Override
     public int getRowCount()                    { return servers.size(); }
     @Override
