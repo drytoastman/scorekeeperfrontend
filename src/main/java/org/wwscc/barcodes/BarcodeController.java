@@ -8,6 +8,7 @@
 
 package org.wwscc.barcodes;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ import org.wwscc.util.SerialPortUtil;
 public class BarcodeController extends JMenu implements ActionListener
 {
     private static final String OFF = "Off";
+    public static final Color RED_MENU = new Color(200, 0, 0);
+
     Map<String, JRadioButtonMenuItem> radios;
     JMenuItem keyboardoptions, serialoptions;
     WatcherBase watcher;
@@ -35,7 +38,7 @@ public class BarcodeController extends JMenu implements ActionListener
 
     public BarcodeController()
     {
-        super("Barcode-Scanner");
+        super("Scanner");
         radios          = new HashMap<String, JRadioButtonMenuItem>();
         separator       = new JSeparator();
         keyboardoptions = new JMenuItem(new BarcodeScannerOptionsAction(KeyboardBarcodeWatcher.TYPE));
@@ -106,6 +109,9 @@ public class BarcodeController extends JMenu implements ActionListener
         serialoptions.setVisible(type.equals(SerialPortBarcodeWatcher.TYPE));
         separator.setVisible(keyboardoptions.isVisible() || serialoptions.isVisible());
         setRadio(type);
+
+        setForeground((type.equals(OFF) ? RED_MENU : Color.BLACK));
+        repaint();
     }
 
     class BarcodeScannerOptionsAction extends AbstractAction

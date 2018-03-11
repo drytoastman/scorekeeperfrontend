@@ -76,8 +76,8 @@ public class Registration extends JFrame
         JMenuBar bar = new JMenuBar();
         bar.add(file);
         bar.add(find);
-        bar.add(new BarcodeController());
         bar.add(reports);
+        bar.add(new BarcodeController());
         setJMenuBar(bar);
 
         setBounds(Prefs.getWindowBounds("registration"));

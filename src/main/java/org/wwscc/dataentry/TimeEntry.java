@@ -74,6 +74,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 {
     private static final Logger log = Logger.getLogger(TimeEntry.class.getCanonicalName());
     public static final int SEGMENTS = 5;
+    public static final Color RED_MENU = new Color(200, 0, 0);
 
     /**
      * The timer input mode
@@ -111,7 +112,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 
     JLabel connectionStatus;
     ModeButtonGroup modeGroup;
-
+    JMenu timerMenu;
 
     /**
      * Special focus listener for cones and gates entry
@@ -239,6 +240,24 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         add(errorLabel, "spanx 2, growx, growy 0, wrap");
         add(new JLabel(""), "pushy 100");
 
+        // Timer menu
+        timerMenu = new JMenu("Timer");
+        for (Mode m : Mode.values())
+        {
+            JRadioButtonMenuItem bm = new JRadioButtonMenuItem();
+            bm.setActionCommand(m.name());
+            bm.addActionListener(this);
+            timerMenu.add(bm);
+            modeGroup.add(bm);
+            switch (m)
+            {
+                case OFF: bm.setText("Off"); break;
+                case BASIC_SERIAL: bm.setText("FarmTek / RaceAmerica / JACircuits"); break;
+                case BWTIMER_NETWORK: bm.setText("BWTimer Network"); break;
+                case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
+            }
+        }
+
         switchTimerMode(Mode.OFF);
 
         timeList.addKeyListener(this);
@@ -269,24 +288,6 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
      */
     public JMenu getTimerMenu()
     {
-        JMenu timerMenu = new JMenu("Timer");
-        for (Mode m : Mode.values())
-        {
-            JRadioButtonMenuItem bm = new JRadioButtonMenuItem();
-            bm.setActionCommand(m.name());
-            bm.addActionListener(this);
-            timerMenu.add(bm);
-            modeGroup.add(bm);
-            switch (m)
-            {
-                case OFF: bm.setText("Off"); break;
-                case BASIC_SERIAL: bm.setText("FarmTek / RaceAmerica / JACircuits"); break;
-                case BWTIMER_NETWORK: bm.setText("BWTimer Network"); break;
-                case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
-            }
-        }
-
-        modeGroup.setSelected(Mode.OFF);
         return timerMenu;
     }
 
@@ -399,9 +400,13 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         {
             msg = "Not Connected";
             connectionStatus.setForeground(Color.RED);
+            timerMenu.setForeground(RED_MENU);
         }
         else
+        {
             connectionStatus.setForeground(Color.BLACK);
+            timerMenu.setForeground(Color.BLACK);
+        }
         connectionStatus.setText(msg);
     }
 
@@ -664,6 +669,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
                 Object[] a = (Object[])o;
                 if ((a[0] == tclient) && (!(Boolean)a[1]))
                 {
+                    timerMenu.setForeground(RED_MENU);
                     connectionStatus.setForeground(Color.RED);
                     connectionStatus.setText("Not Connected");
                 }
