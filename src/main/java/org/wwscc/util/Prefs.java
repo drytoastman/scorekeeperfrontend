@@ -164,6 +164,7 @@ public class Prefs
     public static String getDefaultPrinter()   { return prefs.get("defaultprinter", ""); }
     public static boolean usePaidFlag()        { return prefs.getBoolean("paidflag", false); }
     public static boolean getAllowDiscovery()  { return prefs.getBoolean("allowdiscovery", true); }
+    public static boolean getPrintDirectly()   { return prefs.getBoolean("printdirectly", true); }
     public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
 
     public static String getScannerConfig(String type) { return prefs.get("scannerconfig-"+type, ""); }
@@ -187,6 +188,7 @@ public class Prefs
     public static void setDefaultPrinter(String s)   { prefs.put("defaultprinter", s); }
     public static void setUsePaidFlag(boolean b)     { prefs.putBoolean("paidflag", b); }
     public static void setAllowDiscovery(boolean b)  { prefs.putBoolean("allowdiscovery", b); }
+    public static void setPrintDirectly(boolean b)   { prefs.putBoolean("printdirectly", b); }
     public static void setLogLevel(AppLogLevel l)    { prefs.put("loglevel", l.getName()); }
 
     public static void setScannerConfig(String type, String s) { prefs.put("scannerconfig-"+type, s); }

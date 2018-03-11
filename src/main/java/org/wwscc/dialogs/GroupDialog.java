@@ -8,62 +8,48 @@
 
 package org.wwscc.dialogs;
 
-import java.awt.GridLayout;
-import javax.swing.JCheckBox;
+import net.miginfocom.swing.MigLayout;
 
-
-/**
- * Core functions for all dialogs.
- */
-public class GroupDialog extends BaseDialog<int[]>
+public class GroupDialog extends BaseDialog<String[]>
 {
-	//private static Logger log = Logger.getLogger("org.wwscc.dialogs.GroupDialog");
+    private static final int groupCount = 6;
 
-	private static final int groupCount = 6;
-	JCheckBox groupchecks[];
-
-	/**
-	 * Create the dialog.
-	 */
     public GroupDialog()
-	{
-        super(new GridLayout(1,groupCount), true);
-
-		groupchecks = new JCheckBox[groupCount];
-		for (int ii = 0; ii < groupCount; ii++)
-		{
-			groupchecks[ii] = new JCheckBox(""+(ii+1));
-			mainPanel.add(groupchecks[ii]);
-		}
+    {
+        super(new MigLayout("fill, gap 2"), true);
+        for (int ii = 0; ii < groupCount; ii++) {
+            String lbl = ""+(ii+1);
+            mainPanel.add(label(lbl, true), "al right");
+            mainPanel.add(checkbox(lbl, false), "al left, gap right 5");
+        }
     }
-	
-	/**
-	 * Called after OK to verify data before closing.
-	 */ 
-	@Override
-	public boolean verifyData()
-	{
-		return true;
-	}
 
-	/**
-	 * OK was pressed, data was verified, now return it.
-	 */
-	@Override
-	public int[] getResult()
-	{
-		int size = 0;
-		for (int ii = 0; ii < groupCount; ii++)
-			if (groupchecks[ii].isSelected())
-				size++;
+    /**
+     * Called after OK to verify data before closing.
+     */
+    @Override
+    public boolean verifyData()
+    {
+        return true;
+    }
 
-		result = new int[size];
-		size = 0;
+    /**
+     * OK was pressed, data was verified, now return it.
+     */
+    @Override
+    public String[] getResult()
+    {
+        int size = 0;
+        for (int ii = 0; ii < groupCount; ii++)
+            if (isChecked(""+(ii+1)))
+                size++;
 
-		for (int ii = 0; ii < groupCount; ii++)
-			if (groupchecks[ii].isSelected())
-				result[size++] = (ii+1);
-		
-		return result;
-	}
+        result = new String[size];
+        size = 0;
+        for (int ii = 0; ii < groupCount; ii++)
+            if (isChecked(""+(ii+1)))
+                result[size++] = Integer.toString(ii+1);
+
+        return result;
+    }
 }

@@ -15,9 +15,6 @@ import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Worker.State;
@@ -32,6 +29,18 @@ public class BrowserControl
     public static void openAuditReport(ApplicationState state, String order)
     {
         openResults(state, String.format("audit?order=%s&course=%s&group=%s", order, state.getCurrentCourse(), state.getCurrentRunGroup()));
+    }
+
+    public static void openGroupResults(ApplicationState state, String[] groups)
+    {
+        if (groups.length == 0) return;
+        openResults(state, String.format("bygroup?course=%s&list=%s", state.getCurrentCourse(), String.join(",", groups)));
+    }
+
+    public static void printGroupResults(ApplicationState state)
+    {
+        printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s",
+                state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), state.getCurrentRunGroup()));
     }
 
     public static void openResults(ApplicationState state, String selection)
@@ -64,24 +73,14 @@ public class BrowserControl
         });
     }
 
-    public static void printGroupResults(ApplicationState state, int[] groups)
-    {
-        if (groups.length == 0)
-            return;
-
-        String g = new String();
-        int ii;
-        for (ii = 0; ii < groups.length-1; ii++)
-            g += groups[ii]+",";
-        g += groups[ii];
-
-        printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s", state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), g));
-    }
-
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static void printURL(String url)
     {
+        if (!Prefs.getPrintDirectly()) {
+            openURL(url);
+            return;
+        }
+
         Platform.runLater(new Runnable() {
             @Override public void run() {
                 try {
@@ -89,12 +88,6 @@ public class BrowserControl
                     WebEngine engine = view.getEngine();
                     engine.getLoadWorker().stateProperty().addListener((ChangeListener) (obsValue, oldState, newState) -> {
                        if (newState == State.SUCCEEDED) {
-                           Document doc = engine.getDocument();
-                           // don't know why, but this was necessary to get the font-size smaller for results, prints fine under Chrome but not WebView
-                           Element extrastyle = doc.createElement("style");
-                           extrastyle.appendChild(doc.createTextNode(".container-fluid { font-size: 0.7rem !important; }"));
-                           doc.getDocumentElement().getElementsByTagName("head").item(0).appendChild(extrastyle);
-
                            PrinterJob job = PrinterJob.createPrinterJob();
                            if (job == null) {
                                log.warning("Unable to create a print job.  Opening in a browser instead.");

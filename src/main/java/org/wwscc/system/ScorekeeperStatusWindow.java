@@ -190,7 +190,7 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(header("Network", 14), "");
             content.add(labels.get("networkstatus"), "growy, wrap");
             content.add(new JLabel(""), "");
-            content.add(buttons.get("minimaxi"), "al right, h 25!, wrap");
+            content.add(buttons.get("minimaxi"), "al right, wrap");
 
             pack();
             setResizable(false);
@@ -204,7 +204,7 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(header("Network", 14), "split");
             content.add(labels.get("networkstatus"), "growy, w 150!");
             content.add(new JLabel(""), "pushx 100, growx 100");
-            content.add(buttons.get("minimaxi"), "h 25!, wmin 80, wrap");
+            content.add(buttons.get("minimaxi"), "wmin 80, wrap");
 
             content.add(new JSeparator(), "growx, wrap");
             content.add(header("Active Hosts", 16), "split");

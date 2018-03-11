@@ -76,24 +76,24 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         groupSelect.setModel(new DefaultComboBoxModel<Integer>(new Integer[] { 1, 2, 3, 4, 5, 6 }));
 
         add(createLabel("Series:", f), "gapleft 10");
-        add(seriesLabel, "gapright 20");
+        add(seriesLabel, "gapright 10");
 
         add(createLabel("Event:", f), "");
-        add(eventSelect, "gapright 10");
+        add(eventSelect, "gapright 5");
 
         add(createLabel("Course:", f));
-        add(courseSelect, "gapright 10");
+        add(courseSelect, "gapright 5");
 
         add(createLabel("RunGroup:", f));
-        add(groupSelect, "gapright 10");
+        add(groupSelect, "gapright 5");
 
         add(createLabel("Count:", f));
-        add(entrantCountLabel, "");
+        add(entrantCountLabel, "gapright 5");
 
         add(new JLabel(""), "growx 100, pushx 100");
 
         add(refreshButton, "");
-        add(resultsButton, "gapright 10");
+        add(resultsButton, "gapright 5");
     }
 
 
@@ -182,7 +182,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         else if (cmd.endsWith("Print"))
         {
             if (cmd.startsWith("results"))
-                BrowserControl.printGroupResults(DataEntry.state, new int[] {DataEntry.state.getCurrentRunGroup()});
+                BrowserControl.printGroupResults(DataEntry.state);
         }
     }
 }

@@ -64,7 +64,7 @@ public class Actions
         quit           = new EventSendAction("Shutdown",        MT.SHUTDOWN_REQUEST);
         openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
         debugRequest   = new EventSendAction("Save Debug Info", MT.DEBUG_REQUEST);
-        backupRequest  = new EventSendAction("Backup Database", MT.BACKUP_REQUEST);
+        backupRequest  = addAction(new EventSendAction("Backup Database", MT.BACKUP_REQUEST));
         importRequest  = addAction(new ImportAction());
 
         mergeAll       = addAction(new MergeWithAllLocalAction());

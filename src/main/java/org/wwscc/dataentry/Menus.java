@@ -47,6 +47,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
     JMenu edit, event, results;
     JCheckBoxMenuItem paidInfoMode;
     JCheckBoxMenuItem reorderMode;
+    JCheckBoxMenuItem printMode;
     ButtonGroup runGrouping;
 
     public Menus()
@@ -85,12 +86,16 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
             runs.add(m);
         }
 
+        printMode = new JCheckBoxMenuItem("Print Directly", Prefs.getPrintDirectly());
+        printMode.addActionListener(e -> Prefs.setPrintDirectly(printMode.isSelected()));
+        event.add(printMode);
+
         paidInfoMode = new JCheckBoxMenuItem("Highlight Unpaid Entries", Prefs.usePaidFlag());
-        paidInfoMode.addActionListener(this);
+        paidInfoMode.addActionListener(e -> { Prefs.setUsePaidFlag(paidInfoMode.isSelected()); Messenger.sendEvent(MT.EVENT_CHANGED, null); });
         event.add(paidInfoMode);
 
         reorderMode = new JCheckBoxMenuItem("Constant Staging Mode", Prefs.useReorderingTable());
-        reorderMode.addActionListener(this);
+        reorderMode.addActionListener(e -> Prefs.setReorderingTable(reorderMode.isSelected()));
         event.add(reorderMode);
 
         /* Results Menu */
@@ -125,11 +130,11 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         String cmd = e.getActionCommand();
         if (cmd.equals("Multiple Group Results"))
         {
-            new GroupDialog().doDialog("Select groups to print:", new DialogFinisher<int[]>() {
+            new GroupDialog().doDialog("Select groups to view:", new DialogFinisher<String[]>() {
                 @Override
-                public void dialogFinished(int[] result) {
+                public void dialogFinished(String[] result) {
                     if (result != null)
-                        BrowserControl.printGroupResults(DataEntry.state, result);
+                        BrowserControl.openGroupResults(DataEntry.state, result);
                 }
             });
         }
@@ -157,15 +162,6 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
                 else
                     event.setRuns(save); // We bombed
             }
-        }
-        else if (cmd.equals("Highlight Unpaid Entries"))
-        {
-            Prefs.setUsePaidFlag(paidInfoMode.getState());
-            Messenger.sendEvent(MT.EVENT_CHANGED, null);
-        }
-        else if (cmd.equals("Constant Staging Mode"))
-        {
-            Prefs.setReorderingTable(reorderMode.getState());
         }
         else
         {

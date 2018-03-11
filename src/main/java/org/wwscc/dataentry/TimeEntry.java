@@ -259,6 +259,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         }
 
         switchTimerMode(Mode.OFF);
+        modeGroup.setSelected(Mode.OFF);
 
         timeList.addKeyListener(this);
         time.addKeyListener(this);
