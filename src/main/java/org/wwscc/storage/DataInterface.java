@@ -106,8 +106,8 @@ public interface DataInterface
      * @param car the car to register
      * @throws SQLException if an error occurs into the SQL execution
      */
-    public void registerCar(UUID eventid, Car car) throws SQLException;
-    public void unregisterCar(UUID eventid, Car car) throws SQLException; // remove this car from the current event registration
+    public void registerCar(UUID eventid, UUID carid) throws SQLException;
+    public void unregisterCar(UUID eventid, UUID carid) throws SQLException; // remove this car from the current event registration
     public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException;
     public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws SQLException;
     public void deletePayment(UUID payid) throws SQLException;

@@ -19,6 +19,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
+import javax.swing.FocusManager;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
@@ -202,7 +204,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
         try {
             Database.d.newCar(c);
-            Database.d.registerCar(DataEntry.state.getCurrentEventId(), c);
+            Database.d.registerCar(DataEntry.state.getCurrentEventId(), c.getCarId());
         } catch (SQLException sqle) {
             log.log(Level.WARNING, "\bUnable to create a placeholder car entry: " + sqle, sqle);
         }
@@ -244,9 +246,17 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                 break;
 
             case CAR_CHANGE:
-                int row = driverTable.getSelectedRow();
-                if ((row >= 0) && (row < driverTable.getRowCount()))
-                    dataModel.replaceCar((UUID)o, row);
+                if (driverTable.getSelectedRowCount() == 0) {
+                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                            "You need to select a driver in the table before you can swap entrant.", "Notice", JOptionPane.INFORMATION_MESSAGE);
+                } else if (driverTable.getSelectedRowCount() > 1) {
+                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                            "Can't swap entrant when more than one entrant is selected in the table.", "Error", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    int row = driverTable.getSelectedRow();
+                    if ((row >= 0) && (row < driverTable.getRowCount()))
+                        dataModel.replaceCar((UUID)o, row);
+                }
                 break;
 
             case FILTER_ENTRANT:

@@ -41,7 +41,6 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
-import org.wwscc.system.monitors.Monitor;
 import org.wwscc.system.sync.MergeServerModel;
 import org.wwscc.system.sync.MergeStatusTable;
 import org.wwscc.util.AppLogLevel;

@@ -571,20 +571,21 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void registerCar(UUID eventid, Car car) throws SQLException
+    public void registerCar(UUID eventid, UUID carid) throws SQLException
     {
-        executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, car.getCarId()));
+        executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, carid));
     }
 
     @Override
-    public void unregisterCar(UUID eventid, Car car) throws SQLException
+    public void unregisterCar(UUID eventid, UUID carid) throws SQLException
     {
-        executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=?", newList(eventid, car.getCarId()));
+        executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=?", newList(eventid, carid));
     }
 
     @Override
     public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException
     {
+        registerCar(eventid, carid);
         executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
                 newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
     }

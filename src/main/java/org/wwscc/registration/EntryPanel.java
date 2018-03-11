@@ -339,7 +339,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             try {
-                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
+                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
             } catch (SQLException sqle) {
                 log.log(Level.WARNING, "\bFailed to register car: " + sqle, sqle);
@@ -359,7 +359,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             try {
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar);
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
             } catch (SQLException sqle) {
                 log.log(Level.WARNING, "\bFailed to unregister car: " + sqle, sqle);
@@ -382,7 +382,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                 CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
                 if (d.doDialog("Payment", null)) {
                     Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), ONSITE_PAYMENT, d.getResult());
-                    Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar);
                     reloadCars(selectedCar);
                 }
             } catch (SQLException sqle) {
@@ -409,8 +408,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         {
             try {
                 Database.d.movePayments(Registration.state.getCurrentEventId(), selectedCar.getCarId(), dest.getCarId());
-                Database.d.registerCar(Registration.state.getCurrentEventId(), dest);
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar);
+                Database.d.registerCar(Registration.state.getCurrentEventId(), dest.getCarId());
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
             } catch (Exception e) {
                 log.log(Level.WARNING, "\bFailed to move payments: " + e, e);
             }
