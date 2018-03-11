@@ -59,7 +59,6 @@ public class Prefs
         @Override public void sync() {}
     }
 
-
     /**
      * During regular init, our default is to use the regular Java preferences for our base
      */
@@ -156,14 +155,16 @@ public class Prefs
         return ret;
     }
 
+
     public static String getSeries(String def) { return prefs.get("series", def); }
-    public static int getEventId(int def) { return prefs.getInt("eventid", def); }
-    public static int getChallengeId(int def) { return prefs.getInt("challengeid", def); }
+    public static int getEventId(int def)      { return prefs.getInt("eventid", def); }
+    public static int getChallengeId(int def)  { return prefs.getInt("challengeid", def); }
     public static boolean useReorderingTable() { return prefs.getBoolean("reorderingtable", false); }
-    public static int getLightCount() { return prefs.getInt("lights", 2); }
-    public static String getDefaultPrinter() { return prefs.get("defaultprinter", ""); }
-    public static boolean usePaidFlag() { return prefs.getBoolean("paidflag", false); }
-    public static boolean getAllowDiscovery() { return prefs.getBoolean("allowdiscovery", true); }
+    public static int getLightCount()          { return prefs.getInt("lights", 2); }
+    public static String getDefaultPrinter()   { return prefs.get("defaultprinter", ""); }
+    public static boolean usePaidFlag()        { return prefs.getBoolean("paidflag", false); }
+    public static boolean getAllowDiscovery()  { return prefs.getBoolean("allowdiscovery", true); }
+    public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
 
     public static String getScannerConfig(String type) { return prefs.get("scannerconfig-"+type, ""); }
     public static String getScannerInput() { return prefs.get("scannerinput", ""); }
@@ -178,14 +179,15 @@ public class Prefs
         return r;
     }
 
-    public static void setSeries(String s) { prefs.put("series", s); }
-    public static void setEventId(int i) { prefs.putInt("eventid", i); }
-    public static void setChallengeId(int i) { prefs.putInt("challengeid", i); }
+    public static void setSeries(String s)           { prefs.put("series", s); }
+    public static void setEventId(int i)             { prefs.putInt("eventid", i); }
+    public static void setChallengeId(int i)         { prefs.putInt("challengeid", i); }
     public static void setReorderingTable(boolean b) { prefs.putBoolean("reorderingtable", b); }
-    public static void setLightCount(int i) { prefs.putInt("lights", i); }
-    public static void setDefaultPrinter(String s) { prefs.put("defaultprinter", s); }
-    public static void setUsePaidFlag(boolean b) { prefs.putBoolean("paidflag", b); }
-    public static void setAllowDiscovery(boolean b) { prefs.putBoolean("allowdiscovery", b); }
+    public static void setLightCount(int i)          { prefs.putInt("lights", i); }
+    public static void setDefaultPrinter(String s)   { prefs.put("defaultprinter", s); }
+    public static void setUsePaidFlag(boolean b)     { prefs.putBoolean("paidflag", b); }
+    public static void setAllowDiscovery(boolean b)  { prefs.putBoolean("allowdiscovery", b); }
+    public static void setLogLevel(AppLogLevel l)    { prefs.put("loglevel", l.getName()); }
 
     public static void setScannerConfig(String type, String s) { prefs.put("scannerconfig-"+type, s); }
     public static void setScannerInput(String s) { prefs.put("scannerinput", s); }

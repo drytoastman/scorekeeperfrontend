@@ -158,11 +158,11 @@ public class DockerContainer
             cmd.add("UI_TIME_ZONE="+TimeZone.getDefault().getID());
             cmd.add("-e");
             cmd.add("SECRET='"+Prefs.getCookieSecret()+"'");
+            cmd.add("-e");
+            cmd.add("LOG_LEVEL="+Prefs.getLogLevel().getPythonLevel());
             if (Prefs.isDebug()) {
                 cmd.add("-e");
                 cmd.add("DEBUG=1");
-                cmd.add("-e");
-                cmd.add("LOG_LEVEL=DEBUG");
             }
             for (String k : volumes.keySet()) {
                 cmd.add("-v");

@@ -93,7 +93,7 @@ public class AppSetup
 
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
-        applog.setLevel(Prefs.isDebug() ? Level.FINE : Level.INFO);
+        applog.setLevel(Prefs.getLogLevel().getJavaLevel());
         applog.addHandler(new AlertHandler());
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {

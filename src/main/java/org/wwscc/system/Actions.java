@@ -316,35 +316,44 @@ public class Actions
     }
 
 
-    public static class InitServersAction extends AbstractAction
+    static class ImportAction extends AbstractAction
     {
-        public static final String HOME_SERVER = "scorekeeper.wwscc.org";
-
-        public InitServersAction() {
-            super("Init Server List");
+        public ImportAction() {
+            super("Import Backup Data");
         }
+
         public void actionPerformed(ActionEvent e) {
-            doinit();
-        }
-        public static void doinit() {
-            // Local should always be there
-            InetAddress a = Network.getPrimaryAddress();
-            if (a == null) a = InetAddress.getLoopbackAddress();
-            Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
+            Window active = FocusManager.getCurrentManager().getActiveWindow();
+            final JFileChooser fc = new JFileChooser() {
+                @Override
+                public void approveSelection(){
+                    File f = getSelectedFile();
+                    String pieces[] = f.getName().split("[#._]");
+                    if (!pieces[0].equals("date") || !pieces[2].equals("schema")) {
+                        JOptionPane.showMessageDialog(active, f.getName() + " is not a recognized backup filename of the format date_<DATE>#schema_<SCHEMA>");
+                        return;
+                    }
 
-            // And a remote home server of some type should always be there
-            boolean remotepresent = false;
-            for (MergeServer s : Database.d.getMergeServers()) {
-                if (s.isRemote())
-                    remotepresent = true;
-            }
-            if (!remotepresent) {
-                Database.d.mergeServerSetRemote(HOME_SERVER, "", 10);
-            }
+                    if (Integer.parseInt(pieces[3]) < 20180000) {
+                        JOptionPane.showMessageDialog(active, "Unable to import backups with schema earlier than 2018, selected file is " + pieces[3]);
+                        return;
+                    }
 
-            // inactive all
-            Database.d.mergeServerInactivateAll();
-            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+                    super.approveSelection();
+                }
+            };
+
+            fc.setDialogTitle("Specify a backup file to import");
+            fc.setCurrentDirectory(Prefs.getRootDir().toFile());
+            int returnVal = fc.showOpenDialog(active);
+            if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
+                return;
+
+            if (JOptionPane.showConfirmDialog(active, "This will overwrite any data in the current database, is that okay?",
+                                                "Import Data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
+                return;
+
+            Messenger.sendEvent(MT.IMPORT_REQUEST, fc.getSelectedFile());
         }
     }
 
@@ -386,44 +395,35 @@ public class Actions
     }
 
 
-    static class ImportAction extends AbstractAction
+    public static class InitServersAction extends AbstractAction
     {
-        public ImportAction() {
-            super("Import Backup Data");
+        public static final String HOME_SERVER = "scorekeeper.wwscc.org";
+
+        public InitServersAction() {
+            super("Init Server List");
         }
-
         public void actionPerformed(ActionEvent e) {
-            Window active = FocusManager.getCurrentManager().getActiveWindow();
-            final JFileChooser fc = new JFileChooser() {
-                @Override
-                public void approveSelection(){
-                    File f = getSelectedFile();
-                    String pieces[] = f.getName().split("[#._]");
-                    if (!pieces[0].equals("date") || !pieces[2].equals("schema")) {
-                        JOptionPane.showMessageDialog(active, f.getName() + " is not a recognized backup filename of the format date_<DATE>#schema_<SCHEMA>");
-                        return;
-                    }
+            doinit();
+        }
+        public static void doinit() {
+            // Local should always be there
+            InetAddress a = Network.getPrimaryAddress();
+            if (a == null) a = InetAddress.getLoopbackAddress();
+            Database.d.mergeServerSetLocal(Network.getLocalHostName(), a.getHostAddress(), 10);
 
-                    if (Integer.parseInt(pieces[3]) < 20180000) {
-                        JOptionPane.showMessageDialog(active, "Unable to import backups with schema earlier than 2018, selected file is " + pieces[3]);
-                        return;
-                    }
+            // And a remote home server of some type should always be there
+            boolean remotepresent = false;
+            for (MergeServer s : Database.d.getMergeServers()) {
+                if (s.isRemote())
+                    remotepresent = true;
+            }
+            if (!remotepresent) {
+                Database.d.mergeServerSetRemote(HOME_SERVER, "", 10);
+            }
 
-                    super.approveSelection();
-                }
-            };
-
-            fc.setDialogTitle("Specify a backup file to import");
-            fc.setCurrentDirectory(Prefs.getRootDir().toFile());
-            int returnVal = fc.showOpenDialog(active);
-            if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
-                return;
-
-            if (JOptionPane.showConfirmDialog(active, "This will overwrite any data in the current database, is that okay?",
-                                                "Import Data", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.CANCEL_OPTION)
-                return;
-
-            Messenger.sendEvent(MT.IMPORT_REQUEST, fc.getSelectedFile());
+            // inactive all
+            Database.d.mergeServerInactivateAll();
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
     }
 }

@@ -13,6 +13,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -21,9 +22,11 @@ import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ButtonGroup;
 import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -32,23 +35,29 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
+import org.wwscc.system.monitors.Monitor;
 import org.wwscc.system.sync.MergeServerModel;
 import org.wwscc.system.sync.MergeStatusTable;
+import org.wwscc.util.AppLogLevel;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
+
 import net.miginfocom.swing.MigLayout;
 
 public class ScorekeeperStatusWindow extends JFrame
 {
+    private static final Logger log = Logger.getLogger(ScorekeeperStatusWindow.class.getName());
+
     MergeStatusTable activetable, inactivetable;
     Map<String, JLabel> labels;
     Map<String, JButton> buttons;
@@ -93,6 +102,22 @@ public class ScorekeeperStatusWindow extends JFrame
         JMenu debug = new JMenu("Debug");
         debug.add(actions.resetHash);
         debug.add(actions.initServers);
+        JMenu levels = new JMenu("Logging Level");
+        debug.add(levels);
+
+        ButtonGroup options = new ButtonGroup();
+        AppLogLevel current = Prefs.getLogLevel();
+        LogLevelChanges levelchange = new LogLevelChanges();
+
+        for (AppLogLevel.ALevel a : AppLogLevel.ALevel.values()) {
+            JRadioButtonMenuItem m = new JRadioButtonMenuItem(a.name());
+            m.addActionListener(levelchange);
+            options.add(m);
+            levels.add(m);
+            if (a.equals(current.getLevel())) {
+                m.setSelected(true);
+            }
+        }
 
         JMenu launch = new JMenu("Launch");
         for (Action a : actions.apps)
@@ -138,6 +163,20 @@ public class ScorekeeperStatusWindow extends JFrame
 
         Messenger.register(MT.OPEN_STATUS_REQUEST, (t,o) -> { setVisible(true); toFront(); });
     }
+
+
+    class LogLevelChanges implements ActionListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            AppLogLevel newl = new AppLogLevel(e.getActionCommand());
+            AppLogLevel curl = Prefs.getLogLevel();
+            Prefs.setLogLevel(newl);
+            Logger.getLogger("org.wwscc").setLevel(newl.getJavaLevel());
+            log.warning("Log level changed from " + curl.getName() + " to " + newl.getName());
+        }
+    }
+
 
     private void statusLayout(boolean mini)
     {

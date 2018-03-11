@@ -172,7 +172,7 @@ public class MergeStatusTable extends JTable
             if (seconds < 60)
                 setText(seconds+"s");
             else if (seconds < 3600)
-                setText(seconds/60+"m");
+                setText(seconds/60+"m "+seconds%60+"s");
             else if (seconds < 86400)
                 setText(seconds/3600+"h "+seconds%3600/60+"m");
             else
