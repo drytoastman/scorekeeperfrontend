@@ -25,7 +25,6 @@ import org.wwscc.storage.MergeServer;
 import org.wwscc.system.monitors.ContainerMonitor;
 import org.wwscc.system.monitors.FrontEndMonitor;
 import org.wwscc.system.monitors.MachineMonitor;
-import org.wwscc.system.sync.MergeServerModel;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;

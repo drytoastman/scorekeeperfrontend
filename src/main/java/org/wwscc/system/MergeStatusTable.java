@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.sync;
+package org.wwscc.system;
 
 import java.awt.Color;
 import java.awt.Component;

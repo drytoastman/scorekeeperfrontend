@@ -216,7 +216,12 @@ public class DockerContainer
                 ZipOutputStream out = new ZipOutputStream(new FileOutputStream(path.toFile()+".zip"));
                 out.putNextEntry(new ZipEntry(path.getFileName().toString()));
                 FileInputStream in = new FileInputStream(path.toFile());
+
+                out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
+                out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
                 IOUtils.copy(in, out);
+                out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
+
                 IOUtils.closeQuietly(out);
                 IOUtils.closeQuietly(in);
                 Files.deleteIfExists(path);

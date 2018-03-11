@@ -101,10 +101,16 @@ public class ContainerMonitor extends Monitor
         }
 
         // interrupt our regular schedule to shutdown and import data
-        if (toimport != null)
+        if (toimport != null) {
+            ready.set(false);
             doImport();
-        if (tobackup != null)
+            lastcheck = false;
+        }
+
+        if (tobackup != null) {
             doBackup();
+        }
+
         if (restartsync && ready.get()) {
             containers.get("sync").restart();
             restartsync = false;
@@ -162,6 +168,7 @@ public class ContainerMonitor extends Monitor
         nondb.add(containers.get("web"));
         nondb.add(containers.get("sync"));
         DockerContainer.stopAll(nondb);
+        Database.d.close();
 
         dialog.setStatus("Importing ...", -1);
         status.set("Importing ...");
@@ -173,9 +180,6 @@ public class ContainerMonitor extends Monitor
             dialog.setStatus("Import and conversion was successful", 100);
         else
             dialog.setStatus("Import failed, see logs", 100);
-
-        Database.openDefault();
-        Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
     }
 
     private void doBackup()
@@ -187,7 +191,7 @@ public class ContainerMonitor extends Monitor
         if (backupNow(tobackup, true)) {
             dialog.setStatus("Backup Complete", 100);
         } else {
-            dialog.setStatus("Backup failed, see logs", 100);
+            dialog.setStatus("Backup failed, see import.log", 100);
         }
 
         tobackup = null;

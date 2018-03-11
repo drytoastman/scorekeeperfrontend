@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.sync;
+package org.wwscc.system;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import org.wwscc.storage.MergeServer;
-import org.wwscc.system.sync.MergeStatusTable.DecoratedMergeServer;
+import org.wwscc.system.MergeStatusTable.DecoratedMergeServer;
 import org.wwscc.util.IdGenerator;
 
 public class MergeServerModel extends AbstractTableModel
