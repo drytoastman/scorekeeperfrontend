@@ -11,7 +11,6 @@ package org.wwscc.dataentry.tables;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -145,7 +144,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
             d = Driver.getPlaceHolder(barcode);
             try {
                 Database.d.newDriver(d);
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.log(Level.WARNING, "\bUnable to create driver placeholder entry: " + e, e);
             }
         }
@@ -205,7 +204,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         try {
             Database.d.newCar(c);
             Database.d.registerCar(DataEntry.state.getCurrentEventId(), c.getCarId());
-        } catch (SQLException sqle) {
+        } catch (Exception sqle) {
             log.log(Level.WARNING, "\bUnable to create a placeholder car entry: " + sqle, sqle);
         }
         event(MT.CAR_ADD, c.getCarId());

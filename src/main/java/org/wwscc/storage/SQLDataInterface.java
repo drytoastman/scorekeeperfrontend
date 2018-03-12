@@ -8,9 +8,9 @@
 
 package org.wwscc.storage;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -23,27 +23,29 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.postgresql.util.PSQLException;
 import org.wwscc.util.IdGenerator;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** */
 public abstract class SQLDataInterface implements DataInterface
 {
     private static Logger log = Logger.getLogger(SQLDataInterface.class.getCanonicalName());
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     ClassData classCache = null;
     long classCacheTimestamp = 0;
 
-    public abstract void start() throws SQLException;
-    public abstract void commit() throws SQLException;
+    public abstract void start() throws Exception;
+    public abstract void commit() throws Exception;
     public abstract void rollback();
-    public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
-    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
-    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
+    public abstract void executeUpdate(String sql, List<Object> args) throws Exception, IOException;
+    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws Exception, IOException;
+    public abstract ResultSet executeSelect(String sql, List<Object> args) throws Exception, IOException;
     public abstract void closeLeftOvers();
-    public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException;
+    public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws Exception, IOException;
 
     /**
      * Utility function to create a list for passing args
@@ -72,7 +74,7 @@ public abstract class SQLDataInterface implements DataInterface
             ResultSet rs = executeSelect("select version from version", null);
             if (rs.next())
                 return rs.getString("version");
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             logError("getVersion", ioe);
         }
         return "unknown";
@@ -90,7 +92,7 @@ public abstract class SQLDataInterface implements DataInterface
             } else {
                 return "";
             }
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             logError("getSetting", ioe);
             return "";
         }
@@ -137,9 +139,9 @@ public abstract class SQLDataInterface implements DataInterface
      * @param d result data containing entrant info
      * @param r result data containing run info or null
      * @return a list of entrants
-     * @throws SQLException
+     * @throws Exception
      */
-    List<Entrant> loadEntrants(ResultSet d, ResultSet r) throws SQLException
+    List<Entrant> loadEntrants(ResultSet d, ResultSet r) throws Exception
     {
         List<Entrant> ret = new ArrayList<Entrant>();
         List<Run> runs = null;
@@ -404,13 +406,13 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void newDriver(Driver d) throws SQLException
+    public void newDriver(Driver d) throws Exception
     {
         executeUpdate("insert into drivers (driverid, firstname, lastname, email, username, password, membership, optoutmail, attr) values (?,?,?,?,?,?,?,?,?)", d.getValues());
     }
 
     @Override
-    public void updateDriver(Driver d) throws SQLException
+    public void updateDriver(Driver d) throws Exception
     {
         LinkedList<Object> vals = d.getValues();
         vals.add(vals.pop());
@@ -418,19 +420,19 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void deleteDriver(Driver d) throws SQLException
+    public void deleteDriver(Driver d) throws Exception
     {
         deleteDriver(d.getDriverId());
     }
 
    @Override
-    public void deleteDriver(UUID driverid) throws SQLException
+    public void deleteDriver(UUID driverid) throws Exception
     {
         executeUpdate("delete from drivers where driverid=?", newList(driverid));
     }
 
     @Override
-    public void deleteDrivers(Collection<Driver> list) throws SQLException
+    public void deleteDrivers(Collection<Driver> list) throws Exception
     {
         try
         {
@@ -439,7 +441,7 @@ public abstract class SQLDataInterface implements DataInterface
                 executeUpdate("delete from drivers where id=?", newList(d.driverid));
             commit();
         }
-        catch (SQLException sql)
+        catch (Exception sql)
         {
             rollback();
             throw sql;
@@ -524,10 +526,14 @@ public abstract class SQLDataInterface implements DataInterface
             ResultSet rs = executeSelect("select attr from cars", null);
             while (rs.next())
             {
-                JSONObject attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
-                if (attr.containsKey("make"))  make.add((String)attr.get("make"));
-                if (attr.containsKey("model")) model.add((String)attr.get("model"));
-                if (attr.containsKey("color")) color.add((String)attr.get("color"));
+                try {
+                    ObjectNode attr = (ObjectNode) objectMapper.readTree(rs.getString("attr"));
+                    if (attr.has("make"))  make.add(attr.get("make").asText());
+                    if (attr.has("model")) model.add(attr.get("model").asText());
+                    if (attr.has("color")) color.add(attr.get("color").asText());
+                } catch (IOException ioe) {
+                    log.info("Unable to parse car attributes: " + rs.getString("attr"));
+                }
             }
 
             ret.put("make",  make);
@@ -571,19 +577,19 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void registerCar(UUID eventid, UUID carid) throws SQLException
+    public void registerCar(UUID eventid, UUID carid) throws Exception
     {
         executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, carid));
     }
 
     @Override
-    public void unregisterCar(UUID eventid, UUID carid) throws SQLException
+    public void unregisterCar(UUID eventid, UUID carid) throws Exception
     {
         executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=?", newList(eventid, carid));
     }
 
     @Override
-    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException
+    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception
     {
         registerCar(eventid, carid);
         executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
@@ -591,25 +597,25 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws SQLException
+    public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws Exception
     {
         executeUpdate("UPDATE payments SET carid=?,modified=now() WHERE eventid=? and carid=?", newList(dstcarid, eventid, srccarid));
     }
 
     @Override
-    public void deletePayment(UUID payid) throws SQLException
+    public void deletePayment(UUID payid) throws Exception
     {
         executeUpdate("DELETE FROM payments WHERE payid=?", newList(payid));
     }
 
     @Override
-    public void newCar(Car c) throws SQLException
+    public void newCar(Car c) throws Exception
     {
         executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
     }
 
     @Override
-    public void updateCar(Car c) throws SQLException
+    public void updateCar(Car c) throws Exception
     {
         LinkedList<Object> vals = c.getValues();
         vals.add(vals.pop());
@@ -617,21 +623,21 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void deleteCar(Car c) throws SQLException
+    public void deleteCar(Car c) throws Exception
     {
         try {
             start();
             executeUpdate("delete from registered where carid=?", newList(c.carid));
             executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
-        } catch (SQLException sqle) {
+        } catch (Exception sqle) {
             rollback();
             throw sqle;
         }
     }
 
     @Override
-    public void deleteCars(Collection<Car> list) throws SQLException
+    public void deleteCars(Collection<Car> list) throws Exception
     {
         try
         {
@@ -640,7 +646,7 @@ public abstract class SQLDataInterface implements DataInterface
                 executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             rollback();
             throw ioe;
@@ -648,7 +654,7 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void mergeCar(Car from, Car into) throws SQLException
+    public void mergeCar(Car from, Car into) throws Exception
     {
         try
         {
@@ -677,7 +683,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("delete from cars where carid=?", da);
             commit();
         }
-        catch (SQLException sqle)
+        catch (Exception sqle)
         {
             rollback();
             throw sqle;
@@ -686,7 +692,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void setRun(Run r) throws SQLException
+    public void setRun(Run r) throws Exception
     {
         try {
             executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
@@ -694,14 +700,14 @@ public abstract class SQLDataInterface implements DataInterface
                           "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
                           newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
                                                                        r.cones, r.gates, r.raw, r.status, r.attr));
-        } catch (SQLException sqle) {
+        } catch (Exception sqle) {
             logError("setRun", sqle);
             throw sqle;
         }
     }
 
     @Override
-    public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException
+    public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception
     {
         try {
             // do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
@@ -713,18 +719,18 @@ public abstract class SQLDataInterface implements DataInterface
                         newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
             }
             commit();
-        } catch (SQLException sqle) {
+        } catch (Exception sqle) {
             rollback();
             throw sqle;
         }
     }
 
     @Override
-    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException
+    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws Exception
     {
         try {
             executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
-        } catch (SQLException sqle){
+        } catch (Exception sqle){
             logError("deleteRun", sqle);
             throw sqle;
         }
@@ -931,14 +937,14 @@ public abstract class SQLDataInterface implements DataInterface
             vals.add(vals.pop());
             executeUpdate("update challenges set eventid=?,name=?,depth=? where challengeid=?", vals);
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             logError("updateChallenge", ioe);
         }
     }
 
 
-    protected void _updateChallengeRound(ChallengeRound r) throws SQLException
+    protected void _updateChallengeRound(ChallengeRound r) throws Exception
     {
         List<Object> list = newList();
         list.add(r.swappedstart);
@@ -1118,7 +1124,7 @@ public abstract class SQLDataInterface implements DataInterface
         try {
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, ctimeout) VALUES (?, ?, ?, ?) " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, ctimeout=?", newList(serverid, name, address, ctimeout, name, address, ctimeout));
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "_mergeServerSet: " + ioe, ioe);
         }
     }
@@ -1128,7 +1134,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try {
             executeUpdate("DELETE FROM mergeservers WHERE serverid=?", newList(serverid));
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "mergeServerDelete: " + ioe, ioe);
         }
     }
@@ -1138,7 +1144,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try {
             executeUpdate("UPDATE mergeservers SET hoststate='I'", null);
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "mergeServerInactivateAll: " + ioe, ioe);
         }
     }
@@ -1150,7 +1156,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("INSERT INTO mergeservers (serverid, hostname, address, nextcheck, hoststate) VALUES (?, ?, ?, now(), 'A') " +
                           "ON CONFLICT (serverid) DO UPDATE SET hostname=?, address=?, nextcheck=now(), hoststate='A'",
                           newList(serverid, name, ip, name, ip));
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "mergeServerActivate: " + ioe, ioe);
         }
     }
@@ -1160,7 +1166,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try {
             executeUpdate("UPDATE mergeservers SET hoststate='I', nextcheck='epoch' WHERE serverid=?", newList(serverid));
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "mergeServerDeactivate: " + ioe, ioe);
         }
     }
@@ -1180,7 +1186,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try {
             executeUpdate("UPDATE mergeservers set mergestate='{}'", null);
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             logError("mergeServerResetAll", ioe);
         }
     }
@@ -1215,7 +1221,7 @@ public abstract class SQLDataInterface implements DataInterface
                     return true;
             }
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             logError("verifyUserAndSeries", ioe);
         }
@@ -1235,7 +1241,7 @@ public abstract class SQLDataInterface implements DataInterface
             commit();
             return true;
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             rollback();
             logError("deleteUserAndSeries", ioe);
@@ -1254,7 +1260,7 @@ public abstract class SQLDataInterface implements DataInterface
             commit();
             return true;
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             rollback();
             logError("deleteDriversTable", ioe);

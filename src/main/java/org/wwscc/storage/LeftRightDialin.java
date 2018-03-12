@@ -8,39 +8,22 @@
 
 package org.wwscc.storage;
 
-import org.json.simple.JSONObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- *
- * @author bwilson
- */
-@SuppressWarnings("unchecked")
-public class LeftRightDialin implements Serial
+public class LeftRightDialin
 {
-	public double left;
-	public double right;
+    @JsonProperty
+    public double left;
+    @JsonProperty
+    public double right;
 
-	public LeftRightDialin()
-	{
-	}
+    public LeftRightDialin()
+    {
+    }
 
-	public LeftRightDialin(double l, double r)
-	{
-		left = l;
-		right = r;
-	}
-
-    @Override
-	public void encode(JSONObject out)
-	{
-	    out.put("left", left);
-        out.put("right", right);
-	}
-
-	@Override
-	public void decode(JSONObject in)
-	{
-		left = (double)in.getOrDefault("left", -1);
-		right = (double)in.getOrDefault("right", -1);
-	}
+    public LeftRightDialin(double l, double r)
+    {
+        left = l;
+        right = r;
+    }
 }

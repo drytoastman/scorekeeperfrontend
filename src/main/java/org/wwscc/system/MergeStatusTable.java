@@ -28,10 +28,11 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
-import org.json.simple.JSONObject;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Resources;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class MergeStatusTable extends JTable
 {
@@ -109,11 +110,11 @@ public class MergeStatusTable extends JTable
 
     static class DecoratedMergeServer extends MergeServer implements Comparable<DecoratedMergeServer>
     {
-        JSONObject[] columns;
+        ObjectNode[] columns;
         public DecoratedMergeServer(MergeServer m, List<String> order)
         {
             super(m);
-            columns = new JSONObject[order.size()];
+            columns = new ObjectNode[order.size()];
             for (int ii = 0; ii < order.size(); ii++)
             {
                 columns[ii] = getSeriesState(order.get(ii));
@@ -192,8 +193,8 @@ public class MergeStatusTable extends JTable
         private boolean isMismatchedWithLocal(JTable table, int col, String testhash)
         {
             DecoratedMergeServer local = ((MergeServerModel)table.getModel()).servers.get(0);
-            JSONObject lstatus = local.columns[col-BASE_COL_COUNT];
-            String lhash = (String)lstatus.get("totalhash");
+            ObjectNode lstatus = local.columns[col-BASE_COL_COUNT];
+            String lhash = lstatus.get("totalhash").asText();
             return !testhash.equals(lhash);
         }
 
@@ -271,14 +272,18 @@ public class MergeStatusTable extends JTable
                     break;
 
                 default: // a series hash column
-                    JSONObject seriesstatus = server.columns[col-BASE_COL_COUNT];
+                    ObjectNode seriesstatus = server.columns[col-BASE_COL_COUNT];
                     if (seriesstatus == null) {
                         return this;
                     }
 
-                    String error = (String)seriesstatus.get("error");
-                    String progress = (String)seriesstatus.get("progress");
-                    String hash = (String)seriesstatus.get("totalhash");
+                    String hash     = seriesstatus.get("totalhash").asText();
+                    String progress = null;
+                    String error    = null;
+                    if (seriesstatus.has("error"))
+                        error = seriesstatus.get("error").asText();
+                    if (seriesstatus.has("progress"))
+                        progress = seriesstatus.get("progress").asText();
 
                     if (error != null) {
                         setToolTipText(getToolTip(error, textLimit(hash, 12), server.isActive()));
@@ -293,7 +298,7 @@ public class MergeStatusTable extends JTable
                         setFont(bold);
                     }
 
-                    if (seriesstatus.containsKey("syncing"))
+                    if (seriesstatus.has("syncing"))
                         setIcon(syncing);
 
                     break;

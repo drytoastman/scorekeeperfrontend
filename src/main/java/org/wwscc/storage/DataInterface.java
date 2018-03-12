@@ -8,7 +8,6 @@
 
 package org.wwscc.storage;
 
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -86,11 +85,11 @@ public interface DataInterface
     public Set<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
     public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids); // set the run order of the current rungroup to carids
 
-    public void newDriver(Driver d) throws SQLException; // create a new driver from data in d and set the id variable
-    public void updateDriver(Driver d) throws SQLException; // update the driver values in the database
-    public void deleteDriver(Driver d) throws SQLException;
-    public void deleteDriver(UUID driverid) throws SQLException;
-    public void deleteDrivers(Collection<Driver> d) throws SQLException;
+    public void newDriver(Driver d) throws Exception; // create a new driver from data in d and set the id variable
+    public void updateDriver(Driver d) throws Exception; // update the driver values in the database
+    public void deleteDriver(Driver d) throws Exception;
+    public void deleteDriver(UUID driverid) throws Exception;
+    public void deleteDrivers(Collection<Driver> d) throws Exception;
     public Driver getDriver(UUID driverid);
     public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
@@ -104,24 +103,24 @@ public interface DataInterface
      * Upon successful return, the provided car will be in the registered table for the current event.
      * @param eventid the eventid to register the car in
      * @param car the car to register
-     * @throws SQLException if an error occurs into the SQL execution
+     * @throws Exception if an error occurs into the SQL execution
      */
-    public void registerCar(UUID eventid, UUID carid) throws SQLException;
-    public void unregisterCar(UUID eventid, UUID carid) throws SQLException; // remove this car from the current event registration
-    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws SQLException;
-    public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws SQLException;
-    public void deletePayment(UUID payid) throws SQLException;
+    public void registerCar(UUID eventid, UUID carid) throws Exception;
+    public void unregisterCar(UUID eventid, UUID carid) throws Exception; // remove this car from the current event registration
+    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception;
+    public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws Exception;
+    public void deletePayment(UUID payid) throws Exception;
 
-    public void newCar(Car c) throws SQLException; // create a new car entry with this data, sets the id variable
-    public void updateCar(Car d) throws SQLException; // update the car values in the database
-    public void deleteCar(Car d) throws SQLException;
-    public void deleteCars(Collection<Car> d) throws SQLException;
-    public void mergeCar(Car from, Car into) throws SQLException;
+    public void newCar(Car c) throws Exception; // create a new car entry with this data, sets the id variable
+    public void updateCar(Car d) throws Exception; // update the car values in the database
+    public void deleteCar(Car d) throws Exception;
+    public void deleteCars(Collection<Car> d) throws Exception;
+    public void mergeCar(Car from, Car into) throws Exception;
     public DecoratedCar decorateCar(Car c, UUID eventid, int course);
 
-    public void setRun(Run r) throws SQLException;
-    public void swapRuns(Collection<Run> runs, UUID newcarid) throws SQLException;
-    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws SQLException;
+    public void setRun(Run r) throws Exception;
+    public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception;
+    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws Exception;
     public void addTimerTime(UUID serverid, Run r);
 
 

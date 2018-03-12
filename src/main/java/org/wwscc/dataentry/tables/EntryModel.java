@@ -8,7 +8,6 @@
 
 package org.wwscc.dataentry.tables;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -82,7 +81,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
         try {
             Database.d.registerCar(DataEntry.state.getCurrentEventId(), e.getCarId());
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.log(Level.WARNING, "\bRegistration during car add failed: {0}" + ioe.getMessage(), ioe);
         }
 
@@ -281,7 +280,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                     Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
                     e.deleteRun(col-runoffset);
                 }
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.SEVERE, "\bFailed to update run data: " + sqle, sqle);
             }
 
@@ -386,14 +385,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
             try {
                 Database.d.deleteCar(old.getCar());
                 Messenger.sendEvent(MT.ENTRANTS_CHANGED, null); // force car panel to update, FINISH ME, move to Notifications from database someday instead
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bUnable delete car as it is still in use\n\n" + sqle, sqle);
             }
 
             try {
                 if (old.getFirstName().equals(Driver.PLACEHOLDER))
                     Database.d.deleteDriver(old.getDriverId()); // this may fail if there are multiple placeholder cars still available, but that is okay
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.info(""+sqle);
             }
         }

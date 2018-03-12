@@ -9,7 +9,6 @@
 package org.wwscc.storage;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.wwscc.storage.Database;
@@ -20,7 +19,7 @@ public class PostgresTests
     public static TestDatabaseContainer pc = new TestDatabaseContainer();
 
     @Test
-    public void longQueryTest() throws SQLException
+    public void longQueryTest() throws Exception
     {
         PostgresqlDatabase pdb = (PostgresqlDatabase)Database.d;
         ResultSet rs = pdb.executeSelect("select pg_sleep(3);", null);  // should complete without exception

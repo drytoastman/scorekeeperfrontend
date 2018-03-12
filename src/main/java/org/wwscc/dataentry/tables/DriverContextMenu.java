@@ -14,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -153,7 +152,7 @@ class PaidAction extends AbstractAction
         try {
             Database.d.registerPayment(DataEntry.state.getCurrentEventId(), entrant.getCarId(), "dataentry", 0.01);
             Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
-        } catch (SQLException ioe) {
+        } catch (Exception ioe) {
             log.severe("\bFailed to mark driver paid: " + ioe.getMessage());
         }
     }
@@ -184,7 +183,7 @@ class TextRunAction extends AbstractAction
                 r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
                 Database.d.setRun(r);
             }
-        } catch (SQLException sqle) {
+        } catch (Exception sqle) {
             log.log(Level.SEVERE, "\bFailed to set run data: " + sqle, sqle);
         }
 

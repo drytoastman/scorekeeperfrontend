@@ -14,7 +14,6 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -273,7 +272,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                         c.setDriverId(selectedDriver.getDriverId());
                         Database.d.updateCar(c);
                         reloadCars(c);
-                    } catch (SQLException ioe) {
+                    } catch (Exception ioe) {
                         log.log(Level.SEVERE, "\bFailed to update car: " + ioe.getMessage(), ioe);
                     }
                 }
@@ -294,7 +293,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                 try {
                     Database.d.deleteCar(selectedCar);
                     reloadCars(null);
-                } catch (SQLException ioe) {
+                } catch (Exception ioe) {
                     log.log(Level.SEVERE, "\bFailed to delete car: " + ioe, ioe);
                 }
             }
@@ -321,7 +320,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                         Database.d.mergeCar(c, target);
                 }
                 reloadCars(target);
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bUnable to merge cars: " + sqle, sqle);
             }
         }
@@ -341,7 +340,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             try {
                 Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to register car: " + sqle, sqle);
             }
         }
@@ -361,7 +360,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             try {
                 Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to unregister car: " + sqle, sqle);
             }
         }
@@ -384,7 +383,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                     Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), ONSITE_PAYMENT, d.getResult());
                     reloadCars(selectedCar);
                 }
-            } catch (SQLException sqle) {
+            } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to register car and payment: " + sqle, sqle);
             }
         }
@@ -568,7 +567,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             else
                 super.actionPerformed(e);
         }
-        catch (SQLException ioe)
+        catch (Exception ioe)
         {
             log.log(Level.WARNING, "\bRegistation action failed: " + ioe, ioe);
         }

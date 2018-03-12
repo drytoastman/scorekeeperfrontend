@@ -14,7 +14,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -228,7 +227,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                     try {
                         Database.d.newDriver(d);
                         focusOnDriver(d.getFirstName(), d.getLastName());
-                    } catch (SQLException ioe) {
+                    } catch (Exception ioe) {
                         log.log(Level.SEVERE, "\bFailed to create driver: " + ioe, ioe);
                     }
                 }
@@ -249,7 +248,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                         int ii = drivers.getSelectedIndex();
                         drivers.clearSelection();
                         drivers.setSelectedIndex(ii);
-                    } catch (SQLException ioe) {
+                    } catch (Exception ioe) {
                         log.log(Level.SEVERE, "\bFailed to update driver: " + ioe, ioe);
                     }
                 }
@@ -286,7 +285,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                                 Messenger.sendEvent(MT.CAR_ADD, c.getCarId());
                         }
                     }
-                    catch (SQLException ioe)
+                    catch (Exception ioe)
                     {
                         log.log(Level.SEVERE, "\bFailed to create a car: " + ioe, ioe);
                     }

@@ -15,13 +15,16 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * A server that create TimerClients for each connection as well as running a
@@ -116,39 +119,45 @@ public class TimerServer implements RunServiceInterface
 
     class ServiceThread implements Runnable
     {
-        @SuppressWarnings("unchecked")
         @Override
         public void run()
         {
-            JSONObject data = new JSONObject();
-            data.put("serviceport", serversock.getLocalPort());
-            Discovery.get().registerService(Prefs.getServerId(), servicetype, data);
-            Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, serversock.getLocalPort() } );
-
-            while (!done)
+            try
             {
-                try
-                {
-                    Socket s = serversock.accept();
-                    TimerClient c = new TimerClient(s);
-                    c.start();
-                    clients.add(c);
-                }
-                catch (IOException ioe)
-                {
-                    log.log(Level.INFO, "Server error: {0}", ioe);
-                }
-            }
+                ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
+                data.put("serviceport", serversock.getLocalPort());
+                Discovery.get().registerService(Prefs.getServerId(), servicetype, data);
+                Messenger.sendEvent(MT.TIMER_SERVICE_LISTENING, new Object[] { this, serversock.getLocalPort() } );
 
-            for (RunServiceInterface tc : clients)
+                while (!done)
+                {
+                    try
+                    {
+                        Socket s = serversock.accept();
+                        TimerClient c = new TimerClient(s);
+                        c.start();
+                        clients.add(c);
+                    }
+                    catch (IOException ioe)
+                    {
+                        log.log(Level.INFO, "Server error: {0}", ioe);
+                    }
+                }
+
+                for (RunServiceInterface tc : clients)
+                {
+                    ((TimerClient)tc).stop();
+                }
+
+                Discovery.get().unregisterService(Prefs.getServerId(), servicetype);
+                try { serversock.close(); } catch (IOException ioe) {}
+
+                Messenger.sendEvent(MT.TIMER_SERVICE_NOTLISTENING, this);
+            }
+            catch (JsonProcessingException je)
             {
-                ((TimerClient)tc).stop();
+                log.log(Level.WARNING, "Failure in timer server setup/teardown: " + je, je);
             }
-
-            Discovery.get().unregisterService(Prefs.getServerId(), servicetype);
-            try { serversock.close(); } catch (IOException ioe) {}
-
-            Messenger.sendEvent(MT.TIMER_SERVICE_NOTLISTENING, this);
         }
     }
 }

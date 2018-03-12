@@ -8,6 +8,7 @@
 
 package org.wwscc.storage;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -15,14 +16,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.wwscc.util.IdGenerator;
+
 
 public class MergeServer
 {
+    private static Logger log = Logger.getLogger(MergeServer.class.getCanonicalName());
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
     public static enum HostState {
         ACTIVE,
         ONESHOT,
@@ -39,7 +45,7 @@ public class MergeServer
     protected int        ctimeout;
     protected int        cfailures;
     protected HostState  hoststate;
-    protected Map<String, JSONObject> seriesstate;
+    protected Map<String, ObjectNode> seriesstate;
 
     @Override
     public String toString()
@@ -83,13 +89,14 @@ public class MergeServer
             case "I": hoststate = HostState.INACTIVE; break;
             default:  hoststate = HostState.UNKNOWN; break;
         }
-        seriesstate = new HashMap<String, JSONObject>();
+        seriesstate = new HashMap<String, ObjectNode>();
         try {
-            JSONObject mergestate = (JSONObject)new JSONParser().parse(rs.getString("mergestate"));
-            for (Object o : mergestate.keySet()) {
-                seriesstate.put((String)o, (JSONObject)mergestate.get(o));
-            }
-        } catch (ParseException e) {
+            ObjectNode mergestate = (ObjectNode) objectMapper.readTree(rs.getString("mergestate"));
+            mergestate.fields().forEachRemaining(field ->  {
+                seriesstate.put(field.getKey(), (ObjectNode)field.getValue());
+            });
+        } catch (IOException e) {
+            log.warning("Failed to parse mergestate JSON: " + e);
         }
     }
 
@@ -115,18 +122,18 @@ public class MergeServer
         return address;
     }
 
-    public JSONObject getSeriesState(String series)
+    public ObjectNode getSeriesState(String series)
     {
         return seriesstate.get(series);
     }
 
     public String getDriversState()
     {
-        for (JSONObject o : seriesstate.values())
+        for (ObjectNode o : seriesstate.values())
         {  // just find any active series and get the drivers table hash from there
-            JSONObject hashes = (JSONObject)o.get("hashes");
-            if (hashes.isEmpty()) continue;
-            return (String)hashes.get("drivers");
+            ObjectNode hashes = (ObjectNode)o.get("hashes");
+            if (hashes.size() == 0) continue;
+            return hashes.get("drivers").asText();
         }
         return "";
     }

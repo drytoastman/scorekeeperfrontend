@@ -8,6 +8,7 @@
 
 package org.wwscc.storage;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -30,17 +31,20 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
 import org.postgresql.util.PGobject;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseable
 {
     private static final Logger log = Logger.getLogger(PostgresqlDatabase.class.getCanonicalName());
     private static final List<String> ignore = Arrays.asList(new String[] {"information_schema", "pg_catalog", "public", "template"});
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     private volatile Connection conn;
     private volatile ConnectParam connectParam;
@@ -324,7 +328,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         }
     }
 
-    void bindParam(PreparedStatement p, List<Object> args) throws SQLException
+    void bindParam(PreparedStatement p, List<Object> args) throws SQLException,IOException
     {
         if (args == null)
             return;
@@ -346,10 +350,10 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 p.setBoolean(ii+1, (Boolean)v);
             } else if (v instanceof UUID) {
                 p.setObject(ii+1, v);
-            } else if (v instanceof JSONObject) {
+            } else if (v instanceof ObjectNode) {
                 PGobject pgo = new PGobject();
                 pgo.setType("json");
-                pgo.setValue(((JSONObject)v).toJSONString());
+                pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
                 p.setObject(ii+1, pgo);
             } else if (v instanceof Timestamp) {
                 p.setTimestamp(ii+1, (Timestamp)v);
@@ -360,7 +364,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     }
 
     @Override
-    public void executeUpdate(String sql, List<Object> args) throws SQLException
+    public void executeUpdate(String sql, List<Object> args) throws SQLException, IOException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         bindParam(p, args);
@@ -369,7 +373,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     }
 
     @Override
-    public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException
+    public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException, IOException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         for (List<Object> l : args) {
@@ -381,7 +385,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
 
 
     @Override
-    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException
+    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException, IOException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         if (args != null)
@@ -421,9 +425,10 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     /**
      * Run a SELECT statement and create objects with the results using the given constructor that takes a
      * ResultSet as an argument.
+     * @throws IOException
      */
     @Override
-    public <T> List<T> executeSelect(String sql, List<Object> args, Constructor<T> objc) throws SQLException
+    public <T> List<T> executeSelect(String sql, List<Object> args, Constructor<T> objc) throws SQLException, IOException
     {
         try
         {

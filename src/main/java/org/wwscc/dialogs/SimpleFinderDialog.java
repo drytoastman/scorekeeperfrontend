@@ -30,10 +30,11 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.json.simple.JSONObject;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.Resources;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -146,12 +147,12 @@ class ServiceInfo
     InetAddress ip;
     int serviceport;
 
-    public ServiceInfo(String servicetype, JSONObject data)
+    public ServiceInfo(String servicetype, InetAddress ip, ObjectNode data)
     {
         this.servicetype = servicetype;
         try {
-            this.ip          = (InetAddress)data.get("ip");
-            this.serviceport = ((Long)data.get("serviceport")).intValue();
+            this.ip          = ip;
+            this.serviceport = data.get("serviceport").asInt();
         } catch (Exception e) {
             this.serviceport = 0;
         }
@@ -186,10 +187,10 @@ class JServiceList extends JList<ServiceInfo> implements DiscoveryListener
     }
 
     @Override
-    public void serviceChange(UUID serverid, String service, JSONObject data, boolean up)
+    public void serviceChange(UUID serverid, String service, InetAddress src, ObjectNode data, boolean up)
     {
         if (services.contains(service)) {
-            ServiceInfo info = new ServiceInfo(service, data);
+            ServiceInfo info = new ServiceInfo(service, src, data);
             if (up && !serviceModel.contains(info)) {
                 serviceModel.addElement(info);  // FINISH ME
             } else {

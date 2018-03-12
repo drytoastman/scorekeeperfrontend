@@ -37,11 +37,11 @@ public class DiscoveryTest
         InetAddress a1 = InetAddress.getByName("192.168.1.10");
         InetAddress a2 = InetAddress.getByName("192.168.1.20");
 
-        totest.addServiceListener((serverid, service, jsondata, up) -> {
+        totest.addServiceListener((serverid, service, src, jsondata, up) -> {
             System.out.println(serverid + ", " + service + ", " + jsondata + ", " + up);
             if (up) {
                 activeuuid = serverid;
-                activeip = (InetAddress)jsondata.get("ip");
+                activeip = src;
             } else {
                 activeuuid = null;
                 activeip = null;
@@ -53,7 +53,7 @@ public class DiscoveryTest
         Assert.assertEquals(uuid, activeuuid);
         Assert.assertEquals(a1, activeip);
 
-        // message with a2 addrses
+        // message with a2 address
         totest.processNetworkData(a2, d1, d1.length);
         Assert.assertEquals(uuid, activeuuid);
         Assert.assertEquals(a2, activeip);

@@ -8,38 +8,44 @@
 
 package org.wwscc.storage;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-@SuppressWarnings("unchecked")
 public class AttrBase
 {
     private static Logger log = Logger.getLogger(AttrBase.class.getCanonicalName());
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
-    protected JSONObject attr;
+    @JsonProperty
+    protected ObjectNode attr;
 
     public AttrBase()
     {
-        attr = new JSONObject();
+        attr = new ObjectNode(JsonNodeFactory.instance);
     }
 
-    public AttrBase(JSONObject o)
+    public AttrBase(ObjectNode o)
     {
-        attr = (JSONObject)o.clone();
+        attr = o.deepCopy();
     }
 
     public AttrBase(ResultSet rs) throws SQLException
     {
         try {
-            attr = (JSONObject)new JSONParser().parse(rs.getString("attr"));
-        } catch (ParseException e) {
-            attr = new JSONObject();
+            attr = (ObjectNode) objectMapper.readTree(rs.getString("attr"));
+        } catch (IOException e) {
+            log.warning("Failed to parse attr JSON: " + e);
+            attr = new ObjectNode(JsonNodeFactory.instance);
         }
     }
 
@@ -48,30 +54,29 @@ public class AttrBase
      */
     public void attrCleanup()
     {
-        for (Object key : attr.keySet())
-        {
-            Object val = attr.get(key);
+        attr.fields().forEachRemaining(field -> {
+            JsonNode val = field.getValue();
             if (    (val == null)
-                || ((val instanceof String)  && (val.equals("")))
-                || ((val instanceof Integer) && ((Integer)val == 0))
-                || ((val instanceof Double)  && ((Double)val <= 0.0))
-                || ((val instanceof Boolean) && (!(Boolean)val))
+                || ((val.isTextual()) && (val.asText().equals("")))
+                || ((val.isInt())     && (val.asInt() == 0))
+                || ((val.isDouble())  && (val.asDouble() <= 0.0))
+                || ((val.isBoolean()) && (!val.asBoolean()))
                ) {
-                attr.remove(key);
+                attr.remove(field.getKey());
             }
-        }
+        });
     }
 
     public boolean hasAttr(String name)
     {
-        return attr.containsKey(name) && !attr.get(name).equals("");
+        return attr.has(name) && !attr.get(name).asText().equals("");
     }
 
     public String getAttrS(String name)
     {
         String ret = null;
         try {
-            ret = (String)attr.get(name);
+            ret = attr.get(name).textValue();
             if (ret != null)
                 return ret;
         } catch (Exception e) {
@@ -84,7 +89,7 @@ public class AttrBase
     {
         Double ret = null;
         try {
-            ret = (Double)attr.get(name);
+            ret = attr.get(name).doubleValue();
             if (ret != null)
                 return ret;
         } catch (Exception e) {
@@ -95,7 +100,9 @@ public class AttrBase
 
     public Set<String> getAttrKeys()
     {
-        return (Set<String>)attr.keySet();
+        Set<String> ret = new HashSet<String>();
+        attr.fieldNames().forEachRemaining(ret::add);
+        return ret;
     }
 
     public void setAttrS(String name, String val)

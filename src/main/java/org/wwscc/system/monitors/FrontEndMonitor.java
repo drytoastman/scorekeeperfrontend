@@ -8,10 +8,12 @@
 
 package org.wwscc.system.monitors;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.json.simple.JSONObject;
 import org.wwscc.storage.Database;
 import org.wwscc.system.Actions;
 import org.wwscc.util.Discovery;
@@ -19,6 +21,10 @@ import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
+
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.wwscc.util.Discovery.DiscoveryListener;
 
 /**
@@ -27,6 +33,8 @@ import org.wwscc.util.Discovery.DiscoveryListener;
  */
 public class FrontEndMonitor extends Monitor implements DiscoveryListener
 {
+    private static final Logger log = Logger.getLogger(FrontEndMonitor.class.getName());
+
     boolean paused;
     boolean backendready;
     BroadcastState<InetAddress> address;
@@ -79,34 +87,39 @@ public class FrontEndMonitor extends Monitor implements DiscoveryListener
         paused = b;
     }
 
-    @SuppressWarnings("unchecked")
     private void updateDiscoverySetting(boolean up)
     {
-        if (up)
+        try
         {
-            JSONObject data = new JSONObject();
-            data.put("serverid", Prefs.getServerId().toString());
-            data.put("hostname", Network.getLocalHostName());
-            Discovery.get().addServiceListener(this);
-            Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
+            if (up)
+            {
+                ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
+                data.put("serverid", Prefs.getServerId().toString());
+                data.put("hostname", Network.getLocalHostName());
+                Discovery.get().addServiceListener(this);
+                Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
+            }
+            else
+            {
+                Discovery.get().removeServiceListener(this);
+                Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
+            }
         }
-        else
+        catch (IOException ioe)
         {
-            Discovery.get().removeServiceListener(this);
-            Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
+            log.log(Level.WARNING, "discovery settings change failure: " + ioe, ioe);
         }
     }
 
     @Override
-    public void serviceChange(UUID serverid, String service, JSONObject data, boolean up)
+    public void serviceChange(UUID serverid, String service, InetAddress src, ObjectNode data, boolean up)
     {
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;
-        InetAddress ip = (InetAddress)data.get("ip");
-        if (ip.equals(address.get()))
+        if (src.equals(address.get()))
             return;
         if (up) {
-            Database.d.mergeServerActivate(serverid, (String)data.get("hostname"), ip.getHostAddress());
+            Database.d.mergeServerActivate(serverid, data.get("hostname").asText(), src.getHostAddress());
         } else {
             Database.d.mergeServerDeactivate(serverid);
         }

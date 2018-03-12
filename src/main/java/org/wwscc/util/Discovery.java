@@ -18,25 +18,26 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.mutable.MutableLong;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Simple presence and info detection.  Assumes that each IP will only be hosting one
  * of each type of service string at this point.  Maybe more later but there doesn't
  * seem to be any need to support that.
  */
-@SuppressWarnings("unchecked")
 public class Discovery
 {
     private static final Logger log = Logger.getLogger(Discovery.class.getName());
+    private static ObjectMapper objectMapper = new ObjectMapper();
     private static volatile Discovery singleton;
 
     public static final String DISCOVERY_GROUP = "224.0.0.251";
@@ -53,7 +54,7 @@ public class Discovery
 
     public interface DiscoveryListener
     {
-        public void serviceChange(UUID serverid, String service, JSONObject data, boolean up);
+        public void serviceChange(UUID serverid, String service, InetAddress src, ObjectNode data, boolean up);
     }
 
     class NoInternetException extends IOException {}
@@ -67,19 +68,17 @@ public class Discovery
         return singleton;
     }
 
-    private JSONArray announcements;
-    private byte[] annoucementBytes;
+    private ArrayNode announcements;
+    private byte[] annonucementBytes;
     private Map<DiscoveryListener, StateAwareListener> listeners;
-    private JSONParser parser;
     private long timeoutms;
     private boolean resetFlag;
 
     protected Discovery()
     {
-        announcements = new JSONArray();
-        annoucementBytes = new byte[0];
+        announcements = new ArrayNode(JsonNodeFactory.instance);
+        annonucementBytes = new byte[0];
         listeners = new HashMap<DiscoveryListener, StateAwareListener>();
-        parser = new JSONParser();
         timeoutms = DEFAULT_TIMEOUT;
         Messenger.register(MT.NETWORK_CHANGED, (e,o) -> singleton.resetFlag = true);
     }
@@ -104,35 +103,44 @@ public class Discovery
     }
 
 
-    private static Predicate<JSONObject> matchesKey(UUID serverid, String service)
+    private void remove(UUID serverid, String service)
     {
-        return obj -> obj.get("serverid").equals(serverid.toString()) && obj.get("service").equals(service);
+        for (int ii = 0; ii < announcements.size(); ) {
+            ObjectNode node = (ObjectNode)announcements.get(ii);
+            if (node.get("serverid").asText().equals(serverid.toString()) &&
+                node.get("service").asText().equals(service)) {
+                announcements.remove(ii);
+                continue; // continue at same index as we just removed it
+            }
+            ii++;
+        }
     }
 
-    public void registerService(UUID serverid, String service, JSONObject data)
+    public void registerService(UUID serverid, String service, ObjectNode data) throws JsonProcessingException
     {
-        announcements.removeIf(matchesKey(serverid, service));
-        JSONObject serv = new JSONObject();
+        remove(serverid, service);
+        ObjectNode serv = new ObjectNode(JsonNodeFactory.instance);
         serv.put("serverid", serverid.toString());
         serv.put("service", service);
-        serv.put("data", data);
+        serv.set("data", data);
         announcements.add(serv);
-        annoucementBytes = announcements.toJSONString().getBytes();
+        annonucementBytes = objectMapper.writeValueAsBytes(announcements);
     }
 
-    public void unregisterService(UUID serverid, String service)
+    public void unregisterService(UUID serverid, String service) throws JsonProcessingException
     {
-        announcements.removeIf(matchesKey(serverid, service));
-        annoucementBytes = announcements.toJSONString().getBytes();
+        remove(serverid, service);
+        annonucementBytes = objectMapper.writeValueAsBytes(announcements);
     }
 
     /**
      * Process new data from the network.  The actual JSON data looks like:
+     * @throws IOException
      * @throws ParseException
      */
-    protected void processNetworkData(InetAddress addr, byte buf[], int len) throws ParseException
+    protected void processNetworkData(InetAddress addr, byte buf[], int len) throws IOException
     {
-        JSONArray data = (JSONArray)parser.parse(new String(buf, 0, len));
+        ArrayNode data = (ArrayNode)objectMapper.readTree(new String(buf, 0, len));
         for (StateAwareListener l : listeners.values())
             l.newData(addr, data);
     }
@@ -149,11 +157,13 @@ public class Discovery
 
     class ReceivedData
     {
-        JSONObject data;
+        ObjectNode data;
+        InetAddress src;
         long time;
-        public ReceivedData(JSONObject d, long t)
+        public ReceivedData(ObjectNode d, InetAddress a, long t)
         {
             data = d;
+            src  = a;
             time = t;
         }
     }
@@ -177,25 +187,24 @@ public class Discovery
          * @param source the source IP of the data
          * @param entries the list of entries we received, which looks like  { serverid:<UUID>, service:<String>, data:<JSON> }, ... ]
          */
-        public void newData(InetAddress source, JSONArray entries)
+        public void newData(InetAddress source, ArrayNode entries)
         {
             for (Object o : entries)
             {
-                JSONObject serv = (JSONObject)o;
-                UUID serverid   = UUID.fromString((String)serv.get("serverid"));
-                String service  = (String)serv.get("service");
-                JSONObject data = (JSONObject)serv.get("data");
+                ObjectNode serv = (ObjectNode)o;
+                UUID serverid   = UUID.fromString(serv.get("serverid").asText());
+                String service  = serv.get("service").asText();
+                ObjectNode data = (ObjectNode)serv.get("data");
 
-                data.put("ip", source);
-                ReceivedData info = new ReceivedData(data, System.currentTimeMillis());
+                ReceivedData info = new ReceivedData(data, source, System.currentTimeMillis());
 
                 if (!registry.containsKey(serverid))
                     registry.put(serverid, new HashMap<String, ReceivedData>());
                 Map<String, ReceivedData> services = registry.get(serverid);
 
                 ReceivedData old = services.put(service, info);
-                if ((old == null || !old.data.equals(info.data)))
-                    listener.serviceChange(serverid, service, info.data, true);
+                if ((old == null || !old.src.equals(info.src) || !old.data.equals(info.data)))
+                    listener.serviceChange(serverid, service, info.src, info.data, true);
             }
         }
 
@@ -209,7 +218,8 @@ public class Discovery
                 {
                     Map.Entry<String, ReceivedData> pair = iter.next();
                     if (pair.getValue().time + timeoutms < now) {
-                        listener.serviceChange(serverid, pair.getKey(), pair.getValue().data, false);
+                        ReceivedData info = pair.getValue();
+                        listener.serviceChange(serverid, pair.getKey(), info.src, info.data, false);
                         iter.remove();
                     }
                 }
@@ -272,7 +282,7 @@ public class Discovery
                     } catch (SocketTimeoutException ste) {}
 
                     if ((announcements.size() > 0) && timeout(sendms))
-                        socket.send(new DatagramPacket(annoucementBytes, annoucementBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT));
+                        socket.send(new DatagramPacket(annonucementBytes, annonucementBytes.length, InetAddress.getByName(DISCOVERY_GROUP), DISCOVERY_PORT));
                 }
                 catch (NoInternetException nie)
                 {
