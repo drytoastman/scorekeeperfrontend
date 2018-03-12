@@ -13,6 +13,9 @@ import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.wwscc.util.IdGenerator;
@@ -22,6 +25,8 @@ import org.wwscc.util.IdGenerator;
  * This represents a single run in an event.  Note that for simplicity we represent a ProSolo
  * run as default (reaction, sixty) and then use it for regular runs as well
  */
+@JsonAutoDetect(fieldVisibility = Visibility.NONE, getterVisibility = Visibility.NONE,
+                isGetterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class Run extends AttrBase implements Cloneable
 {
     public static final int LEFT = 1;
@@ -42,6 +47,12 @@ public class Run extends AttrBase implements Cloneable
     protected String status;
     @JsonProperty
     protected double raw;
+
+    @JsonCreator
+    protected Run()
+    {
+        this(0.0, 0, 0, "OK");
+    }
 
 
     public static class NetOrder implements Comparator<Run>
@@ -96,7 +107,6 @@ public class Run extends AttrBase implements Cloneable
     {
         this(raw, 0, 0, "OK");
     }
-
 
     /**
      * Extract run data from a SQL result set
@@ -174,7 +184,7 @@ public class Run extends AttrBase implements Cloneable
         Run r = (Run)o;
 
         return ((r.course == course) && (r.run == run) && (r.status.equals(status)) &&
-                (r.raw == raw) && (r.attr.equals(attr)));
+                (r.raw == raw) && (r.cones == cones) && (r.gates == gates) && (r.attr.equals(attr)));
     }
 
     @Override

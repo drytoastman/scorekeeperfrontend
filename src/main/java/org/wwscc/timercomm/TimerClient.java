@@ -41,11 +41,6 @@ public final class TimerClient implements RunServiceInterface
     OutputStream out;
     boolean done;
 
-    public TimerClient(String host, int port) throws IOException
-    {
-        this(new InetSocketAddress(host, port));
-    }
-
     public TimerClient(InetSocketAddress addr) throws IOException
     {
         sock = new Socket();
@@ -60,6 +55,14 @@ public final class TimerClient implements RunServiceInterface
         sock = s;
         in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         out = s.getOutputStream();
+        done = true;
+    }
+
+    public TimerClient(OutputStream test)
+    {
+        sock = null;
+        in = null;
+        out = test;
         done = true;
     }
 
@@ -115,6 +118,27 @@ public final class TimerClient implements RunServiceInterface
         return send(data);
     }
 
+    protected void processLine(String line) throws IOException
+    {
+        ObjectNode msg = (ObjectNode) objectMapper.readTree(line);
+        String type = msg.get("type").asText();
+        switch (type)
+        {
+            case DIAL_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, objectMapper.treeToValue(msg.get("data"), LeftRightDialin.class));
+                break;
+            case RUN_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_RUN, objectMapper.treeToValue(msg.get("data"), Run.class));
+                break;
+            case RUN_DELETE_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, objectMapper.treeToValue(msg.get("data"), Run.class));
+                break;
+            default:
+                log.warning("Unknown message type: " + type);
+                break;
+        }
+    }
+
     class ReceiverThread implements Runnable
     {
         @Override
@@ -137,33 +161,13 @@ public final class TimerClient implements RunServiceInterface
                             return;
                         }
 
-                        ObjectNode msg = (ObjectNode) objectMapper.readTree(line);
-                        String type = msg.get("type").asText();
-                        switch (type)
-                        {
-                            case DIAL_MESSAGE:
-                                Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, objectMapper.treeToValue(msg.get("data"), LeftRightDialin.class));
-                                break;
-                            case RUN_MESSAGE:
-                                Messenger.sendEvent(MT.TIMER_SERVICE_RUN, objectMapper.treeToValue(msg.get("data"), Run.class));
-                                break;
-                            case RUN_DELETE_MESSAGE:
-                                Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, objectMapper.treeToValue(msg.get("data"), Run.class));
-                                break;
-                            default:
-                                log.warning("Unknown message type: " + type);
-                                break;
-                        }
+                        processLine(line);
                     }
-                    catch (JsonProcessingException pe)
+                    catch (IOException ioe)
                     {
-                        log.warning(String.format("TimerClient got bad data: %s (%s)", line, pe));
+                        log.warning(String.format("TimerClient processing error: %s (%s)", line, ioe));
                     }
                 }
-            }
-            catch (IOException ex)
-            {
-                log.log(Level.INFO, "read failure: " + ex, ex);
             }
             catch (Exception e)
             {

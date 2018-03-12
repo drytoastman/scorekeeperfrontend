@@ -26,4 +26,17 @@ public class LeftRightDialin
         left = l;
         right = r;
     }
+
+    public String toString()
+    {
+        return "Left: " + left + ", Right: " + right;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (!(o instanceof LeftRightDialin)) return false;
+        LeftRightDialin r = (LeftRightDialin)o;
+        return ((r.left == left) && (r.right == right));
+    }
 }
