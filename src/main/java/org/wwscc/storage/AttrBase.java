@@ -76,9 +76,11 @@ public class AttrBase
     {
         String ret = null;
         try {
-            ret = attr.get(name).textValue();
-            if (ret != null)
-                return ret;
+            if (attr.has(name)) {
+                ret = attr.get(name).textValue();
+                if (ret != null)
+                    return ret;
+            }
         } catch (Exception e) {
             log.info(String.format("Failed to load string named %s from %s: %s", name, ret, e));
         }
@@ -89,9 +91,11 @@ public class AttrBase
     {
         Double ret = null;
         try {
-            ret = attr.get(name).doubleValue();
-            if (ret != null)
-                return ret;
+             if (attr.has(name)) {
+                ret = attr.get(name).doubleValue();
+                if (ret != null)
+                    return ret;
+            }
         } catch (Exception e) {
             log.info(String.format("Failed to load double named %s from %s: %s", name, ret, e));
         }

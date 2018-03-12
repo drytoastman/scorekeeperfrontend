@@ -36,7 +36,7 @@ public abstract class TextChangeTrigger implements DocumentListener
     {
         Document d = e.getDocument();
         try { changedTo(d.getText(0, d.getLength())); }
-        catch (Exception ex) { log.log(Level.INFO, "Search error: " + ex); }
+        catch (Exception ex) { log.log(Level.INFO, "Search error: " + ex, ex); }
     }
 
     public abstract void changedTo(String txt);
