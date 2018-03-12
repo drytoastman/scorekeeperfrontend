@@ -22,7 +22,6 @@ import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
