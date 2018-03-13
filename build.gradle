@@ -42,7 +42,7 @@ def getVersionName = { ->
 
 version = getVersionName()
 sourceCompatibility = 1.8
-mainClassName = 'org.wwscc.tray.ScorekeeperSystem'
+mainClassName = 'org.wwscc.system.ScorekeeperSystem'
 shadowJar.classifier = ""
 shadowJar.baseName = "scorekeeper"
 defaultTasks 'shadowJar'
