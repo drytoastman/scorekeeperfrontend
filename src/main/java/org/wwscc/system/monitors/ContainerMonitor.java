@@ -42,6 +42,9 @@ public class ContainerMonitor extends Monitor
     private Map<String, String> machineenv;
     private boolean machineready, lastcheck, restartsync;
 
+    /** flag for debug environment where we are running the backend separately */
+    private boolean external_backend;
+
     @SuppressWarnings("unchecked")
     public ContainerMonitor()
     {
@@ -65,6 +68,8 @@ public class ContainerMonitor extends Monitor
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
         Messenger.register(MT.MACHINE_ENV,      (m, o) -> machineenv   = (Map<String,String>)o);
+
+        external_backend = System.getenv("EXTERNAL_BACKEND") != null;
     }
 
     public boolean minit()
@@ -76,13 +81,15 @@ public class ContainerMonitor extends Monitor
         for (DockerContainer c : containers.values())
             c.setMachineEnv(machineenv);
 
-        status.set( "Clearing old containers");
-        DockerContainer.stopAll(containers.values());
+        if (!external_backend) {
+            status.set( "Clearing old containers");
+            DockerContainer.stopAll(containers.values());
 
-        for (DockerContainer c : containers.values()) {
-            status.set("Init " + c.getName());
-            c.createNetsAndVolumes();
-            c.start();
+            for (DockerContainer c : containers.values()) {
+                status.set("Init " + c.getName());
+                c.createNetsAndVolumes();
+                c.start();
+            }
         }
 
         return true;
@@ -119,13 +126,17 @@ public class ContainerMonitor extends Monitor
         Set<String> dead = DockerContainer.finddown(machineenv, names);
         if (dead.size() > 0) {
             ok = false;
-            status.set("Restarting " + dead);
-            for (DockerContainer c : containers.values()) {
-                if (dead.contains(c.getName())) {
-                    if (!c.start(5000)) {
-                        log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
-                    } else {
-                        quickrecheck = true;
+            if (external_backend) {
+                status.set("Down");
+            } else {
+                status.set("Restarting " + dead);
+                for (DockerContainer c : containers.values()) {
+                    if (dead.contains(c.getName())) {
+                        if (!c.start(5000)) {
+                            log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
+                        } else {
+                            quickrecheck = true;
+                        }
                     }
                 }
             }
@@ -149,8 +160,10 @@ public class ContainerMonitor extends Monitor
     public void mshutdown()
     {
         status.set("Shutting down ...");
-        if (!DockerContainer.stopAll(containers.values())) {
-            log.severe("\bUnable to stop the web and database services. See logs.");
+        if (!external_backend) {
+            if (!DockerContainer.stopAll(containers.values())) {
+                log.severe("\bUnable to stop the web and database services. See logs.");
+            }
         }
         ready.set(false);
         status.set("Done");
