@@ -47,7 +47,7 @@ public class FrontEndMonitor extends Monitor implements DiscoveryListener
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
 
         Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
-        Messenger.register(MT.BACKEND_READY,    (type, data) -> { backendready = (boolean)data; setPause(!backendready); });
+        Messenger.register(MT.BACKEND_READY,    (type, data) -> { backendready = (boolean)data; setPause(!backendready); poke(); });
     }
 
 
