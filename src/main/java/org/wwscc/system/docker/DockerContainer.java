@@ -270,11 +270,11 @@ public class DockerContainer
 
     /**
      * Quicker to send the stop signal all at once and let docker do the graceful
-     * wait followed by a hard kill.
+     * wait followed by a hard kill.  Also call rm to remove if they weren't
+     * started with --rm.
      * @param containers the list of containers to stop
-     * @return true if the docker command returns ok
      */
-    public static boolean stopAll(Collection<DockerContainer> containers)
+    public static void stopAll(Collection<DockerContainer> containers)
     {
         List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "stop"));
         Map<String, String> env = null;
@@ -282,7 +282,10 @@ public class DockerContainer
             cmd.add(c.getName());
             env = c.machineenv;
         }
-        return Exec.execit(Exec.build(env, cmd), null) == 0;
+
+        Exec.execit(Exec.build(env, cmd), null);
+        cmd.set(1, "rm");
+        Exec.execit(Exec.build(env, cmd), null);
     }
 
     /**
@@ -290,7 +293,7 @@ public class DockerContainer
      * this will catch the issue of phantom container network connections from getting in our way.
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    public static boolean establishNetwork(Map<String, String> machineenv)
+    public static void establishNetwork(Map<String, String> machineenv)
     {
         byte result[] = new byte[8192];
 
@@ -307,6 +310,5 @@ public class DockerContainer
         }
 
         Exec.execit(Exec.build(machineenv, "docker", "network", "create", NET_NAME), null);
-        return false;
     }
 }
