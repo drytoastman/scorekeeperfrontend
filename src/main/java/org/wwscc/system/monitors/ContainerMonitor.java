@@ -10,6 +10,7 @@ package org.wwscc.system.monitors;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -153,6 +154,7 @@ public class ContainerMonitor extends Monitor
                 status.set("Waiting for Database");
                 Database.waitUntilUp();
                 Database.openPublic(true, 5000);
+                Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
             }
             status.set("Running");
             ready.set(true);

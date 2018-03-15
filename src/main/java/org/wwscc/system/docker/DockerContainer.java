@@ -285,7 +285,7 @@ public class DockerContainer
 
         Exec.execit(Exec.build(env, cmd), null);
         cmd.set(1, "rm");
-        Exec.execit(Exec.build(env, cmd), null);
+        Exec.execit(Exec.build(env, cmd), null, true); // most likely not there, ignore errors
     }
 
     /**
