@@ -10,6 +10,7 @@ package org.wwscc.system.docker;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,9 +37,12 @@ import org.wwscc.storage.Database;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class DockerContainer
 {
     private static final Logger log = Logger.getLogger(DockerContainer.class.getCanonicalName());
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static final String DBV_PREFIX   = "scdatabase-";
     public static final String LOGV_PREFIX  = "sclogs-";
@@ -71,23 +75,6 @@ public class DockerContainer
             addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
             addVolume(SOCKV_PREFIX, "/var/run/postgresql");
         }
-    }
-
-    /**
-     * Quicker to send the stop signal all at once and let docker do the graceful
-     * wait followed by a hard kill.
-     * @param containers the list of containers to stop
-     * @return true if the docker command returns ok
-     */
-    public static boolean stopAll(Collection<DockerContainer> containers)
-    {
-        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "stop"));
-        Map<String, String> env = null;
-        for (DockerContainer c : containers) {
-            cmd.add(c.getName());
-            env = c.machineenv;
-        }
-        return Exec.execit(Exec.build(env, cmd), null) == 0;
     }
 
     String image;
@@ -132,9 +119,8 @@ public class DockerContainer
      * Attempt to create any needed supporting objects, let docker filter out duplicates as
      * parsing the lists is extra work for no benefit.
      */
-    public void createNetsAndVolumes()
+    public void createVolumes()
     {
-        Exec.execit(Exec.build(machineenv, "docker", "network", "create", NET_NAME), null);
         for (String vname : volumes.keySet())
             Exec.execit(Exec.build(machineenv, "docker", "volume", "create", vname), null);
     }
@@ -280,5 +266,47 @@ public class DockerContainer
 
             return dead;
         }
+    }
+
+    /**
+     * Quicker to send the stop signal all at once and let docker do the graceful
+     * wait followed by a hard kill.
+     * @param containers the list of containers to stop
+     * @return true if the docker command returns ok
+     */
+    public static boolean stopAll(Collection<DockerContainer> containers)
+    {
+        List<String> cmd = new ArrayList<String>(Arrays.asList("docker", "stop"));
+        Map<String, String> env = null;
+        for (DockerContainer c : containers) {
+            cmd.add(c.getName());
+            env = c.machineenv;
+        }
+        return Exec.execit(Exec.build(env, cmd), null) == 0;
+    }
+
+    /**
+     * Static method to forcefully clear out old network and then create a new one.  The hope is that
+     * this will catch the issue of phantom container network connections from getting in our way.
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static boolean establishNetwork(Map<String, String> machineenv)
+    {
+        byte result[] = new byte[8192];
+
+        try {
+            if (Exec.execit(Exec.build(machineenv, "docker", "network", "inspect", NET_NAME), result) == 0) {
+                for (String cid : ((Map<String,Object>)((Map)objectMapper.readValue(result, List.class).get(0)).get("Containers")).keySet()) {
+                    Exec.execit(Exec.build(machineenv, "docker", "network", "disconnect", "-f", NET_NAME, cid), null);
+                }
+
+                Exec.execit(Exec.build(machineenv, "docker", "network", "rm", NET_NAME), null);
+            }
+        } catch (IOException ioe) {
+            log.log(Level.WARNING, "Error tearing down old network: " + ioe, ioe);
+        }
+
+        Exec.execit(Exec.build(machineenv, "docker", "network", "create", NET_NAME), null);
+        return false;
     }
 }

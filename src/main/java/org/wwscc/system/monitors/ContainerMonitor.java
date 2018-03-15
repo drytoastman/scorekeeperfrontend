@@ -85,9 +85,13 @@ public class ContainerMonitor extends Monitor
             status.set( "Clearing old containers");
             DockerContainer.stopAll(containers.values());
 
+            status.set( "Establishing Network");
+            DockerContainer.establishNetwork(machineenv);
+
+            status.set( "Creating new containers");
             for (DockerContainer c : containers.values()) {
                 status.set("Init " + c.getName());
-                c.createNetsAndVolumes();
+                c.createVolumes();
                 c.start();
             }
         }
