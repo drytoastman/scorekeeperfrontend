@@ -165,9 +165,7 @@ public class ContainerMonitor extends Monitor
     {
         status.set("Shutting down ...");
         if (!external_backend) {
-            if (!DockerContainer.stopAll(containers.values())) {
-                log.severe("\bUnable to stop the web and database services. See logs.");
-            }
+            DockerContainer.stopAll(containers.values());
         }
         ready.set(false);
         status.set("Done");
