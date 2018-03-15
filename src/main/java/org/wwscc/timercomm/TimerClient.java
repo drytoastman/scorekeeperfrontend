@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -74,7 +75,10 @@ public final class TimerClient implements RunServiceInterface
 
     public void stop()
     {
-        done = true;
+        try {
+            done = true;
+            sock.close();
+        } catch (IOException se) {}
     }
 
     public boolean send(ObjectNode o)
@@ -145,6 +149,7 @@ public final class TimerClient implements RunServiceInterface
         {
             try
             {
+                log.log(Level.INFO, "Starting timer rx thread connected to {0}", sock.getRemoteSocketAddress());
                 Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION, new Object[] { TimerClient.this, true });
 
                 while (!done)
@@ -162,9 +167,15 @@ public final class TimerClient implements RunServiceInterface
 
                         processLine(line);
                     }
+                    catch (SocketException se)
+                    {
+                        log.info("Socket exception: " + se);
+                        return;
+                    }
                     catch (IOException ioe)
                     {
                         log.warning(String.format("TimerClient processing error: %s (%s)", line, ioe));
+                        try { Thread.sleep(1000); } catch (Exception e) {};
                     }
                 }
             }
@@ -174,6 +185,7 @@ public final class TimerClient implements RunServiceInterface
             }
             finally
             {
+                log.log(Level.INFO, "Finished timer rx thread with {0}", sock.getRemoteSocketAddress());
                 try { sock.close(); } catch (IOException ioe)  {}
                 Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION, new Object[] { TimerClient.this, false });
             }
