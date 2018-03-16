@@ -9,7 +9,9 @@
 
 package org.wwscc.components;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -21,13 +23,18 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.swing.BorderFactory;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.Painter;
+import javax.swing.UIDefaults;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
@@ -64,12 +71,11 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
 
     protected JScrollPane dscroll;
     protected JList<Object> drivers;
-    protected JTextArea driverInfo;
+    protected JTextPane driverInfo;
 
     protected JScrollPane cscroll;
     protected JList<DecoratedCar> cars;
     protected Vector<DecoratedCar> carVector;
-    protected JTextArea carInfo;
 
     protected boolean carAddOption = false;
     protected Driver selectedDriver;
@@ -121,28 +127,48 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         cscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         cscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         cscroll.getVerticalScrollBar().setPreferredSize(new Dimension(15,200));
-
-        carInfo = displayArea(3);
     }
 
-    protected JTextArea displayArea(int linecount)
+
+    static class SolidPainter implements Painter<Object>
     {
-        JTextArea ta = new JTextArea();
-        ta.setEditable(false);
-        ta.setLineWrap(false);
-        ta.setEnabled(true);
+        Color color;
+        public SolidPainter(Color c) {
+            color = c;
+        }
+        @Override
+        public void paint(Graphics2D g, Object object, int width, int height) {
+            g.setColor(color);
+            g.fillRect(0, 0, width, height);
+        }
+
+    }
+
+    protected JTextPane displayArea(int linecount)
+    {
+        JTextPane tp = new JTextPane();
+        tp.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createBevelBorder(BevelBorder.LOWERED),
+                BorderFactory.createEmptyBorder(3,3,3,3)));
+
+        UIDefaults defaults = new UIDefaults();
+        defaults.put("TextPane[Enabled].backgroundPainter", new SolidPainter(new Color(240, 240, 240)));
+        tp.putClientProperty("Nimbus.Overrides", defaults);
+        tp.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
+        tp.setEditable(false);
+        tp.setEnabled(true);
 
         // ugly hack to set a preferred height based on lines of text
-        ta.setSize(100,Short.MAX_VALUE);
+        tp.setSize(100,Short.MAX_VALUE);
         StringBuilder b = new StringBuilder();
         for (int ii = 0; ii < linecount-1; ii++) {
             b.append(ii+"\n"+ii);
         }
-        ta.setText(b.toString());
-        int h = (int)(ta.getPreferredSize().height*0.9);
-        ta.setPreferredSize(new Dimension(Short.MAX_VALUE, h));
-        ta.setText("");
-        return ta;
+        tp.setText(b.toString());
+        int h = (int)(tp.getPreferredSize().height*0.9);
+        tp.setPreferredSize(new Dimension(Short.MAX_VALUE, h));
+        tp.setText("");
+        return tp;
     }
 
 
@@ -344,30 +370,23 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
             else if (source == cars)
             {
                 Object o = cars.getSelectedValue();
-                if (o instanceof DecoratedCar)
-                {
-                    selectedCar = (DecoratedCar)o;
-                    carInfo.setText(carDisplay(selectedCar));
-                }
-                else
-                {
-                    selectedCar = null;
-                    carInfo.setText("\n");
-                }
+                selectedCar = (o instanceof DecoratedCar) ? (DecoratedCar)o : null;
             }
         }
     }
 
     public String driverDisplay(Driver d)
     {
-        StringBuilder ret = new StringBuilder();
+        StringBuilder ret = new StringBuilder("");
         ret.append(d.getDriverId()).append("\n");
         ret.append(d.getFullName()).append("\n");
         ret.append(d.getAttrS("address")).append("\n");
         ret.append(String.format("%s%s%s %s\n", d.getAttrS("city"), d.hasAttr("city")&&d.hasAttr("state")?", ":"", d.getAttrS("state"), d.getAttrS("zip")));
         ret.append(d.getEmail()).append("\n");
         ret.append(d.getAttrS("phone")).append("\n");
-        ret.append("Barcode = ").append(d.getBarcode());
+        if (!d.getBarcode().equals("")) {
+            ret.append("Barcode = ").append(d.getBarcode());
+        }
         return ret.toString();
     }
 

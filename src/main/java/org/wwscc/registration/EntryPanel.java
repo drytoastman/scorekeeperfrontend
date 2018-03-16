@@ -106,7 +106,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
         drivers.setCellRenderer(new DriverRenderer());
         cars.setCellRenderer(new CarRenderer());
-        carInfo.setLineWrap(false);
 
         /* Buttons */
         registerandpay = new JButton(new RegisterAndPayAction());
@@ -140,6 +139,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         barcodewarning = new JLabel("");
         barcodewarning.setForeground(Color.WHITE);
         barcodewarning.setBackground(Color.RED);
+        barcodewarning.setHorizontalAlignment(JLabel.CENTER);
 
         noteswarning = new JLabel("");
         noteswarning.setForeground(Color.WHITE);
@@ -148,7 +148,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         paidwarning = new JLabel("");
         paidwarning.setForeground(Color.WHITE);
         paidwarning.setBackground(Color.RED);
-        paidwarning.setFont(paidwarning.getFont().deriveFont(Font.BOLD, 13));
         paidwarning.setHorizontalAlignment(JLabel.CENTER);
 
         activeLabel = new Code39();
@@ -161,7 +160,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         mergeWarning.setOpaque(true);
         mergeWarning.setForeground(Color.WHITE);
         mergeWarning.setBackground(Color.RED);
-        mergeWarning.setFont(paidwarning.getFont());
         cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
@@ -607,7 +605,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             activeLabel.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
             activeLabel.repaint();
 
-            if (!selectedDriver.getBarcode().trim().equals(""))
+            boolean emptybarcode = selectedDriver.getBarcode().trim().equals("");
+            if (!emptybarcode)
             {
                 List<Driver> dups = Database.d.findDriverByBarcode(selectedDriver.getBarcode());
                 dups.remove(selectedDriver);
@@ -620,6 +619,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                     barcodewarning.setOpaque(true);
                 }
             }
+            else
+            {
+                if (Integer.parseInt(Database.d.getSetting("requestbarcodes")) != 0) {
+                    barcodewarning.setText("No Barcode");
+                    barcodewarning.setOpaque(true);
+                }
+            }
+
 
             String notes = selectedDriver.getAttrS("notes");
             if (!notes.trim().equals(""))
