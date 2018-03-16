@@ -25,10 +25,6 @@ public class SerialPortUtil
 {
     private static Logger log = Logger.getLogger(SerialPortUtil.class.getCanonicalName());
 
-    /*
-     * Generic functions for opening a port.
-     */
-
     public static String userPortSelection()
     {
         ArrayList<String> a, u;
@@ -69,22 +65,88 @@ public class SerialPortUtil
         return s;
     }
 
-    public static SerialPort openPort(String name, SerialPortEventListener listener) throws Exception
+    /**
+     * Base class for common serial port wrapping features
+     */
+    static class SerialBasic
     {
-        return openPort(name, listener, 9600, 3000, 30);
+        SerialPort port;
+
+        protected void openPort(String name, SerialPortEventListener listener) throws Exception
+        {
+            openPort(name, listener, 9600, 3000, 30);
+        }
+
+        protected void openPort(String name, SerialPortEventListener listener, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
+        {
+            log.info("Opening port " + name);
+            port = CommPortIdentifier.getPortIdentifier(name).open("Scorekeeper-"+name, ctimeoutms);
+            port.setSerialPortParams(baud, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+            port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
+            port.notifyOnDataAvailable(true);
+            port.addEventListener(listener);
+            if (rtimeoutsec > 0)
+                port.enableReceiveTimeout(rtimeoutsec);
+            Messenger.sendEvent(MT.SERIAL_PORT_OPEN, name);
+        }
+
+        public void close()
+        {
+            if (port != null) {
+                Messenger.sendEvent(MT.SERIAL_PORT_CLOSED, port.getName());
+                port.removeEventListener();
+                port.close();
+                port = null;
+            }
+        }
+
+        public void write(String s)
+        {
+            try {
+                port.getOutputStream().write(s.getBytes());
+            } catch (Exception ioe) {
+                log.log(Level.WARNING, "serial port write error: " + ioe, ioe);
+                close();
+            }
+        }
     }
 
-    public static SerialPort openPort(String name, SerialPortEventListener listener, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
+    /*
+     * Utility class for doing character based reads, wrapped so we can send proper events
+     */
+    public interface SerialCharacterListener
     {
-        log.info("Opening port " + name);
-        SerialPort port = CommPortIdentifier.getPortIdentifier(name).open("Scorekeeper-"+name, ctimeoutms);
-        port.setSerialPortParams(baud, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-        port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
-        port.notifyOnDataAvailable(true);
-        port.addEventListener(listener);
-        if (rtimeoutsec > 0)
-            port.enableReceiveTimeout(rtimeoutsec);
-        return port;
+        public void processChar(char data);
+    }
+
+    public static class CharacterBasedSerialPort extends SerialBasic implements SerialPortEventListener
+    {
+        SerialCharacterListener charlistener;
+
+        public CharacterBasedSerialPort(String name, SerialCharacterListener lis) throws Exception
+        {
+            this(name, lis, 9600, 3000, 30);
+        }
+
+        public CharacterBasedSerialPort(String name, SerialCharacterListener lis, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
+        {
+            charlistener = lis;
+            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
+        }
+
+        @Override
+        public void serialEvent(SerialPortEvent ev)
+        {
+            if (ev.getEventType() != SerialPortEvent.DATA_AVAILABLE) return;
+            try {
+                int data = port.getInputStream().read();
+                if (data < 0) return;
+                charlistener.processChar((char)data);
+            } catch (Exception ioe) {
+                log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
+                close();
+            }
+        }
     }
 
 
@@ -97,9 +159,8 @@ public class SerialPortUtil
         public void processLine(byte[] data);
     }
 
-    public static class LineBasedSerialPort implements SerialPortEventListener
+    public static class LineBasedSerialPort extends SerialBasic implements SerialPortEventListener
     {
-        SerialPort port;
         LineBasedSerialBuffer buffer;
         SerialLineListener linelistener;
 
@@ -112,17 +173,7 @@ public class SerialPortUtil
         {
             buffer = new LineBasedSerialBuffer();
             linelistener = lis;
-            port = openPort(name, this, baud, ctimeoutms, rtimeoutsec);
-        }
-
-        public void close()
-        {
-            port.close();
-        }
-
-        public void write(String s) throws IOException
-        {
-            port.getOutputStream().write(s.getBytes());
+            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
         }
 
         @Override
@@ -134,11 +185,13 @@ public class SerialPortUtil
                 buffer.readData(port.getInputStream());
                 while ((line = buffer.getNextLine()) != null)
                     linelistener.processLine(line);
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 log.log(Level.WARNING, "serial port read error: " + ex, ex);
+                close();
             }
         }
     }
+
 
     public static class LineBasedSerialBuffer
     {

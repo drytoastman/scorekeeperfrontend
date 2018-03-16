@@ -21,8 +21,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
@@ -70,7 +70,7 @@ import org.wwscc.util.TimeTextField;
 /**
  * Implements the time entry panel used in the data entry GUI
  */
-public class TimeEntry extends JPanel implements ActionListener, ListSelectionListener, ListDataListener, MessageListener, KeyListener
+public class TimeEntry extends JPanel implements ListSelectionListener, ListDataListener, MessageListener
 {
     private static final Logger log = Logger.getLogger(TimeEntry.class.getCanonicalName());
     public static final int SEGMENTS = 5;
@@ -86,7 +86,6 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         /** protimer over network */ PROTIMER_NETWORK
     };
 
-    Mode mode;
     TimerClient tclient;
     String commPortName;
     LineBasedSerialPort commPort;
@@ -112,6 +111,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 
     JLabel connectionStatus;
     ModeButtonGroup modeGroup;
+    Mode  currentMode;
     JMenu timerMenu;
 
     /**
@@ -139,7 +139,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
     {
         super();
         Messenger.register(MT.TIMER_TAKES_FOCUS, this);
-        Messenger.register(MT.TIMER_SERVICE_CONNECTION, this);
+        Messenger.register(MT.TIMER_SERVICE_CONNECTION_CLOSED, this);
         Messenger.register(MT.OBJECT_DCLICKED, this);
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.COURSE_CHANGED, this);
@@ -147,8 +147,8 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 
         connectionStatus = new JLabel("");
         modeGroup = new ModeButtonGroup();
+        currentMode = Mode.OFF;
 
-        mode = Mode.OFF;
         tclient = null;
         commPort = null;
         defaultModel = new SimpleTimeListModel(0);
@@ -192,7 +192,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
             segVal[ii].setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, s);
 
         registerKeyboardAction(
-            this,
+            e -> enterTime(),
             "Enter Time",
             KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
             JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
@@ -200,12 +200,19 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
 
         status = new JComboBox<String>(new String[] { "OK", "DNF", "DNS", "RL", "NS", "DSQ" });
         enter = new JButton("Enter Time");
-        enter.addActionListener(this);
+        enter.addActionListener(e -> enterTime());
         enter.setDefaultCapable(true);
         del = new JButton("Delete From List");
         del.setFont(new Font(null, Font.PLAIN, 11));
         del.setMargin(new Insets(0,0,0,0));
-        del.addActionListener(this);
+        del.addActionListener(e -> {
+            int index = timeList.getSelectedIndex();
+            if (index >= 0)
+            {
+                activeModel.remove(index);
+                selectNext(index);
+            }
+        });
 
         errorLabel = new JLabel("");
         errorLabel.setForeground(Color.RED);
@@ -246,7 +253,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         {
             JRadioButtonMenuItem bm = new JRadioButtonMenuItem();
             bm.setActionCommand(m.name());
-            bm.addActionListener(this);
+            bm.addActionListener(modeGroup);
             timerMenu.add(bm);
             modeGroup.add(bm);
             switch (m)
@@ -258,16 +265,16 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
             }
         }
 
-        switchTimerMode(Mode.OFF);
         modeGroup.setSelected(Mode.OFF);
 
-        timeList.addKeyListener(this);
-        time.addKeyListener(this);
-        cones.addKeyListener(this);
-        gates.addKeyListener(this);
-        reaction.addKeyListener(this);
-        sixty.addKeyListener(this);
-        enter.addKeyListener(this);
+        ConesGatesKeys cgk = new ConesGatesKeys();
+        timeList.addKeyListener(cgk);
+        time.addKeyListener(cgk);
+        cones.addKeyListener(cgk);
+        gates.addKeyListener(cgk);
+        reaction.addKeyListener(cgk);
+        sixty.addKeyListener(cgk);
+        enter.addKeyListener(cgk);
     }
     /**
 
@@ -296,7 +303,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
      * Change the timer input mode for the this TimeEntry box
      * @param newMode the mode to switch to
      */
-    private void switchTimerMode(Mode newMode)
+    private void processTimerModeSwitch(Mode newMode)
     {
         try
         {
@@ -327,7 +334,7 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
             /* Turn current stuff off */
             Messenger.unregisterAll(defaultModel);
             Messenger.unregisterAll(course2Model);
-            switch (mode)
+            switch (currentMode)
             {
                 case BASIC_SERIAL:
                     commPort.close();
@@ -380,35 +387,32 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
                     break;
             }
 
-            mode = newMode;
+            currentMode = newMode;
             event(MT.COURSE_CHANGED, null);
         }
         catch (Exception ioe) // IOError, etc, warn and go to off mode
         {
             String msg = ioe.getMessage();
             if ((msg != null) && !msg.equals("cancel"))
-            {
                 log.log(Level.WARNING, "\bTimer Select Failed ({0}), turning Off", ioe.getMessage());
-                mode = Mode.OFF;
-            }
 
-            if (modeGroup != null)
-                modeGroup.setSelected(mode);  // Select off or previous mode if we canceled early.
+            modeGroup.setSelected(Mode.OFF);  // Force a 'selection' to Off
+            return;
         }
 
-        String msg = modeGroup.getSelected();
-        if ((msg == null) || msg.equals("") || msg.equals("Off"))
+        // Update connection status label
+        if ((currentMode == null) || (currentMode == Mode.OFF))
         {
-            msg = "Not Connected";
+            connectionStatus.setText("Not Connected");
             connectionStatus.setForeground(Color.RED);
             timerMenu.setForeground(RED_MENU);
         }
         else
         {
+            connectionStatus.setText(modeGroup.getSelected());
             connectionStatus.setForeground(Color.BLACK);
             timerMenu.setForeground(Color.BLACK);
         }
-        connectionStatus.setText(msg);
     }
 
     /**
@@ -466,33 +470,6 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        String cmd = e.getActionCommand();
-        if (cmd.equals("Enter Time"))
-        {
-            enterTime();
-        }
-        else if (cmd.equals("Delete From List"))
-        {
-            int index = timeList.getSelectedIndex();
-            if (index >= 0)
-            {
-                activeModel.remove(index);
-                selectNext(index);
-            }
-        }
-
-        else
-        {
-            try {
-                switchTimerMode(Mode.valueOf(cmd));
-            } catch (IllegalArgumentException iae) {
-                log.log(Level.INFO, "Unknown command: {0}", cmd);
-            }
-        }
-    }
 
     /**
      * A new time came in via the connected timer
@@ -666,14 +643,9 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
                 timeList.setModel(activeModel);
                 break;
 
-            case TIMER_SERVICE_CONNECTION:
-                Object[] a = (Object[])o;
-                if ((a[0] == tclient) && (!(Boolean)a[1]))
-                {
-                    timerMenu.setForeground(RED_MENU);
-                    connectionStatus.setForeground(Color.RED);
-                    connectionStatus.setText("Not Connected");
-                }
+            case TIMER_SERVICE_CONNECTION_CLOSED:
+                if ((TimerClient)o == tclient)
+                    modeGroup.setSelected(Mode.OFF);
                 break;
 
             case TIME_ENTER_REQUEST:
@@ -682,92 +654,97 @@ public class TimeEntry extends JPanel implements ActionListener, ListSelectionLi
         }
     }
 
-    @Override
-    public void keyTyped(KeyEvent e)
-    {
-        Object o = e.getSource();
-        if(o instanceof JTextField || o == enter || o == timeList)
-        {
-            int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
 
-            switch(e.getKeyChar())
+    class ConesGatesKeys extends KeyAdapter
+    {
+        @Override
+        public void keyTyped(KeyEvent e)
+        {
+            Object o = e.getSource();
+            if(o instanceof JTextField || o == enter || o == timeList)
             {
-                case 'c':
-                case 'C':
-                    cones.setText(Integer.toString(cones.getInt() + increment));
-                    e.consume();
+                int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
+
+                switch(e.getKeyChar())
+                {
+                    case 'c':
+                    case 'C':
+                        cones.setText(Integer.toString(cones.getInt() + increment));
+                        e.consume();
+                        break;
+                    case 'g':
+                    case 'G':
+                        gates.setText(Integer.toString(gates.getInt() + increment));
+                        e.consume();
+                        break;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Wrap some common activities and tie the actions together in one class
+     */
+    class ModeButtonGroup extends ButtonGroup implements ActionListener
+    {
+        public void setSelected(TimeEntry.Mode m)
+        {
+            for (AbstractButton b : buttons)
+            {
+                if (b.getActionCommand().equals(m.name()))
+                {
+                    b.doClick();
                     break;
-                case 'g':
-                case 'G':
-                    gates.setText(Integer.toString(gates.getInt() + increment));
-                    e.consume();
-                    break;
+                }
             }
         }
-    }
-    @Override
-    public void keyPressed(KeyEvent e) { /* do nothing */ }
-    @Override
-    public void keyReleased(KeyEvent e) { /* do nothing */ }
-}
 
-
-class ModeButtonGroup extends ButtonGroup
-{
-    public void setSelected(TimeEntry.Mode m)
-    {
-        for (AbstractButton b : buttons)
+        public String getSelected()
         {
-            if (b.getActionCommand().equals(m.name()))
+            ButtonModel m = getSelection();
+            for (AbstractButton b : buttons)
             {
-                setSelected(b.getModel(), true);
-                break;
+                if (b.getModel() == m)
+                {
+                    return b.getText();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            String cmd = e.getActionCommand();
+            log.log(Level.INFO, "Mode Group Change = {0}", cmd);
+            try {
+                processTimerModeSwitch(Mode.valueOf(cmd));
+            } catch (IllegalArgumentException iae) {
+                log.log(Level.WARNING, "Unknown command: {0}", cmd);
             }
         }
     }
 
-    public String getSelected()
+
+    class RunListRenderer extends DefaultListCellRenderer
     {
-        ButtonModel m = getSelection();
-        for (AbstractButton b : buttons)
-        {
-            if (b.getModel() == m)
-            {
-                return b.getText();
+        protected Font font;
+        public RunListRenderer() {
+            font = new Font("sansserif", Font.PLAIN, 22);
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> l, Object o, int i, boolean is, boolean f) {
+            super.getListCellRendererComponent(l, o, i, is, f);
+            if (o instanceof Run) {
+                Run r = (Run)o;
+                setText(NF.format(r.getRaw()));
+            } else if (o instanceof Double) {
+                setText(NF.format((Double)o));
             }
+            setFont(font);
+            return this;
         }
-        return null;
     }
 }
-
-
-class RunListRenderer extends DefaultListCellRenderer
-{
-    protected Font font;
-
-    public RunListRenderer()
-    {
-        font = new Font("sansserif", Font.PLAIN, 22);
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<?> l, Object o, int i, boolean is, boolean f)
-    {
-        super.getListCellRendererComponent(l, o, i, is, f);
-
-        if (o instanceof Run)
-        {
-            Run r = (Run)o;
-            setText(NF.format(r.getRaw()));
-        }
-        else if (o instanceof Double)
-        {
-            setText(NF.format((Double)o));
-        }
-
-        setFont(font);
-        return this;
-    }
-}
-
-

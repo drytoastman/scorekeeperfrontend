@@ -114,18 +114,11 @@ public class TimingInterface implements MessageListener
 
     public void doCommand(String command)
     {
-        try
+        if (serial != null)
         {
-            if (serial != null)
-            {
-                log.log(Level.INFO, "OUT: {0}", command);
-                Messenger.sendEvent(MT.SENDING_SERIAL, command);
-                serial.write(command + "\r");
-            }
-        }
-        catch (Exception e)
-        {
-            log.log(Level.WARNING, "Write error: {0}", e); // don't dialog
+            log.log(Level.INFO, "OUT: {0}", command);
+            Messenger.sendEvent(MT.SENDING_SERIAL, command);
+            serial.write(command + "\r");
         }
     }
 

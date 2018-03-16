@@ -150,7 +150,7 @@ public final class TimerClient implements RunServiceInterface
             try
             {
                 log.log(Level.INFO, "Starting timer rx thread connected to {0}", sock.getRemoteSocketAddress());
-                Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION, new Object[] { TimerClient.this, true });
+                Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION_OPEN, TimerClient.this);
 
                 while (!done)
                 {
@@ -187,7 +187,7 @@ public final class TimerClient implements RunServiceInterface
             {
                 log.log(Level.INFO, "Finished timer rx thread with {0}", sock.getRemoteSocketAddress());
                 try { sock.close(); } catch (IOException ioe)  {}
-                Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION, new Object[] { TimerClient.this, false });
+                Messenger.sendEvent(MT.TIMER_SERVICE_CONNECTION_CLOSED, TimerClient.this);
             }
         }
     }
