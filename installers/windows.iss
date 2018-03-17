@@ -4,7 +4,11 @@ AppVersion={#Version}
 OutputDir=.
 AppPublisher=Brett Wilson
 UsePreviousAppDir=yes
+#ifdef Offline
+OutputBaseFilename=ScorekeeperSetup-{#Version}-Offline
+#else
 OutputBaseFilename=ScorekeeperSetup-{#Version}
+#endif
 DefaultDirName={pf}\Scorekeeper
 DefaultGroupName=Scorekeeper
 AllowNoIcons=yes
@@ -17,6 +21,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl";
 
 [Files]
 Source: "..\build\libs\scorekeeper-{#Version}.jar"; DestDir: "{app}";
+#ifdef Offline
+#define ImageArchive "images-"+Version+".tar"
+Source: {#ImageArchive}; DestDir: "{tmp}"; 
+#endif 
 
 [InstallDelete]
 Type: files; Name: "{group}\Scorekeeper*"
@@ -30,7 +38,12 @@ Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
 Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Creating Docker VM (if not already present)";
 Filename: "docker-machine.exe"; Parameters: "start default";  Flags: runasoriginaluser waituntilterminated; StatusMsg: "Starting Docker VM (if not already started)";
-Filename: {code:ImageBatchFile};                              Flags: runasoriginaluser waituntilterminated; StatusMsg: "Download database images";
+#ifdef Offline
+Filename: "{cmd}"; Parameters: "/c (@FOR /f ""tokens=*"" %i IN ('docker-machine.exe env --shell=cmd') DO @%i) & docker load --input {tmp}\{#ImageArchive}"; \
+                   Flags: runasoriginaluser waituntilterminated; StatusMsg: "Loading Docker Images";
+#else
+Filename: {code:ImageBatchFile}; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Downloading Docker Images";
+#endif
 
 [Code]
 const
