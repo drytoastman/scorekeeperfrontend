@@ -8,8 +8,6 @@
 
 package org.wwscc.system;
 
-import java.awt.AWTException;
-import java.awt.SystemTray;
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +36,6 @@ public class ScorekeeperSystem
     Actions actions;
     MergeServerModel model;
     ScorekeeperStatusWindow window;
-    ScorekeeperTrayIcon trayicon;
     List<Process> launched;
     MachineMonitor   mmonitor;
     ContainerMonitor cmonitor;
@@ -54,17 +51,11 @@ public class ScorekeeperSystem
         usingmachine    = false;
         shutdownstarted = false;
 
-        boolean usetray = false;
-        if (SystemTray.isSupported()) {
-            try {
-                trayicon = new ScorekeeperTrayIcon(actions);
-                usetray = true;
-            } catch (AWTException e) {
-                log.warning("Unable to install trayicon: " + e);
-            }
-        }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.severe("Shutdown Hook Called!");
+        }));
 
-        window = new ScorekeeperStatusWindow(actions, model, usetray);
+        window = new ScorekeeperStatusWindow(actions, model);
         window.setVisible(true);
 
         Messenger.register(MT.USING_MACHINE,         (t,d) -> usingmachine = (boolean)d);

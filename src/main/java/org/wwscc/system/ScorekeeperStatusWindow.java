@@ -27,14 +27,12 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ButtonGroup;
-import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JOptionPane;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
@@ -60,9 +58,15 @@ public class ScorekeeperStatusWindow extends JFrame
     Map<String, JButton> buttons;
     MiniMaxiAction minimaxi;
 
-    public ScorekeeperStatusWindow(Actions actions, MergeServerModel serverModel, boolean hastrayicon)
+    public ScorekeeperStatusWindow(Actions actions, MergeServerModel serverModel)
     {
         super("Scorekeeper Status");
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                Messenger.sendEvent(MT.SHUTDOWN_REQUEST, null);
+            }
+        });
 
         activetable   = new MergeStatusTable(serverModel, true);
         inactivetable = new MergeStatusTable(serverModel, false);
@@ -143,20 +147,6 @@ public class ScorekeeperStatusWindow extends JFrame
                 Prefs.setWindowBounds("statuswindow", current);
             }
         });
-
-        if (hastrayicon) {
-            setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-        } else {
-            setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-            this.addWindowListener(new WindowAdapter() {
-                public void windowClosing(WindowEvent e) {
-                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
-                            "As the tray icon is not supported on this system, this window cannot be closed."+
-                            "It can minimized or you can select shutdown from the File menu",
-                            "Unsupported Operation", JOptionPane.WARNING_MESSAGE);
-                }
-            });
-        }
 
         Messenger.register(MT.OPEN_STATUS_REQUEST, (t,o) -> { setVisible(true); toFront(); });
     }
@@ -325,7 +315,7 @@ public class ScorekeeperStatusWindow extends JFrame
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         AppSetup.appSetup("statuswindow");
-        ScorekeeperStatusWindow window = new ScorekeeperStatusWindow(new Actions(), new MergeServerModel(), true);
+        ScorekeeperStatusWindow window = new ScorekeeperStatusWindow(new Actions(), new MergeServerModel());
         window.setVisible(true);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
