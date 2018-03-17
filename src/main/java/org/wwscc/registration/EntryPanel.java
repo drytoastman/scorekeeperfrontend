@@ -621,10 +621,12 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             }
             else
             {
-                if (Integer.parseInt(Database.d.getSetting("requestbarcodes")) != 0) {
-                    barcodewarning.setText("No Barcode");
-                    barcodewarning.setOpaque(true);
-                }
+                try {
+                    if (Integer.parseInt(Database.d.getSetting("requestbarcodes")) != 0) {
+                        barcodewarning.setText("No Barcode");
+                        barcodewarning.setOpaque(true);
+                    }
+                } catch (NumberFormatException nfe) {}
             }
 
 
