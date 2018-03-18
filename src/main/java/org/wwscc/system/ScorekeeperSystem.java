@@ -51,10 +51,6 @@ public class ScorekeeperSystem
         usingmachine    = false;
         shutdownstarted = false;
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.severe("Shutdown Hook Called!");
-        }));
-
         window = new ScorekeeperStatusWindow(actions, model);
         window.setVisible(true);
 
