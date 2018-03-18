@@ -29,67 +29,67 @@ import org.wwscc.util.NF;
  */
 class EntrantDisplay extends JComponent
 {
-	static Font nameFont = new Font(Font.DIALOG, Font.BOLD, 13);
-	static Font dialFont = new Font(Font.DIALOG, Font.PLAIN, 12);
-	static Font buttonFont = new Font(Font.DIALOG, Font.PLAIN, 10);
-	
-	String name;
-	JLabel nameLbl;
-	JLabel dialLbl;
-	JButton autoWin;
-	JButton changeDial;
-	Id.Entry entryId;
-	ChallengeModel model;
-	
-	public EntrantDisplay(ChallengeModel m, Id.Entry eid)
-	{
-		entryId = eid;
-		model = m;
-		Entrant e = model.getEntrant(eid);
-		if (e != null)
-			name = e.getFirstName() + " " + e.getLastName();
-		else
-			name = "(none)";
+    static Font nameFont = new Font(Font.DIALOG, Font.BOLD, 13);
+    static Font dialFont = new Font(Font.DIALOG, Font.PLAIN, 12);
+    static Font buttonFont = new Font(Font.DIALOG, Font.PLAIN, 10);
 
-		autoWin = new JButton("Advance");
-		autoWin.setFont(buttonFont);
-		autoWin.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				Messenger.sendEvent(MT.AUTO_WIN, entryId);
-		        for(Container p = EntrantDisplay.this.getParent(); p != null; p = p.getParent()) {
-		            if (p instanceof JInternalFrame) {
-		                ((JInternalFrame)p).doDefaultCloseAction();
-		                return;
-		            }
-		        }
-			}
-		});
+    String name;
+    JLabel nameLbl;
+    JLabel dialLbl;
+    JButton autoWin;
+    JButton changeDial;
+    Id.Entry entryId;
+    ChallengeModel model;
 
-		changeDial = new JButton("Set Dial");
-		changeDial.setFont(buttonFont);
-		changeDial.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ae) {
-				String ret = (String)JOptionPane.showInputDialog("Override Dialin Value", model.getDial(entryId));
-				if (ret != null) {
-					double dial = Double.valueOf(ret);
-					dialLbl.setText(NF.format(dial));
-					model.overrideDial(entryId, dial);
-					Messenger.sendEventNow(MT.RUN_CHANGED, null);
-				}
-			}
-		});
+    public EntrantDisplay(ChallengeModel m, Id.Entry eid)
+    {
+        entryId = eid;
+        model = m;
+        Entrant e = model.getEntrant(eid);
+        if (e != null)
+            name = e.getFirstName() + " " + e.getLastName();
+        else
+            name = "(none)";
 
-		nameLbl = new JLabel(name);
-		nameLbl.setFont(nameFont);
-		dialLbl = new JLabel(NF.format(model.getDial(entryId)));
-		dialLbl.setFont(dialFont);
-		
-		setLayout(new MigLayout());
-		add(nameLbl, "al center, split 2");
-		add(dialLbl, "");
-	    add(changeDial, "al center");
-		add(autoWin, "al center, split 2");
-	}
+        autoWin = new JButton("Advance");
+        autoWin.setFont(buttonFont);
+        autoWin.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                Messenger.sendEvent(MT.AUTO_WIN, entryId);
+                for(Container p = EntrantDisplay.this.getParent(); p != null; p = p.getParent()) {
+                    if (p instanceof JInternalFrame) {
+                        ((JInternalFrame)p).doDefaultCloseAction();
+                        return;
+                    }
+                }
+            }
+        });
+
+        changeDial = new JButton("Set Dial");
+        changeDial.setFont(buttonFont);
+        changeDial.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                String ret = (String)JOptionPane.showInputDialog(EntrantDisplay.this, "Override Dialin Value", model.getDial(entryId));
+                if (ret != null) {
+                    double dial = Double.valueOf(ret);
+                    dialLbl.setText(NF.format(dial));
+                    model.overrideDial(entryId, dial);
+                    Messenger.sendEventNow(MT.RUN_CHANGED, null);
+                }
+            }
+        });
+
+        nameLbl = new JLabel(name);
+        nameLbl.setFont(nameFont);
+        dialLbl = new JLabel(NF.format(model.getDial(entryId)));
+        dialLbl.setFont(dialFont);
+
+        setLayout(new MigLayout());
+        add(nameLbl, "al center, split 2");
+        add(dialLbl, "");
+        add(changeDial, "al center");
+        add(autoWin, "al center, split 2");
+    }
 }

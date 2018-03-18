@@ -378,7 +378,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     {
         if (old.getClassCode().equals(ClassData.PLACEHOLDER_CLASS))
         {
-            if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getFocusedWindow(), "Do you want to remove the placeholder entry as well?",
+            if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getActiveWindow(), "Do you want to remove the placeholder entry as well?",
                       "Remove PlaceHolder", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
                 return;
 

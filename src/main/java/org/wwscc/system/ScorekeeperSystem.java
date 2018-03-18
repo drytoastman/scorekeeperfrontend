@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.swing.JOptionPane;
 
 import org.wwscc.storage.Database;
@@ -127,7 +128,7 @@ public class ScorekeeperSystem
         if (usingmachine)
         {
             Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
-            int result = JOptionPane.showOptionDialog(null, "<html>" +
+            int result = JOptionPane.showOptionDialog(window, "<html>" +
                     "This will stop all applications including the database and web server.<br/>" +
                     "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;",
                     "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
@@ -138,7 +139,7 @@ public class ScorekeeperSystem
         else
         {
             Object[] options = { "Shutdown Scorekeeper", "Cancel" };
-            int result = JOptionPane.showOptionDialog(null, "<html>" +
+            int result = JOptionPane.showOptionDialog(window, "<html>" +
                     "This will stop all applications including the database and web server.",
                     "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
             if (result == 1)

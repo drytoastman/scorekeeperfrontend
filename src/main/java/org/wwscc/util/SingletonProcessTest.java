@@ -13,6 +13,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.StandardOpenOption;
 
+import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 
 public class SingletonProcessTest
@@ -29,7 +30,7 @@ public class SingletonProcessTest
             filelock = FileChannel.open(Prefs.getLockFilePath(appname), StandardOpenOption.CREATE, StandardOpenOption.WRITE).tryLock();
             if (filelock == null) throw new IOException("File already locked");
         } catch (Exception e) {
-            if (JOptionPane.showConfirmDialog(null, "<html>"+ e + "<br/><br/>" +
+            if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getActiveWindow(), "<html>"+ e + "<br/><br/>" +
                         "Unable to lock "+appname+" access. " +
                         "This usually indicates that another copy of "+appname+" is<br/>already running and only one should be running at a time. " +
                         "It is also possible that "+appname+" <br/>did not exit cleanly last time and the lock is just left over.<br/><br/>" +

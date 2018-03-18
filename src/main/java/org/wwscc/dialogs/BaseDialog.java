@@ -261,7 +261,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
             }
             else if (errorMessage != null)
             {
-                JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), errorMessage, "Dialog Error", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, errorMessage, "Dialog Error", JOptionPane.WARNING_MESSAGE);
             }
             else
             {

@@ -173,7 +173,7 @@ public class AppSetup
                 final String msg = record;
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override public void run() {
-                        JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getFocusOwner(), msg, title, type);
+                        JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, type);
                     }
                 });
             }

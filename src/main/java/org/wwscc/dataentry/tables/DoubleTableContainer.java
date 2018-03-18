@@ -246,10 +246,10 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
             case CAR_CHANGE:
                 if (driverTable.getSelectedRowCount() == 0) {
-                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                    JOptionPane.showMessageDialog(this,
                             "You need to select a driver in the table before you can swap entrant.", "Notice", JOptionPane.INFORMATION_MESSAGE);
                 } else if (driverTable.getSelectedRowCount() > 1) {
-                    JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                    JOptionPane.showMessageDialog(this,
                             "Can't swap entrant when more than one entrant is selected in the table.", "Error", JOptionPane.WARNING_MESSAGE);
                 } else {
                     int row = driverTable.getSelectedRow();

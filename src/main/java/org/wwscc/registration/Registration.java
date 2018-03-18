@@ -103,7 +103,7 @@ public class Registration extends JFrame
 
         public void actionPerformed(ActionEvent e)
         {
-            Object o = JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), "Enter " + type);
+            Object o = JOptionPane.showInputDialog(this, "Enter " + type);
             if (o != null)
                 Messenger.sendEvent(MT.BARCODE_SCANNED, (prefix != null) ? prefix+o.toString() : o);
         }

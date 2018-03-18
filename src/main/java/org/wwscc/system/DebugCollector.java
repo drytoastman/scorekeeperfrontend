@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
@@ -131,7 +132,7 @@ public class DebugCollector extends Thread
         }
         catch (Exception ioe)
         {
-            JOptionPane.showMessageDialog(null, "Error create debug file: " + ioe, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), "Error create debug file: " + ioe, "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         monitor.close();
