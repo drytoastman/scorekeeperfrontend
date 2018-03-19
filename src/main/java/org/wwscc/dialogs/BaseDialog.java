@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
-import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;

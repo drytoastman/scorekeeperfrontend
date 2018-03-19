@@ -208,8 +208,8 @@ public class DockerContainer
                 IOUtils.copy(in, out);
                 out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
 
-                IOUtils.closeQuietly(out);
-                IOUtils.closeQuietly(in);
+                try { out.close(); } catch (IOException ioe) {}
+                try { in.close(); } catch (IOException ioe) {}
                 Files.deleteIfExists(path);
             } catch (Exception ioe) {
                 log.log(Level.INFO, "Unable to compress database backup: " + ioe, ioe);

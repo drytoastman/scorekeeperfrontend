@@ -1,12 +1,8 @@
 import org.gradle.plugins.ide.eclipse.model.AccessRule
 
 buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
-    }
+    repositories { jcenter() }
+    dependencies { classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1' }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -47,19 +43,6 @@ shadowJar.classifier = ""
 shadowJar.baseName = "scorekeeper"
 defaultTasks 'shadowJar'
 
-task createUbuntuSetup(type: Copy) {
-    from 'installers'
-    into "$buildDir"
-    include 'ubuntu.template'
-    rename('ubuntu.template', "ubuntusetup-${version}.sh")
-    expand(git_version: version)
-}
-
-jar {
-    manifest {
-        attributes("Implementation-Version": version)
-    }
-}
 
 repositories {
     jcenter()
@@ -70,9 +53,40 @@ dependencies {
     compile 'com.neuronrobotics:nrjavaserial:3.12.1'
     compile 'org.postgresql:postgresql:42.1.4'
     compile 'com.jcraft:jsch:0.1.54'
-    compile 'org.apache.commons:commons-io:1.3.2'
+    compile 'commons-io:commons-io:2.6'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
 
     testCompile 'junit:junit:4.12'
+}
+
+jar {
+    manifest {
+        attributes("Implementation-Version": version)
+    }
+}
+
+task createUbuntuSetup (type: Copy) {
+    from 'installers'
+    into "$buildDir"
+    include 'ubuntu.template'
+    rename('ubuntu.template', "ubuntusetup-${version}.sh")
+    expand(git_version: version)
+}
+
+task depsize {
+    doLast() {
+        def size = 0
+        def formatStr = "%,10.2f"
+        configurations.default.collect { it.length() / (1024 * 1024) }.each { size += it }
+
+        def out = new StringBuffer()
+        out << 'Total dependencies size:'.padRight(45)
+        out << "${String.format(formatStr, size)} Mb\n\n"
+        configurations.default.sort { -it.length() } .each {
+            out << "${it.name}".padRight(45)
+            out << "${String.format(formatStr, (it.length() / 1024))} kb\n"
+        }
+        println out
+    }
 }
 
