@@ -11,6 +11,7 @@ package org.wwscc.dialogs;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import javax.swing.JRadioButton;
 import net.miginfocom.swing.MigLayout;
 
 
@@ -37,13 +38,22 @@ public class PortDialog extends BaseDialog<String>
 
         for (String p : ports)
         {
-            mainPanel.add(radio(p), "w 150!, gapleft 20, wrap");
+            JRadioButton rb = radio(p);
+            rb.addActionListener(e -> ok.setEnabled(verifyData()));
+            mainPanel.add(rb, "w 150!, gapleft 20, wrap");
             if (unavailable.contains(p))
                 radioEnable(p, false);
         }
 
+        if (ports.size() == 0) {
+            mainPanel.add(label("No ports found", true), "spanx 2, center");
+        } else if (available.size() == 0){
+            mainPanel.add(label("All ports in use", true), "spanx 2, center");
+        }
+
         result = null;
         setSelectedRadio(def);
+        ok.setEnabled(verifyData());
     }
 
     /**
@@ -53,7 +63,7 @@ public class PortDialog extends BaseDialog<String>
     public boolean verifyData()
     {
         result = getSelectedRadio();
-        return (result != null);
+        return (result != null) && !result.equals("");
     }
 
 
