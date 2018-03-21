@@ -64,6 +64,7 @@ public class MachineMonitor extends Monitor
     {
         if (!DockerMachine.machinepresent())
         {
+            machineenv.set(null);
             usingmachine.set(false);
             machineready.set(true);
             status.set("Not Needed");

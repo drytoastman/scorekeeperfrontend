@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
+import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -33,6 +34,7 @@ public class ContainerMonitor extends Monitor
 {
     private static final Logger log = Logger.getLogger(ContainerMonitor.class.getName());
 
+    private DockerAPI docker;
     private Map<String, DockerContainer> containers;
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
@@ -50,6 +52,7 @@ public class ContainerMonitor extends Monitor
     public ContainerMonitor()
     {
         super("ContainerMonitor", 5000);
+        docker     = new DockerAPI();
         containers = new HashMap<String, DockerContainer>();
         containers.put("db", new DockerContainer.Db());
         containers.put("web", new DockerContainer.Web());
@@ -68,9 +71,18 @@ public class ContainerMonitor extends Monitor
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> containers.get("sync").poke());
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
-        Messenger.register(MT.MACHINE_ENV,      (m, o) -> machineenv   = (Map<String,String>)o);
+        Messenger.register(MT.MACHINE_ENV,      (m, o) -> { machineenv   = (Map<String,String>)o; env_change(); });
 
         external_backend = System.getenv("EXTERNAL_BACKEND") != null;
+    }
+
+    private void env_change()
+    {
+        try {
+            docker.setup(machineenv);
+        } catch (Exception e) {
+            log.warning("Unable to setup docker connection at this time: " + e);
+        }
     }
 
     public boolean minit()
@@ -81,13 +93,14 @@ public class ContainerMonitor extends Monitor
 
         for (DockerContainer c : containers.values())
             c.setMachineEnv(machineenv);
+        docker.setup(machineenv);
 
         if (!external_backend) {
             status.set( "Clearing old containers");
             DockerContainer.stopAll(containers.values());
 
             status.set( "Establishing Network");
-            DockerContainer.establishNetwork(machineenv);
+            docker.resetNetwork(DockerContainer.NET_NAME);
 
             status.set( "Creating new containers");
             for (DockerContainer c : containers.values()) {
