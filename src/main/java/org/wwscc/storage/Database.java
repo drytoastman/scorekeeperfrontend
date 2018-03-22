@@ -92,6 +92,7 @@ public class Database
      */
     public static void waitUntilUp()
     {
+        Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF); // Apparently, I have to set this again
         while (true) {
             int countdown = 30;
             try {

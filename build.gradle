@@ -49,16 +49,17 @@ repositories {
 }
 
 dependencies {
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
+    compile 'com.github.jnr:jnr-unixsocket:0.18'
     compile 'com.miglayout:miglayout-swing:5.0'
     compile 'com.neuronrobotics:nrjavaserial:3.12.1'
-    compile 'org.postgresql:postgresql:42.1.4'
     compile 'com.jcraft:jsch:0.1.54'
     compile 'commons-io:commons-io:2.6'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.4'
     compile 'io.swagger:swagger-annotations:1.5.18'
+    compile 'org.apache.commons:commons-compress:1.16.1'
     compile 'org.apache.httpcomponents:httpclient:4.5.5'
     compile 'org.apache.httpcomponents:fluent-hc:4.5.5'
-    compile 'com.github.jnr:jnr-unixsocket:0.18'
+    compile 'org.postgresql:postgresql:42.1.4'
 
     testCompile 'junit:junit:4.12'
 }

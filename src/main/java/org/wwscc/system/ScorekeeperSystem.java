@@ -201,12 +201,14 @@ public class ScorekeeperSystem
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         AppSetup.appSetup("scorekeepersystem");
+
         if (!SingletonProcessTest.ensureSingleton("ScorekeeperSystem")) {
             log.warning("Another Scorekeeper instance is already running, quitting now.");
             System.exit(-1);
         }
 
         ScorekeeperSystem system = new ScorekeeperSystem();
+
         system.startAndWaitForThreads();
         System.exit(0);
     }

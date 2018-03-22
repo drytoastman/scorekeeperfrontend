@@ -11,26 +11,30 @@ package org.wwscc.storage;
 import java.util.Map;
 
 import org.junit.rules.ExternalResource;
+import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.util.AppSetup;
 
 public class TestDatabaseContainer extends ExternalResource
 {
-    static DockerContainer container;
+    static DockerAPI docker;
 
     @Override
     protected void before() throws Throwable
     {
         AppSetup.unitLogging();
         Map<String,String> env = DockerMachine.machineenv();
-        DockerContainer.establishNetwork(env);
-        container = new DockerContainer("drytoastman/scdb:testdb", "testdb");
-        container.setMachineEnv(env);
-        container.addPort("127.0.0.1:6432", "6432");
-        container.addPort("54329", "5432");
-        container.createVolumes();
-        container.start();
+
+        DockerContainer container = new DockerContainer("drytoastman/scdb:testdb", "testdb");
+        container.addPort("127.0.0.1", 6432, 6432);
+        container.addPort("0.0.0.0", 54329, 5432);
+
+        docker = new DockerAPI();
+        docker.setup(env);
+        docker.resetNetwork("scnet");
+        container.up(docker);
+
         Database.waitUntilUp();
         Database.openSeries("testseries", 0);
     }
@@ -39,6 +43,6 @@ public class TestDatabaseContainer extends ExternalResource
     protected void after()
     {
         Database.d.close();
-        container.kill();  // comment out to leave container running after tests
+        docker.kill("testdb");
     }
 }

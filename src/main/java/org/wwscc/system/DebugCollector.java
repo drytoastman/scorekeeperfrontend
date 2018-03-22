@@ -35,10 +35,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
-import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.system.monitors.ContainerMonitor;
-import org.wwscc.util.AppSetup;
 import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
@@ -222,18 +220,5 @@ public class DebugCollector extends Thread
                 return FileVisitResult.CONTINUE;
             }
         });
-    }
-
-    /**
-     * Test entry point.
-     * @param args the command line args, ignored
-     * @throws IOException if collection fails
-     */
-    public static void main(String args[]) throws IOException
-    {
-        AppSetup.appSetup("debugcollector");
-        DockerContainer.Db db = new DockerContainer.Db();
-        db.setMachineEnv(DockerMachine.machineenv());
-        new DebugCollector(new ContainerMonitor()).start();
     }
 }

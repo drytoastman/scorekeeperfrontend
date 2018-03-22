@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -24,7 +25,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class AttrBase
 {
     private static Logger log = Logger.getLogger(AttrBase.class.getCanonicalName());
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static ObjectMapper objectMapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
 
     @JsonProperty
     protected ObjectNode attr;

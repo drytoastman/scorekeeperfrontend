@@ -8,22 +8,33 @@
 
 package org.wwscc.system.monitors;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
+import org.wwscc.util.Exec;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 /**
  * Thread to keep checking our services for status.  It pauses for 5 seconds but can
@@ -38,7 +49,6 @@ public class ContainerMonitor extends Monitor
     private Map<String, DockerContainer> containers;
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
-    private Set<String> names;
     private Path toimport;
     private Path tobackup;
 
@@ -57,9 +67,6 @@ public class ContainerMonitor extends Monitor
         containers.put("db", new DockerContainer.Db());
         containers.put("web", new DockerContainer.Web());
         containers.put("sync", new DockerContainer.Sync());
-        names = new HashSet<String>();
-        for (DockerContainer c : containers.values())
-            names.add(c.getName());
         toimport     = null;
         tobackup     = null;
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
@@ -68,7 +75,7 @@ public class ContainerMonitor extends Monitor
         machineready = false;
         lastcheck    = false;
 
-        Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> containers.get("sync").poke());
+        Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke("sync") );
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
         Messenger.register(MT.MACHINE_ENV,      (m, o) -> { machineenv   = (Map<String,String>)o; env_change(); });
@@ -91,25 +98,25 @@ public class ContainerMonitor extends Monitor
         while (!machineready)
             donefornow();
 
-        for (DockerContainer c : containers.values())
-            c.setMachineEnv(machineenv);
         docker.setup(machineenv);
 
         if (!external_backend) {
             status.set( "Clearing old containers");
-            DockerContainer.stopAll(containers.values());
+            docker.stop(containers.keySet());
+            docker.rm(containers.keySet());
 
             status.set( "Establishing Network");
             docker.resetNetwork(DockerContainer.NET_NAME);
 
             status.set( "Creating new containers");
             for (DockerContainer c : containers.values()) {
-                status.set("Init " + c.getName());
-                c.createVolumes();
-                c.start();
+                status.set("Create " + c.getName());
+                c.up(docker);
             }
         }
 
+        //Logger.getLogger("org.apache.http").setLevel(Level.ALL);
+        //Logger.getLogger("org.apache.http.wire").setLevel(Level.ALL);
         return true;
     }
 
@@ -136,25 +143,24 @@ public class ContainerMonitor extends Monitor
         }
 
         if (restartsync && ready.get()) {
-            containers.get("sync").restart();
+            docker.restart("sync");
             restartsync = false;
         }
 
         // If something isn't running, try and start them now
-        Set<String> dead = DockerContainer.finddown(machineenv, names);
+        Set<String> dead = new HashSet<String>(containers.keySet());
+        dead.removeAll(docker.alive());
         if (dead.size() > 0) {
             ok = false;
             if (external_backend) {
                 status.set("Down");
             } else {
                 status.set("Restarting " + dead);
-                for (DockerContainer c : containers.values()) {
-                    if (dead.contains(c.getName())) {
-                        if (!c.start(5000)) {
-                            log.severe("Unable to start " + c.getName()); // don't send to dialog, noisy
-                        } else {
-                            quickrecheck = true;
-                        }
+                for (String name : dead) {
+                    if (!docker.start(name)) {
+                        log.severe("Unable to start " + name); // don't send to dialog, noisy
+                    } else {
+                        //quickrecheck = true;
                     }
                 }
             }
@@ -180,7 +186,7 @@ public class ContainerMonitor extends Monitor
     {
         status.set("Shutting down ...");
         if (!external_backend) {
-            DockerContainer.stopAll(containers.values());
+            docker.stop(containers.keySet());
         }
         ready.set(false);
         status.set("Done");
@@ -193,22 +199,18 @@ public class ContainerMonitor extends Monitor
         dialog.setStatus("Preparing to import ...", -1);
         status.set("Preparing to import");
 
-        List<DockerContainer> nondb = new ArrayList<DockerContainer>();
-        nondb.add(containers.get("web"));
-        nondb.add(containers.get("sync"));
-        DockerContainer.stopAll(nondb);
+        docker.stop("web", "sync");
         Database.d.close();
 
         dialog.setStatus("Importing ...", -1);
         status.set("Importing ...");
         log.info("importing "  + toimport);
-        boolean success = containers.get("db").importDatabase(toimport);
-        toimport = null;
 
-        if (success)
+        if (containers.get("db").importBackup(toimport))
             dialog.setStatus("Import and conversion was successful", 100);
         else
             dialog.setStatus("Import failed, see logs", 100);
+        toimport = null;
     }
 
     private void doBackup()
@@ -229,14 +231,41 @@ public class ContainerMonitor extends Monitor
     public boolean backupNow(Path dir, boolean compress)
     {
         status.set("Backing up database");
-        boolean ret = containers.get("db").dumpDatabase(dir, compress);
-        poke(); // update status quicker
-        return ret;
+
+        String ver = Database.d.getVersion();
+        if (ver.equals("unknown"))
+            return false;
+
+        String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(new Date());
+        Path path = dir.resolve(String.format("date_%s#schema_%s.pgdump", date, ver));
+
+        int ret = Exec.execit(Exec.build(machineenv, "docker", "exec", "db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump"), null);
+        //p.redirectOutput(Redirect.appendTo(path.toFile()));
+        if ((ret == 0) && compress) {
+            try {
+                ZipOutputStream out = new ZipOutputStream(new FileOutputStream(path.toFile()+".zip"));
+                out.putNextEntry(new ZipEntry(path.getFileName().toString()));
+                FileInputStream in = new FileInputStream(path.toFile());
+
+                out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
+                out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
+                IOUtils.copy(in, out);
+                out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
+
+                try { out.close(); } catch (IOException ioe) {}
+                try { in.close(); } catch (IOException ioe) {}
+                Files.deleteIfExists(path);
+            } catch (Exception ioe) {
+                log.log(Level.INFO, "Unable to compress database backup: " + ioe, ioe);
+            }
+        }
+        poke();
+        return ret == 0;
     }
 
     public boolean copyLogs(Path dir)
     {
-        return containers.get("db").copyLogs(dir);
+        return Exec.execit(Exec.build(machineenv, "docker", "cp", "db:/var/log", dir.toString()), null) == 0;
     }
 
     public void backupRequest(Path dir)

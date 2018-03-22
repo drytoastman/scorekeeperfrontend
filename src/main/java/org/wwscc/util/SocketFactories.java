@@ -119,7 +119,9 @@ public class SocketFactories
 
         @Override
         public synchronized void setSoTimeout(int timeout) throws SocketException {
-            // FINISH ME: set timeout?
+            if (timeout > 0) {
+                new SocketException("I don't do timeout").printStackTrace();
+            }
         }
 
 

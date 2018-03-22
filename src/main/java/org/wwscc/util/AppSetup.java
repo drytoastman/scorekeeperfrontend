@@ -42,7 +42,7 @@ public class AppSetup
         root.setLevel(Level.WARNING);
         for(Handler handler : root.getHandlers()) { root.removeHandler(handler); }
 
-        //Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
+        Logger.getLogger("java.util.prefs").setLevel(Level.SEVERE);
         Logger.getLogger("org.postgresql.jdbc").setLevel(Level.OFF);
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
         Logger.getLogger("org.wwscc").setLevel(Level.ALL);
