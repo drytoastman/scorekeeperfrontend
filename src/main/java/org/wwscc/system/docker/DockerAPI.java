@@ -8,7 +8,9 @@
 
 package org.wwscc.system.docker;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.nio.file.Paths;
@@ -25,10 +27,21 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.utils.BoundedInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -42,7 +55,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.util.EntityUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -73,9 +85,6 @@ public class DockerAPI
             .setSerializationInclusion(Include.NON_NULL);
 
     public static final String prefix = "/v1.35";
-    public static final String DELETE = "DELETE";
-    public static final String POST = "POST";
-    public static final String GET = "GET";
 
     HttpClientBuilder builder;
     CloseableHttpClient client;
@@ -139,12 +148,12 @@ public class DockerAPI
 
     public ImageSummary[] images()
     {
-        return requestvar(GET, prefix+"/images/json", ImageSummary[].class);
+        return request(new HttpGet(prefix+"/images/json"), ImageSummary[].class);
     }
 
     public ContainerSummary containers()
     {
-        return requestvar(GET, prefix+"/containers/json", ContainerSummary.class);
+        return request(new HttpGet(prefix+"/containers/json"), ContainerSummary.class);
     }
 
     public List<String> alive()
@@ -158,39 +167,78 @@ public class DockerAPI
 
     public VolumesResponse volumes()
     {
-        return requestvar(GET, prefix+"/volumes", VolumesResponse.class);
+        return request(new HttpGet(prefix+"/volumes"), VolumesResponse.class);
     }
 
 
     /* Functions for changing the state of the docker environment ***********************/
 
+    public void pull(String image)
+    {
+        String s = request(new HttpPost(prefix+"/images/create?fromImage="+image), String.class);
+        System.out.println(s);
+    }
+
     public void resetNetwork(String name)
     {
-        Network net = requestvar(GET, prefix+"/networks/"+name, Network.class);
+        Network net = request(new HttpGet(prefix+"/networks/"+name), Network.class);
         if (net != null) {
             for (NetworkContainer nc : net.getContainers().values()) {
-                requestvar(POST, prefix+"/networks/"+name+"/disconnect", null, "Container", nc.getName(), "Force", true);
+                requestvar(new HttpPost(prefix+"/networks/"+name+"/disconnect"), Void.class, "Container", nc.getName(), "Force", true);
             }
-            requestvar(DELETE, prefix+"/networks/"+name, Void.class);
+            request(new HttpDelete(prefix+"/networks/"+name), Void.class);
         }
 
-        requestvar(POST, prefix+"/networks/create", Void.class, "Name", name);
+        requestvar(new HttpPost(prefix+"/networks/create"), Void.class, "Name", name);
     }
 
 
     public Volume volumeCreate(String name)
     {
-        return requestvar(POST, prefix+"/volumes/create", Volume.class, "Name", name);
+        return requestvar(new HttpPost(prefix+"/volumes/create"), Volume.class, "Name", name);
     }
 
 
     public void create(String name, CreateContainerConfig config)
     {
         try {
-            request(POST, prefix+"/containers/create?name="+name, Void.class, new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
+            HttpPost request = new HttpPost(prefix+"/containers/create?name="+name);
+            request.setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
+            request(request, Void.class);
         } catch (JsonProcessingException jpe) {
             log.warning("Unable to serialize container config?");
         }
+    }
+
+    public void download(String name, String containerpath, File hostpath) throws IOException
+    {
+        String uri = String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath);
+        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new HttpGet(uri), InputStream.class)))
+        {
+            TarArchiveEntry e = in.getNextTarEntry(); // we only expect one entry at this time
+            FileUtils.copyToFile(new BoundedInputStream(in, e.getSize()), hostpath);
+            hostpath.setLastModified(e.getModTime().getTime());
+        }
+    }
+
+    public void upload(String name, File hostpath, String containerpath) throws IOException
+    {
+        ContentProducer producer = new ContentProducer() {
+            @Override public void writeTo(OutputStream outstream) throws IOException {
+                TarArchiveOutputStream tar = new TarArchiveOutputStream(outstream);
+                TarArchiveEntry entry = new TarArchiveEntry(hostpath.getName());
+                entry.setModTime(hostpath.lastModified());
+                entry.setSize(hostpath.length());
+                tar.putArchiveEntry(entry);
+                FileUtils.copyFile(hostpath, tar);
+                tar.closeArchiveEntry();
+                tar.close();
+            }
+        };
+
+        HttpPut request = new HttpPut(String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath));
+        request.setEntity(new EntityTemplate(producer));
+        request(request, Void.class);
     }
 
     public boolean poke(String ... names)    { return poke(Arrays.asList(names));    }
@@ -208,84 +256,70 @@ public class DockerAPI
     public boolean rm(Collection<String> names)
     {
         return parallelActions(names.stream()
-                .map(name -> (Callable<Void>) () -> requestvar(DELETE, String.format("%s/containers/%s", prefix, name), Void.class))
+                .map(name -> (Callable<Void>) () -> request(new HttpDelete(String.format("%s/containers/%s", prefix, name)), Void.class))
                 .collect(Collectors.toList()));
     }
 
     private boolean parallelContainerPost(String action, Collection<String> names, Object ... args)
     {
         return parallelActions(names.stream()
-                .map(name -> (Callable<Void>) () -> requestvar(POST, String.format("%s/containers/%s/%s", prefix, name, action), Void.class, args))
+                .map(name -> (Callable<Void>) () -> requestvar(new HttpPost(String.format("%s/containers/%s/%s", prefix, name, action)), Void.class, args))
                 .collect(Collectors.toList()));
     }
 
     /* The utility wrappers of common functionality ***********************************/
 
-    static class JacksonProducer implements ContentProducer
-    {
-        @Override
-        public void writeTo(OutputStream outstream) throws IOException {
-            // TODO Auto-generated method stub
-            EntityTemplate t;
-        }
-    }
-
     /**
      * Calls request with args put into simple JSON object
      */
-    private <T> T requestvar(String method, String path, Class<T> rettype, Object ... args)
+    private <T> T requestvar(HttpEntityEnclosingRequestBase request, Class<T> rettype, Object ... args)
     {
         try {
-            if (args.length > 0) {
-                if ((args.length % 2) != 0)
-                    throw new IOException("Varargs needs to be a multiple of 2");
+            if ((args.length % 2) != 0)
+                throw new IOException("Varargs needs to be a multiple of 2");
 
-                Map<String, Object> body = new HashMap<String, Object>();
-                for (int ii = 0; ii < args.length; ii += 2)
-                    body.put((String)args[ii], args[ii+1]);
-                return request(method, path, rettype, new StringEntity(mapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
-            } else {
-                return request(method, path, rettype, null);
-            }
+            Map<String, Object> body = new HashMap<String, Object>();
+            for (int ii = 0; ii < args.length; ii += 2)
+                body.put((String)args[ii], args[ii+1]);
+            request.setEntity(new StringEntity(mapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
+            return request(request, rettype);
         } catch (IOException ioe) {
             return null;
         }
     }
 
-
-    private <T> T request(String method, String path, Class<T> rettype, HttpEntity body)
+    @SuppressWarnings("unchecked")
+    private <T> T request(HttpRequest request, Class<T> rettype)
     {
-        String head = method+" "+path;
         if (client == null) {
-            log.warning(head + " called with no client present");
+            log.warning(request + " called with no client present");
             return null;
         }
 
         try {
-            BasicHttpEntityEnclosingRequest req = new BasicHttpEntityEnclosingRequest(method, path);
-            req.setHeader("Accept", "application/json");
-
-            if (body != null) {
-                req.setEntity(body);
-                //req.setHeader("Content-type", body.getContentType());
-            }
-
-            HttpResponse resp = client.execute(host, req);
+            request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+            HttpResponse resp = client.execute(host, request);
             if (resp.getStatusLine().getStatusCode() >= 400) {
-                HttpEntity data = resp.getEntity();
-                if (ContentType.get(data).equals(ContentType.APPLICATION_JSON))
-                    throw new IOException(mapper.readValue(data.getContent(), ErrorResponse.class).getMessage());
-                else
-                    throw new IOException(EntityUtils.toString(resp.getEntity()));
+                String error = EntityUtils.toString(resp.getEntity());
+                try { // Content-type is not always set properly, try json error first, if not, just use raw string
+                    error = mapper.readValue(error, ErrorResponse.class).getMessage();
+                } catch (Exception e) {}
+                throw new IOException(error);
             }
 
-            if (rettype != Void.class)
+            if (rettype.equals(String.class))
+                return (T) EntityUtils.toString(resp.getEntity());
+            if (InputStream.class.isAssignableFrom(rettype))
+                return (T) resp.getEntity().getContent();
+            else if (rettype != Void.class)
                 return mapper.readValue(resp.getEntity().getContent(), rettype);
+
+            // fall back is to close it all up here
             EntityUtils.consumeQuietly(resp.getEntity());
             return null;
 
         } catch (IOException e) {
-            log.warning(head + ": " + e.getMessage().trim());
+            log.warning(request + ": " + e.getMessage().trim());
             return null;
         }
     }
@@ -316,8 +350,9 @@ public class DockerAPI
     }
 
 
-    /** Simple tests */
-    public static void main(String args[])
+    /** Simple tests
+     * @throws IOException */
+    public static void main(String args[]) throws IOException
     {
         AppSetup.unitLogging();
         //Logger.getLogger("org.apache.http").setLevel(Level.ALL);
@@ -326,7 +361,11 @@ public class DockerAPI
 
         DockerAPI api = new DockerAPI();
         api.setup(null);
-        System.out.println(api.alive());
+        api.pull("drytoastman/scdb:testdb");
+
+        //System.out.println(api.alive());
+        //api.download("db", "/root/.ash_history", new File("mytestfile"));
+        //api.upload("db", new File("mytestfile"), "/root");
         //api.resetNetwork("scnet");
         //api.start("sync", "web", "db");
         //System.out.println(api.volumes());

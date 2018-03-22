@@ -98,8 +98,10 @@ public abstract class WatcherBase
         UUID uuid = UUID.fromString(String.format("%s-%s-%s-%s-%s", s.substring(0,8), s.substring(8,12), s.substring(12,16), s.substring(16,20), s.substring(20,32)));
         log.log(Level.INFO, "UUID scanned - {0}", uuid);
 
-        if (Prefs.isTestMode())
+        if (Prefs.isTestMode()) {
             Messenger.sendEvent(MT.OBJECT_SCANNED, uuid);
+            return;
+        }
 
         Car c = Database.d.getCar(uuid);
         if (c != null) {

@@ -8,8 +8,8 @@
 
 package org.wwscc.system.docker;
 
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TimeZone;
@@ -17,7 +17,6 @@ import java.util.TimeZone;
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.HostConfig;
 import org.wwscc.system.docker.models.PortMap;
-import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -70,7 +69,7 @@ public class DockerContainer
         config.addEnvItem("UI_TIME_ZONE="+TimeZone.getDefault().getID());
         config.addEnvItem("SECRET='"+Prefs.getCookieSecret()+"'");
         config.addEnvItem("LOG_LEVEL="+Prefs.getLogLevel().getPythonLevel());
-        config.setHostConfig(new HostConfig().autoRemove(true).portBindings(new PortMap()));
+        config.setHostConfig(new HostConfig().autoRemove(true).portBindings(new PortMap()).binds(new ArrayList<>()));
         config.setExposedPorts(new HashMap<String, Object>());
 
         config.setNetwork(NET_NAME);

@@ -11,7 +11,6 @@ package org.wwscc.system.monitors;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -34,7 +33,6 @@ import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.util.Exec;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.Prefs;
 
 /**
  * Thread to keep checking our services for status.  It pauses for 5 seconds but can
@@ -240,6 +238,7 @@ public class ContainerMonitor extends Monitor
         Path path = dir.resolve(String.format("date_%s#schema_%s.pgdump", date, ver));
 
         int ret = Exec.execit(Exec.build(machineenv, "docker", "exec", "db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump"), null);
+
         //p.redirectOutput(Redirect.appendTo(path.toFile()));
         if ((ret == 0) && compress) {
             try {
