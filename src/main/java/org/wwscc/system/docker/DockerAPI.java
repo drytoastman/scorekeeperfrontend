@@ -175,8 +175,7 @@ public class DockerAPI
 
     public void pull(String image)
     {
-        String s = request(new HttpPost(prefix+"/images/create?fromImage="+image), String.class);
-        System.out.println(s);
+        request(new HttpPost(prefix+"/images/create?fromImage="+image), Void.class);
     }
 
     public void resetNetwork(String name)

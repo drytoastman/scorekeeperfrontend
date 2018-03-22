@@ -32,6 +32,7 @@ public class TestDatabaseContainer extends ExternalResource
 
         docker = new DockerAPI();
         docker.setup(env);
+        docker.pull("drytoastman/scdb:testdb");
         docker.resetNetwork("scnet");
         container.up(docker);
 
