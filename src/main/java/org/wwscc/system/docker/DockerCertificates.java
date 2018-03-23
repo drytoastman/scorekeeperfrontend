@@ -40,6 +40,7 @@ public class DockerCertificates
         Path certpath = dir.resolve("cert.pem");
 
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null);
         keyStore.setKeyEntry("key", readPrivateKey(keypath), "asdf".toCharArray(), readCertificates(certpath));
 
         KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());

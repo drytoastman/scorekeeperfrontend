@@ -74,6 +74,9 @@ public class ContainerMonitor extends Monitor
         status.set("Waiting for VM");
         while (!machineready)
             donefornow();
+        status.set("Waiting for Docker API");
+        while (!docker.isReady())
+            donefornow();
 
         if (!external_backend) {
             status.set( "Clearing old containers");

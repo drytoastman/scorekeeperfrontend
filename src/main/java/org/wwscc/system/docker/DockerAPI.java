@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -93,21 +94,24 @@ public class DockerAPI
     HttpHost host;
     ExecutorService executor;
 
+    public boolean isReady()
+    {
+        return client != null;
+    }
+
     /**
      * Perform setup or re/setup with a new connection
      * @param env the current known environment variables
      */
     public void setup(Map<String, String> env)
     {
-        if (env == null) { // expect at least a blank map, null is something wrong
-            return;
-        }
-
         try {
+
             if (executor != null) {
                 executor.shutdown();
                 executor = null;
             }
+
             if (client != null) {
                 try {
                     client.close();
@@ -115,15 +119,19 @@ public class DockerAPI
                 client = null;
             }
 
+            if (env == null) { // expect at least a blank map, null is something wrong so we bail here
+                return;
+            }
+
             PoolingHttpClientConnectionManager pool;
             if (env.containsKey("DOCKER_HOST") && env.containsKey("DOCKER_CERT_PATH"))
             {
                 SSLContext sslctx = DockerCertificates.createContext(Paths.get(env.get("DOCKER_CERT_PATH")));
-                SSLConnectionSocketFactory sslf = new SSLConnectionSocketFactory(sslctx, new String[] { "TLSv2" }, null, NoopHostnameVerifier.INSTANCE);
+                SSLConnectionSocketFactory sslf = new SSLConnectionSocketFactory(sslctx, NoopHostnameVerifier.INSTANCE);
                 pool = new PoolingHttpClientConnectionManager(
                         RegistryBuilder.<ConnectionSocketFactory>create().register("http", sslf).build());
-                String pieces[] = env.get("DOCKER_HOST").split(":"); // usually looks like tcp://192.168.99.100:2376
-                host = new HttpHost(InetAddress.getByName(pieces[1]), Integer.parseInt(pieces[2]), "https");
+                URI uri = new URI(env.get("DOCKER_HOST"));
+                host = new HttpHost(uri.getHost(), uri.getPort());
             }
             else if (SystemUtils.IS_OS_WINDOWS)
             {
