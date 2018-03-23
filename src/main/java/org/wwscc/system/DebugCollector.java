@@ -102,21 +102,23 @@ public class DebugCollector extends Thread
             monitor.setNote("creating info.txt");
             createInfoFile(temp);
             monitor.setProgress(20);
+
             monitor.setNote("copying backend files");
             cmonitor.copyLogs(temp);
             monitor.setProgress(30);
+
             monitor.setNote("dump database data");
-
             cmonitor.backupNow(temp, false);
-
-            // second backup the database
             monitor.setProgress(60);
+
             monitor.setNote("adding backend logs to zipfile");
             addLogs(temp);
             monitor.setProgress(70);
+
             monitor.setNote("adding java logs to zipfile");
             addLogs(Prefs.getLogDirectory());
             monitor.setProgress(80);
+
             monitor.setNote("saving zipfile to disk");
             zipfiles(zipfile);
 

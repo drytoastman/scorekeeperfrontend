@@ -8,6 +8,10 @@
 
 package org.wwscc.system.docker;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +19,9 @@ import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.HostConfig;
 import org.wwscc.system.docker.models.ImageSummary;
@@ -26,6 +32,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Wraps the docker configuration details as well as more complex interactions that are really
+ * outside of the Docker API itself, things specific to scorekeeper
+ */
 public class DockerContainer
 {
     private static final Logger log = Logger.getLogger(DockerContainer.class.getCanonicalName());
@@ -126,16 +136,54 @@ public class DockerContainer
     {
         boolean success = false;
         try {
-            if (docker.upload(name, toimport.toFile(), "/tmp")) {
+            if (docker.uploadFile(name, toimport.toFile(), "/tmp")) {
                 if (docker.exec(name, "ash", "-c", "unzip -p /tmp/"+toimport.getFileName()+" | psql -U postgres &> /tmp/import.log") == 0) {
                     success = docker.exec(name, "ash", "-c", "/dbconversion-scripts/upgrade.sh /dbconversion-scripts >> /tmp/import.log 2>&1") == 0;
                 }
-                docker.download(name, "/tmp/import.log", Prefs.getLogDirectory().resolve("import.log").toFile());
+                docker.downloadTo(name, "/tmp/import.log", Prefs.getLogDirectory());
             }
         } catch (Exception e) {
             log.log(Level.WARNING, "Failure in restoring backup: " + e, e);
         }
         return success;
+    }
+
+
+    public boolean dumpDatabase(DockerAPI docker, Path dest, boolean compress)
+    {
+        try {
+            if (docker.exec(name, "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
+                throw new IOException("pg_dump failed");
+
+            File tempdir = FileUtils.getTempDirectory();
+            File tempfile = new File(tempdir, "dump");
+            docker.downloadTo(name, "/tmp/dump", tempdir.toPath());
+
+            OutputStream out;
+            if (compress) {
+                File zipname = dest.resolveSibling(dest.getFileName() + ".zip").toFile();
+                out = new ZipArchiveOutputStream(zipname);
+                ((ZipArchiveOutputStream)out).putArchiveEntry(new ZipArchiveEntry(dest.getFileName().toString()));
+            } else {
+                out = new FileOutputStream(dest.toFile());
+            }
+
+            out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
+            out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
+            FileUtils.copyFile(tempfile, out);
+            out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
+
+            if (compress)
+                ((ZipArchiveOutputStream)out).closeArchiveEntry();
+            out.close();
+
+            tempfile.delete();
+            return true;
+
+        } catch (Exception e) {
+            log.warning("Unabled to dump database: " + e);
+            return false;
+        }
     }
 
     public String getName()

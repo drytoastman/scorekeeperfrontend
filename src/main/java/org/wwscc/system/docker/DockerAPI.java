@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +32,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.BoundedInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpHeaders;
@@ -217,18 +217,22 @@ public class DockerAPI
         }
     }
 
-    public void download(String name, String containerpath, File hostpath) throws IOException
+    public void downloadTo(String name, String containerpath, Path hostdir) throws IOException
     {
         String uri = String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath);
-        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new HttpGet(uri), InputStream.class)))
-        {
-            TarArchiveEntry e = in.getNextTarEntry(); // we only expect one entry at this time
-            FileUtils.copyToFile(new BoundedInputStream(in, e.getSize()), hostpath);
-            hostpath.setLastModified(e.getModTime().getTime());
+        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new HttpGet(uri), InputStream.class))) {
+            TarArchiveEntry entry;
+            while ((entry = in.getNextTarEntry()) != null) {
+                if (!entry.isFile())
+                    continue;
+                File dest = hostdir.resolve(entry.getName()).toFile();
+                FileUtils.copyToFile(new BoundedInputStream(in, entry.getSize()), dest);
+                dest.setLastModified(entry.getModTime().getTime());
+            }
         }
     }
 
-    public boolean upload(String name, File file, String containerpath) throws IOException
+    public boolean uploadFile(String name, File file, String containerpath) throws IOException
     {
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {

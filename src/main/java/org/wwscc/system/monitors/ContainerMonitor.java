@@ -8,10 +8,7 @@
 
 package org.wwscc.system.monitors;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -20,19 +17,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import org.apache.commons.io.IOUtils;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
-import org.wwscc.util.Exec;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.Prefs;
 
 /**
  * Thread to keep checking our services for status.  It pauses for 5 seconds but can
@@ -48,7 +40,7 @@ public class ContainerMonitor extends Monitor
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
     private Path toimport;
-    private Path tobackup;
+    private boolean dobackup;
 
     private Map<String, String> machineenv;
     private boolean machineready, lastcheck, restartsync;
@@ -66,7 +58,7 @@ public class ContainerMonitor extends Monitor
         containers.put("web", new DockerContainer.Web());
         containers.put("sync", new DockerContainer.Sync());
         toimport     = null;
-        tobackup     = null;
+        dobackup     = false;
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
         ready        = new BroadcastState<Boolean>(MT.BACKEND_READY, false);
         machineenv   = new HashMap<String, String>();
@@ -114,8 +106,6 @@ public class ContainerMonitor extends Monitor
             }
         }
 
-        //Logger.getLogger("org.apache.http").setLevel(Level.ALL);
-        //Logger.getLogger("org.apache.http.wire").setLevel(Level.ALL);
         return true;
     }
 
@@ -137,7 +127,7 @@ public class ContainerMonitor extends Monitor
             lastcheck = false;
         }
 
-        if (tobackup != null) {
+        if (dobackup) {
             doBackup();
         }
 
@@ -218,13 +208,13 @@ public class ContainerMonitor extends Monitor
         dialog.doDialog("Backing Up Database", o -> {});
         dialog.setStatus("Backing up database ...", -1);
 
-        if (backupNow(tobackup, true)) {
+        if (backupNow(Prefs.getBackupDirectory(), true)) {
             dialog.setStatus("Backup Complete", 100);
         } else {
-            dialog.setStatus("Backup failed, see import.log", 100);
+            dialog.setStatus("Backup failed, see logs", 100);
         }
 
-        tobackup = null;
+        dobackup = false;
     }
 
     public boolean backupNow(Path dir, boolean compress)
@@ -238,45 +228,31 @@ public class ContainerMonitor extends Monitor
         String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(new Date());
         Path path = dir.resolve(String.format("date_%s#schema_%s.pgdump", date, ver));
 
-        int ret = Exec.execit(Exec.build(machineenv, "docker", "exec", "db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump"), null);
-
-        //p.redirectOutput(Redirect.appendTo(path.toFile()));
-        if ((ret == 0) && compress) {
-            try {
-                ZipOutputStream out = new ZipOutputStream(new FileOutputStream(path.toFile()+".zip"));
-                out.putNextEntry(new ZipEntry(path.getFileName().toString()));
-                FileInputStream in = new FileInputStream(path.toFile());
-
-                out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
-                out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
-                IOUtils.copy(in, out);
-                out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
-
-                try { out.close(); } catch (IOException ioe) {}
-                try { in.close(); } catch (IOException ioe) {}
-                Files.deleteIfExists(path);
-            } catch (Exception ioe) {
-                log.log(Level.INFO, "Unable to compress database backup: " + ioe, ioe);
-            }
-        }
+        boolean ret = containers.get("db").dumpDatabase(docker, path, compress);
         poke();
-        return ret == 0;
+        return ret;
     }
 
     public boolean copyLogs(Path dir)
     {
-        return Exec.execit(Exec.build(machineenv, "docker", "cp", "db:/var/log", dir.toString()), null) == 0;
+        try {
+            docker.downloadTo("db", "/var/log/", dir);
+            return true;
+        } catch (IOException ioe) {
+            log.warning("Failed to copy log files from container: " + ioe);
+            return false;
+        }
     }
 
-    public void backupRequest(Path dir)
+    public void backupRequest()
     {
-        tobackup = dir;
+        dobackup = true;
         poke();
     }
 
-    public void importRequest(Path p)
+    public void importRequest(Path backupfile)
     {
-        toimport = p;
+        toimport = backupfile;
         poke();
     }
 }

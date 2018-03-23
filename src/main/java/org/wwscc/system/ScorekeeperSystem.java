@@ -57,7 +57,7 @@ public class ScorekeeperSystem
 
         Messenger.register(MT.USING_MACHINE,         (t,d) -> usingmachine = (boolean)d);
         Messenger.register(MT.DEBUG_REQUEST,         (t,d) -> new DebugCollector(cmonitor).start());
-        Messenger.register(MT.BACKUP_REQUEST,        (t,d) -> cmonitor.backupRequest(Prefs.getBackupDirectory()));
+        Messenger.register(MT.BACKUP_REQUEST,        (t,d) -> cmonitor.backupRequest());
         Messenger.register(MT.IMPORT_REQUEST,        (t,d) -> importRequest((File)d));
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
         Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest());
