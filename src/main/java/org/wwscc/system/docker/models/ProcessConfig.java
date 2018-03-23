@@ -16,53 +16,125 @@ package org.wwscc.system.docker.models;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * ResourcesBlkioWeightDevice
+ * ProcessConfig
  */
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
-public class ResourcesBlkioWeightDevice {
-  @JsonProperty("Path")
-  private String path = null;
+public class ProcessConfig {
+  @JsonProperty("privileged")
+  private Boolean privileged = null;
 
-  @JsonProperty("Weight")
-  private Integer weight = null;
+  @JsonProperty("user")
+  private String user = null;
 
-  public ResourcesBlkioWeightDevice path(String path) {
-    this.path = path;
+  @JsonProperty("tty")
+  private Boolean tty = null;
+
+  @JsonProperty("entrypoint")
+  private String entrypoint = null;
+
+  @JsonProperty("arguments")
+  private List<String> arguments = null;
+
+  public ProcessConfig privileged(Boolean privileged) {
+    this.privileged = privileged;
     return this;
   }
 
    /**
-   * Get path
-   * @return path
+   * Get privileged
+   * @return privileged
   **/
   @ApiModelProperty(value = "")
-  public String getPath() {
-    return path;
+  public Boolean isPrivileged() {
+    return privileged;
   }
 
-  public void setPath(String path) {
-    this.path = path;
+  public void setPrivileged(Boolean privileged) {
+    this.privileged = privileged;
   }
 
-  public ResourcesBlkioWeightDevice weight(Integer weight) {
-    this.weight = weight;
+  public ProcessConfig user(String user) {
+    this.user = user;
     return this;
   }
 
    /**
-   * Get weight
-   * minimum: 0
-   * @return weight
+   * Get user
+   * @return user
   **/
   @ApiModelProperty(value = "")
-  public Integer getWeight() {
-    return weight;
+  public String getUser() {
+    return user;
   }
 
-  public void setWeight(Integer weight) {
-    this.weight = weight;
+  public void setUser(String user) {
+    this.user = user;
+  }
+
+  public ProcessConfig tty(Boolean tty) {
+    this.tty = tty;
+    return this;
+  }
+
+   /**
+   * Get tty
+   * @return tty
+  **/
+  @ApiModelProperty(value = "")
+  public Boolean isTty() {
+    return tty;
+  }
+
+  public void setTty(Boolean tty) {
+    this.tty = tty;
+  }
+
+  public ProcessConfig entrypoint(String entrypoint) {
+    this.entrypoint = entrypoint;
+    return this;
+  }
+
+   /**
+   * Get entrypoint
+   * @return entrypoint
+  **/
+  @ApiModelProperty(value = "")
+  public String getEntrypoint() {
+    return entrypoint;
+  }
+
+  public void setEntrypoint(String entrypoint) {
+    this.entrypoint = entrypoint;
+  }
+
+  public ProcessConfig arguments(List<String> arguments) {
+    this.arguments = arguments;
+    return this;
+  }
+
+  public ProcessConfig addArgumentsItem(String argumentsItem) {
+    if (this.arguments == null) {
+      this.arguments = new ArrayList<>();
+    }
+    this.arguments.add(argumentsItem);
+    return this;
+  }
+
+   /**
+   * Get arguments
+   * @return arguments
+  **/
+  @ApiModelProperty(value = "")
+  public List<String> getArguments() {
+    return arguments;
+  }
+
+  public void setArguments(List<String> arguments) {
+    this.arguments = arguments;
   }
 
 
@@ -74,24 +146,30 @@ public class ResourcesBlkioWeightDevice {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ResourcesBlkioWeightDevice resourcesBlkioWeightDevice = (ResourcesBlkioWeightDevice) o;
-    return Objects.equals(this.path, resourcesBlkioWeightDevice.path) &&
-        Objects.equals(this.weight, resourcesBlkioWeightDevice.weight);
+    ProcessConfig processConfig = (ProcessConfig) o;
+    return Objects.equals(this.privileged, processConfig.privileged) &&
+        Objects.equals(this.user, processConfig.user) &&
+        Objects.equals(this.tty, processConfig.tty) &&
+        Objects.equals(this.entrypoint, processConfig.entrypoint) &&
+        Objects.equals(this.arguments, processConfig.arguments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(path, weight);
+    return Objects.hash(privileged, user, tty, entrypoint, arguments);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ResourcesBlkioWeightDevice {\n");
+    sb.append("class ProcessConfig {\n");
     
-    sb.append("    path: ").append(toIndentedString(path)).append("\n");
-    sb.append("    weight: ").append(toIndentedString(weight)).append("\n");
+    sb.append("    privileged: ").append(toIndentedString(privileged)).append("\n");
+    sb.append("    user: ").append(toIndentedString(user)).append("\n");
+    sb.append("    tty: ").append(toIndentedString(tty)).append("\n");
+    sb.append("    entrypoint: ").append(toIndentedString(entrypoint)).append("\n");
+    sb.append("    arguments: ").append(toIndentedString(arguments)).append("\n");
     sb.append("}");
     return sb.toString();
   }

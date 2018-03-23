@@ -13,9 +13,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.HostConfig;
+import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.PortMap;
 import org.wwscc.util.Prefs;
 
@@ -25,6 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DockerContainer
 {
+    private static final Logger log = Logger.getLogger(DockerContainer.class.getCanonicalName());
+
     public static final String DBV_PREFIX   = "scdatabase-";
     public static final String LOGV_PREFIX  = "sclogs-";
     public static final String SOCKV_PREFIX = "scsocket";
@@ -69,7 +74,7 @@ public class DockerContainer
         config.addEnvItem("UI_TIME_ZONE="+TimeZone.getDefault().getID());
         config.addEnvItem("SECRET='"+Prefs.getCookieSecret()+"'");
         config.addEnvItem("LOG_LEVEL="+Prefs.getLogLevel().getPythonLevel());
-        config.setHostConfig(new HostConfig().autoRemove(true).portBindings(new PortMap()).binds(new ArrayList<>()));
+        config.setHostConfig(new HostConfig().autoRemove(false).portBindings(new PortMap()).binds(new ArrayList<>()));
         config.setExposedPorts(new HashMap<String, Object>());
 
         config.setNetwork(NET_NAME);
@@ -101,27 +106,37 @@ public class DockerContainer
         else
             config.getEnv().remove("DEBUG=1");
 
+        boolean needpull = true;
+        for (ImageSummary s : docker.images()) {
+            if (s.getRepoTags().contains(config.getImage())) {
+                needpull = false;
+                break;
+            }
+        }
+
+        if (needpull)
+            docker.pull(config.getImage());
         for (String mount : config.getHostConfig().getBinds())
             docker.volumeCreate(mount.split(":")[0]);
         docker.create(name, config);
         docker.start(name);
     }
 
-    public boolean importBackup(Path toimport) { return false; }
-
-    /*
-    public boolean importBackup(Path toimport)
+    public boolean restoreBackup(DockerAPI docker, Path toimport)
     {
-        String tmp = "/tmp/"+toimport.getFileName().toString();
         boolean success = false;
-        if (Exec.execit(Exec.build(machineenv, "docker", "cp", toimport.toString(), "db:"+tmp), null) == 0) {
-            ProcessBuilder p = Exec.build(machineenv, "docker", "exec", "db", "ash", "-c", "unzip -p "+tmp+" | psql -U postgres");
-            p.redirectOutput(Redirect.appendTo(Prefs.getLogDirectory().resolve("import.log").toFile()));
-            if (Exec.execit(p, null) == 0)
-                success = Exec.execit(Exec.build(machineenv, "docker", "exec", "db", "/dbconversion-scripts/upgrade.sh", "/dbconversion-scripts"), null) == 0;
+        try {
+            if (docker.upload(name, toimport.toFile(), "/tmp")) {
+                if (docker.exec(name, "ash", "-c", "unzip -p /tmp/"+toimport.getFileName()+" | psql -U postgres &> /tmp/import.log") == 0) {
+                    success = docker.exec(name, "ash", "-c", "/dbconversion-scripts/upgrade.sh /dbconversion-scripts >> /tmp/import.log 2>&1") == 0;
+                }
+                docker.download(name, "/tmp/import.log", Prefs.getLogDirectory().resolve("import.log").toFile());
+            }
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Failure in restoring backup: " + e, e);
         }
+        return success;
     }
-    */
 
     public String getName()
     {

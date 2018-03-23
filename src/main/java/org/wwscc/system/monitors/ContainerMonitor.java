@@ -104,7 +104,8 @@ public class ContainerMonitor extends Monitor
             docker.rm(containers.keySet());
 
             status.set( "Establishing Network");
-            docker.resetNetwork(DockerContainer.NET_NAME);
+            docker.networkDelete(DockerContainer.NET_NAME);
+            docker.networkCreate(DockerContainer.NET_NAME);
 
             status.set( "Creating new containers");
             for (DockerContainer c : containers.values()) {
@@ -204,7 +205,7 @@ public class ContainerMonitor extends Monitor
         status.set("Importing ...");
         log.info("importing "  + toimport);
 
-        if (containers.get("db").importBackup(toimport))
+        if (containers.get("db").restoreBackup(docker, toimport))
             dialog.setStatus("Import and conversion was successful", 100);
         else
             dialog.setStatus("Import failed, see logs", 100);

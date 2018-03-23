@@ -19,6 +19,7 @@ import org.wwscc.util.AppSetup;
 public class TestDatabaseContainer extends ExternalResource
 {
     static DockerAPI docker;
+    static String TestContainerImage = "drytoastman/scdb:testdb";
 
     @Override
     protected void before() throws Throwable
@@ -26,14 +27,15 @@ public class TestDatabaseContainer extends ExternalResource
         AppSetup.unitLogging();
         Map<String,String> env = DockerMachine.machineenv();
 
-        DockerContainer container = new DockerContainer("drytoastman/scdb:testdb", "testdb");
+        DockerContainer container = new DockerContainer(TestContainerImage, "testdb");
         container.addPort("127.0.0.1", 6432, 6432);
         container.addPort("0.0.0.0", 54329, 5432);
 
         docker = new DockerAPI();
         docker.setup(env);
-        docker.pull("drytoastman/scdb:testdb");
-        docker.resetNetwork("scnet");
+        docker.pull(TestContainerImage);
+        docker.networkDelete(DockerContainer.NET_NAME);
+        docker.networkCreate(DockerContainer.NET_NAME);
         container.up(docker);
 
         Database.waitUntilUp();

@@ -31,6 +31,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.BoundedInputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpHeaders;
@@ -65,10 +66,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.wwscc.system.docker.models.ContainerSummary;
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.ErrorResponse;
+import org.wwscc.system.docker.models.ExecConfig;
+import org.wwscc.system.docker.models.ExecStatus;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
 import org.wwscc.system.docker.models.NetworkContainer;
-import org.wwscc.system.docker.models.Volume;
 import org.wwscc.system.docker.models.VolumesResponse;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.SocketFactories.UnixSocketFactory;
@@ -170,6 +172,11 @@ public class DockerAPI
         return request(new HttpGet(prefix+"/volumes"), VolumesResponse.class);
     }
 
+    public Network network(String name)
+    {
+        return request(new HttpGet(prefix+"/networks/"+name), Network.class);
+    }
+
 
     /* Functions for changing the state of the docker environment ***********************/
 
@@ -178,25 +185,26 @@ public class DockerAPI
         request(new HttpPost(prefix+"/images/create?fromImage="+image), Void.class);
     }
 
-    public void resetNetwork(String name)
+    public void networkCreate(String netname)
     {
-        Network net = request(new HttpGet(prefix+"/networks/"+name), Network.class);
+        requestvar(new HttpPost(prefix+"/networks/create"), Void.class, "Name", netname);
+    }
+
+    public void networkDelete(String netname)
+    {
+        Network net = request(new HttpGet(prefix+"/networks/"+netname), Network.class);
         if (net != null) {
             for (NetworkContainer nc : net.getContainers().values()) {
-                requestvar(new HttpPost(prefix+"/networks/"+name+"/disconnect"), Void.class, "Container", nc.getName(), "Force", true);
+                requestvar(new HttpPost(prefix+"/networks/"+netname+"/disconnect"), Void.class, "Container", nc.getName(), "Force", true);
             }
-            request(new HttpDelete(prefix+"/networks/"+name), Void.class);
+            request(new HttpDelete(prefix+"/networks/"+netname), Void.class);
         }
-
-        requestvar(new HttpPost(prefix+"/networks/create"), Void.class, "Name", name);
     }
 
-
-    public Volume volumeCreate(String name)
+    public void volumeCreate(String name)
     {
-        return requestvar(new HttpPost(prefix+"/volumes/create"), Volume.class, "Name", name);
+        requestvar(new HttpPost(prefix+"/volumes/create"), Void.class, "Name", name);
     }
-
 
     public void create(String name, CreateContainerConfig config)
     {
@@ -220,16 +228,16 @@ public class DockerAPI
         }
     }
 
-    public void upload(String name, File hostpath, String containerpath) throws IOException
+    public boolean upload(String name, File file, String containerpath) throws IOException
     {
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {
                 TarArchiveOutputStream tar = new TarArchiveOutputStream(outstream);
-                TarArchiveEntry entry = new TarArchiveEntry(hostpath.getName());
-                entry.setModTime(hostpath.lastModified());
-                entry.setSize(hostpath.length());
+                TarArchiveEntry entry = new TarArchiveEntry(file.getName());
+                entry.setModTime(file.lastModified());
+                entry.setSize(file.length());
                 tar.putArchiveEntry(entry);
-                FileUtils.copyFile(hostpath, tar);
+                FileUtils.copyFile(file, tar);
                 tar.closeArchiveEntry();
                 tar.close();
             }
@@ -237,8 +245,35 @@ public class DockerAPI
 
         HttpPut request = new HttpPut(String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath));
         request.setEntity(new EntityTemplate(producer));
-        request(request, Void.class);
+        return request(request, Boolean.class);
     }
+
+
+    public int exec(String name, String ... cmd) throws Exception
+    {
+        ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(false).attachStderr(false);
+
+        HttpPost request = new HttpPost(String.format("%s/containers/%s/exec", prefix, name));
+        request.setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
+        String id = (String)request(request, Map.class).get("Id");
+
+        if (id != null) {
+            requestvar(new HttpPost(prefix+"/exec/"+id+"/start"), Void.class, "Detach", true);
+            long deadline = System.currentTimeMillis() + 45000;
+            while (true)
+            {
+                ExecStatus status = request(new HttpGet(prefix+"/exec/"+id+"/json"), ExecStatus.class);
+                if ((status != null) && (status.getExitCode() != null))
+                    return status.getExitCode();
+                Thread.sleep(500);
+                if (System.currentTimeMillis() > deadline)
+                    throw new IOException("Unable to retrieve exec response");
+            }
+        }
+
+        throw new IOException("Got to the end of exec, how?");
+    }
+
 
     public boolean poke(String ... names)    { return poke(Arrays.asList(names));    }
     public boolean kill(String ... names)    { return kill(Arrays.asList(names));    }
@@ -247,7 +282,7 @@ public class DockerAPI
     public boolean restart(String ... names) { return restart(Arrays.asList(names)); }
     public boolean rm(String ... names)      { return rm(Arrays.asList(names));      }
 
-    public boolean poke(Collection<String> names)    { return parallelContainerPost("kill", names, "signal", "SIGHUP"); }
+    public boolean poke(Collection<String> names)    { return parallelContainerPost("kill?signal=SIGHUP", names); }
     public boolean kill(Collection<String> names)    { return parallelContainerPost("kill", names);    }
     public boolean stop(Collection<String> names)    { return parallelContainerPost("stop", names);    }
     public boolean start(Collection<String> names)   { return parallelContainerPost("start", names);   }
@@ -259,10 +294,10 @@ public class DockerAPI
                 .collect(Collectors.toList()));
     }
 
-    private boolean parallelContainerPost(String action, Collection<String> names, Object ... args)
+    private boolean parallelContainerPost(String action, Collection<String> names)
     {
         return parallelActions(names.stream()
-                .map(name -> (Callable<Void>) () -> requestvar(new HttpPost(String.format("%s/containers/%s/%s", prefix, name, action)), Void.class, args))
+                .map(name -> (Callable<Void>) () -> request(new HttpPost(String.format("%s/containers/%s/%s", prefix, name, action)), Void.class))
                 .collect(Collectors.toList()));
     }
 
@@ -287,6 +322,17 @@ public class DockerAPI
         }
     }
 
+    /**
+     * Perform the request, with special handling depending on rettype.
+     * @param request the request object
+     * @param rettype determines how we deal with the repsonse
+     * @return depending on rettype:
+     *       String.class: wrap the response body in a string and return it
+     *      Boolean.class: return true for response in the 200-300 range, false otherwise
+     *  InputStream.class: return the body input stream for processing (must close it)
+     *            default: attempt to deserialize a JSON response into the rettype
+     *
+     */
     @SuppressWarnings("unchecked")
     private <T> T request(HttpRequest request, Class<T> rettype)
     {
@@ -300,7 +346,7 @@ public class DockerAPI
             HttpResponse resp = client.execute(host, request);
             if (resp.getStatusLine().getStatusCode() >= 400) {
                 String error = EntityUtils.toString(resp.getEntity());
-                try { // Content-type is not always set properly, try json error first, if not, just use raw string
+                try { // response Content-type is not always set properly, try json error first, if not, just use raw string
                     error = mapper.readValue(error, ErrorResponse.class).getMessage();
                 } catch (Exception e) {}
                 throw new IOException(error);
@@ -310,16 +356,15 @@ public class DockerAPI
                 return (T) EntityUtils.toString(resp.getEntity());
             if (InputStream.class.isAssignableFrom(rettype))
                 return (T) resp.getEntity().getContent();
-            else if (rettype != Void.class)
+            else if ((rettype != Boolean.class) && (rettype != Void.class))
                 return mapper.readValue(resp.getEntity().getContent(), rettype);
 
             // fall back is to close it all up here
             EntityUtils.consumeQuietly(resp.getEntity());
-            return null;
-
+            return (T) ((rettype == Boolean.class) ? Boolean.TRUE : null);
         } catch (IOException e) {
             log.warning(request + ": " + e.getMessage().trim());
-            return null;
+            return (T) ((rettype == Boolean.class) ? Boolean.FALSE : null);
         }
     }
 
@@ -350,8 +395,8 @@ public class DockerAPI
 
 
     /** Simple tests
-     * @throws IOException */
-    public static void main(String args[]) throws IOException
+     * @throws Exception */
+    public static void main(String args[]) throws Exception
     {
         AppSetup.unitLogging();
         //Logger.getLogger("org.apache.http").setLevel(Level.ALL);
@@ -360,7 +405,8 @@ public class DockerAPI
 
         DockerAPI api = new DockerAPI();
         api.setup(null);
-        api.pull("drytoastman/scdb:testdb");
+        //api.pull("drytoastman/scdb:testdb");
+        System.out.println("code = " + api.exec("db", "ash", "-c", "sleep 30"));
 
         //System.out.println(api.alive());
         //api.download("db", "/root/.ash_history", new File("mytestfile"));
