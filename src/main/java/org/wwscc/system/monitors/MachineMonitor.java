@@ -68,6 +68,7 @@ public class MachineMonitor extends Monitor
     @Override
     protected boolean minit()
     {
+        status.set("Checking if present");
         if (!DockerMachine.machinepresent())
         {
             dockerenv.set(new HashMap<>());
@@ -78,9 +79,10 @@ public class MachineMonitor extends Monitor
         }
 
         usingmachine.set(true);
+        status.set("Checking if created");
         if (!DockerMachine.machinecreated())
         {
-            log.info("Creating a new docker machine.");
+            log.info("Creating a new docker machine");
             status.set("Creating VM");
             if (!DockerMachine.createmachine())
             {
@@ -91,6 +93,7 @@ public class MachineMonitor extends Monitor
         }
 
         jsch = new JSch();
+        status.set("Done checks");
         return true;
     }
 
@@ -116,6 +119,7 @@ public class MachineMonitor extends Monitor
         // Make sure we have a proper environment setup
         if (envBad())
         {
+            status.set("Loading environment");
             dockerenv.set(DockerMachine.machineenv());
             if (envBad())
             {

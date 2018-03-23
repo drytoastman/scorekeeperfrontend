@@ -13,8 +13,8 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -50,7 +50,7 @@ public class ContainerMonitor extends Monitor
     {
         super("ContainerMonitor", 5000);
         docker     = new DockerAPI();
-        containers = new HashMap<String, DockerContainer>();
+        containers = new LinkedHashMap<String, DockerContainer>();
         containers.put("db", new DockerContainer.Db());
         containers.put("web", new DockerContainer.Web());
         containers.put("sync", new DockerContainer.Sync());
@@ -74,6 +74,7 @@ public class ContainerMonitor extends Monitor
         status.set("Waiting for VM");
         while (!machineready)
             donefornow();
+
         status.set("Waiting for Docker API");
         while (!docker.isReady())
             donefornow();
@@ -164,6 +165,7 @@ public class ContainerMonitor extends Monitor
         status.set("Shutting down ...");
         if (!external_backend) {
             docker.stop(containers.keySet());
+            docker.rm(containers.keySet());
         }
         ready.set(false);
         status.set("Done");
