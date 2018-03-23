@@ -33,7 +33,7 @@ public enum MT {
     WEB_PORT_READY,
     MACHINE_READY,
     MACHINE_STATUS,
-    MACHINE_ENV,
+    DOCKER_ENV,
     // Containers
     BACKEND_STATUS,
     BACKEND_READY,

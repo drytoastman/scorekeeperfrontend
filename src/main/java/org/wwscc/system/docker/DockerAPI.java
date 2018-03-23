@@ -99,6 +99,10 @@ public class DockerAPI
      */
     public void setup(Map<String, String> env)
     {
+        if (env == null) { // expect at least a blank map, null is something wrong
+            return;
+        }
+
         try {
             if (executor != null) {
                 executor.shutdown();
@@ -112,7 +116,7 @@ public class DockerAPI
             }
 
             PoolingHttpClientConnectionManager pool;
-            if ((env != null) && env.containsKey("DOCKER_HOST") && (env.containsKey("DOCKER_CERT_PATH")))
+            if (env.containsKey("DOCKER_HOST") && env.containsKey("DOCKER_CERT_PATH"))
             {
                 SSLContext sslctx = DockerCertificates.createContext(Paths.get(env.get("DOCKER_CERT_PATH")));
                 SSLConnectionSocketFactory sslf = new SSLConnectionSocketFactory(sslctx, new String[] { "TLSv2" }, null, NoopHostnameVerifier.INSTANCE);
@@ -403,15 +407,11 @@ public class DockerAPI
     public static void main(String args[]) throws Exception
     {
         AppSetup.unitLogging();
-        //Logger.getLogger("org.apache.http").setLevel(Level.ALL);
-        //Logger.getLogger("org.apache.http.wire").setLevel(Level.ALL);
         log.info("starting");
 
         DockerAPI api = new DockerAPI();
-        api.setup(null);
+        api.setup(new HashMap<>());
         //api.pull("drytoastman/scdb:testdb");
-        System.out.println("code = " + api.exec("db", "ash", "-c", "sleep 30"));
-
         //System.out.println(api.alive());
         //api.download("db", "/root/.ash_history", new File("mytestfile"));
         //api.upload("db", new File("mytestfile"), "/root");

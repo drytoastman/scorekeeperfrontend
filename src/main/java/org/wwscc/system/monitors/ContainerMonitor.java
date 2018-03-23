@@ -40,10 +40,7 @@ public class ContainerMonitor extends Monitor
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
     private Path toimport;
-    private boolean dobackup;
-
-    private Map<String, String> machineenv;
-    private boolean machineready, lastcheck, restartsync;
+    private boolean dobackup, machineready, lastcheck, restartsync;
 
     /** flag for debug environment where we are running the backend separately */
     private boolean external_backend;
@@ -61,25 +58,15 @@ public class ContainerMonitor extends Monitor
         dobackup     = false;
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
         ready        = new BroadcastState<Boolean>(MT.BACKEND_READY, false);
-        machineenv   = new HashMap<String, String>();
         machineready = false;
         lastcheck    = false;
 
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke("sync") );
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
-        Messenger.register(MT.MACHINE_ENV,      (m, o) -> { machineenv   = (Map<String,String>)o; env_change(); });
+        Messenger.register(MT.DOCKER_ENV,       (m, o) -> docker.setup((Map<String,String>)o) );
 
         external_backend = System.getenv("EXTERNAL_BACKEND") != null;
-    }
-
-    private void env_change()
-    {
-        try {
-            docker.setup(machineenv);
-        } catch (Exception e) {
-            log.warning("Unable to setup docker connection at this time: " + e);
-        }
     }
 
     public boolean minit()
@@ -87,8 +74,6 @@ public class ContainerMonitor extends Monitor
         status.set("Waiting for VM");
         while (!machineready)
             donefornow();
-
-        docker.setup(machineenv);
 
         if (!external_backend) {
             status.set( "Clearing old containers");

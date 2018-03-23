@@ -25,14 +25,13 @@ public class TestDatabaseContainer extends ExternalResource
     protected void before() throws Throwable
     {
         AppSetup.unitLogging();
-        Map<String,String> env = DockerMachine.machineenv();
 
         DockerContainer container = new DockerContainer(TestContainerImage, "testdb");
         container.addPort("127.0.0.1", 6432, 6432);
         container.addPort("0.0.0.0", 54329, 5432);
 
         docker = new DockerAPI();
-        docker.setup(env);
+        docker.setup(DockerMachine.machineenv());
         docker.pull(TestContainerImage);
         docker.networkDelete(DockerContainer.NET_NAME);
         docker.networkCreate(DockerContainer.NET_NAME);

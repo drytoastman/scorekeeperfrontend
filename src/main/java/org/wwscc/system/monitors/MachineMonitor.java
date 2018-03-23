@@ -9,6 +9,7 @@
 package org.wwscc.system.monitors;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,7 +35,7 @@ public class MachineMonitor extends Monitor
     private Session portforward, port80forward;
     private String machinehost = "192.168.99.100";
     private Pattern hostpattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
-    private BroadcastState<Map<String,String>> machineenv;
+    private BroadcastState<Map<String,String>> dockerenv;
     private BroadcastState<Boolean> dbportsready, webportready, machineready, usingmachine;
     private BroadcastState<String> status;
     private boolean shouldStopMachine, backendready;
@@ -42,7 +43,7 @@ public class MachineMonitor extends Monitor
     public MachineMonitor()
     {
         super("MachineMonitor", 10000);
-        machineenv   = new BroadcastState<Map<String,String>>(MT.MACHINE_ENV, null);
+        dockerenv   = new BroadcastState<Map<String,String>>(MT.DOCKER_ENV, null);
         dbportsready = new BroadcastState<Boolean>(MT.DB_PORTS_READY, false);
         webportready = new BroadcastState<Boolean>(MT.WEB_PORT_READY, false);
         machineready = new BroadcastState<Boolean>(MT.MACHINE_READY, false);
@@ -59,12 +60,17 @@ public class MachineMonitor extends Monitor
         shouldStopMachine = yes;
     }
 
+    private boolean envBad()
+    {
+        return (dockerenv.get() == null) || (dockerenv.get().get("DOCKER_HOST") == null) || (dockerenv.get().get("DOCKER_CERT_PATH") == null);
+    }
+
     @Override
     protected boolean minit()
     {
         if (!DockerMachine.machinepresent())
         {
-            machineenv.set(null);
+            dockerenv.set(new HashMap<>());
             usingmachine.set(false);
             machineready.set(true);
             status.set("Not Needed");
@@ -96,7 +102,7 @@ public class MachineMonitor extends Monitor
         if (!DockerMachine.machinerunning())
         {
             machineready.set(false);
-            machineenv.set(null);
+            dockerenv.set(null);
             log.info("Starting the docker machine.");
             status.set("Restarting VM");
             if (!DockerMachine.startmachine())
@@ -108,10 +114,10 @@ public class MachineMonitor extends Monitor
         }
 
         // Make sure we have a proper environment setup
-        if ((machineenv.get() == null) || (machineenv.get().get("DOCKER_HOST") == null) || (machineenv.get().get("DOCKER_CERT_PATH") == null))
+        if (envBad())
         {
-            machineenv.set(DockerMachine.machineenv());
-            if ((machineenv.get() == null) || (machineenv.get().get("DOCKER_HOST") == null) || (machineenv.get().get("DOCKER_CERT_PATH") == null))
+            dockerenv.set(DockerMachine.machineenv());
+            if (envBad())
             {
                 log.warning("Unable to load machine env, will try again");
                 status.set("Waiting for Env");
@@ -126,11 +132,11 @@ public class MachineMonitor extends Monitor
         // Make sure port forwarding is up
         try
         {
-            Matcher m = hostpattern.matcher(machineenv.get().get("DOCKER_HOST"));
+            Matcher m = hostpattern.matcher(dockerenv.get().get("DOCKER_HOST"));
             if (m.find()) { machinehost = m.group(1); }
 
             if (jsch.getIdentityNames().size() == 0)
-                jsch.addIdentity(Paths.get(machineenv.get().get("DOCKER_CERT_PATH"), "id_rsa").toString());
+                jsch.addIdentity(Paths.get(dockerenv.get().get("DOCKER_CERT_PATH"), "id_rsa").toString());
 
             if ((portforward == null) || (!portforward.isConnected()))
             {
