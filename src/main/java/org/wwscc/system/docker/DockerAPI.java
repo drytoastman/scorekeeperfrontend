@@ -118,6 +118,8 @@ public class DockerAPI
                 SSLConnectionSocketFactory sslf = new SSLConnectionSocketFactory(sslctx, NoopHostnameVerifier.INSTANCE);
                 pool = new PoolingHttpClientConnectionManager(
                         RegistryBuilder.<ConnectionSocketFactory>create().register("http", sslf).build());
+                pool.setDefaultMaxPerRoute(5);
+
                 URI uri = new URI(env.get("DOCKER_HOST"));
                 host = new HttpHost(uri.getHost(), uri.getPort());
             }
@@ -135,6 +137,7 @@ public class DockerAPI
             {
                 pool = new PoolingHttpClientConnectionManager(
                     RegistryBuilder.<ConnectionSocketFactory>create().register("http", new UnixSocketFactory("/var/run/docker.sock")).build());
+                pool.setDefaultMaxPerRoute(5);
                 host = new HttpHost("127.0.0.1");
             }
 
