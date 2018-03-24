@@ -32,7 +32,6 @@ import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
 import org.wwscc.system.docker.DockerMachine;
-import org.wwscc.system.monitors.ContainerMonitor;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 

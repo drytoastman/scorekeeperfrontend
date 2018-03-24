@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.monitors;
+package org.wwscc.system;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -14,9 +14,9 @@ import java.util.logging.Logger;
 /**
  * Abstract class to define the basic init, loop/wait and shutdown phases of our monitors
  */
-public abstract class Monitor extends Thread
+public abstract class MonitorBase extends Thread
 {
-    private static final Logger log = Logger.getLogger(Monitor.class.getName());
+    private static final Logger log = Logger.getLogger(MonitorBase.class.getName());
 
     protected final Long ms;
     protected boolean quickrecheck;
@@ -26,7 +26,7 @@ public abstract class Monitor extends Thread
     protected abstract void mloop() throws Exception;
     protected abstract void mshutdown() throws Exception;
 
-    public Monitor(String name, long ms) {
+    public MonitorBase(String name, long ms) {
         super(name);
         this.ms = ms;
         this.done = false;

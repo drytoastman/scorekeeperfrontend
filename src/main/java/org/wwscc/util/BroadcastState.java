@@ -6,13 +6,13 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.monitors;
+package org.wwscc.util;
 
 import java.util.logging.Logger;
 
-import org.wwscc.util.MT;
-import org.wwscc.util.Messenger;
-
+/**
+ * Wrap a variable that sends messages whenever its state changes.
+ */
 public class BroadcastState<T>
 {
     private static final Logger log = Logger.getLogger(BroadcastState.class.getName());

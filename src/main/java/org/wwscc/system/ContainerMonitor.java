@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.monitors;
+package org.wwscc.system;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,6 +31,7 @@ import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
+import org.wwscc.util.BroadcastState;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -40,7 +41,7 @@ import org.wwscc.util.Prefs;
  * be woken by anyone calling poke.  Also provides the interface to any of the docker
  * container calls.
  */
-public class ContainerMonitor extends Monitor
+public class ContainerMonitor extends MonitorBase
 {
     private static final Logger log = Logger.getLogger(ContainerMonitor.class.getName());
 

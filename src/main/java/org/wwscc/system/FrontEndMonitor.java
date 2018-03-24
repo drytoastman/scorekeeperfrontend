@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.monitors;
+package org.wwscc.system;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -15,7 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.wwscc.storage.Database;
-import org.wwscc.system.Actions;
+import org.wwscc.util.BroadcastState;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -31,7 +31,7 @@ import org.wwscc.util.Discovery.DiscoveryListener;
  * Thread to keep checking pinging the database to cause notifications
  * for the discovery pieces. It can be 'paused' when the database is to be offline.
  */
-public class FrontEndMonitor extends Monitor implements DiscoveryListener
+public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
 {
     private static final Logger log = Logger.getLogger(FrontEndMonitor.class.getName());
 

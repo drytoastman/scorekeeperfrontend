@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.system.monitors;
+package org.wwscc.system;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wwscc.system.docker.DockerMachine;
+import org.wwscc.util.BroadcastState;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
@@ -30,7 +31,7 @@ import com.jcraft.jsch.Session;
 /**
  * Thread to start machine and monitor port forwarding
  */
-public class MachineMonitor extends Monitor
+public class MachineMonitor extends MonitorBase
 {
     private static final Logger log = Logger.getLogger(MachineMonitor.class.getName());
 

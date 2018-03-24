@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.util;
+package org.wwscc.system.docker;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

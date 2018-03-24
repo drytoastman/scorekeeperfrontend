@@ -55,6 +55,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.wwscc.system.docker.SocketFactories.UnixSocketFactory;
+import org.wwscc.system.docker.SocketFactories.WindowsPipeFactory;
 import org.wwscc.system.docker.models.ContainerSummaryInner;
 import org.wwscc.system.docker.models.ErrorResponse;
 import org.wwscc.system.docker.models.ExecConfig;
@@ -66,8 +68,6 @@ import org.wwscc.system.docker.models.Volume;
 import org.wwscc.system.docker.models.VolumesResponse;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
-import org.wwscc.util.SocketFactories.UnixSocketFactory;
-import org.wwscc.util.SocketFactories.WindowsPipeFactory;
 
 /*
  * Docker API for local connections.
