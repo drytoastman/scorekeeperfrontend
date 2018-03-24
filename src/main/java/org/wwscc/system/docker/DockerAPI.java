@@ -12,21 +12,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
+import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -37,13 +36,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -51,8 +44,6 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentProducer;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.EntityTemplate;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -60,20 +51,18 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.wwscc.system.docker.models.ContainerSummary;
-import org.wwscc.system.docker.models.CreateContainerConfig;
+import org.wwscc.system.docker.models.ContainerSummaryInner;
 import org.wwscc.system.docker.models.ErrorResponse;
 import org.wwscc.system.docker.models.ExecConfig;
 import org.wwscc.system.docker.models.ExecStatus;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
 import org.wwscc.system.docker.models.NetworkContainer;
-import org.wwscc.system.docker.models.VolumesResponse;
 import org.wwscc.util.AppSetup;
+import org.wwscc.util.Prefs;
 import org.wwscc.util.SocketFactories.UnixSocketFactory;
 import org.wwscc.util.SocketFactories.WindowsPipeFactory;
 
@@ -87,22 +76,19 @@ public class DockerAPI
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(Include.NON_NULL);
 
-    public static final String prefix = "/v1.35";
-
     HttpClientBuilder builder;
     CloseableHttpClient client;
     HttpHost host;
     ExecutorService executor;
+    Map<String, String> lastenv;
 
-    public boolean isReady()
-    {
-        return client != null;
-    }
+    public class DockerDownException extends IOException {}
 
     /**
      * Perform setup or re/setup with a new connection
      * @param env the current known environment variables
      */
+
     public void setup(Map<String, String> env)
     {
         try {
@@ -150,6 +136,7 @@ public class DockerAPI
                 host = new HttpHost("127.0.0.1");
             }
 
+            lastenv  = env;
             executor = Executors.newFixedThreadPool(5, (r) -> { Thread t = new Thread(r); t.setDaemon(true); return t; });
             builder  = HttpClients.custom().setConnectionManager(pool);
             client   = builder.build();
@@ -158,81 +145,133 @@ public class DockerAPI
         }
     }
 
-    /* Functions for getting data from docker ******************************************/
 
-    public ImageSummary[] images()
+    public boolean isReady()
     {
-        return request(new HttpGet(prefix+"/images/json"), ImageSummary[].class);
-    }
-
-    public ContainerSummary containers()
-    {
-        return request(new HttpGet(prefix+"/containers/json"), ContainerSummary.class);
-    }
-
-    public List<String> alive()
-    {
-        return containers().stream()
-                .map(i -> i.getNames())
-                .flatMap(l -> l.stream())
-                .distinct().map(s -> s.substring(1))
-                .collect(Collectors.toList());
-    }
-
-    public VolumesResponse volumes()
-    {
-        return request(new HttpGet(prefix+"/volumes"), VolumesResponse.class);
-    }
-
-    public Network network(String name)
-    {
-        return request(new HttpGet(prefix+"/networks/"+name), Network.class);
+        return client != null;
     }
 
 
-    /* Functions for changing the state of the docker environment ***********************/
-
-    public void pull(String image)
-    {
-        request(new HttpPost(prefix+"/images/create?fromImage="+image), Void.class);
-    }
-
-    public void networkCreate(String netname)
-    {
-        requestvar(new HttpPost(prefix+"/networks/create"), Void.class, "Name", netname);
-    }
-
-    public void networkDelete(String netname)
-    {
-        Network net = request(new HttpGet(prefix+"/networks/"+netname), Network.class);
-        if (net != null) {
-            for (NetworkContainer nc : net.getContainers().values()) {
-                requestvar(new HttpPost(prefix+"/networks/"+netname+"/disconnect"), Void.class, "Container", nc.getName(), "Force", true);
-            }
-            request(new HttpDelete(prefix+"/networks/"+netname), Void.class);
-        }
-    }
-
-    public void volumeCreate(String name)
-    {
-        requestvar(new HttpPost(prefix+"/volumes/create"), Void.class, "Name", name);
-    }
-
-    public void create(String name, CreateContainerConfig config)
+    public void dump(Writer w)
     {
         try {
-            HttpPost request = new HttpPost(prefix+"/containers/create?name="+name);
-            request.setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
-            request(request, Void.class);
-        } catch (JsonProcessingException jpe) {
-            log.warning("Unable to serialize container config?");
+            w.write("\n=== Docker Env ===\n");
+            w.write(lastenv.toString());
+            w.write("\n=== Docker Version ===\n");
+            w.write(request(new Requests.Version()));
+
+            w.write("\n=== Docker images ===\n");
+            for (ImageSummary i : request(new Requests.GetImages())) {
+                w.write(i.toString());
+                w.write("\n");
+            }
+
+            w.write("\n=== Docker containers ===\n");
+            w.write(request(new Requests.GetContainers()).toString());
+
+            w.write("\n=== Docker network ===\n");
+            for (Network n : request(new Requests.GetNetworks())) {
+                w.write(n.toString());
+                w.write("\n");
+            }
+
+        } catch (IOException ioe) {
+            log.warning("Failed to write status: " + ioe);
         }
     }
+
+
+    public void loadState(Collection<DockerContainer> search) throws IOException
+    {
+        for (DockerContainer c : search) {
+            c.setState(null);
+        }
+
+        for (ContainerSummaryInner info : request(new Requests.GetContainers()))
+        {
+            for (DockerContainer c : search) {
+                if (info.getNames().contains("/"+c.getName())) {
+                    c.setState(info.getState());
+                }
+            }
+        }
+    }
+
+
+    public boolean networkUp(String name)
+    {
+        try {
+            Network net = null;
+            try { net = request(new Requests.GetNetwork(name)); } catch (IOException ioe) {}
+
+            if (net != null) { // found a network matching the name
+                for (NetworkContainer nc : net.getContainers().values())
+                    request(new Requests.DisconnectContainer(name, nc.getName()));
+                request(new Requests.DeleteNetwork(name));
+            }
+
+            request(new Requests.CreateNetwork(name));
+            return true;
+        } catch (IOException ioe) {
+            log.warning("Failed to bring up network: " + ioe);
+            return false;
+        }
+    }
+
+
+
+    public boolean containersUp(Collection<DockerContainer> containers)
+    {
+        try {
+            ImageSummary[] images = request(new Requests.GetImages());
+            if (images == null)
+                throw new DockerDownException();
+
+            loadState(containers);
+
+            for (DockerContainer container : containers) { // eventually parallelize
+                if (Prefs.isDebug())
+                    container.addEnvItem("DEBUG=1");
+                else
+                    container.getEnv().remove("DEBUG=1");
+
+                // Pull image if necessary
+                boolean needpull = true;
+                for (ImageSummary s :images) {
+                    if (s.getRepoTags() != null && s.getRepoTags().contains(container.getImage())) {
+                        needpull = false;
+                    }
+                }
+                if (needpull) {
+                    log.info("Pulling " + container.getImage());
+                    request(new Requests.PullImage(container.getImage()));
+                }
+
+                // Create any volumes
+                for (String mount : container.getHostConfig().getBinds())
+                    request(new Requests.CreateVolume(mount.split(":")[0]));
+
+                // Create the container
+                if (!container.isCreated())
+                    request(new Requests.CreateContainer(container));
+
+                // Then start it
+                if (!container.isUp())
+                    request(new Requests.Start(container.getName()));
+            }
+
+            return true;
+        } catch (IOException e) {
+            log.warning("Unabled to bring up containers: " + e);
+            return false;
+        }
+    }
+
+
 
     public void downloadTo(String name, String containerpath, Path hostdir) throws IOException
     {
-        String uri = String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath);
-        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new HttpGet(uri), InputStream.class))) {
+        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new Requests.Download(name, containerpath)))) {
             TarArchiveEntry entry;
             while ((entry = in.getNextTarEntry()) != null) {
                 if (!entry.isFile())
@@ -244,7 +283,9 @@ public class DockerAPI
         }
     }
 
-    public boolean uploadFile(String name, File file, String containerpath) throws IOException
+
+
+    public void uploadFile(String name, File file, String containerpath) throws IOException
     {
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {
@@ -259,26 +300,22 @@ public class DockerAPI
             }
         };
 
-        HttpPut request = new HttpPut(String.format("%s/containers/%s/archive?path=%s", prefix, name, containerpath));
-        request.setEntity(new EntityTemplate(producer));
-        return request(request, Boolean.class);
+        request(new Requests.Upload(name, containerpath, producer));
     }
+
 
 
     public int exec(String name, String ... cmd) throws Exception
     {
         ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(false).attachStderr(false);
-
-        HttpPost request = new HttpPost(String.format("%s/containers/%s/exec", prefix, name));
-        request.setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
-        String id = (String)request(request, Map.class).get("Id");
+        String id = (String)request(new Requests.CreateExec(name, config)).get("Id");
 
         if (id != null) {
-            requestvar(new HttpPost(prefix+"/exec/"+id+"/start"), Void.class, "Detach", true);
+            request(new Requests.StartExec(id));
             long deadline = System.currentTimeMillis() + 45000;
             while (true)
             {
-                ExecStatus status = request(new HttpGet(prefix+"/exec/"+id+"/json"), ExecStatus.class);
+                ExecStatus status = request(new Requests.GetExecStatus(id));
                 if ((status != null) && (status.getExitCode() != null))
                     return status.getExitCode();
                 Thread.sleep(500);
@@ -291,52 +328,48 @@ public class DockerAPI
     }
 
 
-    public boolean poke(String ... names)    { return poke(Arrays.asList(names));    }
-    public boolean kill(String ... names)    { return kill(Arrays.asList(names));    }
-    public boolean stop(String ... names)    { return stop(Arrays.asList(names));    }
-    public boolean start(String ... names)   { return start(Arrays.asList(names));   }
-    public boolean restart(String ... names) { return restart(Arrays.asList(names)); }
-    public boolean rm(String ... names)      { return rm(Arrays.asList(names));      }
-
-    public boolean poke(Collection<String> names)    { return parallelContainerPost("kill?signal=SIGHUP", names); }
-    public boolean kill(Collection<String> names)    { return parallelContainerPost("kill", names);    }
-    public boolean stop(Collection<String> names)    { return parallelContainerPost("stop", names);    }
-    public boolean start(Collection<String> names)   { return parallelContainerPost("start", names);   }
-    public boolean restart(Collection<String> names) { return parallelContainerPost("restart", names); }
-    public boolean rm(Collection<String> names)
+    public void poke(DockerContainer cont)
     {
-        return parallelActions(names.stream()
-                .map(name -> (Callable<Void>) () -> request(new HttpDelete(String.format("%s/containers/%s", prefix, name)), Void.class))
-                .collect(Collectors.toList()));
+        requestIgnore(new Requests.Poke(cont.getName()));
     }
 
-    private boolean parallelContainerPost(String action, Collection<String> names)
+
+    public void restart(DockerContainer cont)
     {
-        return parallelActions(names.stream()
-                .map(name -> (Callable<Void>) () -> request(new HttpPost(String.format("%s/containers/%s/%s", prefix, name, action)), Void.class))
-                .collect(Collectors.toList()));
+        requestIgnore(new Requests.Restart(cont.getName()));
     }
+
+
+    public void kill(DockerContainer cont)
+    {
+        requestIgnore(new Requests.Kill(cont.getName()));
+    }
+
+
+    public void stop(Collection<DockerContainer> containers)
+    {
+        List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
+        for (DockerContainer c : containers)
+            outer.add(Arrays.asList(new Requests.Stop(c.getName())));
+        parallelAndReport("stop", outer);
+    }
+
+
+    public void teardown(Collection<DockerContainer> containers)
+    {
+        List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
+        for (DockerContainer c : containers) {
+            List<Requests.Wrapper<Void>> inner = new ArrayList<Requests.Wrapper<Void>>();
+            inner.add(new Requests.Stop(c.getName()));
+            inner.add(new Requests.Rm(c.getName()));
+            outer.add(inner);
+        }
+
+        parallelAndReport("teardown", outer);
+    }
+
 
     /* The utility wrappers of common functionality ***********************************/
-
-    /**
-     * Calls request with args put into simple JSON object
-     */
-    private <T> T requestvar(HttpEntityEnclosingRequestBase request, Class<T> rettype, Object ... args)
-    {
-        try {
-            if ((args.length % 2) != 0)
-                throw new IOException("Varargs needs to be a multiple of 2");
-
-            Map<String, Object> body = new HashMap<String, Object>();
-            for (int ii = 0; ii < args.length; ii += 2)
-                body.put((String)args[ii], args[ii+1]);
-            request.setEntity(new StringEntity(mapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
-            return request(request, rettype);
-        } catch (IOException ioe) {
-            return null;
-        }
-    }
 
     /**
      * Perform the request, with special handling depending on rettype.
@@ -344,71 +377,105 @@ public class DockerAPI
      * @param rettype determines how we deal with the repsonse
      * @return depending on rettype:
      *       String.class: wrap the response body in a string and return it
-     *      Boolean.class: return true for response in the 200-300 range, false otherwise
      *  InputStream.class: return the body input stream for processing (must close it)
+     *         Void.class: ignore the return data
      *            default: attempt to deserialize a JSON response into the rettype
+     * @throws DockerDownException
+     * @throws IOException
      *
      */
     @SuppressWarnings("unchecked")
-    private <T> T request(HttpRequest request, Class<T> rettype)
+    private <T> T request(Requests.Wrapper<T> wrap) throws IOException
     {
         if (client == null) {
-            log.warning(request + " called with no client present");
+            log.warning(wrap.request + " called with no client present");
+            throw new DockerDownException();
+        }
+
+        wrap.request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        HttpResponse resp = client.execute(host, wrap.request);
+        if (resp.getStatusLine().getStatusCode() >= 400) {
+            String error = EntityUtils.toString(resp.getEntity());
+            try { // response Content-type is not always set properly, try json error first, if not, just use raw string
+                error = mapper.readValue(error, ErrorResponse.class).getMessage();
+            } catch (Exception e) {}
+            throw new IOException(error);
+        }
+
+        if (wrap.rettype == null) {
+            EntityUtils.consumeQuietly(resp.getEntity());
             return null;
         }
 
-        try {
-            request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-            HttpResponse resp = client.execute(host, request);
-            if (resp.getStatusLine().getStatusCode() >= 400) {
-                String error = EntityUtils.toString(resp.getEntity());
-                try { // response Content-type is not always set properly, try json error first, if not, just use raw string
-                    error = mapper.readValue(error, ErrorResponse.class).getMessage();
-                } catch (Exception e) {}
-                throw new IOException(error);
-            }
+        if (wrap.rettype == String.class)
+            return (T) EntityUtils.toString(resp.getEntity());
+        if (InputStream.class.isAssignableFrom(wrap.rettype))
+            return (T) resp.getEntity().getContent();
 
-            if (rettype.equals(String.class))
-                return (T) EntityUtils.toString(resp.getEntity());
-            if (InputStream.class.isAssignableFrom(rettype))
-                return (T) resp.getEntity().getContent();
-            else if ((rettype != Boolean.class) && (rettype != Void.class))
-                return mapper.readValue(resp.getEntity().getContent(), rettype);
-
-            // fall back is to close it all up here
-            EntityUtils.consumeQuietly(resp.getEntity());
-            return (T) ((rettype == Boolean.class) ? Boolean.TRUE : null);
-        } catch (IOException e) {
-            log.warning(request + ": " + e.getMessage().trim());
-            return (T) ((rettype == Boolean.class) ? Boolean.FALSE : null);
-        }
+        return mapper.readValue(resp.getEntity().getContent(), wrap.rettype);
     }
 
-
-    private boolean parallelActions(List<Callable<Void>> requests)
+    /**
+     * Perform a request and ignore all body, returns or exceptions
+     */
+    private <T> void requestIgnore(Requests.Wrapper<T> wrap)
     {
-        if (executor == null) {
-            log.warning("parallelActions failure: No executor yet");
-            return false;
-        }
-
-        boolean ok = true;
         try {
-            for (Future<Void> f : executor.invokeAll(requests)) {
-                try {
-                    f.get();
-                } catch (Exception e) {
-                    ok = false;
-                    log.warning(f.toString() + " action failure: " + e);
-                }
-            }
-        } catch (InterruptedException ie) {
-            log.warning("parallelActions failure: interupted while starting");
+            request(wrap);
+        } catch (IOException ioe) {
+            log.warning("request failed: " + ioe);
         }
-
-        return ok;
     }
 
+
+    /**
+     * Submit a double list.
+     * Each outer list can run in parallel.
+     * Each inner list is meant to run synchronously
+     * @param chains
+     * @throws DockerDownException
+     * @throws IOException
+     */
+    private List<Exception> parallelChains(List<List<Requests.Wrapper<Void>>> chains)
+    {
+        List<Exception> ret = new ArrayList<Exception>();
+
+        if ((executor == null) || (client == null)) {
+            log.warning("parallelActions failure: No executor yet");
+            ret.add(new DockerDownException());
+            return ret;
+        }
+
+        List<Future<Void>> futures = new ArrayList<Future<Void>>();
+        for (List<Requests.Wrapper<Void>> list : chains) {
+            futures.add(executor.submit(() -> {
+                    for (Requests.Wrapper<Void> wrap : list)
+                        request(wrap);
+                    return null;
+            }));
+        }
+
+        for (Future<Void> f : futures) {
+            try {
+                f.get();
+            } catch (Exception e) {
+                ret.add(e);
+            }
+        }
+
+        return ret;
+    }
+
+    private void parallelAndReport(String function, List<List<Requests.Wrapper<Void>>> chains)
+    {
+        List<Exception> ret = parallelChains(chains);
+        if (ret.size() > 0) {
+            log.warning(function + " errors: ");
+            for (Exception e : ret) {
+                log.warning(e.getMessage());
+            }
+        }
+    }
 
     /** Simple tests
      * @throws Exception */

@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,10 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -37,7 +33,6 @@ import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.system.monitors.ContainerMonitor;
-import org.wwscc.util.Exec;
 import org.wwscc.util.Prefs;
 
 public class DebugCollector extends Thread
@@ -100,7 +95,14 @@ public class DebugCollector extends Thread
 
             monitor.setProgress(10);
             monitor.setNote("creating info.txt");
-            createInfoFile(temp);
+            Path info = Files.createFile(temp.resolve("info.txt"));
+            try (OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+                out.write(
+                    "Scorekeeper version = "   + Prefs.getVersion() +
+                    "\nJava version = "        + System.getProperty("java.version") +
+                    "\nVBoxVersion version = " + DockerMachine.vboxversion());
+                cmonitor.getDockerAPI().dump(out);
+            }
             monitor.setProgress(20);
 
             monitor.setNote("copying backend files");
@@ -108,7 +110,7 @@ public class DebugCollector extends Thread
             monitor.setProgress(30);
 
             monitor.setNote("dump database data");
-            cmonitor.backupNow(temp, false);
+            cmonitor.backup(temp, false);
             monitor.setProgress(60);
 
             monitor.setNote("adding backend logs to zipfile");
@@ -136,52 +138,6 @@ public class DebugCollector extends Thread
         }
 
         monitor.close();
-    }
-
-    private void createInfoFile(Path dir) throws IOException
-    {
-        Path info = Files.createFile(dir.resolve("info.txt"));
-        Map<String, String> machineenv;
-        if (DockerMachine.machinepresent()) {
-            machineenv = DockerMachine.machineenv();
-        } else {
-            machineenv = new HashMap<String, String>();
-        }
-
-        write2file(info,
-            "Scorekeeper version = "   + Prefs.getVersion() +
-            "\nJava version = "        + System.getProperty("java.version") +
-            "\nVBoxVersion version = " + DockerMachine.vboxversion() +
-            "\n=== Machine Env ===\n"  + machineenv +
-            "\n=== Docker version ===\n"
-            );
-
-        cmd2file(  info, machineenv, "docker", "version");
-        write2file(info, "\n=== Docker images ===\n");
-        cmd2file(  info, machineenv, "docker", "images", "--digests");
-        write2file(info, "\n=== Docker containers ===\n");
-        cmd2file(  info, machineenv, "docker", "ps", "-a");
-        write2file(info, "\n=== Docker network ===\n");
-        cmd2file(  info, machineenv, "docker", "network", "inspect", "scnet");
-    }
-
-    private void write2file(Path file, String data) throws IOException
-    {
-        try (OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-            out.write(data);
-        }
-    }
-
-    private void cmd2file(Path file, Map<String, String> env, String ... cmd)
-    {
-        try {
-            ProcessBuilder b = Exec.build(env, cmd);
-            b.redirectOutput(Redirect.appendTo(file.toFile()));
-            Process p = b.start();
-            p.waitFor(2000, TimeUnit.MILLISECONDS);
-            p.destroy();
-        } catch (InterruptedException | IOException e) {
-        }
     }
 
     /**

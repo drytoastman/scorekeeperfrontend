@@ -8,6 +8,7 @@
 
 package org.wwscc.system.monitors;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -21,9 +22,9 @@ public abstract class Monitor extends Thread
     protected boolean quickrecheck;
     protected boolean done;
 
-    protected abstract boolean minit();
-    protected abstract void mloop();
-    protected abstract void mshutdown();
+    protected abstract boolean minit() throws Exception;
+    protected abstract void mloop() throws Exception;
+    protected abstract void mshutdown() throws Exception;
 
     public Monitor(String name, long ms) {
         super(name);
@@ -55,15 +56,30 @@ public abstract class Monitor extends Thread
 
     @Override
     public void run() {
-        if (!minit())
+        try {
+            if (!minit())
+                return;
+        } catch (Exception e) {
+            log.log(Level.SEVERE, getClass().getName() + " mshutdown exception: " + e, e);
             return;
+        }
+
         while (!done) {
-            mloop();
+            try {
+                mloop();
+            } catch (Exception e) {
+                log.log(Level.SEVERE, getClass().getName() + " mloop exception: " + e, e);
+            }
             if (!quickrecheck && !done)
                 donefornow();
             quickrecheck = false;
         }
+
         log.info(getClass().getName() + " shutting down");
-        mshutdown();
+        try {
+            mshutdown();
+        } catch (Exception e) {
+            log.log(Level.SEVERE, getClass().getName() + " mshutdown exception: " + e, e);
+        }
     }
 }

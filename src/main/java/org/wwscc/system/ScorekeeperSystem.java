@@ -157,7 +157,7 @@ public class ScorekeeperSystem
             }
 
             pmonitor.setPause(true);
-            cmonitor.backupNow(Prefs.getBackupDirectory(), true);
+            cmonitor.backup(Prefs.getBackupDirectory(), true);
             Database.d.close();
 
             // tell everyone to shutdown

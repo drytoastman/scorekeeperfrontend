@@ -85,7 +85,6 @@ public class ScorekeeperStatusWindow extends JFrame
         buttons.put("clearold",  button(actions.clearOld));
 
         JMenu file = new JMenu("File");
-        file.add(actions.debugRequest);
         file.add(actions.backupRequest);
         file.add(actions.importRequest);
         file.add(actions.deleteSeries);
@@ -101,10 +100,12 @@ public class ScorekeeperStatusWindow extends JFrame
         servers.add(new JCheckBoxMenuItem(actions.discovery));
 
         JMenu debug = new JMenu("Debug");
-        debug.add(actions.resetHash);
-        debug.add(actions.initServers);
+        debug.add(actions.debugRequest);
         JMenu levels = new JMenu("Logging Level");
         debug.add(levels);
+        debug.add(new JSeparator());
+        debug.add(actions.resetHash);
+        debug.add(actions.initServers);
 
         ButtonGroup options = new ButtonGroup();
         AppLogLevel current = Prefs.getLogLevel();
@@ -120,15 +121,17 @@ public class ScorekeeperStatusWindow extends JFrame
             }
         }
 
-        JMenu launch = new JMenu("Launch");
+        JMenu launch = new JMenu("Applications");
+        launch.setFont(launch.getFont().deriveFont(Font.BOLD));
         for (Action a : actions.apps)
             launch.add(a);
 
         JMenuBar bar = new JMenuBar();
         bar.add(file);
-        bar.add(launch);
         bar.add(servers);
         bar.add(debug);
+        bar.add(new JMenu(" "));
+        bar.add(launch);
         setJMenuBar(bar);
 
         statusLayout(false);

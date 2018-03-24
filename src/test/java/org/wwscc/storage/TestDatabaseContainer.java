@@ -8,7 +8,7 @@
 
 package org.wwscc.storage;
 
-import java.util.Map;
+import java.util.Arrays;
 
 import org.junit.rules.ExternalResource;
 import org.wwscc.system.docker.DockerAPI;
@@ -20,22 +20,24 @@ public class TestDatabaseContainer extends ExternalResource
 {
     static DockerAPI docker;
     static String TestContainerImage = "drytoastman/scdb:testdb";
+    static String TestContainerName  = "testdb";
+    static String TestNetName        = "testnet";
+    static DockerContainer container;
+
 
     @Override
     protected void before() throws Throwable
     {
         AppSetup.unitLogging();
 
-        DockerContainer container = new DockerContainer(TestContainerImage, "testdb");
+        container = new DockerContainer(TestContainerName, TestContainerImage, TestNetName);
         container.addPort("127.0.0.1", 6432, 6432);
         container.addPort("0.0.0.0", 54329, 5432);
 
         docker = new DockerAPI();
         docker.setup(DockerMachine.machineenv());
-        docker.pull(TestContainerImage);
-        docker.networkDelete(DockerContainer.NET_NAME);
-        docker.networkCreate(DockerContainer.NET_NAME);
-        container.up(docker);
+        docker.networkUp(TestNetName);
+        docker.containersUp(Arrays.asList(container));
 
         Database.waitUntilUp();
         Database.openSeries("testseries", 0);
@@ -45,6 +47,6 @@ public class TestDatabaseContainer extends ExternalResource
     protected void after()
     {
         Database.d.close();
-        docker.kill("testdb");
+        docker.kill(container);
     }
 }
