@@ -33,6 +33,7 @@ import javax.swing.ProgressMonitor;
 import org.apache.commons.io.FileUtils;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.system.monitors.ContainerMonitor;
+import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 public class DebugCollector extends Thread
@@ -97,10 +98,15 @@ public class DebugCollector extends Thread
             monitor.setNote("creating info.txt");
             Path info = Files.createFile(temp.resolve("info.txt"));
             try (OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-                out.write(
-                    "Scorekeeper version = "   + Prefs.getVersion() +
-                    "\nJava version = "        + System.getProperty("java.version") +
-                    "\nVBoxVersion version = " + DockerMachine.vboxversion());
+                out.write("=== Host Info ===\n");
+                out.write(String.format("%20s = %s\n", "Scorekeeper", Prefs.getVersion()));
+                out.write(String.format("%20s = %s\n", "VBoxVersion", DockerMachine.vboxversion()));
+                for (String key : new String[] { "os.name", "os.version", "os.arch", "java.version", "java.vendor", "java.home" }) {
+                    out.write(String.format("%20s = %s\n", key, System.getProperty(key)));
+                }
+                out.write(String.format("%20s = %s\n", "Interface", Network.getPrimaryInterface()));
+                out.write(String.format("%20s = %s\n", "Address", Network.getPrimaryAddress()));
+                out.write(String.format("%20s = %s\n", "Hostname", Network.getLocalHostName()));
                 cmonitor.getDockerAPI().dump(out);
             }
             monitor.setProgress(20);

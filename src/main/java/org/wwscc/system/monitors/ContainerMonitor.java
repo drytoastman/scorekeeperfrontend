@@ -164,7 +164,7 @@ public class ContainerMonitor extends Monitor
             if (external_backend) {
                 status.set("Down");
             } else {
-                status.set("Restarting " + down);
+                status.set("Restarting " + down.stream().map(e -> e.getName()).collect(Collectors.joining(",")));
                 if (!docker.containersUp(down)) {
                     log.severe("Error during call to up."); // don't send to dialog, noisy
                 } else {
@@ -293,7 +293,7 @@ public class ContainerMonitor extends Monitor
             return true;
 
         } catch (Exception e) {
-            log.warning("Unabled to dump database: " + e);
+            log.log(Level.WARNING, "Unabled to dump database: " + e, e);
             return false;
         } finally {
             poke();

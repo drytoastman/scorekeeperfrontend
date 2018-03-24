@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
@@ -88,7 +89,6 @@ public class DockerAPI
      * Perform setup or re/setup with a new connection
      * @param env the current known environment variables
      */
-
     public void setup(Map<String, String> env)
     {
         try {
@@ -158,16 +158,23 @@ public class DockerAPI
             w.write("\n=== Docker Env ===\n");
             w.write(lastenv.toString());
             w.write("\n=== Docker Version ===\n");
-            w.write(request(new Requests.Version()));
+            Map<?,?> m = request(new Requests.Version());
+            for (Map.Entry<?,?> entry : m.entrySet()) {
+                if (!(entry.getValue() instanceof List))
+                    w.write(String.format("%20s = %s\n", entry.getKey(), entry.getValue()));
+            }
 
             w.write("\n=== Docker images ===\n");
             for (ImageSummary i : request(new Requests.GetImages())) {
-                w.write(i.toString());
-                w.write("\n");
+                if (i.getRepoTags() == null) continue;
+                w.write(String.format("%28s %s\n", i.getRepoTags(), i.getId()));
             }
 
             w.write("\n=== Docker containers ===\n");
-            w.write(request(new Requests.GetContainers()).toString());
+            for (ContainerSummaryInner s : request(new Requests.GetContainers())) {
+                w.write(s.toString());
+                w.write("\n");
+            }
 
             w.write("\n=== Docker network ===\n");
             for (Network n : request(new Requests.GetNetworks())) {
@@ -191,6 +198,7 @@ public class DockerAPI
         {
             for (DockerContainer c : search) {
                 if (info.getNames().contains("/"+c.getName())) {
+                    log.info(c.getName() + " state = " + info.getState());
                     c.setState(info.getState());
                 }
             }
@@ -217,7 +225,6 @@ public class DockerAPI
             return false;
         }
     }
-
 
 
     public boolean containersUp(Collection<DockerContainer> containers)
@@ -262,11 +269,10 @@ public class DockerAPI
 
             return true;
         } catch (IOException e) {
-            log.warning("Unabled to bring up containers: " + e);
+            log.log(Level.WARNING, "Unabled to bring up containers: " + e, e);
             return false;
         }
     }
-
 
 
     public void downloadTo(String name, String containerpath, Path hostdir) throws IOException
@@ -282,7 +288,6 @@ public class DockerAPI
             }
         }
     }
-
 
 
     public void uploadFile(String name, File file, String containerpath) throws IOException
@@ -304,11 +309,12 @@ public class DockerAPI
     }
 
 
-
+    @SuppressWarnings("rawtypes")
     public int exec(String name, String ... cmd) throws Exception
     {
         ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(false).attachStderr(false);
-        String id = (String)request(new Requests.CreateExec(name, config)).get("Id");
+        Map ret   = request(new Requests.CreateExec(name, config));
+        String id = (String)ret.get("Id");
 
         if (id != null) {
             request(new Requests.StartExec(id));
@@ -393,6 +399,7 @@ public class DockerAPI
         }
 
         wrap.request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        log.fine(wrap.request.toString());
         HttpResponse resp = client.execute(host, wrap.request);
         if (resp.getStatusLine().getStatusCode() >= 400) {
             String error = EntityUtils.toString(resp.getEntity());
