@@ -90,28 +90,17 @@ public class Database
     /**
      * Static function to wait for the database to start and initialize
      */
-    public static void waitUntilUp()
+    public static boolean testUp()
     {
-        while (true) {
-            int countdown = 30;
-            try {
-                Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF); // Apparently, I have to set this again
-                PostgresqlDatabase db = new PostgresqlDatabase("localuser");
-                db.close();
-                return;
-            } catch (SQLException sqle) {
-                String ss = sqle.getSQLState();
-                // give time for creating user, database, etc.
-                if (--countdown > 0) {
-                    log.log(Level.INFO, "Database not available yet ("+ss+"): "+sqle);
-                    try {  Thread.sleep(1000);
-                    } catch (InterruptedException ie) {}
-                    continue;
-                }
-
-                log.log(Level.SEVERE, "\bDatabase unavailable due to error "+sqle+","+ss, sqle);
-                return;
-            }
+        try {
+            Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF); // Apparently, I have to set this again
+            PostgresqlDatabase db = new PostgresqlDatabase("localuser");
+            db.close();
+            return true;
+        } catch (SQLException sqle) {
+            String ss = sqle.getSQLState();
+            log.log(Level.INFO, "Database unavailable: "+sqle+","+ss);
+            return false;
         }
     }
 }

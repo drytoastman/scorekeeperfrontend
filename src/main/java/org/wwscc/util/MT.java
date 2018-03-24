@@ -29,8 +29,6 @@ public enum MT {
     // ScorekeeperSystem
     // Machine
     USING_MACHINE,
-    DB_PORTS_READY,
-    WEB_PORT_READY,
     MACHINE_READY,
     MACHINE_STATUS,
     DOCKER_ENV,

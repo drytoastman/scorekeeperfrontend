@@ -156,7 +156,9 @@ public class DockerAPI
     {
         try {
             w.write("\n=== Docker Env ===\n");
-            w.write(lastenv.toString());
+            for (Map.Entry<?,?> entry : lastenv.entrySet()) {
+                w.write(String.format("%20s = %s\n", entry.getKey(), entry.getValue()));
+            }
             w.write("\n=== Docker Version ===\n");
             Map<?,?> m = request(new Requests.Version());
             for (Map.Entry<?,?> entry : m.entrySet()) {
@@ -198,7 +200,7 @@ public class DockerAPI
         {
             for (DockerContainer c : search) {
                 if (info.getNames().contains("/"+c.getName())) {
-                    log.info(c.getName() + " state = " + info.getState());
+                    log.finer(c.getName() + " state = " + info.getState());
                     c.setState(info.getState());
                 }
             }

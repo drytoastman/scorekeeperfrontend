@@ -106,11 +106,11 @@ public class ContainerMonitor extends Monitor
     public boolean minit()
     {
         status.set("Waiting for VM");
-        while (!machineready)
+        while (!done && !machineready)
             donefornow();
 
         status.set("Waiting for Docker API");
-        while (!docker.isReady())
+        while (!done && !docker.isReady())
             donefornow();
 
         if (!external_backend) {
@@ -118,11 +118,11 @@ public class ContainerMonitor extends Monitor
             docker.teardown(all);
 
             status.set( "Establishing Network");
-            while (!docker.networkUp(NET_NAME))
+            while (!done && !docker.networkUp(NET_NAME))
                 donefornow();
 
             status.set( "Creating containers");
-            while (!docker.containersUp(all))
+            while (!done && !docker.containersUp(all))
                 donefornow();
         }
 
@@ -178,7 +178,8 @@ public class ContainerMonitor extends Monitor
             if (ok != lastcheck)
             {
                 status.set("Waiting for Database");
-                Database.waitUntilUp();
+                while (!done && !Database.testUp());
+                if (done) return;
                 Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
             }

@@ -9,8 +9,14 @@
 package org.wwscc.system.monitors;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -32,25 +38,24 @@ public class MachineMonitor extends Monitor
     private static final Logger log = Logger.getLogger(MachineMonitor.class.getName());
 
     private JSch jsch;
-    private Session portforward, port80forward;
+    private Session ports;
     private String machinehost = "192.168.99.100";
     private Pattern hostpattern = Pattern.compile("(\\d+\\.\\d+\\.\\d+\\.\\d+)");
     private BroadcastState<Map<String,String>> dockerenv;
-    private BroadcastState<Boolean> dbportsready, webportready, machineready, usingmachine;
+    private BroadcastState<Boolean> machineready, usingmachine;
     private BroadcastState<String> status;
     private boolean shouldStopMachine, backendready;
 
     public MachineMonitor()
     {
         super("MachineMonitor", 10000);
-        dockerenv   = new BroadcastState<Map<String,String>>(MT.DOCKER_ENV, null);
-        dbportsready = new BroadcastState<Boolean>(MT.DB_PORTS_READY, false);
-        webportready = new BroadcastState<Boolean>(MT.WEB_PORT_READY, false);
-        machineready = new BroadcastState<Boolean>(MT.MACHINE_READY, false);
-        usingmachine = new BroadcastState<Boolean>(MT.USING_MACHINE, null);
-        status       = new BroadcastState<String>(MT.MACHINE_STATUS, "");
+        dockerenv     = new BroadcastState<Map<String,String>>(MT.DOCKER_ENV, null);
+        machineready  = new BroadcastState<Boolean>(MT.MACHINE_READY, false);
+        usingmachine  = new BroadcastState<Boolean>(MT.USING_MACHINE, null);
+        status        = new BroadcastState<String>(MT.MACHINE_STATUS, "");
         shouldStopMachine = false;
-        backendready = false;
+        backendready  = false;
+        ports = null;
 
         Messenger.register(MT.BACKEND_READY, (m, o) -> { backendready = (boolean)o; poke(); });
     }
@@ -134,6 +139,7 @@ public class MachineMonitor extends Monitor
         machineready.set(true);
 
         // Make sure port forwarding is up
+        List<Integer> missingports = new ArrayList<Integer>(Arrays.asList(new Integer[] { 6432, 80, 54329 }));
         try
         {
             Matcher m = hostpattern.matcher(dockerenv.get().get("DOCKER_HOST"));
@@ -142,56 +148,56 @@ public class MachineMonitor extends Monitor
             if (jsch.getIdentityNames().size() == 0)
                 jsch.addIdentity(Paths.get(dockerenv.get().get("DOCKER_CERT_PATH"), "id_rsa").toString());
 
-            if ((portforward == null) || (!portforward.isConnected()))
-            {
-                dbportsready.set(false);
-                status.set("Forwarding ports 6432,59432");
-
-                portforward = jsch.getSession("docker", machinehost);
-                portforward.setConfig("StrictHostKeyChecking", "no");
-                portforward.setConfig("GSSAPIAuthentication",  "no");
-                portforward.setConfig("PreferredAuthentications", "publickey");
-                portforward.setPortForwardingL("*",        54329, "127.0.0.1", 54329);
-                portforward.setPortForwardingL("127.0.0.1", 6432, "127.0.0.1",  6432);
-                portforward.connect();
-
-                dbportsready.set(true);
+            if ((ports == null) || (!ports.isConnected())) {
+                ports = jsch.getSession("docker", machinehost);
+                ports.setConfig("StrictHostKeyChecking", "no");
+                ports.setConfig("GSSAPIAuthentication",  "no");
+                ports.setConfig("PreferredAuthentications", "publickey");
+                ports.connect();
             }
 
-            // This one is the most likely to be blocked by another service, separate it so everything
-            // else (i.e. database) can at least connect in the mean time
-            if ((port80forward == null) || (!port80forward.isConnected()))
-            {
-                webportready.set(false);
-                status.set("Forwarding port 80");
+            for (String s : ports.getPortForwardingL())
+                missingports.remove((Object)Integer.parseInt(s.split(":")[0]));
 
-                port80forward = jsch.getSession("docker", machinehost);
-                port80forward.setConfig("StrictHostKeyChecking", "no");
-                port80forward.setConfig("GSSAPIAuthentication",  "no");
-                port80forward.setConfig("PreferredAuthentications", "publickey");
-                port80forward.setPortForwardingL("*", 80, "127.0.0.1", 80);
-                port80forward.connect();
+            if (missingports.contains(6432))
+                forwardPort("127.0.0.1", 6432);
+            if (missingports.contains(80))
+                forwardPort("*", 80);
+            if (missingports.contains(54329))
+                forwardPort("*", 54329);
 
-                webportready.set(true);
-            }
+            for (String s : ports.getPortForwardingL())
+                missingports.remove((Object)Integer.parseInt(s.split(":")[0]));
         }
-        catch (JSchException jse)
+        catch (Exception jse)
         {
-            log.log(Level.INFO, "Error setting up portforwarding: " + jse, jse);
+            log.log(Level.INFO, "Error in portfoward check: " + jse, jse);
             return;
         }
 
         // Everything is up at this point
-        status.set("Running");
+        if (missingports.size() > 0)
+            status.set("Ports " + missingports);
+        else
+            status.set("Running");
+    }
+
+    private void forwardPort(String host, int port)
+    {
+        try {
+            ports.setPortForwardingL(host, port, "127.0.0.1", port);
+        } catch (JSchException jse) {
+            log.log(Level.INFO, "Error setting up portforwarding: " + jse);
+        }
     }
 
     @Override
     protected void mshutdown()
     {
-        if (portforward != null) {
-            status.set("Stopping port-forwarding");
-            portforward.disconnect();
-        }
+        status.set("Stopping port-forwarding");
+        if (ports != null)
+            ports.disconnect();
+
         if (shouldStopMachine) {
             status.set("Waiting for backend shutdown");
             while (backendready)

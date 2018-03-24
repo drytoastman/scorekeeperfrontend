@@ -39,7 +39,7 @@ public class TestDatabaseContainer extends ExternalResource
         docker.networkUp(TestNetName);
         docker.containersUp(Arrays.asList(container));
 
-        Database.waitUntilUp();
+        while (!Database.testUp());
         Database.openSeries("testseries", 0);
     }
 
