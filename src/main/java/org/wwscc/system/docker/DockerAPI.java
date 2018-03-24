@@ -62,6 +62,8 @@ import org.wwscc.system.docker.models.ExecStatus;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
 import org.wwscc.system.docker.models.NetworkContainer;
+import org.wwscc.system.docker.models.Volume;
+import org.wwscc.system.docker.models.VolumesResponse;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
 import org.wwscc.util.SocketFactories.UnixSocketFactory;
@@ -231,14 +233,25 @@ public class DockerAPI
 
     public boolean containersUp(Collection<DockerContainer> containers)
     {
-        try {
+        try
+        {
             ImageSummary[] images = request(new Requests.GetImages());
             if (images == null)
                 throw new DockerDownException();
+            VolumesResponse volumes = request(new Requests.GetVolumes());
 
             loadState(containers);
 
-            for (DockerContainer container : containers) { // eventually parallelize
+            // Build our list of requests that need to be made
+            List<List<Requests.Wrapper<Void>>> chains = new ArrayList<List<Requests.Wrapper<Void>>>();
+            for (DockerContainer container : containers)
+            {
+                if (container.isUp())
+                    continue;
+
+                List<Requests.Wrapper<Void>> inner = new ArrayList<Requests.Wrapper<Void>>();
+                chains.add(inner);
+
                 if (Prefs.isDebug())
                     container.addEnvItem("DEBUG=1");
                 else
@@ -253,25 +266,44 @@ public class DockerAPI
                 }
                 if (needpull) {
                     log.info("Pulling " + container.getImage());
-                    request(new Requests.PullImage(container.getImage()));
+                    inner.add(new Requests.PullImage(container.getImage()));
                 }
 
                 // Create any volumes
-                for (String mount : container.getHostConfig().getBinds())
-                    request(new Requests.CreateVolume(mount.split(":")[0]));
+                for (String mount : container.getHostConfig().getBinds()) {
+                    String cvol = mount.split(":")[0];
+                    boolean needvol = true;
+                    for (Volume v : volumes.getVolumes()) {
+                        if (cvol.equals(v.getName())) {
+                            needvol = false;
+                        }
+                    }
+                    if (needvol)
+                        inner.add(new Requests.CreateVolume(cvol));
+                }
 
                 // Create the container
                 if (!container.isCreated())
-                    request(new Requests.CreateContainer(container));
+                    inner.add(new Requests.CreateContainer(container));
 
                 // Then start it
-                if (!container.isUp())
-                    request(new Requests.Start(container.getName()));
+                inner.add(new Requests.Start(container.getName()));
+            }
+
+            List<Exception> ret = parallelChains(chains);
+            if (ret.size() > 0) {
+                log.warning("containerup errors: ");
+                for (Exception e : ret) {
+                    log.warning(e.getMessage());
+                }
+                return false;
             }
 
             return true;
-        } catch (IOException e) {
-            log.log(Level.WARNING, "Unabled to bring up containers: " + e, e);
+        }
+        catch (Exception e)
+        {
+            log.log(Level.WARNING, "Unable to bring up containers: " + e, e);
             return false;
         }
     }

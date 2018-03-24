@@ -12,11 +12,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -139,7 +136,7 @@ public class MachineMonitor extends Monitor
         machineready.set(true);
 
         // Make sure port forwarding is up
-        List<Integer> missingports = new ArrayList<Integer>(Arrays.asList(new Integer[] { 6432, 80, 54329 }));
+        List<String> missing = missingPorts();
         try
         {
             Matcher m = hostpattern.matcher(dockerenv.get().get("DOCKER_HOST"));
@@ -156,18 +153,13 @@ public class MachineMonitor extends Monitor
                 ports.connect();
             }
 
-            for (String s : ports.getPortForwardingL())
-                missingports.remove((Object)Integer.parseInt(s.split(":")[0]));
-
-            if (missingports.contains(6432))
+            if (missing.contains("6432"))
                 forwardPort("127.0.0.1", 6432);
-            if (missingports.contains(80))
+            if (missing.contains("80"))
                 forwardPort("*", 80);
-            if (missingports.contains(54329))
+            if (missing.contains("54329"))
                 forwardPort("*", 54329);
-
-            for (String s : ports.getPortForwardingL())
-                missingports.remove((Object)Integer.parseInt(s.split(":")[0]));
+            missing = missingPorts();
         }
         catch (Exception jse)
         {
@@ -175,9 +167,8 @@ public class MachineMonitor extends Monitor
             return;
         }
 
-        // Everything is up at this point
-        if (missingports.size() > 0)
-            status.set("Ports " + missingports);
+        if (missing.size() > 0)
+            status.set("Ports " + String.join(",", missing));
         else
             status.set("Running");
     }
@@ -189,6 +180,16 @@ public class MachineMonitor extends Monitor
         } catch (JSchException jse) {
             log.log(Level.INFO, "Error setting up portforwarding: " + jse);
         }
+    }
+
+    private List<String> missingPorts()
+    {
+        List<String> ret = new ArrayList<String>(Arrays.asList(new String[] { "6432", "80", "54329" }));
+        try {
+            for (String s : ports.getPortForwardingL())
+                ret.remove(s.split(":")[0]);
+        } catch (Exception e) {}
+        return ret;
     }
 
     @Override

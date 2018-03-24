@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Requests
 {
-    public static final String apiver = "/v1.35";
+    public static final String API_VER = "/v1.35";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /* The templates ****************************************************************************/
@@ -71,7 +71,7 @@ public class Requests
     {
         public ContainerPost(String name, String action)
         {
-            super(new HttpPost(String.format("%s/containers/%s/%s", apiver, name, action)));
+            super(new HttpPost(String.format("%s/containers/%s/%s", API_VER, name, action)));
         }
     }
 
@@ -85,98 +85,98 @@ public class Requests
 
     static class Rm extends Wrapper<Void> {
         public Rm(String name) {
-            super(new HttpDelete(String.format("%s/containers/%s", apiver, name)));
+            super(new HttpDelete(String.format("%s/containers/%s", API_VER, name)));
     }}
 
     @SuppressWarnings("rawtypes")
     static class Version extends Wrapper<Map> {
         public Version() {
-            super(new HttpGet(apiver+"/version"), Map.class);
+            super(new HttpGet(API_VER+"/version"), Map.class);
         }
     }
 
     static class GetContainers extends Wrapper<ContainerSummary> {
         public GetContainers() {
-            super(new HttpGet(apiver+"/containers/json?all=true"), ContainerSummary.class);
+            super(new HttpGet(API_VER+"/containers/json?all=true"), ContainerSummary.class);
     }}
 
     static class GetImages extends Wrapper<ImageSummary[]> {
         public GetImages() {
-            super(new HttpGet(apiver+"/images/json"), ImageSummary[].class);
+            super(new HttpGet(API_VER+"/images/json"), ImageSummary[].class);
     }}
 
     static class GetVolumes extends Wrapper<VolumesResponse> {
         public GetVolumes() {
-            super(new HttpGet(apiver+"/volumes"), VolumesResponse.class);
+            super(new HttpGet(API_VER+"/volumes"), VolumesResponse.class);
     }}
 
     static class GetNetworks extends Wrapper<Network[]> {
         public GetNetworks() {
-            super(new HttpGet(apiver+"/networks"), Network[].class);
+            super(new HttpGet(API_VER+"/networks"), Network[].class);
     }}
 
     static class PullImage extends Wrapper<Void> {
         public PullImage(String name) {
-            super(new HttpPost(apiver+"/images/create?fromImage="+name));
+            super(new HttpPost(API_VER+"/images/create?fromImage="+name));
     }}
 
     static class GetNetwork extends Wrapper<Network> {
         public GetNetwork(String name) {
-            super(new HttpGet(apiver+"/networks/"+name), Network.class);
+            super(new HttpGet(API_VER+"/networks/"+name), Network.class);
     }}
 
     static class DeleteNetwork extends Wrapper<Void> {
         public DeleteNetwork(String name) {
-            super(new HttpDelete(apiver+"/networks/"+name));
+            super(new HttpDelete(API_VER+"/networks/"+name));
     }}
 
     static class CreateNetwork extends MapRequest {
         public CreateNetwork(String name) throws IOException {
-            super(new HttpPost(apiver+"/networks/create"), "Name", name);
+            super(new HttpPost(API_VER+"/networks/create"), "Name", name);
     }}
 
     static class CreateVolume extends MapRequest {
         public CreateVolume(String name) throws IOException {
-            super(new HttpPost(apiver+"/volumes/create"), "Name", name);
+            super(new HttpPost(API_VER+"/volumes/create"), "Name", name);
     }}
 
     static class DisconnectContainer extends MapRequest {
         public DisconnectContainer(String network, String container) throws IOException {
-            super(new HttpPost(apiver+"/networks/"+network+"/disconnect"), "Container", container, "Force", true);
+            super(new HttpPost(API_VER+"/networks/"+network+"/disconnect"), "Container", container, "Force", true);
     }}
 
     static class CreateContainer extends Wrapper<Void> {
         public CreateContainer(DockerContainer config) throws IOException {
-            super(new HttpPost(apiver+"/containers/create?name="+config.getName()));
+            super(new HttpPost(API_VER+"/containers/create?name="+config.getName()));
             ((HttpPost)request).setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
     }}
 
     static class Download extends Wrapper<InputStream> {
         public Download(String container, String path) {
-            super(new HttpGet(String.format("%s/containers/%s/archive?path=%s", apiver, container, path)), InputStream.class);
+            super(new HttpGet(String.format("%s/containers/%s/archive?path=%s", API_VER, container, path)), InputStream.class);
     }}
 
     static class Upload extends Wrapper<Void> {
         public Upload(String container, String path, ContentProducer content) {
-            super(new HttpPut(String.format("%s/containers/%s/archive?path=%s", apiver, container, path)));
+            super(new HttpPut(String.format("%s/containers/%s/archive?path=%s", API_VER, container, path)));
             ((HttpPut)request).setEntity(new EntityTemplate(content));
     }}
 
     @SuppressWarnings("rawtypes")
     static class CreateExec extends Wrapper<Map> {
         public CreateExec(String container, ExecConfig config) throws IOException {
-            super(new HttpPost(String.format("%s/containers/%s/exec", apiver, container)), Map.class);
+            super(new HttpPost(String.format("%s/containers/%s/exec", API_VER, container)), Map.class);
             ((HttpPost)request).setEntity(new StringEntity(mapper.writeValueAsString(config), ContentType.APPLICATION_JSON));
     }}
 
     static class StartExec extends MapRequest {
         public StartExec(String id) throws IOException {
-            super(new HttpPost(apiver+"/exec/"+id+"/start"), "Detach", true);
+            super(new HttpPost(API_VER+"/exec/"+id+"/start"), "Detach", true);
     }}
 
     static class GetExecStatus extends Wrapper<ExecStatus> {
         public GetExecStatus(String id) {
-            super(new HttpGet(apiver+"/exec/"+id+"/json"), ExecStatus.class);
+            super(new HttpGet(API_VER+"/exec/"+id+"/json"), ExecStatus.class);
         }
     }
 }
