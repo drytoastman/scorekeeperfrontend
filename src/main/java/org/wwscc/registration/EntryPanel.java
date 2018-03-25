@@ -46,7 +46,6 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import net.miginfocom.swing.MigLayout;
 
-import org.wwscc.barcodes.Code39;
 import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
@@ -66,16 +65,19 @@ import org.wwscc.util.Resources;
 
 public class EntryPanel extends DriverCarPanel implements MessageListener
 {
+    private static final ImageIcon noteicon = new ImageIcon(Resources.loadImage("notes.png"));
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
     public static final String ONSITE_PAYMENT = "onsite";
+    public static final String NEWWEEKEND = "Weekend Membership";
 
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
-    JButton clearSearch, newdriver, editdriver, editnotes;
+    JButton clearSearch, newdriver, editdriver, editnotes, newweekend;
     JButton newcar, newcarfrom, editcar, deletecar, print;
-    JLabel barcodewarning, noteswarning, paidwarning, mergeWarning;
+    JLabel paidwarning, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
     JComboBox<PrintService> printers;
-    Code39 activeLabel;
+
+    LayeredBarcode barcode;
 
     @SuppressWarnings("deprecation")
     public EntryPanel()
@@ -127,6 +129,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         newdriver   = smallButton(NEWDRIVER, true);
         editdriver  = smallButton(EDITDRIVER, false);
         editnotes   = smallButton(EDITNOTES, false);
+        newweekend  = smallButton(NEWWEEKEND, false);
         newcar      = smallButton(NEWCAR, false);
         newcarfrom  = smallButton(NEWFROM, false);
 
@@ -136,24 +139,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         deletecar = new JButton(new DeleteCarAction());
         deletecar.setEnabled(false);
 
-        barcodewarning = new JLabel("");
-        barcodewarning.setForeground(Color.WHITE);
-        barcodewarning.setBackground(Color.RED);
-        barcodewarning.setHorizontalAlignment(JLabel.CENTER);
-
-        noteswarning = new JLabel("");
-        noteswarning.setForeground(Color.WHITE);
-        noteswarning.setBackground(new Color(249, 157, 27));
-
         paidwarning = new JLabel("");
         paidwarning.setForeground(Color.WHITE);
         paidwarning.setBackground(Color.RED);
         paidwarning.setHorizontalAlignment(JLabel.CENTER);
 
-        activeLabel = new Code39();
-        activeLabel.setAlignmentX(CENTER_ALIGNMENT);
-
-        print = new JButton(new PrintLabelAction());
+        barcode = new LayeredBarcode();
+        print   = new JButton(new PrintLabelAction());
         print.setEnabled(false);
 
         mergeWarning = new JLabel("<html>Can only merge cars with<br/>the same class and index</html>", SwingConstants.CENTER);
@@ -163,7 +155,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
-        JPanel driverp = new JPanel(new MigLayout("fill, gap 2", "[fill,50%][50%!]", "fill"));
+        JPanel driverp = new JPanel(new MigLayout("fill, gap 2, ins 0 6 6 6", "[fill,50%][50%!]", "fill"));
         JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
         JPanel rightp  = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", "[grow 0][grow 100][grow 0]"));
 
@@ -183,17 +175,18 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         searchp.add(lastSearch,               "");
 
         driverp.add(createTitle("2. Driver"), "spanx 2, growx, wrap");
-        driverp.add(dscroll,           "spany 10, grow");
+        driverp.add(dscroll,           "spany 11, grow");
         driverp.add(newdriver,         "growx, wrap");
         driverp.add(editdriver,        "growx, wrap");
         driverp.add(editnotes,         "growx, wrap");
+        driverp.add(newweekend,        "growx, wrap");
+        driverp.add(new JLabel(""),    "pushy 10, wrap");
         driverp.add(driverInfo,        "growx, wrap");
-        driverp.add(barcodewarning, "growx, h 18, wrap");
-        driverp.add(noteswarning,      "growx, h 18, wrap");
-        driverp.add(activeLabel,       "gapy 4 4, center, wrap");
+        driverp.add(new JLabel(""),    "pushy 10, wrap");
+        driverp.add(barcode,           "growx, h 50, center, wrap");
         driverp.add(printers,          "growx, wrap");
         driverp.add(print,             "growx, wrap");
-        driverp.add(new JLabel(""),    "pushy 100");
+        driverp.add(new JLabel(""),    "pushy 10");
 
         singleCarPanel = new JPanel(new MigLayout("fill, ins 0, gap 2"));
         multiCarPanel  = new JPanel(new MigLayout("fill, ins 0, gap 2"));
@@ -243,7 +236,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                 attr.add((Media)ps.getDefaultAttributeValue(Media.class)); // set to default paper from printer
                 attr.add(OrientationRequested.LANDSCAPE);
 
-                SimpleDoc doc = new SimpleDoc(activeLabel, DocFlavor.SERVICE_FORMATTED.PRINTABLE, null);
+                SimpleDoc doc = new SimpleDoc(barcode.getBarcode(), DocFlavor.SERVICE_FORMATTED.PRINTABLE, null);
                 ps.createPrintJob().print(doc, attr);
             }  catch (PrintException ex) {
                 log.log(Level.SEVERE, "\bBarcode print failed: " + ex.getMessage(), ex);
@@ -554,7 +547,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         {
             if (cmd.equals(EDITNOTES) && (selectedDriver != null))
             {
-                String ret = (String)JOptionPane.showInputDialog(this, EDITNOTES, noteswarning.getText());
+                String ret = (String)JOptionPane.showInputDialog(this, EDITNOTES, selectedDriver.getAttrS("notes"));
                 if (ret != null)
                 {
                     selectedDriver.setAttrS("notes", ret);
@@ -592,18 +585,17 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
     protected void driverSelectionChanged()
     {
-        barcodewarning.setText("");
-        barcodewarning.setOpaque(false);
-        noteswarning.setText("");
-        noteswarning.setOpaque(false);
+        editnotes.setIcon(null);
 
         if (selectedDriver != null)
         {
             newcar.setEnabled(true);
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
-            activeLabel.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
-            activeLabel.repaint();
+            newweekend.setEnabled(true);
+            barcode.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
+            barcode.setWarning("");
+            barcode.repaint();
 
             boolean emptybarcode = selectedDriver.getBarcode().trim().equals("");
             if (!emptybarcode)
@@ -615,16 +607,14 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
                     StringBuffer buf = new StringBuffer(dups.get(0).getFullName());
                     for (int ii = 1; ii < dups.size(); ii++)
                         buf.append(", ").append(dups.get(ii).getFullName());
-                    barcodewarning.setText("Duplicate Barcode - " + buf);
-                    barcodewarning.setOpaque(true);
+                    barcode.setWarning("Duplicate Barcode - " + buf);
                 }
             }
             else
             {
                 try {
                     if (Integer.parseInt(Database.d.getSetting("requestbarcodes")) != 0) {
-                        barcodewarning.setText("No Barcode");
-                        barcodewarning.setOpaque(true);
+                        barcode.setWarning("No Barcode");
                     }
                 } catch (NumberFormatException nfe) {}
             }
@@ -632,18 +622,16 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
             String notes = selectedDriver.getAttrS("notes");
             if (!notes.trim().equals(""))
-            {
-                noteswarning.setText(notes);
-                noteswarning.setOpaque(true);
-            }
+                editnotes.setIcon(noteicon);
         }
         else
         {
             newcar.setEnabled(false);
             editdriver.setEnabled(false);
             editnotes.setEnabled(false);
-            activeLabel.setValue("", "");
-            activeLabel.repaint();
+            newweekend.setEnabled(false);
+            barcode.setValue("", "");
+            barcode.setWarning("");
             carVector.clear();
             setPaidDriverInfo(); // make sure to clear old data
         }
