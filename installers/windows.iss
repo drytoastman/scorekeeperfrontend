@@ -1,5 +1,3 @@
-#define Version "practice2"
-
 [Setup]
 AppName=Scorekeeper
 AppVersion={#Version}
@@ -134,17 +132,9 @@ var
  ResultCode: Integer;
  BatFile: String;
 begin
+    { machine error is always 1 even if its just an existing machine so we ignore and depend on pull to error }
     ExecAsOriginalUser('docker-machine.exe', 'create default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-    if ResultCode <> 0 then begin
-        Result := 'Failed to create docker VM default instance'
-        Exit;
-    end;
-
     ExecAsOriginalUser('docker-machine.exe', 'start default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-    if ResultCode <> 0 then begin
-        Result := 'Failed to start docker VM default instance'
-        Exit;
-    end;
 
 #ifdef Offline
     BatFile := ImageLoadBatch('');
