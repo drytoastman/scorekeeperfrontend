@@ -1,3 +1,5 @@
+#define Version "practice2"
+
 [Setup]
 AppName=Scorekeeper
 AppVersion={#Version}
@@ -36,14 +38,6 @@ Name: "{userdesktop}\Scorekeeper {#Version}"; WorkingDir: "{app}"; Filename: "ja
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
-Filename: "docker-machine.exe"; Parameters: "create default"; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Creating Docker VM (if not already present)";
-Filename: "docker-machine.exe"; Parameters: "start default";  Flags: runasoriginaluser waituntilterminated; StatusMsg: "Starting Docker VM (if not already started)";
-#ifdef Offline
-Filename: "{cmd}"; Parameters: "/c (@FOR /f ""tokens=*"" %i IN ('docker-machine.exe env --shell=cmd') DO @%i) & docker load --input {tmp}\{#ImageArchive}"; \
-                   Flags: runasoriginaluser waituntilterminated; StatusMsg: "Loading Docker Images";
-#else
-Filename: {code:ImageBatchFile}; Flags: runasoriginaluser waituntilterminated; StatusMsg: "Downloading Docker Images";
-#endif
 
 [Code]
 const
@@ -73,8 +67,6 @@ begin
      'On a Windows Pro machine you must make sure Hyper-V is disabled before installing Docker Toolbox.  ' +
      'Docker for Windows, based on Hyper-V, is not reliable enough after the computer comes out of hibernate or sleep at this time.'
      , mbError, MB_OK, IDOK);
-     //Result := False;
-     //Exit;
    end;
 
    if RegQueryStringValue(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment', 'CurrentVersion', Version) then begin
@@ -111,7 +103,7 @@ begin
 end;
 
 
-function ImageBatchFile(ignored: String): String;
+function ImagePullBatch(ignored: String): String;
 var
  ResultCode: Integer;
 begin
@@ -121,6 +113,49 @@ begin
        SaveStringToFile(Result, 'docker pull drytoastman/scweb:{#Version}'#10, True);
        SaveStringToFile(Result, 'docker pull drytoastman/scsync:{#Version}'#10, True);
    end;
+end;
+
+
+#ifdef Offline
+function ImageLoadBatch(ignored: String): String;
+var
+ ResultCode: Integer;
+begin
+   Result := ExpandConstant('{tmp}\loadimages.bat')
+   if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
+       SaveStringToFile(Result, ExpandConstant('docker load --input {tmp}\{#ImageArchive}'#10), True);
+   end;
+end;
+#endif
+
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+ ResultCode: Integer;
+ BatFile: String;
+begin
+    ExecAsOriginalUser('docker-machine.exe', 'create default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    if ResultCode <> 0 then begin
+        Result := 'Failed to create docker VM default instance'
+        Exit;
+    end;
+
+    ExecAsOriginalUser('docker-machine.exe', 'start default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    if ResultCode <> 0 then begin
+        Result := 'Failed to start docker VM default instance'
+        Exit;
+    end;
+
+#ifdef Offline
+    BatFile := ImageLoadBatch('');
+#else
+    BatFile := ImagePullBatch('');
+#endif
+
+    ExecAsOriginalUser(BatFile, '', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    if ResultCode <> 0 then begin
+        Result := 'Failed to download the docker images';
+    end;
 end;
 
 
