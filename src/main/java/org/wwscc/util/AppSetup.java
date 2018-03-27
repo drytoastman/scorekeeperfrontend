@@ -83,18 +83,19 @@ public class AppSetup
         Logger.getLogger("org.postgresql.jdbc").setLevel(Level.OFF);
         Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF);
 
-        // Add console handler if running in debug mode
-        if (Prefs.isDebug()) {
-            ConsoleHandler ch = new ConsoleHandler();
-            ch.setLevel(Level.ALL);
-            ch.setFormatter(format);
-            root.addHandler(ch);
-        }
-
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
         applog.setLevel(Prefs.getLogLevel().getJavaLevel());
         applog.addHandler(new AlertHandler());
+
+        // Add console handler if running in debug mode
+        if (Prefs.isDebug()) {
+            ConsoleHandler ch = new ConsoleHandler();
+            applog.setLevel(Level.ALL);
+            ch.setLevel(Level.ALL);
+            ch.setFormatter(format);
+            root.addHandler(ch);
+        }
 
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
             @Override

@@ -40,10 +40,12 @@ public class TestDatabaseContainer extends ExternalResource
         DockerMachine.machineenv(env);
         docker = new DockerAPI();
         docker.setup(env.get());
+        docker.teardown(Arrays.asList(container));
         docker.networkUp(TestNetName);
         docker.containersUp(Arrays.asList(container));
 
-        while (!Database.testUp());
+        while (!Database.testUp())
+            Thread.sleep(1000);
         Database.openSeries("testseries", 0);
     }
 

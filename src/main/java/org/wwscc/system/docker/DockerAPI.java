@@ -35,9 +35,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.BoundedInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -45,12 +47,12 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentProducer;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -240,7 +242,7 @@ public class DockerAPI
         {
             ImageSummary[] images = request(new Requests.GetImages());
             if (images == null)
-                throw new DockerDownException();
+                images = new ImageSummary[0];
             VolumesResponse volumes = request(new Requests.GetVolumes());
             if (volumes.getVolumes() == null)
                 volumes.setVolumes(new ArrayList<Volume>());
@@ -438,7 +440,14 @@ public class DockerAPI
         }
 
         wrap.request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
-        log.fine(wrap.request.toString());
+
+        log.log(Level.FINE, "{0}", wrap.request);
+        if (log.isLoggable(Level.FINER) && wrap.request instanceof HttpEntityEnclosingRequestBase) {
+            HttpEntity he = ((HttpEntityEnclosingRequestBase)wrap.request).getEntity();
+            if (he instanceof StringEntity)
+                log.log(Level.FINER, EntityUtils.toString(he));
+        }
+
         HttpResponse resp = client.execute(host, wrap.request);
         if (resp.getStatusLine().getStatusCode() >= 400) {
             String error = EntityUtils.toString(resp.getEntity());
