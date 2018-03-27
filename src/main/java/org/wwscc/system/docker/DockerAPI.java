@@ -242,6 +242,8 @@ public class DockerAPI
             if (images == null)
                 throw new DockerDownException();
             VolumesResponse volumes = request(new Requests.GetVolumes());
+            if (volumes.getVolumes() == null)
+                volumes.setVolumes(new ArrayList<Volume>());
 
             loadState(containers);
 

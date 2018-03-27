@@ -38,7 +38,8 @@ public class BroadcastState<T>
         {
             log.info(String.format("%s changed: %s to %s ", event, state, newstate));
             state = newstate;
-            Messenger.sendEvent(event, state);
+            if (event != null)
+                Messenger.sendEvent(event, state);
         }
     }
 

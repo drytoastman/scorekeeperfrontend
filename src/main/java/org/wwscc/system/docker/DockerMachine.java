@@ -15,9 +15,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.TimeZone;
-import java.util.logging.Logger;
-
 import org.apache.commons.lang3.SystemUtils;
+import org.wwscc.util.BroadcastState;
 import org.wwscc.util.Exec;
 
 /**
@@ -25,46 +24,8 @@ import org.wwscc.util.Exec;
  */
 public class DockerMachine
 {
-    private static final Logger log = Logger.getLogger(DockerMachine.class.getName());
-
-    /**
-     * Returns the environment variables used by docker-compose if docker-machine is present
-     * @return a map of the environment variables that were set
-     */
-    public static Map<String, String> machineenv()
-    {
-        byte buf[] = new byte[4096];
-        if (Exec.execit(Exec.build(null, "docker-machine", "env", "--shell", "cmd"), buf) != 0) {
-            log.severe(new String(buf).trim());
-            return new HashMap<String, String>();
-        }
-        return scanenv(new String(buf));
-    }
-
-    protected static Map<String, String> scanenv(String buf)
-    {
-        HashMap<String, String> ret = new HashMap<String, String>();
-
-        try (Scanner scan = new Scanner(buf))
-        {
-            while (scan.hasNext())
-            {
-                String set = scan.next();
-                String var = scan.nextLine();
-                if (set.equals("SET")) {
-                    String p[] = var.split("=");
-                    ret.put(p[0].trim(), p[1].trim());
-                } else {
-                    scan.nextLine();
-                }
-            }
-        }
-        catch (NoSuchElementException nse)
-        {
-        }
-
-        return ret;
-    }
+    public static final String MACHINE_NAME = "default";
+    public enum MachineReturn { OK, REGEN_CERTS, ERROR };
 
     /**
      * @return true if docker-machine and vboxmanage are installed (VirtualBox comes with Docker ToolBox)
@@ -97,7 +58,7 @@ public class DockerMachine
     public static boolean machinecreated()
     {
         byte buf[] = new byte[128];
-        if (Exec.execit(Exec.build(null, "docker-machine", "ls", "-q", "--filter", "name=default"), buf) != 0) {
+        if (Exec.execit(Exec.build(null, "docker-machine", "ls", "-q", "--filter", "name="+MACHINE_NAME), buf) != 0) {
             return false;
         }
         try (Scanner scan = new Scanner(new String(buf).trim())) {
@@ -112,15 +73,64 @@ public class DockerMachine
      */
     public static boolean createmachine()
     {
-        return Exec.execit(Exec.build(null, "docker-machine", "create", "-d", "virtualbox", "default"), null) == 0;
+        return Exec.execit(Exec.build(null, "docker-machine", "create", "-d", "virtualbox", MACHINE_NAME), null) == 0;
+    }
+
+
+    /**
+     * Returns the environment variables used by docker-compose if docker-machine is present
+     * @return a map of the environment variables that were set
+     */
+    public static MachineReturn machineenv(BroadcastState<Map<String, String>> env)
+    {
+        byte buf[] = new byte[4096];
+        if (Exec.execit(Exec.build(null, "docker-machine", "env", "--shell", "cmd"), buf) == 0) {
+            env.set(scanenv(new String(buf)));
+            return MachineReturn.OK;
+        }
+        env.set(null);
+        if (new String(buf).contains("regenerat")) {
+            return MachineReturn.REGEN_CERTS;
+        }
+        return MachineReturn.ERROR;
+    }
+
+    protected static Map<String, String> scanenv(String buf)
+    {
+        HashMap<String, String> ret = new HashMap<String, String>();
+
+        try (Scanner scan = new Scanner(buf))
+        {
+            while (scan.hasNext())
+            {
+                String set = scan.next();
+                String var = scan.nextLine();
+                if (set.equals("SET")) {
+                    String p[] = var.split("=");
+                    ret.put(p[0].trim(), p[1].trim());
+                } else {
+                    scan.nextLine();
+                }
+            }
+        }
+        catch (NoSuchElementException nse)
+        {
+        }
+
+        return ret;
     }
 
     /**
      * @return true if virtualbox node is running
      */
-    public static boolean machinerunning()
+    public static MachineReturn machinerunning()
     {
-        return Exec.execit(Exec.build(null, "docker-machine", "ip"), null) == 0;
+        byte buf[] = new byte[1024];
+        if (Exec.execit(Exec.build(null, "docker-machine", "ip", MACHINE_NAME), buf) == 0)
+            return MachineReturn.OK;
+        if (new String(buf).contains("regenerat"))
+            return MachineReturn.REGEN_CERTS;
+        return MachineReturn.ERROR;
     }
 
     /**
@@ -129,7 +139,16 @@ public class DockerMachine
      */
     public static boolean startmachine()
     {
-        return Exec.execit(Exec.build(null, "docker-machine", "start"), null) == 0;
+        return Exec.execit(Exec.build(null, "docker-machine", "start", MACHINE_NAME), null) == 0;
+    }
+
+    /**
+     * Regenerate certs in response to errors.
+     * @return true the command returns success
+     */
+    public static boolean regenerate_certs()
+    {
+        return Exec.execit(Exec.build(null, "docker-machine", "regenerate-certs", "-f", MACHINE_NAME), null) == 0;
     }
 
     /**
@@ -140,7 +159,7 @@ public class DockerMachine
     {
         SimpleDateFormat fmt = new SimpleDateFormat("MMddHHmmyyyy.ss");
         fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return Exec.execit(Exec.build(null, "docker-machine", "ssh", "default", "sudo date -u " + fmt.format(new Date())), null) == 0;
+        return Exec.execit(Exec.build(null, "docker-machine", "ssh", MACHINE_NAME, "sudo date -u " + fmt.format(new Date())), null) == 0;
     }
 
     /**

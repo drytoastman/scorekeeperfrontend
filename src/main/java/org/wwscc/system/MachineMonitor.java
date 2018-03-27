@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wwscc.system.docker.DockerMachine;
+import org.wwscc.system.docker.DockerMachine.MachineReturn;
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -105,30 +106,45 @@ public class MachineMonitor extends MonitorBase
     protected void mloop()
     {
         // Make sure machine is running
-        if (!DockerMachine.machinerunning())
+        MachineReturn running = DockerMachine.machinerunning();
+        while (!done && (running != MachineReturn.OK))
         {
             machineready.set(false);
             dockerenv.set(null);
-            log.info("Starting the docker machine.");
-            status.set("Restarting VM");
-            if (!DockerMachine.startmachine())
-            {
-                log.severe("Unable to restart docker machine, will try again");
-                status.set("VM Paused");
-                return;
+
+            if (running == MachineReturn.ERROR) {
+                log.info("Starting the docker machine.");
+                status.set("Restarting VM");
+                if (!DockerMachine.startmachine()) {
+                    log.severe("Unable to restart docker machine, will try again");
+                    status.set("VM Error");
+                    return;
+                }
+            } else if (running == MachineReturn.REGEN_CERTS) {
+                log.warning("Regenerating machine certs");
+                status.set("Generate Certs");
+                DockerMachine.regenerate_certs();
             }
+
+            running = DockerMachine.machinerunning();
         }
 
         // Make sure we have a proper environment setup
-        if (envBad())
+        while (!done && envBad())
         {
             status.set("Loading environment");
-            dockerenv.set(DockerMachine.machineenv());
-            if (envBad())
+            MachineReturn mret = DockerMachine.machineenv(dockerenv);
+            if (mret == MachineReturn.ERROR)
             {
                 log.warning("Unable to load machine env, will try again");
                 status.set("Waiting for Env");
                 return;
+            }
+            else if (mret == MachineReturn.REGEN_CERTS)
+            {
+                log.warning("Regenerating machine certs");
+                status.set("Generate certs");
+                DockerMachine.regenerate_certs();
             }
         }
 

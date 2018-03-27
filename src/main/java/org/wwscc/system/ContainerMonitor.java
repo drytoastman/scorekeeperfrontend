@@ -179,7 +179,8 @@ public class ContainerMonitor extends MonitorBase
             if (ok != lastcheck)
             {
                 status.set("Waiting for Database");
-                while (!done && !Database.testUp());
+                while (!done && !Database.testUp())
+                    donefornow();
                 if (done) return;
                 Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));

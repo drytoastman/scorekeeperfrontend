@@ -9,12 +9,14 @@
 package org.wwscc.storage;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.junit.rules.ExternalResource;
 import org.wwscc.system.docker.DockerAPI;
 import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.util.AppSetup;
+import org.wwscc.util.BroadcastState;
 
 public class TestDatabaseContainer extends ExternalResource
 {
@@ -29,13 +31,15 @@ public class TestDatabaseContainer extends ExternalResource
     protected void before() throws Throwable
     {
         AppSetup.unitLogging();
+        BroadcastState<Map<String,String>> env = new BroadcastState<Map<String,String>>(null, null);
 
         container = new DockerContainer(TestContainerName, TestContainerImage, TestNetName);
         container.addPort("127.0.0.1", 6432, 6432);
         container.addPort("0.0.0.0", 54329, 5432);
 
+        DockerMachine.machineenv(env);
         docker = new DockerAPI();
-        docker.setup(DockerMachine.machineenv());
+        docker.setup(env.get());
         docker.networkUp(TestNetName);
         docker.containersUp(Arrays.asList(container));
 
