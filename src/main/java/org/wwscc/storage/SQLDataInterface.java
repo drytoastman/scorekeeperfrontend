@@ -1,5 +1,5 @@
 /*
- * This software is licensed under the GPLv3 license, included as
+G * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
  * Portions created by Brett Wilson are Copyright 2017 Brett Wilson.
@@ -11,6 +11,7 @@ package org.wwscc.storage;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,9 +42,9 @@ public abstract class SQLDataInterface implements DataInterface
     public abstract void start() throws Exception;
     public abstract void commit() throws Exception;
     public abstract void rollback();
-    public abstract void executeUpdate(String sql, List<Object> args) throws Exception, IOException;
-    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws Exception, IOException;
-    public abstract ResultSet executeSelect(String sql, List<Object> args) throws Exception, IOException;
+    public abstract void executeUpdate(String sql, List<Object> args) throws SQLException, IOException;
+    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException, IOException;
+    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException, IOException;
     public abstract void closeLeftOvers();
     public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws Exception, IOException;
 
@@ -1037,6 +1038,54 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
+    @Override
+    public List<WeekendMember> getWeekendMemberships(UUID driverid)
+    {
+        try
+        {
+            List<WeekendMember> ret = new ArrayList<WeekendMember>();
+            ResultSet rs = executeSelect("SELECT * FROM weekendmembers WHERE driverid=?", newList(driverid));
+            while (rs.next()) {
+                ret.add(new WeekendMember(rs));
+            }
+            return ret;
+        }
+        catch (Exception ioe)
+        {
+            logError("isInOrder", ioe);
+            return null;
+        }
+    }
+
+
+    @Override
+    public Integer newWeekendNumber(WeekendMember in) throws Exception
+    {
+        int min, max;
+        try {
+            min = Integer.parseInt(getSetting("weekendmin"));
+            max = Integer.parseInt(getSetting("weekendmax"));
+        } catch (NumberFormatException nfe) {
+            throw new SQLException("Invalid range for weekend membership numbers in settings");
+        }
+        Set<Integer> current = new HashSet<Integer>();
+        ResultSet rs = executeSelect("SELECT DISTINCT membership FROM weekendmembers", null);
+        while (rs.next())
+            current.add(rs.getInt(1));
+
+        int pick = 0;
+        for (pick = min; pick <= max; pick++) {
+            if (!current.contains(pick))
+                break;
+        }
+        if (pick > max)
+            throw new SQLException("Ran out of weekend membernumbers, all alloted values have been used");
+
+        in.membership = pick;
+        executeUpdate("INSERT INTO weekendmembers (membership, driverid, startdate, enddate, issuer, issuermem, region, area) VALUES (?,?,?,?,?,?,?,?)", in.getValues());
+        return pick;
+    }
+
 
     @Override
     public boolean isInOrder(UUID eventid, UUID carid, int course)
@@ -1050,10 +1099,6 @@ public abstract class SQLDataInterface implements DataInterface
         {
             logError("isInOrder", ioe);
             return false;
-        }
-        finally
-        {
-            closeLeftOvers();
         }
     }
 
@@ -1069,10 +1114,6 @@ public abstract class SQLDataInterface implements DataInterface
         {
             logError("isInCurrentOrder", ioe);
             return false;
-        }
-        finally
-        {
-            closeLeftOvers();
         }
     }
 

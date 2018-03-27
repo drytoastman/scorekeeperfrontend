@@ -50,6 +50,8 @@ import org.wwscc.components.DriverCarPanel;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.CurrencyDialog;
+import org.wwscc.dialogs.NotesDialog;
+import org.wwscc.dialogs.WeekendMemberDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
@@ -66,12 +68,14 @@ import org.wwscc.util.Resources;
 public class EntryPanel extends DriverCarPanel implements MessageListener
 {
     private static final ImageIcon noteicon = new ImageIcon(Resources.loadImage("notes.png"));
+    private static final ImageIcon cardicon = new ImageIcon(Resources.loadImage("card.png"));
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
+
     public static final String ONSITE_PAYMENT = "onsite";
-    public static final String NEWWEEKEND = "Weekend Membership";
+    public static final String WEEKEND = "Weekend Membership";
 
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
-    JButton clearSearch, newdriver, editdriver, editnotes, newweekend;
+    JButton clearSearch, newdriver, editdriver, editnotes, weekmember;
     JButton newcar, newcarfrom, editcar, deletecar, print;
     JLabel paidwarning, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
@@ -129,7 +133,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         newdriver   = smallButton(NEWDRIVER, true);
         editdriver  = smallButton(EDITDRIVER, false);
         editnotes   = smallButton(EDITNOTES, false);
-        newweekend  = smallButton(NEWWEEKEND, false);
+        weekmember  = smallButton(WEEKEND, false);
         newcar      = smallButton(NEWCAR, false);
         newcarfrom  = smallButton(NEWFROM, false);
 
@@ -179,7 +183,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         driverp.add(newdriver,         "growx, wrap");
         driverp.add(editdriver,        "growx, wrap");
         driverp.add(editnotes,         "growx, wrap");
-        driverp.add(newweekend,        "growx, wrap");
+        driverp.add(weekmember,        "growx, wrap");
         driverp.add(new JLabel(""),    "pushy 10, wrap");
         driverp.add(driverInfo,        "growx, wrap");
         driverp.add(new JLabel(""),    "pushy 10, wrap");
@@ -547,13 +551,17 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         {
             if (cmd.equals(EDITNOTES) && (selectedDriver != null))
             {
-                String ret = (String)JOptionPane.showInputDialog(this, EDITNOTES, selectedDriver.getAttrS("notes"));
-                if (ret != null)
-                {
-                    selectedDriver.setAttrS("notes", ret);
+                NotesDialog nd = new NotesDialog(selectedDriver.getAttrS("notes"));
+                if (nd.doDialog("Edit Notes", null)) {
+                    selectedDriver.setAttrS("notes", nd.getResult());
                     Database.d.updateDriver(selectedDriver);
                     valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
                 }
+            }
+            else if (cmd.equals(WEEKEND) && (selectedDriver != null))
+            {
+                WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver);
+                wd.doDialog("Weekend Membership", d -> {});
             }
             else
                 super.actionPerformed(e);
@@ -592,10 +600,12 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             newcar.setEnabled(true);
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
-            newweekend.setEnabled(true);
+            weekmember.setEnabled(true);
             barcode.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
             barcode.setWarning("");
             barcode.repaint();
+
+            weekmember.setIcon(cardicon);
 
             boolean emptybarcode = selectedDriver.getBarcode().trim().equals("");
             if (!emptybarcode)
@@ -629,7 +639,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             newcar.setEnabled(false);
             editdriver.setEnabled(false);
             editnotes.setEnabled(false);
-            newweekend.setEnabled(false);
+            weekmember.setEnabled(false);
             barcode.setValue("", "");
             barcode.setWarning("");
             carVector.clear();
