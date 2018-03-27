@@ -9,6 +9,7 @@
 package org.wwscc.storage;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.rules.ExternalResource;
@@ -37,9 +38,13 @@ public class TestDatabaseContainer extends ExternalResource
         container.addPort("127.0.0.1", 6432, 6432);
         container.addPort("0.0.0.0", 54329, 5432);
 
-        DockerMachine.machineenv(env);
         docker = new DockerAPI();
-        docker.setup(env.get());
+        if (DockerMachine.machinepresent()) {
+            DockerMachine.machineenv(env);
+            docker.setup(env.get());
+        } else {
+            docker.setup(new HashMap<>());
+        }
         docker.teardown(Arrays.asList(container));
         docker.networkUp(TestNetName);
         docker.containersUp(Arrays.asList(container));

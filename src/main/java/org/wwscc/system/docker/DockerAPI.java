@@ -87,7 +87,11 @@ public class DockerAPI
     ExecutorService executor;
     Map<String, String> lastenv;
 
-    public class DockerDownException extends IOException {}
+    public class DockerDownException extends IOException {
+        public DockerDownException() {
+            super("Docker is down");
+        }
+    }
 
     /**
      * Perform setup or re/setup with a new connection
