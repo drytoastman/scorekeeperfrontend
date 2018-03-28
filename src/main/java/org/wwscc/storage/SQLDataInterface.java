@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -1053,7 +1054,8 @@ public abstract class SQLDataInterface implements DataInterface
     public WeekendMember getActiveWeekendMembership(UUID driverid)
     {
         try {
-            ResultSet rs = executeSelect("SELECT * FROM weekendmembers WHERE driverid=? AND startdate <= current_date and enddate >= current_date ORDER BY enddate DESC", newList(driverid));
+            LocalDate now = LocalDate.now();
+            ResultSet rs = executeSelect("SELECT * FROM weekendmembers WHERE driverid=? AND startdate<=? and enddate>=? ORDER BY enddate DESC", newList(driverid, now, now));
             if (rs.next()) {
                 return new WeekendMember(rs);
             }

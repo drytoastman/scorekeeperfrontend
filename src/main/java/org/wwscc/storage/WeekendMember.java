@@ -8,9 +8,9 @@
 
 package org.wwscc.storage;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.UUID;
 
@@ -18,14 +18,14 @@ public class WeekendMember extends AttrBase
 {
     protected int membership;
     protected UUID driverid;
-    protected Date startdate;
-    protected Date enddate;
+    protected LocalDate startdate;
+    protected LocalDate enddate;
     protected String issuer;
     protected String issuermem;
     protected String region;
     protected String area;
 
-    public WeekendMember(UUID driverid, Date start, Date end)
+    public WeekendMember(UUID driverid, LocalDate start, LocalDate end)
     {
         this.membership = -1;
         this.driverid  = driverid;
@@ -41,8 +41,8 @@ public class WeekendMember extends AttrBase
     {
         membership = rs.getInt("membership");
         driverid   = (UUID)rs.getObject("driverid");
-        startdate  = rs.getDate("startdate", Database.utc);
-        enddate    = rs.getDate("enddate", Database.utc);
+        startdate  = rs.getObject("startdate", LocalDate.class);
+        enddate    = rs.getObject("enddate", LocalDate.class);
         issuer     = rs.getString("issuer");
         issuermem  = rs.getString("issuermem");
         region     = rs.getString("region");
@@ -64,8 +64,8 @@ public class WeekendMember extends AttrBase
     }
 
     public UUID getDriverId()         { return driverid; }
-    public Date getStartDate()        { return startdate; }
-    public Date getEndDate()          { return enddate; }
+    public LocalDate getStartDate()   { return startdate; }
+    public LocalDate getEndDate()     { return enddate; }
     public Integer getMemberId()      { return membership; }
 
     public void setDriverId(UUID id)   { driverid = id; }

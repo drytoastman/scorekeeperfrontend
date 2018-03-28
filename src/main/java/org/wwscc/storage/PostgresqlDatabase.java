@@ -13,13 +13,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -358,8 +358,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 p.setObject(ii+1, pgo);
             } else if (v instanceof Timestamp) {
                 p.setTimestamp(ii+1, (Timestamp)v, Database.utc);
-            } else if (v instanceof Date) {
-                p.setDate(ii+1, (Date)v, Database.utc);
+            } else if (v instanceof LocalDate) {
+                p.setObject(ii+1, v);
             } else {
                 throw new SQLException("unexpected param type: " + v.getClass());
             }

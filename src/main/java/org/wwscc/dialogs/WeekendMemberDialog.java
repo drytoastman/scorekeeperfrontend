@@ -8,7 +8,7 @@
 
 package org.wwscc.dialogs;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,13 +30,13 @@ public class WeekendMemberDialog extends BaseDialog<Void>
 
     public WeekendMemberDialog(Driver driver, WeekendMember active)
     {
-        super(new MigLayout("h 100, w 150, center", ""), true);
+        super(new MigLayout("h 90, w 150, center", ""), true);
 
         getnew = new JButton("Assign New Membership");
         getnew.addActionListener(e -> {
-            long start = System.currentTimeMillis();
-            long end   = start + (5*24*60*60*1000);
-            WeekendMember temp = new WeekendMember(driver.getDriverId(), new Date(start), new Date(end));
+            LocalDate start = LocalDate.now();
+            LocalDate end   = start.plusDays(5);
+            WeekendMember temp = new WeekendMember(driver.getDriverId(), start, end);
             GetNewWeekendMemberDialog d = new GetNewWeekendMemberDialog(temp);
             if (d.doDialog("Assign New Weekend Number", null)) {
                 try {
