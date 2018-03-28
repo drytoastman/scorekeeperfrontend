@@ -191,7 +191,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         driverp.add(barcode,           "growx, h 50, center, wrap");
         driverp.add(printers,          "growx, wrap");
         driverp.add(print,             "growx, wrap");
-        driverp.add(new JLabel(""),    "pushy 10");
+        driverp.add(new JLabel(""),    "pushy 15");
 
         singleCarPanel = new JPanel(new MigLayout("fill, ins 0, gap 2"));
         multiCarPanel  = new JPanel(new MigLayout("fill, ins 0, gap 2"));
