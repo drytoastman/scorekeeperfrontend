@@ -41,7 +41,11 @@ public class Requests
     public static final String API_VER = "/v1.35";
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    /* The templates ****************************************************************************/
+    /*
+     *  models dir data created swagger-codegen using docker API v1.35 swagger.yaml:
+     *  swagger-codegen-cli:v2.3.1 generate -i /local/swagger.yaml -o /local/out -ljava
+     *     -Dlibrary=feign -Dmodels -Djava8 -DdateLibrary=java8 -DmodelPackage=org.wwscc.system.docker.models
+     */
 
     static class Wrapper<T>
     {

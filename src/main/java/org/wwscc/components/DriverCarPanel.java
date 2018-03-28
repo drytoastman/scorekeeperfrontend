@@ -34,22 +34,24 @@ import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.Painter;
 import javax.swing.UIDefaults;
-import javax.swing.border.BevelBorder;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import net.miginfocom.swing.MigLayout;
+
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.DriverDialog;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.Driver;
 import org.wwscc.storage.DecoratedCar;
+import org.wwscc.storage.Driver;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.TextChangeTrigger;
+
+import net.miginfocom.swing.MigLayout;
 
 
 public abstract class DriverCarPanel extends JPanel implements ActionListener, ListSelectionListener, FocusListener
@@ -59,7 +61,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     public static final String CLEAR      = "Clear Search";
     public static final String NEWDRIVER  = "New Driver";
     public static final String EDITDRIVER = "Edit Driver";
-    public static final String EDITNOTES  = "Edit Notes";
+    public static final String EDITNOTES  = "Notes";
 
     public static final String NEWCAR     = "New Car";
     public static final String NEWFROM    = "New From";
@@ -114,7 +116,17 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         dscroll.getVerticalScrollBar().setPreferredSize(new Dimension(15,200));
 
         // create default height
-        driverInfo = displayArea(7);
+        driverInfo = new JTextPane();
+        driverInfo.setText("\n\n\n\n\n");
+        driverInfo.setBorder(BorderFactory.createTitledBorder("Info"));
+
+        UIDefaults system = UIManager.getDefaults();
+        UIDefaults defaults = new UIDefaults();
+        defaults.put("TextPane[Enabled].backgroundPainter", new SolidPainter(system.getColor("Panel.background")));
+        driverInfo.putClientProperty("Nimbus.Overrides", defaults);
+        driverInfo.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
+        driverInfo.setEditable(false);
+        driverInfo.setEnabled(true);
 
         /* Car Section */
         carVector = new Vector<DecoratedCar>();
@@ -143,34 +155,6 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         }
 
     }
-
-    protected JTextPane displayArea(int linecount)
-    {
-        JTextPane tp = new JTextPane();
-        tp.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createBevelBorder(BevelBorder.LOWERED),
-                BorderFactory.createEmptyBorder(3,3,3,3)));
-
-        UIDefaults defaults = new UIDefaults();
-        defaults.put("TextPane[Enabled].backgroundPainter", new SolidPainter(new Color(240, 240, 240)));
-        tp.putClientProperty("Nimbus.Overrides", defaults);
-        tp.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
-        tp.setEditable(false);
-        tp.setEnabled(true);
-
-        // ugly hack to set a preferred height based on lines of text
-        tp.setSize(100,Short.MAX_VALUE);
-        StringBuilder b = new StringBuilder();
-        for (int ii = 0; ii < linecount-1; ii++) {
-            b.append(ii+"\n"+ii);
-        }
-        tp.setText(b.toString());
-        int h = (int)(tp.getPreferredSize().height*0.9);
-        tp.setPreferredSize(new Dimension(Short.MAX_VALUE, h));
-        tp.setText("");
-        return tp;
-    }
-
 
     /**
      * Set the name search fields and select the name.
@@ -378,15 +362,11 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     public String driverDisplay(Driver d)
     {
         StringBuilder ret = new StringBuilder("");
-        ret.append(d.getDriverId()).append("\n");
         ret.append(d.getFullName()).append("\n");
         ret.append(d.getAttrS("address")).append("\n");
         ret.append(String.format("%s%s%s %s\n", d.getAttrS("city"), d.hasAttr("city")&&d.hasAttr("state")?", ":"", d.getAttrS("state"), d.getAttrS("zip")));
         ret.append(d.getEmail()).append("\n");
-        ret.append(d.getAttrS("phone")).append("\n");
-        if (!d.getBarcode().equals("")) {
-            ret.append("Barcode = ").append(d.getBarcode());
-        }
+        ret.append(d.getAttrS("phone"));
         return ret.toString();
     }
 

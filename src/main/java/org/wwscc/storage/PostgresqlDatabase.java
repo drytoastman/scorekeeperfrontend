@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -356,7 +357,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
                 p.setObject(ii+1, pgo);
             } else if (v instanceof Timestamp) {
-                p.setTimestamp(ii+1, (Timestamp)v);
+                p.setTimestamp(ii+1, (Timestamp)v, Database.utc);
+            } else if (v instanceof LocalDate) {
+                p.setObject(ii+1, v);
             } else {
                 throw new SQLException("unexpected param type: " + v.getClass());
             }
