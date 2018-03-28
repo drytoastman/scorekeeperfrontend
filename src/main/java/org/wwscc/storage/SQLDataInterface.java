@@ -82,20 +82,31 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
 
+    @SuppressWarnings("unchecked")
     @Override
-    public String getSetting(String key)
+    public <T> T getSetting(String key, Class<T> type)
     {
         try
         {
             ResultSet setting = executeSelect("select val from settings where name=?", newList(key));
+            String s = "";
             if (setting.next()) {
-                return setting.getString("val");
-            } else {
-                return "";
+                s = setting.getString("val");
+            };
+
+            if (type == Integer.class) {
+                try {
+                    return (T) Integer.valueOf(s);
+                } catch (NumberFormatException nfe) {
+                    return (T) Integer.valueOf(-1);
+                }
+            } else if (type == Boolean.class) {
+                return (T) (Boolean) s.equals("1");
             }
+            return (T)s;
         } catch (Exception ioe) {
             logError("getSetting", ioe);
-            return "";
+            return null;
         }
     }
 
@@ -556,7 +567,7 @@ public abstract class SQLDataInterface implements DataInterface
         List<Integer> ret = new ArrayList<Integer>();
         try
         {
-            boolean superunique = Integer.parseInt(getSetting("superuniquenumbers")) != 0;
+            boolean superunique = getSetting("superuniquenumbers", Boolean.class);
             ResultSet rs;
 
             if (superunique) {
@@ -1039,35 +1050,26 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public List<WeekendMember> getWeekendMemberships(UUID driverid)
+    public WeekendMember getActiveWeekendMembership(UUID driverid)
     {
-        try
-        {
-            List<WeekendMember> ret = new ArrayList<WeekendMember>();
-            ResultSet rs = executeSelect("SELECT * FROM weekendmembers WHERE driverid=?", newList(driverid));
-            while (rs.next()) {
-                ret.add(new WeekendMember(rs));
+        try {
+            ResultSet rs = executeSelect("SELECT * FROM weekendmembers WHERE driverid=? AND startdate <= current_date and enddate >= current_date ORDER BY enddate DESC", newList(driverid));
+            if (rs.next()) {
+                return new WeekendMember(rs);
             }
-            return ret;
+        } catch (Exception ioe) {
+            logError("getActiveWeekendMembership", ioe);
         }
-        catch (Exception ioe)
-        {
-            logError("isInOrder", ioe);
-            return null;
-        }
+        return null;
     }
 
 
     @Override
     public Integer newWeekendNumber(WeekendMember in) throws Exception
     {
-        int min, max;
-        try {
-            min = Integer.parseInt(getSetting("weekendmin"));
-            max = Integer.parseInt(getSetting("weekendmax"));
-        } catch (NumberFormatException nfe) {
-            throw new SQLException("Invalid range for weekend membership numbers in settings");
-        }
+        int min = getSetting("weekendmin", Integer.class);
+        int max = getSetting("weekendmax", Integer.class);
+
         Set<Integer> current = new HashSet<Integer>();
         ResultSet rs = executeSelect("SELECT DISTINCT membership FROM weekendmembers", null);
         while (rs.next())

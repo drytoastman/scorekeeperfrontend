@@ -88,6 +88,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     {
         super(Registration.state);
         setLayout(new MigLayout("fill, gap 0, ins 0", "[45%, fill][55%, fill]", "fill"));
+        Messenger.register(MT.SERIES_CHANGED, this);
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
         Messenger.register(MT.OBJECT_SCANNED, this);
@@ -159,7 +160,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         cars.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
-        JPanel driverp = new JPanel(new MigLayout("fill, gap 2, ins 0 6 6 6", "[fill,50%][50%!]", "fill"));
+        JPanel driverp = new JPanel(new MigLayout("fill, gap 2, ins 0 6 6 6, hidemode 3", "[fill,50%][50%!]", "fill"));
         JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
         JPanel rightp  = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", "[grow 0][grow 100][grow 0]"));
 
@@ -560,8 +561,9 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             }
             else if (cmd.equals(WEEKEND) && (selectedDriver != null))
             {
-                WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver);
-                wd.doDialog("Weekend Membership", d -> {});
+                WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver, Database.d.getActiveWeekendMembership(selectedDriver.getDriverId()));
+                wd.doDialog("Weekend Membership", null);
+                valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
             }
             else
                 super.actionPerformed(e);
@@ -605,7 +607,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             barcode.setWarning("");
             barcode.repaint();
 
-            weekmember.setIcon(cardicon);
 
             boolean emptybarcode = selectedDriver.getBarcode().trim().equals("");
             if (!emptybarcode)
@@ -623,12 +624,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
             else
             {
                 try {
-                    if (Integer.parseInt(Database.d.getSetting("requestbarcodes")) != 0) {
+                    if (Database.d.getSetting("requestbarcodes", Boolean.class)) {
                         barcode.setWarning("No Barcode");
                     }
                 } catch (NumberFormatException nfe) {}
             }
 
+            weekmember.setIcon((Database.d.getActiveWeekendMembership(selectedDriver.getDriverId()) != null) ? cardicon : null);
 
             String notes = selectedDriver.getAttrS("notes");
             if (!notes.trim().equals(""))
@@ -718,6 +720,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     {
         switch (type)
         {
+            case SERIES_CHANGED:
+                weekmember.setVisible(Database.d.getSetting("doweekendmembers", Boolean.class));
+                break;
+
             case EVENT_CHANGED:
                 driverSelectionChanged();
                 reloadCars(selectedCar);

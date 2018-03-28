@@ -27,41 +27,53 @@ public class WeekendMemberDialog extends BaseDialog<Void>
     private Logger log = Logger.getLogger(WeekendMemberDialog.class.getCanonicalName());
 
     JButton getnew;
-    JLabel number;
-    Driver driver;
 
-    public WeekendMemberDialog(Driver driver)
+    public WeekendMemberDialog(Driver driver, WeekendMember active)
     {
-        super(new MigLayout("fill", "[50%][50%]"), true);
-        this.driver = driver;
+        super(new MigLayout("h 100, w 150, center", ""), true);
 
-        getnew = new JButton("Get New Membership");
+        getnew = new JButton("Assign New Membership");
         getnew.addActionListener(e -> {
-            GetNewWeekendMemberDialog d = new GetNewWeekendMemberDialog();
-            d.doDialog("Get New Weekend Number", i -> {
-                long now = System.currentTimeMillis();
-                WeekendMember m = new WeekendMember(driver.getDriverId(), new Date(now), new Date(now), "", "", "", "");
+            long start = System.currentTimeMillis();
+            long end   = start + (5*24*60*60*1000);
+            WeekendMember temp = new WeekendMember(driver.getDriverId(), new Date(start), new Date(end));
+            GetNewWeekendMemberDialog d = new GetNewWeekendMemberDialog(temp);
+            if (d.doDialog("Assign New Weekend Number", null)) {
                 try {
-                    Database.d.newWeekendNumber(m);
+                    temp = d.getResult();
+                    Database.d.newWeekendNumber(temp);
+                    rebuildPanel(temp);
                 } catch (Exception ex) {
                     log.log(Level.WARNING, "Error getting a new weekend number: " + ex, ex);
                     JOptionPane.showMessageDialog(this, "Error generating new member number: \n" + ex);
                 }
-            });
+            }
         });
 
-        number = new JLabel("123456");
-        number.setFont(number.getFont().deriveFont(20.0f));
-
-        mainPanel.add(number, "spanx 2, center, wrap");
-
-        mainPanel.add(label("Start", true), "right");
-        mainPanel.add(label("3/22/18", false), "wrap");
-        mainPanel.add(label("End", true), "right");
-        mainPanel.add(label("3/27/18", false), "wrap");
-
-        mainPanel.add(getnew, "center, spanx 2");
         buttonPanel.remove(cancel);
+        rebuildPanel(active);
+    }
+
+    private void rebuildPanel(WeekendMember active)
+    {
+        mainPanel.removeAll();
+
+        if (active != null) {
+            JLabel number = new JLabel("");
+            number.setFont(number.getFont().deriveFont(20.0f));
+            number.setText(""+active.getMemberId());
+            mainPanel.add(number, "spanx 2, center, wrap");
+            mainPanel.add(label("Start", true), "right");
+            mainPanel.add(label(active.getStartDate()+"", false), "wrap");
+            mainPanel.add(label("End", true), "right");
+            mainPanel.add(label(active.getEndDate()+"", false), "wrap");
+        } else {
+            mainPanel.add(label("No membership covering today", true), "center, gapbottom 20, wrap");
+            mainPanel.add(getnew, "center");
+        }
+
+        revalidate();
+        repaint();
     }
 
     /**

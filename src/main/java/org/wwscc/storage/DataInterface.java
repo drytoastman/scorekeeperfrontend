@@ -40,10 +40,11 @@ public interface DataInterface
     public void useSeries(String series);
 
     /**
+     * @param <T>
      * @param key the setting to lookup
      * @return the string value of the setting
      */
-    public String getSetting(String key);
+    public <T> T getSetting(String key, Class<T> type);
 
     /**
      * @return a list of all events in the current series
@@ -94,7 +95,7 @@ public interface DataInterface
     public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
 
-    public List<WeekendMember> getWeekendMemberships(UUID driverid);
+    public WeekendMember getActiveWeekendMembership(UUID driverid);
     public Integer newWeekendNumber(WeekendMember in) throws Exception;
 
     public Car getCar(UUID carid);

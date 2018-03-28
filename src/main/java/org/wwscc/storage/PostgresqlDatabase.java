@@ -357,9 +357,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
                 p.setObject(ii+1, pgo);
             } else if (v instanceof Timestamp) {
-                p.setTimestamp(ii+1, (Timestamp)v);
+                p.setTimestamp(ii+1, (Timestamp)v, Database.utc);
             } else if (v instanceof Date) {
-                p.setDate(ii+1, (Date)v);
+                p.setDate(ii+1, (Date)v, Database.utc);
             } else {
                 throw new SQLException("unexpected param type: " + v.getClass());
             }

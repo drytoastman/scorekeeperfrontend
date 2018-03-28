@@ -25,25 +25,24 @@ public class WeekendMember extends AttrBase
     protected String region;
     protected String area;
 
-    public WeekendMember(UUID driverid, Date start, Date end, String issuer, String issuermem, String region, String area)
+    public WeekendMember(UUID driverid, Date start, Date end)
     {
         this.membership = -1;
         this.driverid  = driverid;
         this.startdate = start;
         this.enddate   = end;
-        this.issuer    = issuer;
-        this.issuermem = issuermem;
-        this.region    = region;
-        this.area      = area;
+        this.issuer    = "";
+        this.issuermem = "";
+        this.region    = "";
+        this.area      = "autocross";
     }
 
     public WeekendMember(ResultSet rs) throws SQLException
     {
-        super(rs);
         membership = rs.getInt("membership");
         driverid   = (UUID)rs.getObject("driverid");
-        startdate  = rs.getDate("startdate");
-        enddate    = rs.getDate("enddate");
+        startdate  = rs.getDate("startdate", Database.utc);
+        enddate    = rs.getDate("enddate", Database.utc);
         issuer     = rs.getString("issuer");
         issuermem  = rs.getString("issuermem");
         region     = rs.getString("region");
@@ -65,5 +64,12 @@ public class WeekendMember extends AttrBase
     }
 
     public UUID getDriverId()         { return driverid; }
-    public void setDriverId(UUID id)  { driverid = id; }
+    public Date getStartDate()        { return startdate; }
+    public Date getEndDate()          { return enddate; }
+    public Integer getMemberId()      { return membership; }
+
+    public void setDriverId(UUID id)   { driverid = id; }
+    public void setRegion(String s)    { region = s; }
+    public void setIssuer(String s)    { issuer = s; }
+    public void setIssuerMem(String s) { issuermem = s; }
 }
