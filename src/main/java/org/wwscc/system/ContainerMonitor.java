@@ -27,9 +27,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
@@ -339,8 +338,8 @@ fileok: try (Scanner scan = new Scanner(toimport)) {
             OutputStream out;
             if (compress) {
                 File zipname = path.resolveSibling(path.getFileName() + ".zip").toFile();
-                out = new ZipArchiveOutputStream(zipname);
-                ((ZipArchiveOutputStream)out).putArchiveEntry(new ZipArchiveEntry(path.getFileName().toString()));
+                out = new ZipOutputStream(new FileOutputStream(zipname));
+                ((ZipOutputStream)out).putNextEntry(new ZipEntry(path.getFileName().toString()));
             } else {
                 out = new FileOutputStream(path.toFile());
             }
@@ -351,7 +350,7 @@ fileok: try (Scanner scan = new Scanner(toimport)) {
             out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
 
             if (compress)
-                ((ZipArchiveOutputStream)out).closeArchiveEntry();
+                ((ZipOutputStream)out).closeEntry();
             out.close();
 
             tempfile.delete();

@@ -29,10 +29,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.compress.utils.BoundedInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpEntity;
@@ -53,6 +49,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
+import org.kamranzafar.jtar.TarEntry;
+import org.kamranzafar.jtar.TarInputStream;
+import org.kamranzafar.jtar.TarOutputStream;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -322,15 +322,19 @@ public class DockerAPI
 
     public void downloadTo(String name, String containerpath, Path hostdir) throws IOException
     {
-        try (TarArchiveInputStream in = new TarArchiveInputStream(request(new Requests.Download(name, containerpath)))) {
-            TarArchiveEntry entry;
-            while ((entry = in.getNextTarEntry()) != null) {
-                if (!entry.isFile())
+        try (TarInputStream in = new TarInputStream(request(new Requests.Download(name, containerpath)))) {
+            TarEntry entry;
+            while ((entry = in.getNextEntry()) != null) {
+                if (entry.isDirectory())
                     continue;
                 File dest = hostdir.resolve(entry.getName()).toFile();
-                FileUtils.copyToFile(new BoundedInputStream(in, entry.getSize()), dest);
+                FileUtils.copyToFile(in, dest);
                 dest.setLastModified(entry.getModTime().getTime());
             }
+        } catch (IOException ioe) {
+            if (ioe.getMessage().contains("Attempted read on closed stream")) // jtar tries to read pad size but stream is already closed
+                return;
+            throw ioe;
         }
     }
 
@@ -339,13 +343,10 @@ public class DockerAPI
     {
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {
-                TarArchiveOutputStream tar = new TarArchiveOutputStream(outstream);
-                TarArchiveEntry entry = new TarArchiveEntry(file.getName());
-                entry.setModTime(file.lastModified());
-                entry.setSize(file.length());
-                tar.putArchiveEntry(entry);
+                TarOutputStream tar = new TarOutputStream(outstream);
+                TarEntry entry = new TarEntry(file, file.getName());
+                tar.putNextEntry(entry);
                 FileUtils.copyFile(file, tar);
-                tar.closeArchiveEntry();
                 tar.close();
             }
         };
