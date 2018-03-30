@@ -42,5 +42,6 @@ public class StatusDialog extends BaseDialog<Object>
             bar.setIndeterminate(false);
             bar.setValue(val);
         }
+        repack();
     }
 }

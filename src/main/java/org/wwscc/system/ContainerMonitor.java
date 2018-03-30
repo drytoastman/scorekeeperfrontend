@@ -17,12 +17,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -217,6 +221,61 @@ public class ContainerMonitor extends MonitorBase
         dialog.setStatus("Preparing to import ...", -1);
         status.set("Preparing to import");
 
+        /*
+         *  Decompress the file if its a zip
+         */
+        if (toimport.toString().toLowerCase().endsWith(".zip")) {
+            File temp;
+    fileok: try (ZipFile zip = new ZipFile(toimport.toFile())) {
+                Enumeration<? extends ZipEntry> entries = zip.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    temp = File.createTempFile("open-zip", ".sql");
+                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), temp);
+                    break fileok;
+                }
+                throw new IOException("No sql file found in zip file");
+            } catch (IOException ioe) {
+                dialog.setStatus("Zip Error: " + ioe, 100);
+                toimport = null;
+                return;
+            }
+
+            toimport = temp.toPath();
+        }
+
+        if (!toimport.toString().toLowerCase().endsWith(".sql")) {
+            dialog.setStatus("Data is not a sql file", 100);
+            toimport = null;
+            return;
+        }
+
+        /* Check the schema version:
+         * looking for lines like the following for the version table:
+         * COPY version (id, version, modified) FROM stdin;
+         * 1 20180106 2017-11-17 05:32:37.805896
+         */
+fileok: try (Scanner scan = new Scanner(toimport)) {
+            boolean mark = false;
+            while (scan.hasNextLine()) {
+                if (mark) {
+                    scan.next(); // id
+                    int schema = scan.nextInt();
+                    if (schema < 20180000)
+                        throw new IOException("Unable to import backups with schema earlier than 2018, selected file is " + schema);
+                    break fileok;
+                }
+                String line = scan.nextLine();
+                if (line.startsWith("COPY version"))
+                    mark = true;
+            }
+            throw new IOException("No schema version found in file.");
+        } catch (Exception e1) {
+            dialog.setStatus("Error: " + e1, 100);
+            toimport = null;
+            return;
+        }
+
         docker.stop(nondb);
         Database.d.close();
 
@@ -228,12 +287,12 @@ public class ContainerMonitor extends MonitorBase
         boolean success = false;
         try {
             docker.uploadFile(name, toimport.toFile(), "/tmp");
-            if (docker.exec(name, "ash", "-c", "unzip -p /tmp/"+toimport.getFileName()+" | psql -U postgres &> /tmp/import.log") == 0) {
+            if (docker.exec(name, "ash", "-c", "psql -U postgres -f /tmp/"+toimport.getFileName()+" &> /tmp/import.log") == 0) {
                 success = docker.exec(name, "ash", "-c", "/dbconversion-scripts/upgrade.sh /dbconversion-scripts >> /tmp/import.log 2>&1") == 0;
             }
             docker.downloadTo(name, "/tmp/import.log", Prefs.getLogDirectory());
         } catch (Exception e) {
-            log.log(Level.WARNING, "Failure in restoring backup: " + e, e);
+            log.log(Level.WARNING, "Failure in restoring from backup: " + e, e);
         }
 
         if (success)
@@ -266,8 +325,8 @@ public class ContainerMonitor extends MonitorBase
             return false;
 
         String name = "db";
-        String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm").format(new Date());
-        Path path   = dir.resolve(String.format("date_%s#schema_%s.pgdump", date, ver));
+        String date = new SimpleDateFormat("yyyy-MM-dd-HH'h'mm'm'").format(new Date());
+        Path path   = dir.resolve(String.format("%s(%s).pgdump", date, ver));
 
         try {
             if (docker.exec(name, "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)

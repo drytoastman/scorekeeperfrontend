@@ -296,6 +296,12 @@ public class BaseDialog<E> extends JPanel implements ActionListener
         return result;
     }
 
+    public void repack()
+    {
+        if (currentDialog != null)
+            currentDialog.pack();
+    }
+
     public boolean doDialog(String title, DialogFinisher<E> finish)
     {
         if (currentDialog != null)

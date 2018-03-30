@@ -11,7 +11,6 @@ package org.wwscc.system;
 import java.awt.Component;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +29,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.dialogs.SeriesSelectionDialog;
 import org.wwscc.dialogs.HoverMessage;
@@ -328,27 +329,11 @@ public class Actions
 
         public void actionPerformed(ActionEvent e) {
             Window active = FocusManager.getCurrentManager().getActiveWindow();
-            final JFileChooser fc = new JFileChooser() {
-                @Override
-                public void approveSelection(){
-                    File f = getSelectedFile();
-                    String pieces[] = f.getName().split("[#._]");
-                    if (!pieces[0].equals("date") || !pieces[2].equals("schema")) {
-                        JOptionPane.showMessageDialog(active, f.getName() + " is not a recognized backup filename of the format date_<DATE>#schema_<SCHEMA>");
-                        return;
-                    }
-
-                    if (Integer.parseInt(pieces[3]) < 20180000) {
-                        JOptionPane.showMessageDialog(active, "Unable to import backups with schema earlier than 2018, selected file is " + pieces[3]);
-                        return;
-                    }
-
-                    super.approveSelection();
-                }
-            };
-
+            JFileChooser fc = new JFileChooser();
             fc.setDialogTitle("Specify a backup file to import");
             fc.setCurrentDirectory(Prefs.getRootDir().toFile());
+            fc.setFileFilter(new FileNameExtensionFilter("SQL Files (zip, sql)", "zip", "sql"));
+
             int returnVal = fc.showOpenDialog(active);
             if ((returnVal != JFileChooser.APPROVE_OPTION) || (fc.getSelectedFile() == null))
                 return;

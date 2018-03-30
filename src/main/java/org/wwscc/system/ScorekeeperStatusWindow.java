@@ -318,7 +318,9 @@ public class ScorekeeperStatusWindow extends JFrame
     public static void main(String[] args) throws InterruptedException, NoSuchAlgorithmException
     {
         AppSetup.appSetup("statuswindow");
-        ScorekeeperStatusWindow window = new ScorekeeperStatusWindow(new Actions(), new MergeServerModel());
+        Actions actions = new Actions();
+        actions.backendReady(true); // fake ready for testing menus
+        ScorekeeperStatusWindow window = new ScorekeeperStatusWindow(actions, new MergeServerModel());
         window.setVisible(true);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
