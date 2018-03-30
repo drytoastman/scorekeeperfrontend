@@ -92,7 +92,8 @@ public class Prefs
         return (System.getenv("DEBUG") != null);
     }
 
-    public static String getVersion()
+
+    public static String getFullVersion()
     {
         Package p = Prefs.class.getPackage();
         if (p == null) return "latest";
@@ -101,7 +102,19 @@ public class Prefs
         return v;
     }
 
-    private static Path _ensureDirectory(Path p)
+    public static String getVersionBase()
+    {
+        String v = getFullVersion();
+        int i1 = v.indexOf(".");
+        if (i1 < 0)
+            return v;
+        int i2 = v.indexOf(".", i1+1);
+        if (i2 < 0)
+            return v;
+        return v.substring(0, i2);
+    }
+
+    private static Path ensureDirectory(Path p)
     {
         File f = p.toFile();
         if (!f.exists())
@@ -111,7 +124,7 @@ public class Prefs
 
     public static Path getRootDir()
     {
-        return _ensureDirectory(Paths.get(System.getProperty("user.home"), "scorekeeper"));
+        return ensureDirectory(Paths.get(System.getProperty("user.home"), "scorekeeper"));
     }
 
     public static Path getLockFilePath(String name)
@@ -121,12 +134,12 @@ public class Prefs
 
     public static Path getLogDirectory()
     {
-        return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "logs")));
+        return ensureDirectory(getRootDir().resolve(Paths.get(getVersionBase(), "logs")));
     }
 
     public static Path getBackupDirectory()
     {
-        return _ensureDirectory(getRootDir().resolve(Paths.get(getVersion(), "backup")));
+        return ensureDirectory(getRootDir().resolve(Paths.get(getVersionBase(), "backup")));
     }
 
     public static UUID getServerId()

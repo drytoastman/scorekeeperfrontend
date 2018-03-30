@@ -117,6 +117,7 @@ public class AppSetup
                     "Unable to enable logging to file: " + ioe, "Log Error", JOptionPane.ERROR_MESSAGE);
         }
 
+        applog.info("*** "+ name + " starting at " + new Date() + ", version=" + Prefs.getFullVersion());
         // force the initialization of IdGenerator on another thread so app can start now without an odd delay later
         new Thread() {
             public void run() {

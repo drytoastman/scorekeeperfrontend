@@ -45,10 +45,13 @@ public class ContainerMonitor extends MonitorBase
 {
     private static final Logger log = Logger.getLogger(ContainerMonitor.class.getName());
 
-    public static final String NET_NAME     = "scnet";
-    public static final String DBV_PREFIX   = "scdatabase-";
-    public static final String LOGV_PREFIX  = "sclogs-";
-    public static final String SOCKV_PREFIX = "scsocket";
+    public static final String NET_NAME        = "scnet";
+    public static final String DB_IMAGE_NAME   = "drytoastman/scdb:"+Prefs.getFullVersion();
+    public static final String WEB_IMAGE_NAME  = "drytoastman/scweb:"+Prefs.getFullVersion();
+    public static final String SYNC_IMAGE_NAME = "drytoastman/scsync:"+Prefs.getFullVersion();
+    public static final String SOCK_VOL_NAME   = "scsocket";
+    public static final String DB_VOL_NAME     = "scdatabase-"+Prefs.getVersionBase();
+    public static final String LOG_VOL_NAME    = "sclogs-"+Prefs.getVersionBase();
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
@@ -75,24 +78,24 @@ public class ContainerMonitor extends MonitorBase
         machineready = false;
         lastcheck    = false;
 
-        db = new DockerContainer("db", "drytoastman/scdb:"+Prefs.getVersion(), NET_NAME);
-        db.addVolume(DBV_PREFIX+Prefs.getVersion(), "/var/lib/postgresql/data");
-        db.addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
-        db.addVolume(SOCKV_PREFIX, "/var/run/postgresql");
+        db = new DockerContainer("db", DB_IMAGE_NAME, NET_NAME);
+        db.addVolume(DB_VOL_NAME,   "/var/lib/postgresql/data");
+        db.addVolume(LOG_VOL_NAME,  "/var/log");
+        db.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
         db.addPort("127.0.0.1", 6432, 6432);
-        db.addPort("0.0.0.0", 54329, 5432);
+        db.addPort("0.0.0.0",  54329, 5432);
         all.add(db);
 
-        web = new DockerContainer("web", "drytoastman/scweb:"+Prefs.getVersion(), NET_NAME);
-        web.addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
-        web.addVolume(SOCKV_PREFIX, "/var/run/postgresql");
+        web = new DockerContainer("web", WEB_IMAGE_NAME, NET_NAME);
+        web.addVolume(LOG_VOL_NAME,  "/var/log");
+        web.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
         web.addPort("0.0.0.0", 80, 80);
         all.add(web);
         nondb.add(web);
 
-        sync = new DockerContainer("sync", "drytoastman/scsync:"+Prefs.getVersion(), NET_NAME);
-        sync.addVolume(LOGV_PREFIX+Prefs.getVersion(), "/var/log");
-        sync.addVolume(SOCKV_PREFIX, "/var/run/postgresql");
+        sync = new DockerContainer("sync", SYNC_IMAGE_NAME, NET_NAME);
+        sync.addVolume(LOG_VOL_NAME,  "/var/log");
+        sync.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
         all.add(sync);
         nondb.add(sync);
 

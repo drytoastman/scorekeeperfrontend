@@ -57,7 +57,6 @@ public class Registration extends JFrame
         content.add(driverEntry, BorderLayout.CENTER);
 
         setContentPane(content);
-        log.log(Level.INFO, "Starting Registration: {0}", new java.util.Date());
 
         JMenu file = new JMenu("File");
         file.add(new OpenSeriesAction());

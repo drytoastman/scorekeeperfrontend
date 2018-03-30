@@ -98,7 +98,7 @@ public class DebugCollector extends Thread
             Path info = Files.createFile(temp.resolve("info.txt"));
             try (OutputStreamWriter out = new OutputStreamWriter(Files.newOutputStream(info, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
                 out.write("=== Host Info ===\n");
-                out.write(String.format("%20s = %s\n", "Scorekeeper", Prefs.getVersion()));
+                out.write(String.format("%20s = %s\n", "Scorekeeper", Prefs.getFullVersion()));
                 out.write(String.format("%20s = %s\n", "VBoxVersion", DockerMachine.vboxversion()));
                 for (String key : new String[] { "os.name", "os.version", "os.arch", "java.version", "java.vendor", "java.home" }) {
                     out.write(String.format("%20s = %s\n", key, System.getProperty(key)));
