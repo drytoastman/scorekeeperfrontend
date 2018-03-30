@@ -21,8 +21,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.mutable.MutableLong;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -227,6 +225,14 @@ public class Discovery
         }
     }
 
+    static class MutableLong
+    {
+        private long value;
+        public MutableLong()    { value = 0; }
+        public long get()       { return value; }
+        public void set(long l) { value = l; }
+    }
+
     class DiscoveryThread implements Runnable
     {
         MutableLong  sendms = new MutableLong();
@@ -238,8 +244,8 @@ public class Discovery
 
         public boolean timeout(MutableLong  m)
         {
-            if (System.currentTimeMillis() >= m.longValue()+READ_TIMEOUT_MS) {
-                m.setValue(System.currentTimeMillis());
+            if (System.currentTimeMillis() >= m.get()+READ_TIMEOUT_MS) {
+                m.set(System.currentTimeMillis());
                 return true;
             }
             return false;

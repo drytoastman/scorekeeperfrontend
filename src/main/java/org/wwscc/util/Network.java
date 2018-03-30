@@ -18,8 +18,6 @@ import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.SystemUtils;
-
 public class Network
 {
     private static final Logger log = Logger.getLogger(Network.class.getName());
@@ -51,13 +49,13 @@ public class Network
                         continue;
                     }
                     String dname = ni.getDisplayName();
-                    if (SystemUtils.IS_OS_WINDOWS) {
+                    if (Prefs.isWindows()) {
                         if (dname.contains("VirtualBox")) continue;
                         if (dname.contains("VMware")) continue;
                         if (dname.contains("Tunneling")) continue;
                         if (dname.contains("Microsoft")) continue;
                         if (dname.contains("Hyper-V")) continue;
-                    } else if (SystemUtils.IS_OS_LINUX) {
+                    } else if (Prefs.isLinux()) {
                         if (dname.startsWith("veth")) continue;
                         if (dname.startsWith("docker")) continue;
                         if (dname.startsWith("br-")) continue;

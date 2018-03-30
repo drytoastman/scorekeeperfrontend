@@ -63,11 +63,13 @@ public class Prefs
      * During regular init, our default is to use the regular Java preferences for our base
      */
     private static PrefsInterface prefs;
+    private static String os;
     static
     {
         prefs = new JavaPrefsWrapper(Preferences.userNodeForPackage(Prefs.class));
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             public void run() { prefs.sync(); }}));
+        os = System.getProperty("os.name").toLowerCase();
     }
 
     /**
@@ -92,6 +94,15 @@ public class Prefs
         return (System.getenv("DEBUG") != null);
     }
 
+    public static boolean isWindows()
+    {
+        return os.contains("windows");
+    }
+
+    public static boolean isLinux()
+    {
+        return os.contains("linux");
+    }
 
     public static String getFullVersion()
     {

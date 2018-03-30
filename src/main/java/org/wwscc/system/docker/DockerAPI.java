@@ -30,7 +30,6 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
@@ -129,7 +128,7 @@ public class DockerAPI
                 URI uri = new URI(env.get("DOCKER_HOST"));
                 host = new HttpHost(uri.getHost(), uri.getPort());
             }
-            else if (SystemUtils.IS_OS_WINDOWS)
+            else if (Prefs.isWindows())
             {
                 pool = new PoolingHttpClientConnectionManager(
                     RegistryBuilder.<ConnectionSocketFactory>create().register("http", new WindowsPipeFactory("\\\\.\\pipe\\docker_engine")).build());

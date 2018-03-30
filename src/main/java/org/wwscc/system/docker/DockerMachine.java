@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.TimeZone;
-import org.apache.commons.lang3.SystemUtils;
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.Exec;
+import org.wwscc.util.Prefs;
 
 /**
  * Interface for calling docker machine functions
@@ -44,7 +44,7 @@ public class DockerMachine
     public static String vboxversion()
     {
         byte[] ver = new byte[128];
-        if (SystemUtils.IS_OS_WINDOWS) {
+        if (Prefs.isWindows()) {
             Exec.execit(Exec.build(null, "c:\\Program Files\\Oracle\\VirtualBox\\VBoxManage.exe", "-v"), ver, true);
         } else {
             Exec.execit(Exec.build(null, "vboxmanage", "-v"), ver, true);
