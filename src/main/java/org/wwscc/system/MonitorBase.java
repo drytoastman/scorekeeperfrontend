@@ -36,9 +36,13 @@ public abstract class MonitorBase extends Thread
         notify();
     }
 
-    public synchronized void donefornow() {
+    public void donefornow() {
+        donefornow(ms);
+    }
+
+    public synchronized void donefornow(long waitms) {
         try {
-            this.wait(ms);
+            this.wait(waitms);
         } catch (InterruptedException ie) {}
     }
 

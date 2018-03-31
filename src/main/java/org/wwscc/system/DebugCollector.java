@@ -115,7 +115,7 @@ public class DebugCollector extends Thread
             monitor.setProgress(30);
 
             monitor.setNote("dump database data");
-            cmonitor.backup(temp, false);
+            cmonitor.backupRequest(temp, false, false, true);
             monitor.setProgress(60);
 
             monitor.setNote("adding backend logs to zipfile");

@@ -9,26 +9,16 @@
 package org.wwscc.system;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
-
 import org.apache.commons.io.FileUtils;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
@@ -61,11 +51,19 @@ public class ContainerMonitor extends MonitorBase
     private DockerContainer db, web, sync;
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
-    private Path toimport;
-    private boolean dobackup, machineready, lastcheck, restartsync;
+    private Path importRequestFile;
+    private BackupRequest backupRequest;
+    private boolean machineready, lastcheck, restartsync;
 
     /** flag for debug environment where we are running the backend separately */
     private boolean external_backend;
+
+    class BackupRequest
+    {
+        Path directory;
+        boolean compress;
+        boolean usedialog;
+    }
 
     @SuppressWarnings("unchecked")
     public ContainerMonitor()
@@ -74,12 +72,12 @@ public class ContainerMonitor extends MonitorBase
         docker       = new DockerAPI();
         all          = new ArrayList<DockerContainer>();
         nondb        = new ArrayList<DockerContainer>();
-        toimport     = null;
-        dobackup     = false;
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
         ready        = new BroadcastState<Boolean>(MT.BACKEND_READY, false);
         machineready = false;
         lastcheck    = false;
+        backupRequest = null;
+        importRequestFile = null;
 
         db = new DockerContainer("db", DB_IMAGE_NAME, NET_NAME);
         db.addVolume(DB_VOL_NAME,   "/var/lib/postgresql/data");
@@ -148,14 +146,16 @@ public class ContainerMonitor extends MonitorBase
         }
 
         // interrupt our regular schedule to shutdown and import data
-        if (toimport != null) {
+        if (importRequestFile != null) {
             ready.set(false);
-            doImport();
+            doImport(importRequestFile);
+            importRequestFile = null;
             lastcheck = false;
         }
 
-        if (dobackup) {
-            doBackup();
+        if (backupRequest != null) {
+            doBackup(backupRequest);
+            backupRequest = null;
         }
 
         if (restartsync && ready.get()) {
@@ -186,7 +186,7 @@ public class ContainerMonitor extends MonitorBase
             {
                 status.set("Waiting for Database");
                 while (!done && !Database.testUp())
-                    donefornow();
+                    donefornow(1000);
                 if (done) return;
                 Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
@@ -200,6 +200,13 @@ public class ContainerMonitor extends MonitorBase
 
     public void mshutdown()
     {
+        BackupRequest request = new BackupRequest();
+        request.directory = Prefs.getBackupDirectory();
+        request.compress  = true;
+        request.usedialog = false;
+        doBackup(request);
+        Database.d.close();
+
         status.set("Shutting down ...");
         if (!external_backend) {
             docker.teardown(all);
@@ -213,65 +220,19 @@ public class ContainerMonitor extends MonitorBase
         return docker;
     }
 
-    private void doImport()
+
+    private void doImport(Path importfile)
     {
         StatusDialog dialog = new StatusDialog();
         dialog.doDialog("Old Data Import", o -> {});
         dialog.setStatus("Preparing to import ...", -1);
         status.set("Preparing to import");
 
-        /*
-         *  Decompress the file if its a zip
-         */
-        if (toimport.toString().toLowerCase().endsWith(".zip")) {
-            File temp;
-    fileok: try (ZipFile zip = new ZipFile(toimport.toFile())) {
-                Enumeration<? extends ZipEntry> entries = zip.entries();
-                while (entries.hasMoreElements()) {
-                    ZipEntry entry = entries.nextElement();
-                    temp = File.createTempFile("open-zip", ".sql");
-                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), temp);
-                    break fileok;
-                }
-                throw new IOException("No sql file found in zip file");
-            } catch (IOException ioe) {
-                dialog.setStatus("Zip Error: " + ioe, 100);
-                toimport = null;
-                return;
-            }
-
-            toimport = temp.toPath();
-        }
-
-        if (!toimport.toString().toLowerCase().endsWith(".sql")) {
-            dialog.setStatus("Data is not a sql file", 100);
-            toimport = null;
-            return;
-        }
-
-        /* Check the schema version:
-         * looking for lines like the following for the version table:
-         * COPY version (id, version, modified) FROM stdin;
-         * 1 20180106 2017-11-17 05:32:37.805896
-         */
-fileok: try (Scanner scan = new Scanner(toimport)) {
-            boolean mark = false;
-            while (scan.hasNextLine()) {
-                if (mark) {
-                    scan.next(); // id
-                    int schema = scan.nextInt();
-                    if (schema < 20180000)
-                        throw new IOException("Unable to import backups with schema earlier than 2018, selected file is " + schema);
-                    break fileok;
-                }
-                String line = scan.nextLine();
-                if (line.startsWith("COPY version"))
-                    mark = true;
-            }
-            throw new IOException("No schema version found in file.");
-        } catch (Exception e1) {
-            dialog.setStatus("Error: " + e1, 100);
-            toimport = null;
+        try {
+            importfile = ImportExportFunctions.extractSql(importfile);
+            ImportExportFunctions.checkSchema(importfile);
+        } catch (IOException ioe) {
+            dialog.setStatus("File Error: " + ioe, 100);
             return;
         }
 
@@ -280,13 +241,13 @@ fileok: try (Scanner scan = new Scanner(toimport)) {
 
         dialog.setStatus("Importing ...", -1);
         status.set("Importing ...");
-        log.info("importing "  + toimport);
+        log.info("importing "  + importfile);
 
         String name = "db";
         boolean success = false;
         try {
-            docker.uploadFile(name, toimport.toFile(), "/tmp");
-            if (docker.exec(name, "ash", "-c", "psql -U postgres -f /tmp/"+toimport.getFileName()+" &> /tmp/import.log") == 0) {
+            docker.uploadFile(name, importfile.toFile(), "/tmp");
+            if (docker.exec(name, "ash", "-c", "psql -U postgres -f /tmp/"+importfile.getFileName()+" &> /tmp/import.log") == 0) {
                 success = docker.exec(name, "ash", "-c", "/dbconversion-scripts/upgrade.sh /dbconversion-scripts >> /tmp/import.log 2>&1") == 0;
             }
             docker.downloadTo(name, "/tmp/import.log", Prefs.getLogDirectory());
@@ -298,67 +259,36 @@ fileok: try (Scanner scan = new Scanner(toimport)) {
             dialog.setStatus("Import and conversion was successful", 100);
         else
             dialog.setStatus("Import failed, see logs", 100);
-        toimport = null;
     }
 
-    private void doBackup()
-    {
-        StatusDialog dialog = new StatusDialog();
-        dialog.doDialog("Backing Up Database", o -> {});
-        dialog.setStatus("Backing up database ...", -1);
 
-        if (backup(Prefs.getBackupDirectory(), true)) {
-            dialog.setStatus("Backup Complete", 100);
-        } else {
-            dialog.setStatus("Backup failed, see logs", 100);
+    private void doBackup(BackupRequest request)
+    {
+        StatusDialog dialog = null;
+        if (request.usedialog) {
+            dialog = new StatusDialog();
+            dialog.doDialog("Backing Up Database", o -> {});
+            dialog.setStatus("Backing up database ...", -1);
         }
 
-        dobackup = false;
-    }
-
-    public boolean backup(Path dir, boolean compress)
-    {
         status.set("Backing up database");
-        String ver = Database.d.getVersion();
-        if (ver.equals("unknown"))
-            return false;
-
-        String name = "db";
-        String date = new SimpleDateFormat("yyyy-MM-dd-HH'h'mm'm'").format(new Date());
-        Path path   = dir.resolve(String.format("%s(%s).pgdump", date, ver));
-
         try {
-            if (docker.exec(name, "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
+            Path finalpath = ImportExportFunctions.backupName(request.directory);
+            if (docker.exec("db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
                 throw new IOException("pg_dump failed");
 
             File tempdir = FileUtils.getTempDirectory();
-            File tempfile = new File(tempdir, "dump");
-            docker.downloadTo(name, "/tmp/dump", tempdir.toPath());
+            docker.downloadTo("db", "/tmp/dump", tempdir.toPath());
 
-            OutputStream out;
-            if (compress) {
-                File zipname = path.resolveSibling(path.getFileName() + ".zip").toFile();
-                out = new ZipOutputStream(new FileOutputStream(zipname));
-                ((ZipOutputStream)out).putNextEntry(new ZipEntry(path.getFileName().toString()));
-            } else {
-                out = new FileOutputStream(path.toFile());
-            }
-
-            out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
-            out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
-            FileUtils.copyFile(tempfile, out);
-            out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
-
-            if (compress)
-                ((ZipOutputStream)out).closeEntry();
-            out.close();
-
-            tempfile.delete();
-            return true;
+            ImportExportFunctions.processBackup(new File(tempdir, "dump"), finalpath, request.compress);
+            if (request.usedialog)
+                dialog.setStatus("Backup Complete", 100);
 
         } catch (Exception e) {
             log.log(Level.WARNING, "Unabled to dump database: " + e, e);
-            return false;
+            if (request.usedialog)
+                dialog.setStatus("Backup failed, see logs", 100);
+
         } finally {
             poke();
         }
@@ -377,13 +307,31 @@ fileok: try (Scanner scan = new Scanner(toimport)) {
 
     public void backupRequest()
     {
-        dobackup = true;
-        poke();
+        backupRequest(Prefs.getBackupDirectory(), true, true, false);
     }
 
-    public void importRequest(Path backupfile)
+    public void backupRequest(Path backupdir, boolean compress, boolean usedialog, boolean wait)
     {
-        toimport = backupfile;
+        BackupRequest request = new BackupRequest();
+        request.directory = backupdir;
+        request.compress  = compress;
+        request.usedialog = usedialog;
+        backupRequest = request;
+        poke();
+        if (wait) {
+            while (backupRequest != null) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public void importRequest(Path importfile)
+    {
+        importRequestFile = importfile;
         poke();
     }
 }

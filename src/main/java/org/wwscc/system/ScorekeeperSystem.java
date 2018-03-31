@@ -78,7 +78,6 @@ public class ScorekeeperSystem
         }
 
         pmonitor.setPause(true);
-        Database.d.close();
         cmonitor.importRequest(f.toPath());
     }
 
@@ -154,8 +153,6 @@ public class ScorekeeperSystem
             }
 
             pmonitor.setPause(true);
-            cmonitor.backup(Prefs.getBackupDirectory(), true);
-            Database.d.close();
 
             // tell everyone to shutdown
             mmonitor.shutdown();

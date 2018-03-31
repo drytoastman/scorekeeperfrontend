@@ -26,7 +26,7 @@ public interface DataInterface
      * Get the data type version
      * @return the version schema string
      */
-    public String getVersion();
+    public String getVersion() throws Exception;
 
     /**
      * @return a list of series string names
