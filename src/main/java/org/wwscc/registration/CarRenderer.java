@@ -11,6 +11,9 @@ package org.wwscc.registration;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -28,15 +31,11 @@ import org.wwscc.util.Resources;
 
 class CarRenderer implements ListCellRenderer<Object>
 {
-    private static ImageIcon[][] reg = new ImageIcon[2][3];
-    static {
-        reg[0][0] = new ImageIcon(Resources.loadImage("reg00.png"));
-        reg[0][1] = new ImageIcon(Resources.loadImage("reg01.png"));
-        reg[0][2] = new ImageIcon(Resources.loadImage("reg02.png"));
-        reg[1][0] = new ImageIcon(Resources.loadImage("reg10.png"));
-        reg[1][1] = new ImageIcon(Resources.loadImage("reg11.png"));
-        reg[1][2] = new ImageIcon(Resources.loadImage("reg12.png"));
-    }
+    private static Color greenish = new Color(10, 150, 10);
+    private static ImageIcon reg     = new ImageIcon(Resources.loadImage("reg.png"));
+    private static ImageIcon noreg   = new ImageIcon(Resources.loadImage("noreg.png"));
+    private static ImageIcon star    = new ImageIcon(Resources.loadImage("star.png"));
+    private static ImageIcon nostar  = new ImageIcon(Resources.loadImage("nostar.png"));
 
     private MyPanel p = new MyPanel();
 
@@ -58,20 +57,14 @@ class CarRenderer implements ListCellRenderer<Object>
         }
 
         p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
+        p.payment.setForeground(c.getPaymentTotal() > 0 ? greenish : Color.gray);
         p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), Database.d.getEffectiveIndexStr(c), c.getNumber()));
         p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
         p.quickid.setText(c.getQuickEntryId());
 
-        int c0 = 0;
-        int c1 = 0;
-
-        if (c.isRegistered()) c0 = 1;
-        if (c.isInRunOrder()) {
-            c1 = 2;
-        } else if (c.hasOtherActivity()) {
-            c1 = 1;
-        }
-        p.status.setIcon(reg[c0][c1]);
+        p.inevent = c.isInRunOrder();
+        p.runs.setIcon(c.hasOtherActivity() ? star : nostar);
+        p.icon.setIcon(c.isRegistered() ? reg : noreg);
         p.setOpaque(true);
         return p;
     }
@@ -79,26 +72,34 @@ class CarRenderer implements ListCellRenderer<Object>
 
 class MyPanel extends JPanel
 {
-    JLabel status;
+    private static Color washout = new Color(240, 240, 240, 200);
+    //private static Font infont = new Font(Font.SANS_SERIF, Font.BOLD, 20);
+
+    JLabel icon;
     JLabel payment;
+    JLabel runs;
     JLabel carinfo;
     JLabel cardesc;
     JLabel quicklbl;
     JLabel quickid;
+    boolean inevent;
 
     public MyPanel()
     {
-        setLayout(new MigLayout("ins 5, gapx 12, gapy 1", "[][40!][100:500:10000]", ""));
+        setLayout(new MigLayout("ins 5, gapx 0, gapy 1", "[]10[40!]7[]5[100:500:10000]", ""));
         setBorder(new UnderlineBorder(new Color(180, 180, 180)));
 
-        status = new JLabel();
-        status.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        status.setOpaque(false);
-        add(status, "ay center, spany 3");
+        icon = new JLabel();
+        icon.setOpaque(false);
+        add(icon, "ay center, spany 3");
 
         payment = new JLabel();
         payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         add(payment, "ax right, spany 3");
+
+        runs = new JLabel("");
+        runs.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
+        add(runs, "ay top, ax right, gap 0, spany 3");
 
         carinfo = new JLabel();
         carinfo.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
@@ -113,15 +114,33 @@ class MyPanel extends JPanel
         add(quicklbl, "gap 0, split");
 
         quickid = new JLabel("");
-        quickid.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
+        quickid.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
         add(quickid, "gap 0, wrap");
+    }
+
+    public void paint(Graphics g)
+    {
+        ((Graphics2D) g).setRenderingHint(
+                RenderingHints.KEY_TEXT_ANTIALIASING,
+                RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+
+        super.paint(g);
+        if (inevent) {
+            g.setColor(washout);
+            g.fillRect(0, 0, getWidth(), getHeight());
+
+            //g.setColor(Color.BLACK);
+            //g.setFont(infont);
+            //FontMetrics metrics = g.getFontMetrics(infont);
+            //g.drawString("In Event", 10, ((g.getClipBounds().height - metrics.getHeight()) / 2) + metrics.getAscent());
+        }
     }
 
     @Override
     public void setForeground(Color f)
     {
         super.setForeground(f);
-        if (status != null) status.setForeground(f);
+        if (icon != null)    icon.setForeground(f);
         if (carinfo != null) carinfo.setForeground(f);
         if (cardesc != null) cardesc.setForeground(f);
         if (quickid != null) quickid.setForeground(f);
@@ -131,7 +150,7 @@ class MyPanel extends JPanel
     public void setBackground(Color f)
     {
         super.setBackground(f);
-        if (status != null) status.setBackground(f);
+        if (icon != null)    icon.setBackground(f);
         if (carinfo != null) carinfo.setBackground(f);
         if (cardesc != null) cardesc.setBackground(f);
         if (quickid != null) quickid.setBackground(f);

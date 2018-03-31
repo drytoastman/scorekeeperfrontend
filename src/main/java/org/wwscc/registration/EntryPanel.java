@@ -202,9 +202,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
         rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
 
-        singleCarPanel.add(new JLabel(new ImageIcon(Resources.loadImage("legend.png"))), "gaptop 10, growx, wrap");
-        singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
-
+        singleCarPanel.add(new JLabel(""),    "pushy 10, wrap");
         singleCarPanel.add(newcar,            "growx, split");
         singleCarPanel.add(newcarfrom,        "growx, wrap");
         singleCarPanel.add(editcar,           "growx, split");
@@ -215,7 +213,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         singleCarPanel.add(deletepayment,     "growx, wrap");
         singleCarPanel.add(registerit,        "growx, wrap");
         singleCarPanel.add(unregisterit,      "growx, wrap");
-        singleCarPanel.add(new JSeparator(),  "growx, gapy 10 10, wrap");
+        singleCarPanel.add(new JLabel(""),    "pushy 10, wrap");
         singleCarPanel.add(paidwarning,       "growx, wrap");
         singleCarPanel.add(new JLabel(""),    "pushy 100, wrap");
 

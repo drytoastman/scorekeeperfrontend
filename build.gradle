@@ -86,6 +86,10 @@ shadowJar {
     exclude "**/x86_64-OpenBSD/**"
     exclude "**/x86_64-SunOS/**"
 
+    // jnr
+    exclude "**/solaris/**"
+    exclude "**/openbsd/**"
+
     // javaserial
     exclude "**/freebsd/**"
     exclude "**/linux/x86_32/**"
@@ -99,6 +103,9 @@ shadowJar {
     // nrjavaserial pulls these in but we don't need them
     exclude '**/commons/lang3/**'
     exclude '**/commons/net/**'
+
+    // svg only used offline for generating png
+    exclude '**/svg/**'
 }
 
 
