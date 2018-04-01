@@ -121,9 +121,9 @@ public class DriverDialog extends BaseDialog<Driver>
         }
 
         // if the first, last or email are not what we started with, check for duplicate
-        if (!first.equals(result.getFirstName()) || !last.equals(result.getLastName()) || !email.equals(result.getEmail())) {
+        if (!result.equalNameEmail(first, last, email)) {
             for (Driver d2 : Database.d.getDriversLike(first, last)) {
-                if (d2.getEmail().equals(email)) {
+                if (d2.getEmail().toLowerCase().equals(email.toLowerCase())) {
                     return JOptionPane.showConfirmDialog(this, "A driver with the same firstname, lastname and email already exists. " +
                                                                "Are you sure you want to create a duplicate?",
                                                                "title", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;

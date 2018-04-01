@@ -106,8 +106,6 @@ public class ChallengeGUI extends JFrame
         });
 
         Database.openDefault();
-
-
     }
 
     /**

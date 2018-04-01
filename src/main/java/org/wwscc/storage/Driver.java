@@ -100,6 +100,13 @@ public class Driver extends AttrBase
         return ((o instanceof Driver) && ((Driver)o).driverid.equals(driverid));
     }
 
+    public boolean equalNameEmail(String firstname, String lastname, String email)
+    {
+        return (firstname.toLowerCase().equals(firstname.toLowerCase()) &&
+                 lastname.toLowerCase().equals(lastname.toLowerCase()) &&
+                    email.toLowerCase().equals(email.toLowerCase()));
+    }
+
     @Override
     public int hashCode()
     {
