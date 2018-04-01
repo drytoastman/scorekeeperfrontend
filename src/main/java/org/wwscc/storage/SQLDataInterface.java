@@ -1045,6 +1045,20 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
+
+    @Override
+    public Driver getDriverByUsername(String username)
+    {
+        try {
+            List<Driver> ret = executeSelect("select * from drivers where username=?", newList(username), Driver.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0) return ret.get(0);
+        } catch (Exception ioe) {
+            logError("getDriverByUsername", ioe);
+        }
+        return null;
+    }
+
+
     @Override
     public WeekendMember getActiveWeekendMembership(UUID driverid)
     {

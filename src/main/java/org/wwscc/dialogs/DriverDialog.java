@@ -33,7 +33,7 @@ public class DriverDialog extends BaseDialog<Driver>
      */
     public DriverDialog(Driver d)
     {
-        super(new MigLayout("fill, w 500, gap 5, ins 5", "[grow 0, right][fill, grow 100][grow 0, right][fill, grow 50]", ""), true);
+        super(new MigLayout("fill, w 500, gap 5, ins 5", "[10%, right][40%, fill][10%, right][40%, fill]", ""), true);
 
         if (d == null) d = new Driver();
 
@@ -106,22 +106,26 @@ public class DriverDialog extends BaseDialog<Driver>
             return false;
         }
 
-        if ((username.length() > 0) && (username.length() < 6)) {
+        if (username.length() < 6) {
             errorMessage = "Username must be at least 6 characters";
             return false;
         }
 
-        if (plaintext.length() > 0) {
-            if ((username.length() < 6) || (plaintext.length() < 6)) {
-                errorMessage = "Password and Username must both be at least 6 characters";
-                return false;
-            }
+        Driver d1 = Database.d.getDriverByUsername(username);
+        if ((d1 != null) && (!d1.getDriverId().equals(result.getDriverId()))) {
+            errorMessage = "Username '" + username + "' is already taken";
+            return false;
+        }
+
+        if ((plaintext.length() > 0) && (plaintext.length() < 6)) {
+            errorMessage = "Password must be at least 6 characters";
+            return false;
         }
 
         // if the first, last or email are not what we started with, check for duplicate
         if (!first.equals(result.getFirstName()) || !last.equals(result.getLastName()) || !email.equals(result.getEmail())) {
-            for (Driver d : Database.d.getDriversLike(first, last)) {
-                if (d.getEmail().equals(email)) {
+            for (Driver d2 : Database.d.getDriversLike(first, last)) {
+                if (d2.getEmail().equals(email)) {
                     return JOptionPane.showConfirmDialog(this, "A driver with the same firstname, lastname and email already exists. " +
                                                                "Are you sure you want to create a duplicate?",
                                                                "title", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;

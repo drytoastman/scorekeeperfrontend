@@ -36,7 +36,7 @@ public class Driver extends AttrBase
         firstname = "";
         lastname = "";
         email = "";
-        username = driverid.toString();
+        username = driverid.toString().substring(0, 8);
         password = "";
         barcode = "";
         optoutmail = false;

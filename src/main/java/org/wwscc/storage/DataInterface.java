@@ -94,6 +94,7 @@ public interface DataInterface
     public Driver getDriver(UUID driverid);
     public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
+    public Driver getDriverByUsername(String username);
 
     public WeekendMember getActiveWeekendMembership(UUID driverid);
     public Integer newWeekendNumber(WeekendMember in) throws Exception;
