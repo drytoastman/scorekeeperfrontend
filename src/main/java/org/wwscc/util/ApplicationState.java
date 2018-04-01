@@ -14,22 +14,22 @@ import org.wwscc.storage.Event;
 
 public class ApplicationState {
 
-	   String currentSeries;
-	   Event currentEvent;
-	   int currentCourse;
-	   int currentRunGroup;
-	   UUID currentChallengeId;
-	
-	   public void setCurrentSeries(String s) { currentSeries = s; }
-	   public void setCurrentEvent(Event e) { currentEvent = e; }
-	   public void setCurrentCourse(int course) { currentCourse = course; }
-	   public void setCurrentRunGroup(int rungroup) { currentRunGroup = rungroup; }
-	   public void setCurrentChallengeId(UUID challengeid) { currentChallengeId = challengeid; }
-	
-	   public String getCurrentSeries() { return currentSeries; }
-	   public Event getCurrentEvent() { return currentEvent; }
-	   public UUID getCurrentEventId() { if (currentEvent != null) { return currentEvent.getEventId(); } else { return IdGenerator.nullid; } }
-	   public int getCurrentCourse() { return currentCourse; }
-	   public int getCurrentRunGroup() { return currentRunGroup; }
-	   public UUID getCurrentChallengeId() { return currentChallengeId; }	
+       private String currentSeries;
+       private Event currentEvent;
+       private int currentCourse;
+       private int currentRunGroup;
+       private UUID currentChallengeId;
+
+       public void setCurrentSeries(String s) { currentSeries = s; }
+       public void setCurrentEvent(Event e) { currentEvent = e; }
+       public void setCurrentCourse(int course) { currentCourse = course; }
+       public void setCurrentRunGroup(int rungroup) { currentRunGroup = rungroup; }
+       public void setCurrentChallengeId(UUID challengeid) { currentChallengeId = challengeid; }
+
+       public String getCurrentSeries() { return currentSeries; }
+       public Event getCurrentEvent() { return currentEvent; }
+       public UUID getCurrentEventId() { if (currentEvent != null) { return currentEvent.getEventId(); } else { return null; } }
+       public int getCurrentCourse() { return currentCourse; }
+       public int getCurrentRunGroup() { return currentRunGroup; }
+       public UUID getCurrentChallengeId() { return currentChallengeId; }
 }

@@ -23,7 +23,6 @@ import org.wwscc.components.CurrentSeriesLabel;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -162,7 +161,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
                     challengeSelect.setSelectedIndex(0);
                 else
                 {
-                    ChallengeGUI.state.setCurrentChallengeId(IdGenerator.nullid);
+                    ChallengeGUI.state.setCurrentChallengeId(null);
                     Messenger.sendEvent(MT.CHALLENGE_CHANGED, null);
                 }
             }

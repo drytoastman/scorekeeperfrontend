@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 public class IdGenerator
 {
     private static final Logger log = Logger.getLogger(IdGenerator.class.getName());
-    public static final UUID nullid = new UUID(0,0);
     public static final UUID namespaceDNS = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
     // Upper long
@@ -93,7 +92,7 @@ public class IdGenerator
             return new UUID(hibyte, lobyte);
         } catch (NoSuchAlgorithmException e) {
             log.log(Level.SEVERE, "\bFailed to load SHA1 for generating V5 DNS UUID", e);
-            return nullid;
+            return null;
         }
     }
 }

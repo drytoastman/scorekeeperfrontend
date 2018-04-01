@@ -754,7 +754,7 @@ public final class BracketPane extends JLayeredPane implements MessageListener, 
                     }
 
                     target.setEntry(transfer);
-                    Messenger.sendEvent(MT.ENTRANT_CHANGED, old);
+                    Messenger.sendEvent(MT.ENTRANT_CHANGED, old.source);
                     return true;
                 }
             }

@@ -809,7 +809,7 @@ public abstract class SQLDataInterface implements DataInterface
             rollback();
         }
 
-        return IdGenerator.nullid;
+        return null;
     }
 
     @Override
@@ -884,7 +884,7 @@ public abstract class SQLDataInterface implements DataInterface
             ResultSet rs = executeSelect(sql, newList(eventid));
 
             Dialins ret         = new Dialins();
-            UUID currentid      = IdGenerator.nullid;
+            UUID currentid      = new UUID(0,0);
             String classcode    = "";
             String indexcode    = "";
             boolean useclsmult  = false;
@@ -902,8 +902,8 @@ public abstract class SQLDataInterface implements DataInterface
 
                 if (!currentid.equals(r.getCarId()))  // next car, process previous
                 {
-                    ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
                     currentid = r.getCarId();
+                    ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
                     bestraw[0] = bestraw[1] = bestnet[0] = bestnet[1] = 999.999;
                 }
 
@@ -962,7 +962,7 @@ public abstract class SQLDataInterface implements DataInterface
         list.add(r.car2.dial);
         list.add(r.challengeid);
         list.add(r.round);
-        executeUpdate("update challengerounds set swappedstart=?,car1id=?,car1dial=?,car2id=?,car2dial=? where challengeid=? and round=?", list);
+        executeUpdate("UPDATE challengerounds SET swappedstart=?,car1id=?,car1dial=?,car2id=?,car2dial=?,modified=now() WHERE challengeid=? AND round=?", list);
     }
 
 
@@ -1164,7 +1164,7 @@ public abstract class SQLDataInterface implements DataInterface
     @Override
     public void mergeServerSetLocal(String name, String address, int ctimeout)
     {
-        _mergeServerSet(IdGenerator.nullid, name, address, ctimeout);
+        _mergeServerSet(MergeServer.LOCALHOST, name, address, ctimeout);
     }
 
     @Override

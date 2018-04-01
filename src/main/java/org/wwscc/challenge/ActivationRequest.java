@@ -8,22 +8,22 @@ package org.wwscc.challenge;
  *
  * @author bwilson
  */
-public class ActivationRequest 
+public class ActivationRequest
 {
-	final Id.Run runToChange;
-	/** true to activate, false to deactivate */
-	final boolean makeActive;
-	final boolean sendDials;
-	
-	public ActivationRequest(Id.Run run, boolean activate)
-	{
-		this(run, activate, false);
-	}
-	
-	public ActivationRequest(Id.Run run, boolean activate, boolean dials)
-	{
-		runToChange = run;
-		makeActive = activate;
-		sendDials = dials;
-	}
+    final Id.Run runToChange;
+    /** true to activate, false to deactivate */
+    final boolean makeActive;
+    final boolean sendDials;
+
+    public ActivationRequest(Id.Run run, boolean activate)
+    {
+        this(run, activate, false);
+    }
+
+    public ActivationRequest(Id.Run run, boolean activate, boolean dials)
+    {
+        runToChange = run;
+        makeActive = activate;
+        sendDials = dials;
+    }
 }

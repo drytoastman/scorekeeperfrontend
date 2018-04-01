@@ -22,7 +22,6 @@ import org.wwscc.components.CarTreeRenderer;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Dialins;
 import org.wwscc.storage.Entrant;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -33,117 +32,119 @@ import org.wwscc.util.Messenger;
  */
 public class EntrantTree extends CarTree implements MessageListener
 {
-	private static final Logger log = Logger.getLogger(EntrantTree.class.getCanonicalName());
+    private static final Logger log = Logger.getLogger(EntrantTree.class.getCanonicalName());
 
-	/** indicator that drag operations use bonus dialins, otherwise we use regular style */
-	protected boolean useBonusDialins;
-	
-	/**
-	 * Create the entrant tree.  By default we use bonus dialins
-	 */
-	public EntrantTree()
-	{
-		setCellRenderer(new CarTreeRenderer());
-		Messenger.register(MT.CHALLENGE_CHANGED, this);
-		Messenger.register(MT.ENTRANT_CHANGED, this);
-		setTransferHandler(new DriverDrag());
-		useBonusDialins = true;
-	}
-	
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-			case CHALLENGE_CHANGED:
-			case ENTRANT_CHANGED:
-				UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
-				Collection<UUID> exclude;
-				Collection<Entrant> reg;
-				if (!challengeid.equals(IdGenerator.nullid))
-				{
-					reg = Database.d.getEntrantsByEvent(ChallengeGUI.state.getCurrentEventId());
-					exclude = Database.d.getCarIdsByChallenge(challengeid);
-				}
-				else
-				{
-					reg = new Vector<Entrant>();
-					exclude = new Vector<UUID>();
-				}
+    /** indicator that drag operations use bonus dialins, otherwise we use regular style */
+    protected boolean useBonusDialins;
+    protected Dialins dialins;
 
-				makeTree(reg, exclude);
-				break;
-		}
-	}
+    /**
+     * Create the entrant tree.  By default we use bonus dialins
+     */
+    public EntrantTree()
+    {
+        setCellRenderer(new CarTreeRenderer());
+        Messenger.register(MT.CHALLENGE_CHANGED, this);
+        Messenger.register(MT.ENTRANT_CHANGED, this);
+        setTransferHandler(new DriverDrag());
+        useBonusDialins = true;
+    }
 
-	/**
-	 * Sets the type of dialins that will be used when an entrant is dragged over.
-	 * @param bonus true for bonus, false for regular dialins
-	 */
-	public void useBonusDialins(boolean bonus)
-	{
-		useBonusDialins = bonus;
-	}
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case CHALLENGE_CHANGED:
+                dialins = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
+            case ENTRANT_CHANGED:
+                UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
+                Collection<UUID> exclude;
+                Collection<Entrant> reg;
+                if (challengeid != null)
+                {
+                    reg = Database.d.getEntrantsByEvent(ChallengeGUI.state.getCurrentEventId());
+                    exclude = Database.d.getCarIdsByChallenge(challengeid);
+                }
+                else
+                {
+                    reg = new Vector<Entrant>();
+                    exclude = new Vector<UUID>();
+                }
 
-	
-	/**
-	* Takes care of the drag from the entrant tree
-	* and drop back in for 'deleteing' from the challenge pane
-	*/
-	class DriverDrag extends TransferHandler
-	{
-		@Override
-		public int getSourceActions(JComponent c)
-		{
-			return COPY;
-		}
+                makeTree(reg, exclude);
+                break;
+        }
+    }
 
-		@Override
-		protected Transferable createTransferable(JComponent c)
-		{ 
-			if (c instanceof EntrantTree) 
-			{
-				Object o = ((EntrantTree)c).getLastSelectedPathComponent();
-				if (o instanceof DefaultMutableTreeNode)
-				{
-					Entrant e = (Entrant)((DefaultMutableTreeNode)o).getUserObject();
-					Dialins dial = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
-					return new BracketEntry.Transfer(new BracketEntry(null, e, dial.getDial(e.getCarId(), useBonusDialins)));
-				}
-			}
-			return null;
-		}
+    /**
+     * Sets the type of dialins that will be used when an entrant is dragged over.
+     * @param bonus true for bonus, false for regular dialins
+     */
+    public void useBonusDialins(boolean bonus)
+    {
+        useBonusDialins = bonus;
+    }
 
-		/*protected void exportDone(JComponent c, Transferable data, int action)*/
-		
-		@Override
-		public boolean canImport(TransferHandler.TransferSupport support)
-		{
-			try 
-			{
-				BracketEntry e = (BracketEntry) support.getTransferable().getTransferData(BracketEntry.Transfer.myFlavor);
-				if (e.source == null) return false;
-				support.setDropAction(MOVE);
-				return true;
-			} 
-			catch (Exception ex) { return false; }
-		}
-		
-		
-		/* Called for drop operations */
-		@Override
-		public boolean importData(TransferHandler.TransferSupport support)
-		{
-			try
-			{
-				if (support.isDrop())
-				{
-					BracketEntry transfer = (BracketEntry)support.getTransferable().getTransferData(BracketEntry.Transfer.myFlavor);
-					return transfer.source != null;
-				}
-			}
-			catch (Exception ioe) { log.log(Level.WARNING, "\bError during drop:{0}", ioe); }
-			return false;
-		}
-	}
+
+    /**
+    * Takes care of the drag from the entrant tree
+    * and drop back in for 'deleteing' from the challenge pane
+    */
+    class DriverDrag extends TransferHandler
+    {
+        @Override
+        public int getSourceActions(JComponent c)
+        {
+            return COPY;
+        }
+
+        @Override
+        protected Transferable createTransferable(JComponent c)
+        {
+            if (c instanceof EntrantTree) {
+                Object o = ((EntrantTree)c).getLastSelectedPathComponent();
+                if (o instanceof DefaultMutableTreeNode) {
+                    Object o1 = ((DefaultMutableTreeNode)o).getUserObject();
+                    if (o1 instanceof Entrant) {
+                        Entrant e = (Entrant)o1;
+                        return new BracketEntry.Transfer(new BracketEntry(null, e, dialins.getDial(e.getCarId(), useBonusDialins)));
+                    }
+                }
+            }
+            return null;
+        }
+
+        /*protected void exportDone(JComponent c, Transferable data, int action)*/
+
+        @Override
+        public boolean canImport(TransferHandler.TransferSupport support)
+        {
+            try
+            {
+                BracketEntry e = (BracketEntry) support.getTransferable().getTransferData(BracketEntry.Transfer.myFlavor);
+                if (e.source == null) return false;
+                support.setDropAction(MOVE);
+                return true;
+            }
+            catch (Exception ex) { return false; }
+        }
+
+
+        /* Called for drop operations */
+        @Override
+        public boolean importData(TransferHandler.TransferSupport support)
+        {
+            try
+            {
+                if (support.isDrop())
+                {
+                    BracketEntry transfer = (BracketEntry)support.getTransferable().getTransferData(BracketEntry.Transfer.myFlavor);
+                    return transfer.source != null;
+                }
+            }
+            catch (Exception ioe) { log.log(Level.WARNING, "\bError during drop:{0}", ioe); }
+            return false;
+        }
+    }
 }

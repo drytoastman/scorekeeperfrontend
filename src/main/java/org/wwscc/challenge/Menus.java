@@ -29,7 +29,6 @@ import javax.swing.KeyStroke;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
@@ -85,7 +84,7 @@ public class Menus extends JMenuBar implements ActionListener
             return;
 
         UUID newid = Database.d.newChallenge(ChallengeGUI.state.getCurrentEventId(), d.getChallengeName(), d.getChallengeSize());
-        if (!newid.equals(IdGenerator.nullid))
+        if (newid != null)
         {
             ChallengeGUI.state.setCurrentChallengeId(newid);
             Messenger.sendEvent(MT.NEW_CHALLENGE, newid);

@@ -30,170 +30,170 @@ import org.wwscc.util.TimeTextField;
  */
 class RunDisplay extends JComponent
 {
-	static Font reactionFont = new Font("SansSerif", Font.PLAIN, 12);
-	static Font timeFont = new Font("SansSerif", Font.PLAIN, 14);
-	static Font titleFont = new Font("SansSerif", Font.BOLD, 10);
-	static Font bigTitleFont = new Font("SansSerif", Font.BOLD, 12);
-	static Font comboFont = new Font("SansSerif", Font.PLAIN, 10);	
-	static Border plainBorder = new LineBorder(Color.GRAY, 1);
-	
-	FocusButton nextButton;
-	JPanel runPanel;
-	JLabel reaction;
-	JLabel sixty;
-	TimeTextField value;
-	JComboBox<Integer> cones;
-	JComboBox<Integer> gates;
-	JComboBox<String> status;
+    static Font reactionFont = new Font("SansSerif", Font.PLAIN, 12);
+    static Font timeFont = new Font("SansSerif", Font.PLAIN, 14);
+    static Font titleFont = new Font("SansSerif", Font.BOLD, 10);
+    static Font bigTitleFont = new Font("SansSerif", Font.BOLD, 12);
+    static Font comboFont = new Font("SansSerif", Font.PLAIN, 10);
+    static Border plainBorder = new LineBorder(Color.GRAY, 1);
 
-	ChallengeModel model;
-	ChallengeRun run;
-	Id.Run runId;		
-	double diff;
-	double savetime;
-	boolean updating;
-	
-	
-	public RunDisplay(ChallengeModel m, Id.Run rid)
-	{
-		runId = rid;
-		run = null;
-		diff = Double.NaN;
-		model = m;
-		savetime = 0;
-		updating = false;
+    FocusButton nextButton;
+    JPanel runPanel;
+    JLabel reaction;
+    JLabel sixty;
+    TimeTextField value;
+    JComboBox<Integer> cones;
+    JComboBox<Integer> gates;
+    JComboBox<String> status;
 
-		InternalListener l = new InternalListener();
-		
-		reaction = new JLabel("", JLabel.CENTER);
-		reaction.setFont(reactionFont);
-		
-		sixty = new JLabel("", JLabel.CENTER);
-		sixty.setFont(reactionFont);
+    ChallengeModel model;
+    ChallengeRun run;
+    Id.Run runId;
+    double diff;
+    double savetime;
+    boolean updating;
 
-		value = new TimeTextField("00.000", 5);
-		value.addFocusListener(l);
-		value.setFont(timeFont);
 
-		cones = new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
-		cones.addActionListener(l);
-		cones.setFont(comboFont);
+    public RunDisplay(ChallengeModel m, Id.Run rid)
+    {
+        runId = rid;
+        run = null;
+        diff = Double.NaN;
+        model = m;
+        savetime = 0;
+        updating = false;
 
-		gates = new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
-		gates.addActionListener(l);
-		gates.setFont(comboFont);
+        InternalListener l = new InternalListener();
 
-		status = new JComboBox<String>(new String[] {"OK", "RL", "NS", "DNF"});
-		status.addActionListener(l);		
-		status.setFont(comboFont);
+        reaction = new JLabel("", JLabel.CENTER);
+        reaction.setFont(reactionFont);
 
-		setLayout(new MigLayout());
-		runPanel = new JPanel(new MigLayout("ins 0"));
-		runPanel.setBorder(plainBorder);
+        sixty = new JLabel("", JLabel.CENTER);
+        sixty.setFont(reactionFont);
 
-		JLabel title = new JLabel();
-		title.setFont(bigTitleFont);
-		title.setText(rid.isLeft() ? "Left Run" : "Right Run");
+        value = new TimeTextField("00.000", 5);
+        value.addFocusListener(l);
+        value.setFont(timeFont);
 
-		nextButton = new FocusButton(rid);
-		nextButton.setFont(titleFont);
-		
-		add(title, "split, w 55!");
-		add(nextButton, "w 45!, wrap");
-		add(runPanel, "wrap");
-		
-		runPanel.add(title("start"), "center");
-		runPanel.add(title("time"), "center");
-		runPanel.add(title("cones"), "center");
-		runPanel.add(title("gates"), "center");
-		runPanel.add(title("status"), "center, wrap");
+        cones = new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
+        cones.addActionListener(l);
+        cones.setFont(comboFont);
 
-		int reactionWidth = reaction.getFontMetrics(reaction.getFont()).stringWidth("0.000");
-		int reactionHeight = reaction.getFontMetrics(reaction.getFont()).getHeight();
-		
-		runPanel.add(reaction, String.format("flowy, split 2, gapright 5, gapleft 5, width %d!, height %d!", reactionWidth, reactionHeight));
-		runPanel.add(sixty, String.format("gapleft 5, height %d!", reactionHeight));
-		runPanel.add(value, "");
-		runPanel.add(cones, "width 50!");
-		runPanel.add(gates, "width 50!");
-		runPanel.add(status, "");
-	}
+        gates = new JComboBox<Integer>(new Integer[] {0, 1, 2, 3, 4, 5});
+        gates.addActionListener(l);
+        gates.setFont(comboFont);
 
-	private JLabel title(String s)
-	{
-		JLabel l = new JLabel(s);
-		l.setFont(titleFont);
-		return l;
-	}
-	
-	public void updateRun()
-	{
-		updating = true;
-		try
-		{
-			reaction.setText("");
-			sixty.setText("");
-			value.setText("00.000");
-			cones.setSelectedIndex(0);
-			gates.setSelectedIndex(0);
-			status.setSelectedIndex(0);
+        status = new JComboBox<String>(new String[] {"OK", "RL", "NS", "DNF"});
+        status.addActionListener(l);
+        status.setFont(comboFont);
 
-			run = model.getRun(runId);
-			if (run == null)
-				return;
+        setLayout(new MigLayout());
+        runPanel = new JPanel(new MigLayout("ins 0"));
+        runPanel.setBorder(plainBorder);
 
-			savetime = run.getRaw();			
-			if (!Double.isNaN(run.getReaction()))
-				reaction.setText(NF.format(run.getReaction()));
-			if (!Double.isNaN(run.getSixty()))
-				sixty.setText(NF.format(run.getSixty()));
-			if (!Double.isNaN(run.getRaw()))
-				value.setTime(run.getRaw());
-			cones.setSelectedItem(run.getCones());
-			gates.setSelectedItem(run.getGates());
-			status.setSelectedItem(run.getStatus());
-			diff = model.getPenSum(run) - model.getDial(runId);
-		} 
-		finally
-		{
-			updating = false;
-		}
-	}
+        JLabel title = new JLabel();
+        title.setFont(bigTitleFont);
+        title.setText(rid.isLeft() ? "Left Run" : "Right Run");
 
-	public void updateColor()
-	{
-		nextButton.setStage(model.getState(runId));
-		nextButton.repaint();
-	}
+        nextButton = new FocusButton(rid);
+        nextButton.setFont(titleFont);
 
-	/**
-	 * Hide listener from outsiders
-	 */
-	class InternalListener implements ActionListener, FocusListener
-	{
-		@Override
-		public void actionPerformed(ActionEvent e) 
-		{
-			if (updating)
-				return;
-			Object o = e.getSource();
-			if (o == cones)
-				model.setCones(runId, (Integer)cones.getSelectedItem());
-			else if (o == gates)
-				model.setGates(runId, (Integer)gates.getSelectedItem());
-			else if (o == status)
-				model.setStatus(runId, (String)status.getSelectedItem());
-		}
-	
-		@Override
-		public void focusGained(FocusEvent arg0) {}
+        add(title, "split, w 55!");
+        add(nextButton, "w 45!, wrap");
+        add(runPanel, "wrap");
 
-		@Override
-		public void focusLost(FocusEvent arg0)
-		{
-			if (updating) return;
-			if (value.getTime() == savetime) return;
-			model.setTime(runId, value.getTime());
-		}
-	}
+        runPanel.add(title("start"), "center");
+        runPanel.add(title("time"), "center");
+        runPanel.add(title("cones"), "center");
+        runPanel.add(title("gates"), "center");
+        runPanel.add(title("status"), "center, wrap");
+
+        int reactionWidth = reaction.getFontMetrics(reaction.getFont()).stringWidth("0.000");
+        int reactionHeight = reaction.getFontMetrics(reaction.getFont()).getHeight();
+
+        runPanel.add(reaction, String.format("flowy, split 2, gapright 5, gapleft 5, width %d!, height %d!", reactionWidth, reactionHeight));
+        runPanel.add(sixty, String.format("gapleft 5, height %d!", reactionHeight));
+        runPanel.add(value, "");
+        runPanel.add(cones, "width 50!");
+        runPanel.add(gates, "width 50!");
+        runPanel.add(status, "");
+    }
+
+    private JLabel title(String s)
+    {
+        JLabel l = new JLabel(s);
+        l.setFont(titleFont);
+        return l;
+    }
+
+    public void updateRun()
+    {
+        updating = true;
+        try
+        {
+            reaction.setText("");
+            sixty.setText("");
+            value.setText("00.000");
+            cones.setSelectedIndex(0);
+            gates.setSelectedIndex(0);
+            status.setSelectedIndex(0);
+
+            run = model.getRun(runId);
+            if (run == null)
+                return;
+
+            savetime = run.getRaw();
+            if (!Double.isNaN(run.getReaction()))
+                reaction.setText(NF.format(run.getReaction()));
+            if (!Double.isNaN(run.getSixty()))
+                sixty.setText(NF.format(run.getSixty()));
+            if (!Double.isNaN(run.getRaw()))
+                value.setTime(run.getRaw());
+            cones.setSelectedItem(run.getCones());
+            gates.setSelectedItem(run.getGates());
+            status.setSelectedItem(run.getStatus());
+            diff = model.getPenSum(run) - model.getDial(runId);
+        }
+        finally
+        {
+            updating = false;
+        }
+    }
+
+    public void updateColor()
+    {
+        nextButton.setStage(model.getState(runId));
+        nextButton.repaint();
+    }
+
+    /**
+     * Hide listener from outsiders
+     */
+    class InternalListener implements ActionListener, FocusListener
+    {
+        @Override
+        public void actionPerformed(ActionEvent e)
+        {
+            if (updating)
+                return;
+            Object o = e.getSource();
+            if (o == cones)
+                model.setCones(runId, (Integer)cones.getSelectedItem());
+            else if (o == gates)
+                model.setGates(runId, (Integer)gates.getSelectedItem());
+            else if (o == status)
+                model.setStatus(runId, (String)status.getSelectedItem());
+        }
+
+        @Override
+        public void focusGained(FocusEvent arg0) {}
+
+        @Override
+        public void focusLost(FocusEvent arg0)
+        {
+            if (updating) return;
+            if (value.getTime() == savetime) return;
+            model.setTime(runId, value.getTime());
+        }
+    }
 }

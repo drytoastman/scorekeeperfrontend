@@ -29,7 +29,6 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 
 import org.wwscc.storage.MergeServer;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.Resources;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -124,9 +123,9 @@ public class MergeStatusTable extends JTable
         @Override
         public int compareTo(DecoratedMergeServer o)
         {
-            if (serverid.equals(IdGenerator.nullid))
+            if (serverid.equals(MergeServer.LOCALHOST))
                 return -1;
-            if (o.serverid.equals(IdGenerator.nullid))
+            if (o.serverid.equals(MergeServer.LOCALHOST))
                 return 1;
             if (hoststate != o.hoststate)
                 return hoststate.compareTo(o.hoststate);

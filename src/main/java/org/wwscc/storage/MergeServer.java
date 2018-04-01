@@ -21,13 +21,12 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.wwscc.util.IdGenerator;
-
 
 public class MergeServer
 {
-    private static Logger log = Logger.getLogger(MergeServer.class.getCanonicalName());
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final Logger log = Logger.getLogger(MergeServer.class.getCanonicalName());
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    public  static final UUID LOCALHOST = new UUID(0,0);
 
     public static enum HostState {
         ACTIVE,
@@ -110,7 +109,7 @@ public class MergeServer
     public int getConnectFailures()   { return cfailures; }
     public HostState getHostState()   { return hoststate; }
     public Set<String> getSeriesSet() { return seriesstate.keySet(); }
-    public boolean isLocalHost()      { return serverid.equals(IdGenerator.nullid); }
+    public boolean isLocalHost()      { return serverid.equals(LOCALHOST); }
 
     public boolean isActive()         { return ((hoststate == HostState.ACTIVE) || (hoststate == HostState.ONESHOT)); }
     public boolean isRemote()         { return address.equals(""); }

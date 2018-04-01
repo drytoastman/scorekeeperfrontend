@@ -18,8 +18,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.wwscc.util.IdGenerator;
-
 
 /**
  * This represents a single run in an event.  Note that for simplicity we represent a ProSolo
@@ -93,8 +91,8 @@ public class Run extends AttrBase implements Cloneable
         this.gates	= gates;
         this.status	= status;
 
-        this.carid   = IdGenerator.nullid;
-        this.eventid = IdGenerator.nullid;
+        this.carid   = null;
+        this.eventid = null;
         this.course  = -1;
         this.run     = -1;
     }

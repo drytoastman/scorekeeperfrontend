@@ -30,86 +30,86 @@ import org.wwscc.util.AppSetup;
  */
 public class ChallengeGUI extends JFrame
 {
-	private static Logger log = Logger.getLogger(BracketPane.class.getCanonicalName());
-	public static final ApplicationState state = new ApplicationState();
+    private static Logger log = Logger.getLogger(BracketPane.class.getCanonicalName());
+    public static final ApplicationState state = new ApplicationState();
 
-	ChallengeModel model;
-	JScrollPane bracketScroll;
-	BracketPane bracket;
-	JComboBox<String> bonusSelect;
-	EntrantTree tree;
-	
-	/**
-	 * Create the main GUI window.
-	 */
-	public ChallengeGUI()
-	{
-		super("Challenge");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		setJMenuBar(new Menus());
-				
-		model = new ChallengeModel();
-		bracket = new BracketPane(model);
-		bracketScroll = new JScrollPane(bracket);
-		bracketScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		bracketScroll.getViewport().setBackground(Color.WHITE);
-		bracketScroll.getViewport().setLayout(new BetterViewportLayout());
-		
-		tree = new EntrantTree();
-		tree.setDragEnabled(true);
-		
-		bonusSelect = new JComboBox<String>(new String[] { "Bonus", "Regular" });
-		bonusSelect.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				tree.useBonusDialins(bonusSelect.getSelectedItem().equals("Bonus"));
-			}
-		});
-		bonusSelect.setSelectedItem("Bonus");  // just to make sure everyone is on the same page
-		
-		SelectionBar selectBar = new SelectionBar();
+    ChallengeModel model;
+    JScrollPane bracketScroll;
+    BracketPane bracket;
+    JComboBox<String> bonusSelect;
+    EntrantTree tree;
 
-		JScrollPane tpane = new JScrollPane(tree);
-		tpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		tpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    /**
+     * Create the main GUI window.
+     */
+    public ChallengeGUI()
+    {
+        super("Challenge");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		JPanel main = new JPanel(new MigLayout("fill", "[grow 0][fill]", "[grow 0][]"));
-		
-		main.add(new JLabel("Drag drives with"), "split 3");
-		main.add(bonusSelect, "");
-		main.add(new JLabel("dialins"), "");
-		main.add(bracketScroll, "spany 2, grow, wrap");
-		main.add(tpane, "growy, w 200!");
+        setJMenuBar(new Menus());
 
-		BorderLayout layout = new BorderLayout();
-		layout.setHgap(5);
-		layout.setVgap(5);
-		JPanel content = new JPanel(layout);
-		content.add(selectBar, BorderLayout.NORTH);
-		content.add(main, BorderLayout.CENTER);
-		
-		setContentPane(content);
-		setSize(1024,768);
-		setVisible(true);
-		
-	    Database.openDefault();
-	}
-	
-	/**
-	 * Entry point for Challenge GUI.
-	 * @param args unused
-	 */
-	public static void main(String args[])
-	{
-		try
-		{
-	        AppSetup.appSetup("challengegui");
-			new ChallengeGUI();
-		}
-		catch (Throwable e)
-		{
-			log.log(Level.SEVERE, "\bFailed to start Challenge GUI: " + e, e);
-		}
-	}
+        model = new ChallengeModel();
+        bracket = new BracketPane(model);
+        bracketScroll = new JScrollPane(bracket);
+        bracketScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        bracketScroll.getViewport().setBackground(Color.WHITE);
+        bracketScroll.getViewport().setLayout(new BetterViewportLayout());
+
+        tree = new EntrantTree();
+        tree.setDragEnabled(true);
+
+        bonusSelect = new JComboBox<String>(new String[] { "Bonus", "Regular" });
+        bonusSelect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tree.useBonusDialins(bonusSelect.getSelectedItem().equals("Bonus"));
+            }
+        });
+        bonusSelect.setSelectedItem("Bonus");  // just to make sure everyone is on the same page
+
+        SelectionBar selectBar = new SelectionBar();
+
+        JScrollPane tpane = new JScrollPane(tree);
+        tpane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        tpane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        JPanel main = new JPanel(new MigLayout("fill", "[grow 0][fill]", "[grow 0][]"));
+
+        main.add(new JLabel("Drag drives with"), "split 3");
+        main.add(bonusSelect, "");
+        main.add(new JLabel("dialins"), "");
+        main.add(bracketScroll, "spany 2, grow, wrap");
+        main.add(tpane, "growy, w 200!");
+
+        BorderLayout layout = new BorderLayout();
+        layout.setHgap(5);
+        layout.setVgap(5);
+        JPanel content = new JPanel(layout);
+        content.add(selectBar, BorderLayout.NORTH);
+        content.add(main, BorderLayout.CENTER);
+
+        setContentPane(content);
+        setSize(1024,768);
+        setVisible(true);
+
+        Database.openDefault();
+    }
+
+    /**
+     * Entry point for Challenge GUI.
+     * @param args unused
+     */
+    public static void main(String args[])
+    {
+        try
+        {
+            AppSetup.appSetup("challengegui");
+            new ChallengeGUI();
+        }
+        catch (Throwable e)
+        {
+            log.log(Level.SEVERE, "\bFailed to start Challenge GUI: " + e, e);
+        }
+    }
 }

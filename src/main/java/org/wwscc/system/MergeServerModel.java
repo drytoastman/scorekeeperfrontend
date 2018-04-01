@@ -16,7 +16,6 @@ import javax.swing.table.AbstractTableModel;
 
 import org.wwscc.storage.MergeServer;
 import org.wwscc.system.MergeStatusTable.DecoratedMergeServer;
-import org.wwscc.util.IdGenerator;
 
 public class MergeServerModel extends AbstractTableModel
 {
@@ -38,7 +37,7 @@ public class MergeServerModel extends AbstractTableModel
         if (data != null)
         {
             for (MergeServer s : data) {
-                if (s.getServerId().equals(IdGenerator.nullid)) {
+                if (s.getServerId().equals(MergeServer.LOCALHOST)) {
                     series.addAll(s.getSeriesSet());
                     break;
                 }

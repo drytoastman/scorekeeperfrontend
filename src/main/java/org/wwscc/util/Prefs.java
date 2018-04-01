@@ -155,7 +155,7 @@ public class Prefs
 
     public static UUID getServerId()
     {
-        UUID ret = IdGenerator.nullid;
+        UUID ret;
         String s = prefs.get("serverid", "");
         if (s.equals("")) {
             ret = IdGenerator.generateId();

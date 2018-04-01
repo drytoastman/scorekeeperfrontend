@@ -31,7 +31,7 @@ public class Car extends AttrBase
     {
         super();
         carid     = IdGenerator.generateId();
-        driverid  = IdGenerator.nullid;
+        driverid  = null;
         number    = 0;
         classcode = "";
         indexcode = "";

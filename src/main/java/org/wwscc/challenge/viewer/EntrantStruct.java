@@ -15,44 +15,44 @@ import org.wwscc.challenge.Id;
  */
 class EntrantStruct
 {
-	EntrantDisplay display;
-	RunDisplay leftRun, rightRun;
-	
-	public EntrantStruct(ChallengeModel m, Id.Entry eid)
-	{
-		display = new EntrantDisplay(m, eid);
-		leftRun = new RunDisplay(m, eid.makeLeft());
-		rightRun = new RunDisplay(m, eid.makeRight());
-	}
+    EntrantDisplay display;
+    RunDisplay leftRun, rightRun;
 
-	public String getName()
-	{
-		return display.name;
-	}
+    public EntrantStruct(ChallengeModel m, Id.Entry eid)
+    {
+        display = new EntrantDisplay(m, eid);
+        leftRun = new RunDisplay(m, eid.makeLeft());
+        rightRun = new RunDisplay(m, eid.makeRight());
+    }
 
-	public void updateRun()
-	{
-		leftRun.updateRun();
-		rightRun.updateRun();
-	}
+    public String getName()
+    {
+        return display.name;
+    }
 
-	public void updateColors()
-	{
-		leftRun.updateColor();
-		rightRun.updateColor();
-	}
+    public void updateRun()
+    {
+        leftRun.updateRun();
+        rightRun.updateRun();
+    }
 
-	public double getDiff()
-	{
-		double d1 = leftRun.diff;
-		double d2 = rightRun.diff;
-		if (Double.isNaN(d1) && Double.isNaN(d2))
-			return 0.0;
-		else if (Double.isNaN(d1))
-			return d2;
-		else if (Double.isNaN(d2))
-			return d1;
-		else
-			return d1 + d2;
-	}
+    public void updateColors()
+    {
+        leftRun.updateColor();
+        rightRun.updateColor();
+    }
+
+    public double getDiff()
+    {
+        double d1 = leftRun.diff;
+        double d2 = rightRun.diff;
+        if (Double.isNaN(d1) && Double.isNaN(d2))
+            return 0.0;
+        else if (Double.isNaN(d1))
+            return d2;
+        else if (Double.isNaN(d2))
+            return d1;
+        else
+            return d1 + d2;
+    }
 }
