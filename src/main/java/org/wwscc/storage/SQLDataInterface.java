@@ -900,10 +900,10 @@ public abstract class SQLDataInterface implements DataInterface
                 Run r = new Run(rs);
                 double net = 999.999;
 
-                if (!currentid.equals(r.getCarId()))  // next car, process previous
+                if (!currentid.equals(r.getCarId()))  // next car, process previous and reset values
                 {
-                    currentid = r.getCarId();
                     ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
+                    currentid = r.getCarId();
                     bestraw[0] = bestraw[1] = bestnet[0] = bestnet[1] = 999.999;
                 }
 
@@ -923,6 +923,9 @@ public abstract class SQLDataInterface implements DataInterface
                         bestnet[idx] = net;
                 }
             }
+
+            // final entrant values processing
+            ret.setEntrant(currentid, classcode, bestraw[0]+bestraw[1], bestnet[0]+bestnet[1], index);
 
             // 4. order and set class dialins
             ret.finalizedialins();

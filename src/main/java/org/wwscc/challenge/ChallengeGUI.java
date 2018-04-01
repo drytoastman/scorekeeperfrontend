@@ -12,6 +12,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
@@ -23,6 +24,8 @@ import net.miginfocom.swing.MigLayout;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BetterViewportLayout;
+import org.wwscc.util.MT;
+import org.wwscc.util.Messenger;
 import org.wwscc.util.AppSetup;
 
 /**
@@ -93,7 +96,18 @@ public class ChallengeGUI extends JFrame
         setSize(1024,768);
         setVisible(true);
 
+        Messenger.register(MT.DATABASE_NOTIFICATION, (m, o) -> {
+            @SuppressWarnings("unchecked")
+            Set<String> tables = (Set<String>)o;
+            if (tables.contains("runs") || tables.contains("cars") || tables.contains("drivers")) {
+                log.fine("directing db notification into entrants changed");
+                Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
+            }
+        });
+
         Database.openDefault();
+
+
     }
 
     /**

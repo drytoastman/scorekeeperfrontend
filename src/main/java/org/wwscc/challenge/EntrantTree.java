@@ -56,8 +56,8 @@ public class EntrantTree extends CarTree implements MessageListener
         switch (type)
         {
             case CHALLENGE_CHANGED:
-                dialins = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
             case ENTRANT_CHANGED:
+                dialins = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
                 UUID challengeid = ChallengeGUI.state.getCurrentChallengeId();
                 Collection<UUID> exclude;
                 Collection<Entrant> reg;
