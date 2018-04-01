@@ -12,15 +12,17 @@ package org.wwscc.dataentry;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.event.ActionEvent;
+import java.util.UUID;
+
+import javax.swing.Action;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTabbedPane;
-import javax.swing.event.ListSelectionEvent;
-import org.wwscc.components.DriverCarPanel;
+import org.wwscc.actions.EventSendAction;
+import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
@@ -33,10 +35,8 @@ import org.wwscc.util.Messenger;
 import net.miginfocom.swing.MigLayout;
 
 
-public class AddByNamePanel extends DriverCarPanel implements MessageListener
+public class AddByNamePanel extends DriverCarPanelBase implements MessageListener
 {
-    //private static final Logger log = Logger.getLogger(DriverEntry.class.getCanonicalName());
-
     JButton addit, changeit;
     boolean carAlreadyInOrder = true;
     boolean entrantIsSelected = false;
@@ -58,12 +58,10 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
         cars.setCellRenderer(listRenderer);
 
         /* Buttons */
-        addit = new JButton("Add Entrant");
-        addit.addActionListener(this);
+        addit = new JButton(new EventSendAction<UUID>("Add Entrant", MT.CAR_ADD, () -> (selectedCar != null) ? selectedCar.getCarId() : null));
         addit.setEnabled(false);
 
-        changeit = new JButton("Swap Entrant");
-        changeit.addActionListener(this);
+        changeit = new JButton(new EventSendAction<UUID>("Swap Entrant", MT.CAR_CHANGE, () -> (selectedCar != null) ? selectedCar.getCarId() : null));
         changeit.setEnabled(false);
 
         add(createTitle("1. Search"), "wrap");
@@ -71,17 +69,17 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
         add(firstSearch, "wrap");
         add(new JLabel("Last Name"), "split, grow 0");
         add(lastSearch, "wrap");
-        add(smallButton(CLEAR), "wrap");
+        add(smallButton(new ClearSearchAction()), "wrap");
 
         add(createTitle("2. Driver"), "wrap");
         add(dscroll, "pushy 100, grow, wrap");
-        add(smallButton(NEWDRIVER), "split");
-        add(smallButton(EDITDRIVER), "wrap");
+        add(smallButton(new NewDriverAction()), "split");
+        add(smallButton(new EditDriverAction()), "wrap");
 
         add(createTitle("3. Car"), "wrap");
         add(cscroll, "pushy 100, grow, wrap");
-        add(smallButton(NEWCAR), "split");
-        add(smallButton(NEWFROM), "wrap");
+        add(smallButton(new NewCarAction(false)), "split");
+        add(smallButton(new NewCarAction(true)), "wrap");
 
         add(createTitle("4. Do it"), "wrap");
         add(addit, "split");
@@ -100,52 +98,20 @@ public class AddByNamePanel extends DriverCarPanel implements MessageListener
         return lbl;
     }
 
-    private JButton smallButton(String text)
+    private JButton smallButton(Action action)
     {
-        JButton b = new JButton(text);
+        JButton b = new JButton(action);
         b.setFont(new Font(null, Font.PLAIN, 10));
-        b.addActionListener(this);
         return b;
     }
 
-    /**
-     * Process events from the various buttons
-     */
     @Override
-    public void actionPerformed(ActionEvent e)
+    protected void carSelectionChanged()
     {
-        String cmd = e.getActionCommand();
-
-        if (cmd.equals("Add Entrant"))
-        {
-            if (selectedCar != null)
-                Messenger.sendEvent(MT.CAR_ADD, selectedCar.getCarId());
-        }
-
-        else if (cmd.equals("Swap Entrant"))
-        {
-            if (selectedCar != null)
-                Messenger.sendEvent(MT.CAR_CHANGE, selectedCar.getCarId());
-        }
-
-        else
-            super.actionPerformed(e);
-    }
-
-
-    /**
-     * One of the list value selections has changed.
-     * This can be either a user selection or the list model was updated
-     */
-    @Override
-    public void valueChanged(ListSelectionEvent e)
-    {
-        super.valueChanged(e);
         carAlreadyInOrder = ((selectedCar == null) || (selectedCar.isInRunOrder()));
         addit.setEnabled(!carAlreadyInOrder);
         changeit.setEnabled(!carAlreadyInOrder && entrantIsSelected);
     }
-
 
     @Override
     public void event(MT type, Object o)

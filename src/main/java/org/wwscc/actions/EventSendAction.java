@@ -9,25 +9,28 @@
 package org.wwscc.actions;
 
 import java.awt.event.ActionEvent;
+import java.util.function.Supplier;
+
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
 
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
-public class EventSendAction extends AbstractAction
+public class EventSendAction<T> extends AbstractAction
 {
     MT event;
     Object arg;
+    Supplier<T> supplier;
 
     public EventSendAction(String title, MT tosend)
     {
         this(title, tosend, null, null);
     }
 
-    public EventSendAction(String title, MT tosend, KeyStroke ks)
+    public EventSendAction(String title, MT tosend, Object o)
     {
-        this(title, tosend, null, ks);
+        this(title, tosend, o, null);
     }
 
     public EventSendAction(String title, MT tosend, Object o, KeyStroke ks)
@@ -38,9 +41,22 @@ public class EventSendAction extends AbstractAction
         if (ks != null) putValue(ACCELERATOR_KEY, ks);
     }
 
+    public EventSendAction(String title, MT tosend, Supplier<T> objsource)
+    {
+        super(title);
+        event = tosend;
+        supplier = objsource;
+    }
+
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        Messenger.sendEvent(event, arg);
+        if (supplier != null) {
+            T obj = supplier.get();
+            if (obj != null)
+                Messenger.sendEvent(event, obj);
+        } else {
+            Messenger.sendEvent(event, arg);
+        }
     }
 }

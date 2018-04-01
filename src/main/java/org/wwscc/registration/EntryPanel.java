@@ -29,6 +29,7 @@ import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -46,7 +47,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import net.miginfocom.swing.MigLayout;
 
-import org.wwscc.components.DriverCarPanel;
+import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.CurrencyDialog;
@@ -65,12 +66,14 @@ import org.wwscc.util.Prefs;
 import org.wwscc.util.Resources;
 
 
-public class EntryPanel extends DriverCarPanel implements MessageListener
+public class EntryPanel extends DriverCarPanelBase implements MessageListener
 {
     private static final ImageIcon noteicon = new ImageIcon(Resources.loadImage("notes.png"));
     private static final ImageIcon cardicon = new ImageIcon(Resources.loadImage("card.png"));
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
 
+    public static final String EDITCAR    = "Edit Car";
+    public static final String DELETECAR  = "Delete Car";
     public static final String ONSITE_PAYMENT = "onsite";
 
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
@@ -129,13 +132,13 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         deletepayment = new JButton(new DeletePaymentMenuAction());
         deletepayment.setEnabled(false);
 
-        clearSearch = smallButton(CLEAR, true);
-        newdriver   = smallButton(NEWDRIVER, true);
-        editdriver  = smallButton(EDITDRIVER, false);
-        editnotes   = new JButton(new EditNotesAction());
-        weekmember  = new JButton(new WeekendMemberAction());
-        newcar      = smallButton(NEWCAR, false);
-        newcarfrom  = smallButton(NEWFROM, false);
+        clearSearch = regButton(new ClearSearchAction(), true);
+        newdriver   = regButton(new NewDriverAction(), true);
+        editdriver  = regButton(new EditDriverAction(), false);
+        editnotes   = regButton(new EditNotesAction(), false);
+        weekmember  = regButton(new WeekendMemberAction(), false);
+        newcar      = regButton(new NewCarAction(false), false);
+        newcarfrom  = regButton(new NewCarAction(true), false);
 
         editcar = new JButton(new EditCarAction());
         editcar.setEnabled(false);
@@ -185,7 +188,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         driverp.add(editnotes,         "growx, wrap");
         driverp.add(weekmember,        "growx, wrap");
         driverp.add(new JLabel(""),    "pushy 10, wrap");
-        driverp.add(driverInfo,        "growx, wrap");
+        driverp.add(driverInfoWrapper, "growx, wrap");
         driverp.add(new JLabel(""),    "pushy 10, wrap");
         driverp.add(barcode,           "growx, h 50, center, wrap");
         driverp.add(printers,          "growx, wrap");
@@ -357,14 +360,12 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
     class RegisterAction extends AbstractAction
     {
-        public RegisterAction()
-        {
+        public RegisterAction() {
             super("Register Only");
         }
 
         @Override
-        public void actionPerformed(ActionEvent e)
-        {
+        public void actionPerformed(ActionEvent e) {
             try {
                 Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
@@ -537,11 +538,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         return lbl;
     }
 
-    private JButton smallButton(String text, boolean enabled)
+    private JButton regButton(Action action, boolean enabled)
     {
-        JButton b = new JButton(text);
+        JButton b = new JButton(action);
         b.setEnabled(enabled);
-        b.addActionListener(this);
         return b;
     }
 
@@ -571,25 +571,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         paidwarning.setOpaque(true);
     }
 
-
-    /**
-     * One of the list value selections has changed.
-     * This can be either a user selection or the list model was updated
-     */
     @Override
-    public void valueChanged(ListSelectionEvent e)
-    {
-        if (e.getValueIsAdjusting())
-           return;
-        super.valueChanged(e);
-
-        if (e.getSource() == drivers) {
-            driverSelectionChanged();
-        } else if (e.getSource() == cars) {
-            carSelectionChanged();
-        }
-    }
-
     protected void driverSelectionChanged()
     {
         editnotes.setIcon(null);
@@ -646,6 +628,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         }
     }
 
+    @Override
     protected void carSelectionChanged()
     {
         List<DecoratedCar> selectedCars = cars.getSelectedValuesList();
@@ -701,6 +684,7 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         }
     }
 
+    @Override
     protected void carCreated()
     {
         if (JOptionPane.showConfirmDialog(this,

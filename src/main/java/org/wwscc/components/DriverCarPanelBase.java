@@ -9,13 +9,8 @@
 
 package org.wwscc.components;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +19,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -32,12 +28,10 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
-import javax.swing.Painter;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.CarDialog;
 import org.wwscc.dialogs.DriverDialog;
@@ -49,29 +43,23 @@ import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
+import org.wwscc.util.SolidPainter;
 import org.wwscc.util.TextChangeTrigger;
+import org.wwscc.util.TextFieldFocuser;
 
 import net.miginfocom.swing.MigLayout;
 
 
-public abstract class DriverCarPanel extends JPanel implements ActionListener, ListSelectionListener, FocusListener
+public abstract class DriverCarPanelBase extends JPanel implements ListSelectionListener
 {
-    private static final Logger log = Logger.getLogger(DriverCarPanel.class.getCanonicalName());
-
-    public static final String CLEAR      = "Clear Search";
-    public static final String NEWDRIVER  = "New Driver";
-    public static final String EDITDRIVER = "Edit Driver";
-
-    public static final String NEWCAR     = "New Car";
-    public static final String NEWFROM    = "New From";
-    public static final String EDITCAR    = "Edit Car";
-    public static final String DELETECAR  = "Delete Car";
+    private static final Logger log = Logger.getLogger(DriverCarPanelBase.class.getCanonicalName());
 
     protected JTextField firstSearch;
     protected JTextField lastSearch;
 
     protected JScrollPane dscroll;
     protected JList<Object> drivers;
+    protected JScrollPane driverInfoWrapper;
     protected JTextPane driverInfo;
 
     protected JScrollPane cscroll;
@@ -85,7 +73,7 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     protected SearchDrivers searchDrivers = new SearchDrivers();
     protected ApplicationState state;
 
-    public DriverCarPanel(ApplicationState s)
+    public DriverCarPanelBase(ApplicationState s)
     {
         super();
         state = s;
@@ -97,16 +85,15 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         /* Search Section */
         firstSearch = new JTextField("", 8);
         firstSearch.getDocument().addDocumentListener(searchDrivers);
-        firstSearch.addFocusListener(this);
+        firstSearch.addFocusListener(new TextFieldFocuser());
         lastSearch = new JTextField("", 8);
         lastSearch.getDocument().addDocumentListener(searchDrivers);
-        lastSearch.addFocusListener(this);
+        lastSearch.addFocusListener(new TextFieldFocuser());
 
         /* Driver Section */
         drivers = new JList<Object>();
         drivers.addListSelectionListener(this);
         drivers.setVisibleRowCount(1);
-        //drivers.setPrototypeCellValue("12345678901234567890");
         drivers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         dscroll = new JScrollPane(drivers);
@@ -114,11 +101,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         dscroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         dscroll.getVerticalScrollBar().setPreferredSize(new Dimension(15,200));
 
-        // create default height
-        driverInfo = new JTextPane();
-        driverInfo.setText("\n\n\n\n\n");
-        driverInfo.setBorder(BorderFactory.createTitledBorder("Info"));
-
+        /* create driver info box, have it NOT wrap text, use Nimbus override to set background color */
+        driverInfo = new JTextPane() {
+            public boolean getScrollableTracksViewportWidth() {
+                return false;
+            }
+        };
         UIDefaults system = UIManager.getDefaults();
         UIDefaults defaults = new UIDefaults();
         defaults.put("TextPane[Enabled].backgroundPainter", new SolidPainter(system.getColor("Panel.background")));
@@ -126,6 +114,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         driverInfo.putClientProperty("Nimbus.Overrides.InheritDefaults", true);
         driverInfo.setEditable(false);
         driverInfo.setEnabled(true);
+
+        /* wrap it in a scrollpane without bars to enable the hiding of lines too long */
+        driverInfoWrapper = new JScrollPane(driverInfo);
+        driverInfoWrapper.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        driverInfoWrapper.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        driverInfoWrapper.setBorder(BorderFactory.createTitledBorder("Info"));
 
         /* Car Section */
         carVector = new Vector<DecoratedCar>();
@@ -141,19 +135,41 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     }
 
 
-    static class SolidPainter implements Painter<Object>
-    {
-        Color color;
-        public SolidPainter(Color c) {
-            color = c;
-        }
-        @Override
-        public void paint(Graphics2D g, Object object, int width, int height) {
-            g.setColor(color);
-            g.fillRect(0, 0, width, height);
-        }
+    protected void carCreated() {}
+    protected void driverSelectionChanged() {}
+    protected void carSelectionChanged() {}
 
+
+    /**
+     * One of the list value selections has changed.
+     * This can be either a user selection or the list model was updated
+     */
+    @Override
+    public void valueChanged(ListSelectionEvent e)
+    {
+        if (e.getValueIsAdjusting())
+           return;
+
+        if (e.getSource() == drivers) {
+            Object o = drivers.getSelectedValue();
+            if (o instanceof Driver) {
+                selectedDriver = (Driver)o;
+                driverInfo.setText(driverDisplay(selectedDriver));
+                reloadCars(null);
+            } else {
+                selectedDriver = null;
+                driverInfo.setText("\n\n\n\n");
+                cars.setListData(new DecoratedCar[0]);
+                cars.clearSelection();
+            }
+            driverSelectionChanged();
+        } else if (e.getSource() == cars) {
+            Object o = cars.getSelectedValue();
+            selectedCar = (o instanceof DecoratedCar) ? (DecoratedCar)o : null;
+            carSelectionChanged();
+        }
     }
+
 
     /**
      * Set the name search fields and select the name.
@@ -217,19 +233,12 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     }
 
 
-    /**
-     * Process events from the various buttons
-     * @param e the button event
-     */
-    @Override
-    public void actionPerformed(ActionEvent e)
+    protected class NewDriverAction extends AbstractAction
     {
-        String cmd = e.getActionCommand();
-
-        if (cmd.equals(NEWDRIVER))
-        {
+        public NewDriverAction() { super("New Driver"); }
+        public void actionPerformed(ActionEvent e) {
             DriverDialog dd = new DriverDialog(new Driver(firstSearch.getText(), lastSearch.getText()));
-            dd.doDialog(NEWDRIVER, new DialogFinisher<Driver>() {
+            dd.doDialog("New Driver", new DialogFinisher<Driver>() {
                 @Override
                 public void dialogFinished(Driver d) {
                     if (d == null) return;
@@ -242,11 +251,14 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                 }
             });
         }
+    }
 
-        else if (cmd.equals(EDITDRIVER))
-        {
+    protected class EditDriverAction extends AbstractAction
+    {
+        public EditDriverAction() { super("Edit Driver"); }
+        public void actionPerformed(ActionEvent e) {
             DriverDialog dd = new DriverDialog(selectedDriver);
-            dd.doDialog(EDITDRIVER, new DialogFinisher<Driver>() {
+            dd.doDialog("Edit Driver", new DialogFinisher<Driver>() {
                 @Override
                 public void dialogFinished(Driver d) {
                     if (d == null) return;
@@ -263,109 +275,70 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
                 }
             });
         }
+    }
 
-        else if (cmd.equals(NEWCAR) || cmd.equals(NEWFROM))
-        {
+
+    protected class NewCarAction extends AbstractAction
+    {
+        boolean newfrom;
+        public NewCarAction(boolean fromselected) {
+            super(fromselected ? "New From" : "New Car");
+            newfrom = fromselected;
+        }
+
+        public void actionPerformed(ActionEvent e) {
             final CarDialog cd;
-            if (cmd.equals(NEWFROM) && (selectedCar != null))
-            {
+            if (newfrom && (selectedCar != null)) {
                 Car initial = new Car(selectedCar);
                 initial.setCarId(IdGenerator.generateId());  // Need a new id
                 cd = new CarDialog(selectedDriver.getDriverId(), initial, Database.d.getClassData(), carAddOption);
-            }
-            else
-            {
+            } else {
                 cd = new CarDialog(selectedDriver.getDriverId(), null, Database.d.getClassData(), carAddOption);
             }
 
-            cd.doDialog(NEWCAR, new DialogFinisher<Car>() {
+            cd.doDialog("New Car", new DialogFinisher<Car>() {
                 @Override
                 public void dialogFinished(Car c) {
                     if (c == null)
                         return;
-                    try
-                    {
-                        if (selectedDriver != null)
-                        {
+                    try {
+                        if (selectedDriver != null) {
                             Database.d.newCar(c);
                             reloadCars(c);
                             carCreated();
                             if (cd.getAddToRunOrder())
                                 Messenger.sendEvent(MT.CAR_ADD, c.getCarId());
                         }
-                    }
-                    catch (Exception ioe)
-                    {
+                    } catch (Exception ioe) {
                         log.log(Level.SEVERE, "\bFailed to create a car: " + ioe, ioe);
                     }
                 }
             });
         }
+    }
 
-        else if (cmd.equals(CLEAR))
-        {
+
+    protected class ClearSearchAction extends AbstractAction
+    {
+        public ClearSearchAction() { super("Clear Search"); }
+        public void actionPerformed(ActionEvent e) {
             firstSearch.setText("");
             lastSearch.setText("");
             firstSearch.requestFocus();
-        }
-
-        else
-        {
-            log.log(Level.INFO, "Unknown command in DriverEntry: {0}", cmd);
-        }
-    }
-
-    /**
-     * Called when a new car is created.  The new car should be the selected value in the list
-     */
-    protected void carCreated()
-    {
-    }
-
-    /**
-     * One of the list value selections has changed.
-     * This can be either a user selection or the list model was updated
-     */
-    @Override
-    public void valueChanged(ListSelectionEvent e)
-    {
-        if (e.getValueIsAdjusting() == false)
-        {
-            Object source = e.getSource();
-            if (source == drivers)
-            {
-                Object o = drivers.getSelectedValue();
-                if (o instanceof Driver)
-                {
-                    selectedDriver = (Driver)o;
-                    driverInfo.setText(driverDisplay(selectedDriver));
-                    reloadCars(null);
-                }
-                else
-                {
-                    selectedDriver = null;
-                    driverInfo.setText("\n\n\n\n");
-                    cars.setListData(new DecoratedCar[0]);
-                    cars.clearSelection();
-                }
-            }
-
-            else if (source == cars)
-            {
-                Object o = cars.getSelectedValue();
-                selectedCar = (o instanceof DecoratedCar) ? (DecoratedCar)o : null;
-            }
         }
     }
 
     public String driverDisplay(Driver d)
     {
         StringBuilder ret = new StringBuilder("");
-        ret.append(d.getFullName()).append(" (").append(d.getUserName()).append(")\n");
-        ret.append(d.getEmail()).append("\n");
-        ret.append(d.getAttrS("address")).append("\n");
+        ret.append(d.getFullName() + " (" + d.getUserName() + ")\n");
+        ret.append(d.getEmail() + "\n");
+        if (!d.getBarcode().isEmpty() || !d.getAttrS("scca").isEmpty())
+            ret.append(d.getBarcode() + " / " + d.getAttrS("scca") + "\n");
+        ret.append(d.getAttrS("address") + "\n");
         ret.append(String.format("%s%s%s %s\n", d.getAttrS("city"), d.hasAttr("city")&&d.hasAttr("state")?", ":"", d.getAttrS("state"), d.getAttrS("zip")));
-        ret.append(d.getAttrS("phone"));
+        if (!d.getAttrS("phone").isEmpty())
+            ret.append("\n" + d.getAttrS("phone"));
         return ret.toString();
     }
 
@@ -379,20 +352,6 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
         return ret.toString();
     }
 
-
-    @Override
-    public void focusGained(FocusEvent e)
-    {
-        JTextField tf = (JTextField)e.getComponent();
-        tf.selectAll();
-    }
-
-    @Override
-    public void focusLost(FocusEvent e)
-    {
-        JTextField tf = (JTextField)e.getComponent();
-        tf.select(0,0);
-    }
 
     class SearchDrivers extends TextChangeTrigger
     {

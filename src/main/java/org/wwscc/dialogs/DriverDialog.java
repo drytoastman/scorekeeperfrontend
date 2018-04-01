@@ -23,8 +23,8 @@ import net.miginfocom.swing.MigLayout;
  */
 public class DriverDialog extends BaseDialog<Driver>
 {
-    public final static String[] ATTRLIST = { "address", "city", "state", "zip", "phone", "brag", "sponsor", "econtact", "ephone" };
-    public final static String[] LABELS = { "Address", "City", "State", "Zip", "Phone", "Brag Fact", "Sponsor", "Emerg Contact", "Emerg Phone" };
+    public final static String[] ATTRLIST = { "scca", "address", "city", "state", "zip", "phone", "brag", "sponsor", "econtact", "ephone" };
+    public final static String[] LABELS = { "SCCA #", "Address", "City", "State", "Zip", "Phone", "Brag Fact", "Sponsor", "Emerg Contact", "Emerg Phone" };
 
     /**
      * Create the dialog.
@@ -57,7 +57,9 @@ public class DriverDialog extends BaseDialog<Driver>
         mainPanel.add(esub, "spanx 3, wrap");
 
         mainPanel.add(label("Barcode", false), "");
-        mainPanel.add(entry("barcode", d.getBarcode()), "spanx 3, wrap");
+        mainPanel.add(entry("barcode", d.getBarcode()), "");
+        mainPanel.add(label("SCCA #", false), "");
+        mainPanel.add(entry("scca", d.getAttrS("scca")), "wrap");
 
         mainPanel.add(new JSeparator(), "spanx 4, growx, h 2!, wrap");
 
@@ -73,7 +75,7 @@ public class DriverDialog extends BaseDialog<Driver>
         szp.add(entry("zip", d.getAttrS("zip")), "");
         mainPanel.add(szp, "growx, spanx 2, wrap");
 
-        for (int ii = 4; ii < ATTRLIST.length; ii++) {
+        for (int ii = 5; ii < ATTRLIST.length; ii++) {
             mainPanel.add(label(LABELS[ii], false), "");
             mainPanel.add(entry(ATTRLIST[ii], d.getAttrS(ATTRLIST[ii])), "spanx 3, wrap");
         }

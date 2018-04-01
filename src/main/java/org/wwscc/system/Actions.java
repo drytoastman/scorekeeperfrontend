@@ -58,15 +58,15 @@ public class Actions
         apps    = new ArrayList<Action>();
         actions = new ArrayList<Action>();
 
-        apps.add(new EventSendAction("DataEntry",    MT.LAUNCH_REQUEST, "org.wwscc.dataentry.DataEntry", null));
-        apps.add(new EventSendAction("Registration", MT.LAUNCH_REQUEST, "org.wwscc.registration.Registration", null));
-        apps.add(new EventSendAction("ProTimer",     MT.LAUNCH_REQUEST, "org.wwscc.protimer.ProSoloInterface", null));
-        apps.add(new EventSendAction("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI", null));
+        apps.add(new EventSendAction<>("DataEntry",    MT.LAUNCH_REQUEST, "org.wwscc.dataentry.DataEntry"));
+        apps.add(new EventSendAction<>("Registration", MT.LAUNCH_REQUEST, "org.wwscc.registration.Registration"));
+        apps.add(new EventSendAction<>("ProTimer",     MT.LAUNCH_REQUEST, "org.wwscc.protimer.ProSoloInterface"));
+        apps.add(new EventSendAction<>("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI"));
 
-        quit           = new EventSendAction("Shutdown",        MT.SHUTDOWN_REQUEST);
-        openStatus     = new EventSendAction("Status Window",   MT.OPEN_STATUS_REQUEST);
-        debugRequest   = new EventSendAction("Save Debug Info", MT.DEBUG_REQUEST);
-        backupRequest  = addAction(new EventSendAction("Backup Database", MT.BACKUP_REQUEST));
+        quit           = new EventSendAction<>("Shutdown",        MT.SHUTDOWN_REQUEST);
+        openStatus     = new EventSendAction<>("Status Window",   MT.OPEN_STATUS_REQUEST);
+        debugRequest   = new EventSendAction<>("Save Debug Info", MT.DEBUG_REQUEST);
+        backupRequest  = addAction(new EventSendAction<>("Backup Database", MT.BACKUP_REQUEST));
         importRequest  = addAction(new ImportAction());
 
         mergeAll       = addAction(new MergeWithAllLocalAction());
