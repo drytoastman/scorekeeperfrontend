@@ -72,7 +72,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
     private static final Logger log = Logger.getLogger(EntryPanel.class.getCanonicalName());
 
     public static final String ONSITE_PAYMENT = "onsite";
-    public static final String WEEKEND = "Weekend Membership";
 
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
     JButton clearSearch, newdriver, editdriver, editnotes, weekmember;
@@ -133,8 +132,8 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         clearSearch = smallButton(CLEAR, true);
         newdriver   = smallButton(NEWDRIVER, true);
         editdriver  = smallButton(EDITDRIVER, false);
-        editnotes   = smallButton(EDITNOTES, false);
-        weekmember  = smallButton(WEEKEND, false);
+        editnotes   = new JButton(new EditNotesAction());
+        weekmember  = new JButton(new WeekendMemberAction());
         newcar      = smallButton(NEWCAR, false);
         newcarfrom  = smallButton(NEWFROM, false);
 
@@ -178,10 +177,10 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
         searchp.add(clearSearch,              "wrap");
         searchp.add(new JLabel("Last Name"),  "");
         searchp.add(lastSearch,               "");
+        searchp.add(newdriver,                "");
 
         driverp.add(createTitle("2. Driver"), "spanx 2, growx, wrap");
         driverp.add(dscroll,           "spany 11, grow");
-        driverp.add(newdriver,         "growx, wrap");
         driverp.add(editdriver,        "growx, wrap");
         driverp.add(editnotes,         "growx, wrap");
         driverp.add(weekmember,        "growx, wrap");
@@ -219,6 +218,41 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
         carSelectionChanged();
         new Thread(new FindPrinters()).start();
+    }
+
+
+    class EditNotesAction extends AbstractAction
+    {
+        public EditNotesAction() { super("Edit Notes"); }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (selectedDriver == null)
+                return;
+            NotesDialog nd = new NotesDialog(selectedDriver.getAttrS("notes"));
+            if (nd.doDialog("Edit Notes", null)) {
+                selectedDriver.setAttrS("notes", nd.getResult());
+                try {
+                    Database.d.updateDriver(selectedDriver);
+                    valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
+                } catch (Exception ex) {
+                    log.warning("\bUpdate driver failed: " + ex);
+                }
+            }
+        }
+    }
+
+
+    class WeekendMemberAction extends AbstractAction
+    {
+        public WeekendMemberAction() { super("Weekend Membership"); }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (selectedDriver == null)
+                return;
+            WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver, Database.d.getActiveWeekendMembership(selectedDriver.getDriverId()));
+            wd.doDialog("Weekend Membership", null);
+            valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
+        }
     }
 
 
@@ -535,41 +569,6 @@ public class EntryPanel extends DriverCarPanel implements MessageListener
 
         paidwarning.setText("No cars paid and not in runorder");
         paidwarning.setOpaque(true);
-    }
-
-
-    /**
-     * Process events from the various buttons
-     * @param e the button event
-     */
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        String cmd = e.getActionCommand();
-        try
-        {
-            if (cmd.equals(EDITNOTES) && (selectedDriver != null))
-            {
-                NotesDialog nd = new NotesDialog(selectedDriver.getAttrS("notes"));
-                if (nd.doDialog("Edit Notes", null)) {
-                    selectedDriver.setAttrS("notes", nd.getResult());
-                    Database.d.updateDriver(selectedDriver);
-                    valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
-                }
-            }
-            else if (cmd.equals(WEEKEND) && (selectedDriver != null))
-            {
-                WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver, Database.d.getActiveWeekendMembership(selectedDriver.getDriverId()));
-                wd.doDialog("Weekend Membership", null);
-                valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
-            }
-            else
-                super.actionPerformed(e);
-        }
-        catch (Exception ioe)
-        {
-            log.log(Level.WARNING, "\bRegistation action failed: " + ioe, ioe);
-        }
     }
 
 

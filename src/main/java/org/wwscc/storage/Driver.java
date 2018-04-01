@@ -12,6 +12,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.UUID;
+
+import org.mindrot.jbcrypt.BCrypt;
 import org.wwscc.util.IdGenerator;
 
 public class Driver extends AttrBase
@@ -76,6 +78,7 @@ public class Driver extends AttrBase
         return ret;
     }
 
+    public String getUserName()   { return username; }
     public String getFullName()   { return firstname + " " + lastname; }
     public UUID   getDriverId()   { return driverid; }
     public String getFirstName()  { return firstname; }
@@ -118,6 +121,11 @@ public class Driver extends AttrBase
     public boolean isPlaceholder()
     {
         return firstname.equals(PLACEHOLDER);
+    }
+
+    public void setPasswordPlaintext(String plaintext)
+    {
+        password = BCrypt.hashpw(plaintext, BCrypt.gensalt(12));
     }
 }
 

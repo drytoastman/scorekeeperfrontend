@@ -11,6 +11,7 @@ package org.wwscc.registration;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -73,7 +74,7 @@ class CarRenderer implements ListCellRenderer<Object>
 class MyPanel extends JPanel
 {
     private static Color washout = new Color(240, 240, 240, 200);
-    //private static Font infont = new Font(Font.SANS_SERIF, Font.BOLD, 20);
+    private static Font infont = new Font(Font.SANS_SERIF, Font.BOLD, 20);
 
     JLabel icon;
     JLabel payment;
@@ -129,10 +130,10 @@ class MyPanel extends JPanel
             g.setColor(washout);
             g.fillRect(0, 0, getWidth(), getHeight());
 
-            //g.setColor(Color.BLACK);
-            //g.setFont(infont);
-            //FontMetrics metrics = g.getFontMetrics(infont);
-            //g.drawString("In Event", 10, ((g.getClipBounds().height - metrics.getHeight()) / 2) + metrics.getAscent());
+            g.setColor(Color.BLACK);
+            g.setFont(infont);
+            FontMetrics metrics = g.getFontMetrics(infont);
+            g.drawString("In Event", 10, ((g.getClipBounds().height - metrics.getHeight()) / 2) + metrics.getAscent());
         }
     }
 

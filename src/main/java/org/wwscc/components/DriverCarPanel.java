@@ -61,7 +61,6 @@ public abstract class DriverCarPanel extends JPanel implements ActionListener, L
     public static final String CLEAR      = "Clear Search";
     public static final String NEWDRIVER  = "New Driver";
     public static final String EDITDRIVER = "Edit Driver";
-    public static final String EDITNOTES  = "Notes";
 
     public static final String NEWCAR     = "New Car";
     public static final String NEWFROM    = "New From";

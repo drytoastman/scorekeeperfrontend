@@ -331,10 +331,10 @@ public class CarDialog extends BaseDialog<Car>
         try
         {
             result.setDriverId(driverid);
-            result.setYear(getEntryText("year"));
-            result.setMake(getEntryText("make"));
-            result.setModel(getEntryText("model"));
-            result.setColor(getEntryText("color"));
+            result.setYear(getEntryText("year").trim());
+            result.setMake(getEntryText("make").trim());
+            result.setModel(getEntryText("model").trim());
+            result.setColor(getEntryText("color").trim());
 
             ClassData.Class c = (ClassData.Class)getSelect("classcode");
             result.setClassCode(c.getCode());

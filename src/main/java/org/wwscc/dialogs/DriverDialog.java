@@ -15,6 +15,7 @@ import javax.swing.JSeparator;
 
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
+import org.wwscc.util.HintTextField;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -32,14 +33,22 @@ public class DriverDialog extends BaseDialog<Driver>
      */
     public DriverDialog(Driver d)
     {
-        super(new MigLayout("fill, w 500, gap 5, ins 5", "[grow 0, right][fill,grow 100][grow 0][fill, grow 100]", ""), true);
+        super(new MigLayout("fill, w 500, gap 5, ins 5", "[grow 0, right][fill, grow 100][grow 0, right][fill, grow 50]", ""), true);
 
         if (d == null) d = new Driver();
 
+        HintTextField pwf = new HintTextField("sets a new password");
+        fields.put("plaintext", pwf);
+
         mainPanel.add(label("First Name", true), "");
         mainPanel.add(entry("firstname", d.getFirstName()), "");
-        mainPanel.add(label("Last Name", true), "");
+        mainPanel.add(label("Last Name", true), "right");
         mainPanel.add(entry("lastname", d.getLastName()), "wrap");
+
+        mainPanel.add(label("Username", true), "");
+        mainPanel.add(entry("username", d.getUserName()), "");
+        mainPanel.add(label("Password", true), "");
+        mainPanel.add(pwf, "wrap");
 
         mainPanel.add(label("Email", false), "");
         JPanel esub = new JPanel(new MigLayout("gap 0, ins 0", "[fill,grow 100][grow 0][grow 0]"));
@@ -81,12 +90,33 @@ public class DriverDialog extends BaseDialog<Driver>
     @Override
     public boolean verifyData()
     {
-        String first = getEntryText("firstname");
-        String last  = getEntryText("lastname");
-        String email = getEntryText("email");
+        String first = getEntryText("firstname").trim();
+        String last  = getEntryText("lastname").trim();
+        String username = getEntryText("username").trim();
+        String plaintext = getEntryText("plaintext").trim();
+        String email = getEntryText("email").trim();
 
-        if (first.equals("")) return false;
-        if (last.equals("")) return false;
+        if (first.length() < 2) {
+            errorMessage = "Firstname must be at least 2 characters";
+            return false;
+        }
+
+        if (last.length() < 2) {
+            errorMessage = "Lastname must be at least 2 characters";
+            return false;
+        }
+
+        if ((username.length() > 0) && (username.length() < 6)) {
+            errorMessage = "Username must be at least 6 characters";
+            return false;
+        }
+
+        if (plaintext.length() > 0) {
+            if ((username.length() < 6) || (plaintext.length() < 6)) {
+                errorMessage = "Password and Username must both be at least 6 characters";
+                return false;
+            }
+        }
 
         // if the first, last or email are not what we started with, check for duplicate
         if (!first.equals(result.getFirstName()) || !last.equals(result.getLastName()) || !email.equals(result.getEmail())) {
@@ -112,16 +142,20 @@ public class DriverDialog extends BaseDialog<Driver>
         if (!valid)
             return null;
 
-        result.setFirstName(getEntryText("firstname"));
-        result.setLastName(getEntryText("lastname"));
-        result.setEmail(getEntryText("email"));
+        result.setFirstName(getEntryText("firstname").trim());
+        result.setLastName(getEntryText("lastname").trim());
+        result.setUsername(getEntryText("username").trim());
+        String plaintext = getEntryText("plaintext").trim();
+        if (!plaintext.isEmpty())
+            result.setPasswordPlaintext(plaintext);
+
+        result.setEmail(getEntryText("email").trim());
         result.setOptOutMail(isChecked("optoutmail"));
-        result.setBarcode(getEntryText("barcode"));
+        result.setBarcode(getEntryText("barcode").trim());
         for (String attr : ATTRLIST) {
-            result.setAttrS(attr, getEntryText(attr));
+            result.setAttrS(attr, getEntryText(attr).trim());
         }
         return result;
     }
-
 }
 
