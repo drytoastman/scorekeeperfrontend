@@ -416,7 +416,7 @@ public abstract class SQLDataInterface implements DataInterface
     @Override
     public void newDriver(Driver d) throws Exception
     {
-        executeUpdate("insert into drivers (driverid, firstname, lastname, email, username, password, membership, optoutmail, attr) values (?,?,?,?,?,?,?,?,?)", d.getValues());
+        executeUpdate("insert into drivers (driverid, firstname, lastname, email, username, password, barcode, optoutmail, attr) values (?,?,?,?,?,?,?,?,?)", d.getValues());
     }
 
     @Override
@@ -424,7 +424,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         LinkedList<Object> vals = d.getValues();
         vals.add(vals.pop());
-        executeUpdate("update drivers set firstname=?,lastname=?,email=?,username=?,password=?,membership=?,optoutmail=?,attr=?,modified=now() where driverid=?", vals);
+        executeUpdate("update drivers set firstname=?,lastname=?,email=?,username=?,password=?,barcode=?,optoutmail=?,attr=?,modified=now() where driverid=?", vals);
     }
 
     @Override
@@ -479,7 +479,7 @@ public abstract class SQLDataInterface implements DataInterface
         List<Driver> ret = new ArrayList<Driver>();
         try
         {
-            return executeSelect("select * from drivers where membership like ? order by driverid", newList(barcode),
+            return executeSelect("select * from drivers where barcode like ? order by driverid", newList(barcode),
                     Driver.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)

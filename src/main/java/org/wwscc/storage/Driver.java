@@ -58,7 +58,7 @@ public class Driver extends AttrBase
         email      = rs.getString("email");
         username   = rs.getString("username");
         password   = rs.getString("password");
-        barcode = rs.getString("membership");
+        barcode    = rs.getString("barcode");
         optoutmail = rs.getBoolean("optoutmail");
     }
 
