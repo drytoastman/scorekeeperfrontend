@@ -8,7 +8,6 @@
 
 package org.wwscc.dialogs;
 
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
@@ -47,7 +46,7 @@ public class DriverDialog extends BaseDialog<Driver>
 
         mainPanel.add(label("Username", true), "");
         mainPanel.add(entry("username", d.getUserName()), "");
-        mainPanel.add(label("Password", true), "");
+        mainPanel.add(label("Password", false), "");
         mainPanel.add(pwf, "wrap");
 
         mainPanel.add(label("Email", false), "");
@@ -79,7 +78,6 @@ public class DriverDialog extends BaseDialog<Driver>
             mainPanel.add(entry(ATTRLIST[ii], d.getAttrS(ATTRLIST[ii])), "spanx 3, wrap");
         }
 
-        mainPanel.add(new JLabel(" "), "h 0!, pushy 100");
         result = d;
     }
 

@@ -11,6 +11,8 @@ package org.wwscc.dialogs;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -145,10 +147,11 @@ public class CarDialog extends BaseDialog<Car>
         @Override public int getIconHeight() { return size; }
         @Override public void paintIcon(Component c, Graphics g, int x, int y)
         {
+            ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g.setColor(color);
-            g.fillRect(x, y, size, size);
+            g.fillOval(x, y, size, size);
             g.setColor(Color.DARK_GRAY);
-            g.drawRect(x, y, size-1, size-1);
+            g.drawOval(x, y, size-1, size-1);
         }
         public void setUnknown() { color = Color.gray; repaint(); }
         public void setOk()      { color = Color.green; repaint(); }

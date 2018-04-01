@@ -16,6 +16,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -208,6 +209,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 
         //FontMetrics tm = g.getFontMetrics(topFont);
         FontMetrics bm = g.getFontMetrics(bottomFont);
+        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
         if (topLine != null)
         {

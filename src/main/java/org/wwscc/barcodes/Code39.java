@@ -12,6 +12,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -112,6 +113,7 @@ public class Code39 extends JComponent implements Printable
             xpos += NARROW; // inter character space
         }
 
+        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
         Rectangle2D metrics = g.getFontMetrics(g.getFont()).getStringBounds(label, g);
         g.drawString(label, (int)Math.max(0, (FULLWIDTH-metrics.getWidth())/2), getHeight()-1);
     }

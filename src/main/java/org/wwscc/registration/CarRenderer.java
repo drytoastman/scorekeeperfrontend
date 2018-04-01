@@ -121,10 +121,7 @@ class MyPanel extends JPanel
 
     public void paint(Graphics g)
     {
-        ((Graphics2D) g).setRenderingHint(
-                RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-
+        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
         super.paint(g);
         if (inevent) {
             g.setColor(washout);
