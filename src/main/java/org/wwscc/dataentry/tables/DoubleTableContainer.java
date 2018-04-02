@@ -11,6 +11,8 @@ package org.wwscc.dataentry.tables;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -87,6 +89,15 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                 hr.course = DataEntry.state.getCurrentCourse();
                 driverTable.getTableHeader().repaint();
                 runsTable.getTableHeader().repaint();
+            }
+        });
+
+        // When we click in the runs table, clear the drivers selection else it
+        // leaves a selection box which can add to confusion, we leave the selection
+        // in the runs table in case the time entry is triggered
+        runsTable.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) {
+                driverTable.clearSelection();
             }
         });
 
