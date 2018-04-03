@@ -212,14 +212,15 @@ public class MachineMonitor extends MonitorBase
     @Override
     protected void mshutdown()
     {
-        status.set("Stopping port-forwarding");
-        if (ports != null)
-            ports.disconnect();
-
         if (shouldStopMachine) {
             status.set("Waiting for backend shutdown");
             while (backendready)
                 donefornow();
+
+            status.set("Stopping port-forwarding");
+            if (ports != null)
+                ports.disconnect();
+
             status.set("Shutting down machine");
             DockerMachine.stopmachine();
         }
