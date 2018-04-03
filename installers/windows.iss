@@ -23,7 +23,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl";
 Source: "..\build\libs\scorekeeper-{#Version}.jar"; DestDir: "{app}";
 #ifdef Offline
 #define ImageArchive "images-"+Version+".tar"
-Source: {#ImageArchive}; DestDir: "{tmp}"; 
+Source: "{#ImageArchive}"; DestDir: "{tmp}"; Flags: dontcopy; 
 #endif 
 
 [InstallDelete]
@@ -122,6 +122,7 @@ begin
    Result := ExpandConstant('{tmp}\loadimages.bat')
    if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
        SaveStringToFile(Result, ExpandConstant('docker load --input {tmp}\{#ImageArchive}'#10), True);
+       ExtractTemporaryFile('{#ImageArchive}');
    end;
 end;
 #endif
@@ -144,7 +145,7 @@ begin
 
     ExecAsOriginalUser(BatFile, '', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
     if ResultCode <> 0 then begin
-        Result := 'Failed to download the docker images';
+        Result := 'Failed to load the docker images';
     end;
 end;
 
