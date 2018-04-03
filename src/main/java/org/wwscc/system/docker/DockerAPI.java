@@ -9,6 +9,7 @@
 package org.wwscc.system.docker;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,6 +31,7 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
@@ -326,14 +328,10 @@ public class DockerAPI
             while ((entry = in.getNextEntry()) != null) {
                 if (entry.isDirectory())
                     continue;
-                File dest = hostdir.resolve(entry.getName()).toFile();
-                FileUtils.copyToFile(in, dest);
+                File dest = hostdir.resolve(Paths.get(entry.getName()).getFileName()).toFile();
+                IOUtils.copy(in, new FileOutputStream(dest));
                 dest.setLastModified(entry.getModTime().getTime());
             }
-        } catch (IOException ioe) {
-            if (ioe.getMessage().contains("Attempted read on closed stream")) // jtar tries to read pad size but stream is already closed
-                return;
-            throw ioe;
         }
     }
 
