@@ -94,6 +94,17 @@ public class DockerAPI
         }
     }
 
+    static class MutableCounter
+    {
+        private int value;
+        public MutableCounter() { value = 0; }
+        public int inc() { value += 1; return value; }
+    }
+
+    public interface DockerStatusListener {
+        public void status(int tasks, int completed);
+    }
+
     /**
      * Perform setup or re/setup with a new connection
      * @param env the current known environment variables
@@ -241,7 +252,7 @@ public class DockerAPI
     }
 
 
-    public boolean containersUp(Collection<DockerContainer> containers)
+    public boolean containersUp(Collection<DockerContainer> containers, DockerStatusListener listener)
     {
         try
         {
@@ -302,7 +313,7 @@ public class DockerAPI
                 inner.add(new Requests.Start(container.getName()));
             }
 
-            List<Exception> ret = parallelChains(chains);
+            List<Exception> ret = parallelChains(chains, listener);
             if (ret.size() > 0) {
                 log.warning("containerup errors: ");
                 for (Exception e : ret) {
@@ -395,16 +406,16 @@ public class DockerAPI
     }
 
 
-    public void stop(Collection<DockerContainer> containers)
+    public void stop(Collection<DockerContainer> containers, DockerStatusListener listener)
     {
         List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
         for (DockerContainer c : containers)
             outer.add(Arrays.asList(new Requests.Stop(c.getName())));
-        parallelAndReport("stop", outer);
+        parallelAndReport("stop", outer, listener);
     }
 
 
-    public void teardown(Collection<DockerContainer> containers)
+    public void teardown(Collection<DockerContainer> containers, DockerStatusListener listener)
     {
         List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
         for (DockerContainer c : containers) {
@@ -414,7 +425,7 @@ public class DockerAPI
             outer.add(inner);
         }
 
-        parallelAndReport("teardown", outer);
+        parallelAndReport("teardown", outer, listener);
     }
 
 
@@ -493,7 +504,7 @@ public class DockerAPI
      * @throws DockerDownException
      * @throws IOException
      */
-    private List<Exception> parallelChains(List<List<Requests.Wrapper<Void>>> chains)
+    private List<Exception> parallelChains(List<List<Requests.Wrapper<Void>>> chains, DockerStatusListener listener)
     {
         List<Exception> ret = new ArrayList<Exception>();
 
@@ -503,12 +514,23 @@ public class DockerAPI
             return ret;
         }
 
+        final MutableCounter count = new MutableCounter();
+        final int total = chains.stream().mapToInt(e -> e.size()).sum();
+        if (listener != null)
+            listener.status(0, total);
+
         List<Future<Void>> futures = new ArrayList<Future<Void>>();
         for (List<Requests.Wrapper<Void>> list : chains) {
             futures.add(executor.submit(() -> {
-                    for (Requests.Wrapper<Void> wrap : list)
+                for (Requests.Wrapper<Void> wrap : list) {
+                    try {
                         request(wrap);
-                    return null;
+                    } finally {
+                        if (listener != null)
+                            listener.status(count.inc(), total);
+                    }
+                }
+                return null;
             }));
         }
 
@@ -523,9 +545,10 @@ public class DockerAPI
         return ret;
     }
 
-    private void parallelAndReport(String function, List<List<Requests.Wrapper<Void>>> chains)
+
+    private void parallelAndReport(String function, List<List<Requests.Wrapper<Void>>> chains, DockerStatusListener listener)
     {
-        List<Exception> ret = parallelChains(chains);
+        List<Exception> ret = parallelChains(chains, listener);
         if (ret.size() > 0) {
             log.warning(function + " errors: ");
             for (Exception e : ret) {
@@ -533,6 +556,7 @@ public class DockerAPI
             }
         }
     }
+
 
     /** Simple tests
      * @throws Exception */

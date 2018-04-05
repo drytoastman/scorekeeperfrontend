@@ -120,14 +120,14 @@ public class ContainerMonitor extends MonitorBase
 
         if (!external_backend) {
             status.set( "Clearing old containers");
-            docker.teardown(all);
+            docker.teardown(all, null);
 
             status.set( "Establishing Network");
             while (!done && !docker.networkUp(NET_NAME))
                 donefornow();
 
             status.set( "Creating containers");
-            while (!done && !docker.containersUp(all))
+            while (!done && !docker.containersUp(all, (c, t) -> { status.set(String.format("Creation Step %s of %s", c, t)); }))
                 donefornow();
         }
 
@@ -172,7 +172,7 @@ public class ContainerMonitor extends MonitorBase
                 status.set("Down");
             } else {
                 status.set("Restarting " + down.stream().map(e -> e.getName()).collect(Collectors.joining(",")));
-                if (!docker.containersUp(down)) {
+                if (!docker.containersUp(down, null)) {
                     log.severe("Error during call to up."); // don't send to dialog, noisy
                 } else {
                     quickrecheck = true;
@@ -209,7 +209,7 @@ public class ContainerMonitor extends MonitorBase
 
         status.set("Shutting down ...");
         if (!external_backend) {
-            docker.teardown(all);
+            docker.teardown(all, (c, t) -> { status.set(String.format("Shutdown Step %d of %d", c, t)); });
         }
         ready.set(false);
         status.set("Done");
@@ -236,7 +236,7 @@ public class ContainerMonitor extends MonitorBase
             return;
         }
 
-        docker.stop(nondb);
+        docker.stop(nondb, null);
         Database.d.close();
 
         dialog.setStatus("Importing ...", -1);
