@@ -14,8 +14,11 @@ import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.UUID;
 
+import org.wwscc.util.IdGenerator;
+
 public class WeekendMember extends AttrBase
 {
+    protected UUID uniqueid;
     protected int membership;
     protected UUID driverid;
     protected LocalDate startdate;
@@ -27,6 +30,7 @@ public class WeekendMember extends AttrBase
 
     public WeekendMember(UUID driverid, LocalDate start, LocalDate end)
     {
+        this.uniqueid  = IdGenerator.generateId();
         this.membership = -1;
         this.driverid  = driverid;
         this.startdate = start;
@@ -39,6 +43,7 @@ public class WeekendMember extends AttrBase
 
     public WeekendMember(ResultSet rs) throws SQLException
     {
+        uniqueid   = (UUID)rs.getObject("uniqueid");
         membership = rs.getInt("membership");
         driverid   = (UUID)rs.getObject("driverid");
         startdate  = rs.getObject("startdate", LocalDate.class);
@@ -52,6 +57,7 @@ public class WeekendMember extends AttrBase
     public LinkedList<Object> getValues()
     {
         LinkedList<Object> ret = new LinkedList<Object>();
+        ret.add(uniqueid);
         ret.add(membership);
         ret.add(driverid);
         ret.add(startdate);
