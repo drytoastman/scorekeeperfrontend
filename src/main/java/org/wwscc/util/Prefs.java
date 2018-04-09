@@ -190,7 +190,6 @@ public class Prefs
     public static boolean getAllowDiscovery()  { return prefs.getBoolean("allowdiscovery", true); }
     public static boolean getPrintDirectly()   { return prefs.getBoolean("printdirectly", true); }
     public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
-    public static String getRegion()           { return prefs.get("region", ""); }
     public static String getIssuer()           { return prefs.get("issuer", ""); }
     public static String getIssuerMem()        { return prefs.get("issuermem", ""); }
 
@@ -217,7 +216,6 @@ public class Prefs
     public static void setAllowDiscovery(boolean b)  { prefs.putBoolean("allowdiscovery", b); }
     public static void setPrintDirectly(boolean b)   { prefs.putBoolean("printdirectly", b); }
     public static void setLogLevel(AppLogLevel l)    { prefs.put("loglevel", l.getName()); }
-    public static void setRegion(String s)           { prefs.put("region", s); }
     public static void setIssuer(String s)           { prefs.put("issuer", s); }
     public static void setIssuerMem(String s)        { prefs.put("issuermem", s); }
 

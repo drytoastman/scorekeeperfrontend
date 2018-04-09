@@ -21,9 +21,6 @@ public class GetNewWeekendMemberDialog extends BaseDialog<WeekendMember>
     {
         super(new MigLayout("fill", "[][200]"), false);
 
-        mainPanel.add(label("Region", true), "right");
-        mainPanel.add(entry("Region", Prefs.getRegion()), "left, growx, wrap");
-
         mainPanel.add(label("Worker Name", true), "right");
         mainPanel.add(entry("Worker", Prefs.getIssuer()), "left, growx, wrap");
 
@@ -39,7 +36,7 @@ public class GetNewWeekendMemberDialog extends BaseDialog<WeekendMember>
     @Override
     public boolean verifyData()
     {
-        return !(getEntryText("Region").equals("") || getEntryText("Worker").equals("") || getEntryText("WorkerMem").equals(""));
+        return !(getEntryText("Worker").equals("") || getEntryText("WorkerMem").equals(""));
     }
 
     /**
@@ -48,11 +45,9 @@ public class GetNewWeekendMemberDialog extends BaseDialog<WeekendMember>
     @Override
     public WeekendMember getResult()
     {
-        Prefs.setRegion(getEntryText("Region"));
         Prefs.setIssuer(getEntryText("Worker"));
         Prefs.setIssuerMem(getEntryText("WorkerMem"));
 
-        weekend.setRegion(getEntryText("Region"));
         weekend.setIssuer(getEntryText("Worker"));
         weekend.setIssuerMem(getEntryText("WorkerMem"));
         return weekend;

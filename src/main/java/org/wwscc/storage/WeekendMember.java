@@ -25,8 +25,6 @@ public class WeekendMember extends AttrBase
     protected LocalDate enddate;
     protected String issuer;
     protected String issuermem;
-    protected String region;
-    protected String area;
 
     public WeekendMember(UUID driverid, LocalDate start, LocalDate end)
     {
@@ -37,8 +35,6 @@ public class WeekendMember extends AttrBase
         this.enddate   = end;
         this.issuer    = "";
         this.issuermem = "";
-        this.region    = "";
-        this.area      = "autocross";
     }
 
     public WeekendMember(ResultSet rs) throws SQLException
@@ -50,8 +46,6 @@ public class WeekendMember extends AttrBase
         enddate    = rs.getObject("enddate", LocalDate.class);
         issuer     = rs.getString("issuer");
         issuermem  = rs.getString("issuermem");
-        region     = rs.getString("region");
-        area       = rs.getString("area");
     }
 
     public LinkedList<Object> getValues()
@@ -64,8 +58,6 @@ public class WeekendMember extends AttrBase
         ret.add(enddate);
         ret.add(issuer);
         ret.add(issuermem);
-        ret.add(region);
-        ret.add(area);
         return ret;
     }
 
@@ -75,7 +67,6 @@ public class WeekendMember extends AttrBase
     public Integer getMemberId()      { return membership; }
 
     public void setDriverId(UUID id)   { driverid = id; }
-    public void setRegion(String s)    { region = s; }
     public void setIssuer(String s)    { issuer = s; }
     public void setIssuerMem(String s) { issuermem = s; }
 }
