@@ -63,6 +63,8 @@ public class WeekendMemberDialog extends BaseDialog<Void>
             number.setFont(number.getFont().deriveFont(20.0f));
             number.setText(""+active.getMemberId());
             mainPanel.add(number, "spanx 2, center, wrap");
+            mainPanel.add(label("Region", true), "right");
+            mainPanel.add(label(active.getRegion()+"", false), "wrap");
             mainPanel.add(label("Start", true), "right");
             mainPanel.add(label(active.getStartDate()+"", false), "wrap");
             mainPanel.add(label("End", true), "right");

@@ -1098,7 +1098,11 @@ public abstract class SQLDataInterface implements DataInterface
             throw new SQLException("Ran out of weekend membernumbers, all alloted values have been used");
 
         in.membership = pick;
-        executeUpdate("INSERT INTO weekendmembers (uniqueid, membership, driverid, startdate, enddate, issuer, issuermem) VALUES (?,?,?,?,?,?,?)", in.getValues());
+        in.region     = getSetting("weekendregion", String.class);
+        in.area       = "autocross";
+        executeUpdate("INSERT INTO weekendmembers (uniqueid, membership, driverid, startdate, enddate, issuer, issuermem, region, area) " +
+                      "VALUES (?,?,?,?,?,?,?,?,?)",
+                      newList(in.uniqueid, in.membership, in.driverid, in.startdate, in.enddate, in.issuer, in.issuermem, in.region, in.area));
         return pick;
     }
 
