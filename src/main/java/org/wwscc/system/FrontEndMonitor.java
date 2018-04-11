@@ -116,9 +116,9 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
     {
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;
-        if (src.equals(address.get()))
-            return;
         if (up) {
+            if (src.equals(address.get()))
+                return;
             Database.d.mergeServerActivate(serverid, data.get("hostname").asText(), src.getHostAddress());
         } else {
             Database.d.mergeServerDeactivate(serverid);
