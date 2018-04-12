@@ -1079,7 +1079,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public Integer newWeekendNumber(WeekendMember in) throws Exception
+    public void newWeekendNumber(WeekendMember in) throws Exception
     {
         int min = getSetting("weekendmin", Integer.class);
         int max = getSetting("weekendmax", Integer.class);
@@ -1103,7 +1103,11 @@ public abstract class SQLDataInterface implements DataInterface
         executeUpdate("INSERT INTO weekendmembers (uniqueid, membership, driverid, startdate, enddate, issuer, issuermem, region, area) " +
                       "VALUES (?,?,?,?,?,?,?,?,?)",
                       newList(in.uniqueid, in.membership, in.driverid, in.startdate, in.enddate, in.issuer, in.issuermem, in.region, in.area));
-        return pick;
+    }
+
+    public void deleteWeekendNumber(WeekendMember in) throws Exception
+    {
+        executeUpdate("DELETE FROM weekendmembers WHERE uniqueid=?", newList(in.uniqueid));
     }
 
 

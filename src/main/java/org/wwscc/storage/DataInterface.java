@@ -97,7 +97,8 @@ public interface DataInterface
     public Driver getDriverByUsername(String username);
 
     public WeekendMember getActiveWeekendMembership(UUID driverid);
-    public Integer newWeekendNumber(WeekendMember in) throws Exception;
+    public void newWeekendNumber(WeekendMember in) throws Exception;
+    public void deleteWeekendNumber(WeekendMember in) throws Exception;
 
     public Car getCar(UUID carid);
     public List<Car> getCarsForDriver(UUID driverid); // get all cars for this driverid

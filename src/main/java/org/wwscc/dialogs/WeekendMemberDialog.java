@@ -9,6 +9,7 @@
 package org.wwscc.dialogs;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,11 +28,13 @@ public class WeekendMemberDialog extends BaseDialog<Void>
     private Logger log = Logger.getLogger(WeekendMemberDialog.class.getCanonicalName());
 
     JButton getnew;
+    DateTimeFormatter dformat;
 
     public WeekendMemberDialog(Driver driver, WeekendMember active)
     {
-        super(new MigLayout("h 90, w 150, center", ""), true);
+        super(new MigLayout("h 90, w 150, center", "[45%][55%]"), true);
 
+        dformat = DateTimeFormatter.ofPattern("EEE MMM dd");
         getnew = new JButton("Assign New Membership");
         getnew.addActionListener(e -> {
             LocalDate start = LocalDate.now();
@@ -51,6 +54,7 @@ public class WeekendMemberDialog extends BaseDialog<Void>
         });
 
         buttonPanel.remove(cancel);
+        ok.setText("Close");
         rebuildPanel(active);
     }
 
@@ -59,23 +63,34 @@ public class WeekendMemberDialog extends BaseDialog<Void>
         mainPanel.removeAll();
 
         if (active != null) {
+            JButton delete = new JButton("Delete This Membership");
+            delete.addActionListener(e -> {
+                try {
+                    Database.d.deleteWeekendNumber(active);
+                    rebuildPanel(null);
+                } catch (Exception ex) {
+                    log.log(Level.WARNING, "Error deleting weekend number: " + ex, ex);
+                    JOptionPane.showMessageDialog(this, "Error deleteing number: \n" + ex);
+                }
+            });
+
             JLabel number = new JLabel("");
             number.setFont(number.getFont().deriveFont(20.0f));
             number.setText(""+active.getMemberId());
             mainPanel.add(number, "spanx 2, center, wrap");
+            mainPanel.add(delete, "spanx 2, center, wrap");
             mainPanel.add(label("Region", true), "right");
             mainPanel.add(label(active.getRegion()+"", false), "wrap");
             mainPanel.add(label("Start", true), "right");
-            mainPanel.add(label(active.getStartDate()+"", false), "wrap");
+            mainPanel.add(label(dformat.format(active.getStartDate()), false), "wrap");
             mainPanel.add(label("End", true), "right");
-            mainPanel.add(label(active.getEndDate()+"", false), "wrap");
+            mainPanel.add(label(dformat.format(active.getEndDate()), false), "wrap");
         } else {
-            mainPanel.add(label("No membership covering today", true), "center, gapbottom 20, wrap");
-            mainPanel.add(getnew, "center");
+            mainPanel.add(getnew, "spanx 2, center, wrap");
+            mainPanel.add(label("No membership covering today", true), "center, spanx 2");
         }
 
-        revalidate();
-        repaint();
+        repack();
     }
 
     /**
