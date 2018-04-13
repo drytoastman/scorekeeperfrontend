@@ -365,7 +365,7 @@ public class Actions
                     if (!Database.d.deleteUserAndSeries(s))
                         return;
                 if (sd.allSelected())
-                    Database.d.deleteDriversTable();
+                    Database.d.deletePublicTables();
                 Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
             }}.start();
         }
