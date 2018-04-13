@@ -124,16 +124,17 @@ public class CarDialog extends BaseDialog<Car>
         mainPanel.add(new JLabel(numberok), "wrap");
         fields.get("number").getDocument().addDocumentListener(new TextChangeTrigger() { @Override public void changedTo(String txt) { checkNumberUse(); }});
 
+        classmult = new JCheckBox("Extra Class Multiplier Flag");
+        classmult.setToolTipText("Check this flag to apply the class additional modifier");
+        classmult.addActionListener(this);
+        classmult.setEnabled(false);
+        mainPanel.add(classmult, "skip, gaptop 10, wrap");
+
         override = new JCheckBox("Override Index Restrictions");
         override.setToolTipText("Some classes restrict the available indexes, this lets you override that restriction, only for use in rare circumstances");
         override.addActionListener(this);
         override.setEnabled(false);
-        mainPanel.add(override, "skip, gaptop 10, wrap");
-
-        classmult = new JCheckBox("Class Multiplier Flag");
-        classmult.addActionListener(this);
-        classmult.setEnabled(false);
-        mainPanel.add(classmult, "skip, gapbottom 10, wrap");
+        mainPanel.add(override, "skip, gapbottom 10, wrap");
 
         classChange.actionPerformed(new ActionEvent(this, 1, ""));
         result = car;
