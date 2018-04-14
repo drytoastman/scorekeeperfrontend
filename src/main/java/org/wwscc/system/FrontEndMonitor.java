@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.wwscc.storage.Database;
+import org.wwscc.storage.MergeServer;
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.MT;
@@ -116,9 +117,9 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
     {
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;
+        if (serverid.equals(Prefs.getServerId()) || serverid.equals(MergeServer.LOCALHOST))
+            return;
         if (up) {
-            if (src.equals(address.get()))
-                return;
             Database.d.mergeServerActivate(serverid, data.get("hostname").asText(), src.getHostAddress());
         } else {
             Database.d.mergeServerDeactivate(serverid);

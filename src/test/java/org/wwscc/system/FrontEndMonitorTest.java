@@ -10,6 +10,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.FakeDatabase;
+import org.wwscc.util.Prefs;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -50,7 +52,7 @@ public class FrontEndMonitorTest
     public void testInterfaceChange() throws Exception
     {
         ObjectMapper mapper = new ObjectMapper();
-        UUID uuid = UUID.fromString("abd86e8a-cf47-11e7-abc4-cec278b6b50a");
+        UUID uuid = Prefs.getServerId();
         InetAddress a1 = InetAddress.getByName("192.168.10.10");
         InetAddress a2 = InetAddress.getByName("192.168.0.100");
         ObjectNode o = mapper.createObjectNode();
