@@ -22,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -139,7 +140,8 @@ public class DebugCollector extends Thread
         }
         catch (Exception ioe)
         {
-            JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), "Error create debug file: " + ioe, "Error", JOptionPane.ERROR_MESSAGE);
+            log.log(Level.WARNING, "Error creating debug file: " + ioe, ioe);
+            JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), "Error create debug file: " + ioe, "Error", JOptionPane.WARNING_MESSAGE);
         }
 
         monitor.close();

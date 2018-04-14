@@ -340,7 +340,9 @@ public class DockerAPI
                 if (entry.isDirectory())
                     continue;
                 File dest = hostdir.resolve(Paths.get(entry.getName()).getFileName()).toFile();
-                IOUtils.copy(in, new FileOutputStream(dest));
+                try (FileOutputStream dout = new FileOutputStream(dest)) {
+                    IOUtils.copy(in, dout);
+                }
                 dest.setLastModified(entry.getModTime().getTime());
             }
         }
