@@ -178,8 +178,7 @@ public class CarDialog extends BaseDialog<Car>
             }
             else
             {
-                Set<ClassData.Index>[] lists = basis.restrictedIndexes(indexlist);
-                ClassData.Index[] allowed = lists[0].toArray(new ClassData.Index[0]);
+                ClassData.Index[] allowed = basis.restrictedRegistrationIndexes(indexlist).toArray(new ClassData.Index[0]);
                 Arrays.sort(allowed, new ClassData.Index.StringOrder());
                 indexes.setModel(new DefaultComboBoxModel(allowed));
             }
@@ -219,15 +218,14 @@ public class CarDialog extends BaseDialog<Car>
 
     class IndexChange implements ActionListener
     {
-        @SuppressWarnings("unchecked")
         public void actionPerformed(ActionEvent ae)
         {
             ClassData.Class basis = (ClassData.Class)selects.get("classcode").getSelectedItem();
             if ((basis != null) && basis.useCarFlag())
             {
                 ClassData.Index current = (ClassData.Index)selects.get("indexcode").getSelectedItem();
-                Set<ClassData.Index>[] lists = basis.restrictedIndexes(indexlist);
-                if (override.isSelected() || lists[1].contains(current)) {
+                Set<ClassData.Index> allowed = basis.restrictedClassMultiplierIndexes(indexlist);
+                if (override.isSelected() || (basis.useCarFlag() && allowed.contains(current))) {
                        classmult.setEnabled(true);
                        return;
                 }

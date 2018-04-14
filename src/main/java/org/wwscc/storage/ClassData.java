@@ -21,6 +21,8 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 public class ClassData
 {
     private static Logger log = Logger.getLogger(ClassData.class.getCanonicalName());
@@ -86,9 +88,10 @@ public class ClassData
     }
 
 
-    public double getEffectiveIndex(String classcode, String indexcode, boolean useclsmult)
+    public ImmutablePair<Double, String> getEffectiveIndex(String classcode, String indexcode, boolean useclsmult)
     {
         double indexVal = 1.0;
+        String indexStr = "";
         try
         {
             ClassData.Class classData = getClass(classcode);
@@ -97,62 +100,46 @@ public class ClassData
             if (classData == null)
                 throw new Exception("Invalid class: " + classcode);
 
-            /* Apply car index */
-            if (classData.carindexed)
-            {
-                if ((indexData = getIndex(indexcode)) != null)
+            /* Apply class index (linked to index tables) */
+            if (!classData.indexcode.isEmpty()) {
+                if ((indexData = getIndex(classData.indexcode)) != null) {
                     indexVal *= indexData.getValue();
+                    indexStr  = classData.indexcode;
+                }
             }
 
-            /* Apply class index (linked to index tables) */
-            if (!classData.indexcode.equals(""))
-            {
-                if ((indexData = getIndex(classData.indexcode)) != null)
+            /* Apply car index */
+            if (classData.carindexed) {
+                if ((indexData = getIndex(indexcode)) != null) {
                     indexVal *= indexData.getValue();
+                    indexStr  = indexcode;
+                }
             }
 
             /* Apply special class multiplier (only < 1.000 for Tire class at this point) */
-            if (classData.classmultiplier < 1.0 && (!classData.usecarflag || useclsmult))
-                indexVal *= classData.classmultiplier;
+            if (classData.classmultiplier < 1.0) {
+                Set<String> restrict = new HashSet<String>();
+                if (restrict.contains(indexcode) && (!classData.usecarflag || useclsmult)) {
+                    indexVal *= classData.classmultiplier;
+                    indexStr  = indexStr + "*";
+                }
+            }
         }
         catch (Exception ioe)
         {
             log.log(Level.WARNING, "getEffectiveIndex failed: " + ioe, ioe);
         }
 
-        return indexVal;
+        return new ImmutablePair<>(indexVal, !indexStr.isEmpty() ? '('+indexStr+')' : "");
     }
 
-    public String getIndexStr(String classcode, String indexcode, boolean useclsmult)
-    {
-        String indexstr = indexcode;
-        try
-        {
-            ClassData.Class cls = getClass(classcode);
-            if (cls == null)
-                throw new Exception("Invalid class: " + classcode);
-
-            if (!cls.indexcode.equals(""))
-                indexstr = cls.indexcode;
-
-            if (cls.classmultiplier < 1.000 && (!cls.usecarflag || useclsmult))
-                indexstr = indexstr + "*";
-        }
-        catch (Exception e)
-        {
-        }
-
-        if (indexstr.equals(""))
-            return indexstr;
-        return String.format("(%s)", indexstr);
-    }
 
     /***********************************************************************/
     /* Class */
     public static class Class
     {
         private static final Pattern RINDEX = Pattern.compile("([+-])\\((.*?)\\)");
-        private static final Pattern RFLAG = Pattern.compile("([+-])\\[(.*?)\\]");
+        private static final Pattern RMULT = Pattern.compile("([+-])\\[(.*?)\\]");
 
         protected String classcode;
         protected String descrip;
@@ -234,8 +221,17 @@ public class ClassData
          * @param fullset the full set of indexes
          * @return a new set of indexes that should be allowed
          */
-        private Set<Index> processList(Matcher results, Set<Index> fullset)
+        private Set<Index> processList(Collection<Index> all, Pattern pattern)
         {
+            Set<Index> fullset = new HashSet<Index>(all);
+            fullset.removeIf(i -> i.indexcode.equals(""));
+
+            if (caridxrestrict.trim().isEmpty())
+            {
+                return fullset;
+            }
+
+            Matcher results =  pattern.matcher(caridxrestrict.replace(" ", ""));
             Set<Index> keep = new HashSet<Index>(fullset);
             boolean first = true;
             while (results.find())
@@ -256,33 +252,15 @@ public class ClassData
             return keep;
         }
 
-
-        /**
-         * [0] are indexes allowed to be selected for the class data
-         * [1] are indexes that will allow use of the extra multiplier car flag
-         * @param all the full list of indexes
-         * @return two sets of indexes allowed in particular situations.
-         */
-        @SuppressWarnings("rawtypes")
-        public Set[] restrictedIndexes(Collection<Index> all)
+        public Set<Index> restrictedRegistrationIndexes(Collection<Index> all)
         {
-            Set<Index> allindexes = new HashSet<Index>(all);
-            allindexes.removeIf(i -> i.indexcode.equals(""));
-
-            if (caridxrestrict.trim().isEmpty())
-            {
-                return new Set[] { allindexes, allindexes };
-            }
-            else
-            {
-                String full = caridxrestrict.replace(" ", "");
-                Set<Index> indexrestrict = processList(RINDEX.matcher(full), allindexes);
-                Set<Index> flagrestrict = processList(RFLAG.matcher(full), allindexes);
-                return new Set[] { indexrestrict, flagrestrict };
-            }
-
+            return processList(all, RINDEX);
         }
 
+        public Set<Index> restrictedClassMultiplierIndexes(Collection<Index> all)
+        {
+            return processList(all, RMULT);
+        }
 
         static public class StringOrder implements Comparator<ClassData.Class>
         {

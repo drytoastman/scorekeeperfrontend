@@ -910,7 +910,7 @@ public abstract class SQLDataInterface implements DataInterface
                 classcode    = rs.getString("classcode");
                 indexcode    = rs.getString("indexcode");
                 useclsmult   = rs.getBoolean("useclsmult");
-                index        = getClassData().getEffectiveIndex(classcode, indexcode, useclsmult);
+                index        = getClassData().getEffectiveIndex(classcode, indexcode, useclsmult).getLeft();
 
                 if (r.isOK()) // we ignore non-OK runs
                 {
@@ -1168,7 +1168,7 @@ public abstract class SQLDataInterface implements DataInterface
     @Override
     public String getEffectiveIndexStr(Car c)
     {
-        return getClassData().getIndexStr(c.classcode, c.indexcode, c.useClsMult());
+        return getClassData().getEffectiveIndex(c.classcode, c.indexcode, c.useClsMult()).getRight();
     }
 
 
