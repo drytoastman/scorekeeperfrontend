@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
@@ -88,7 +89,7 @@ public class ClassData
     }
 
 
-    public ImmutablePair<Double, String> getEffectiveIndex(String classcode, String indexcode, boolean useclsmult)
+    public ImmutablePair<Double, String> getEffectiveIndex(String classcode, String indexcode, boolean carflagset)
     {
         double indexVal = 1.0;
         String indexStr = "";
@@ -116,10 +117,10 @@ public class ClassData
                 }
             }
 
-            /* Apply special class multiplier (only < 1.000 for Tire class at this point) */
+            /* Apply special class multiplier if < 1.000 */
             if (classData.classmultiplier < 1.0) {
-                Set<String> restrict = new HashSet<String>();
-                if (restrict.contains(indexcode) && (!classData.usecarflag || useclsmult)) {
+                Set<String> restrict = classData.restrictedClassMultiplierIndexes(indexes.values()).stream().map(i -> i.getCode()).collect(Collectors.toSet());
+                if (!classData.carindexed || (restrict.contains(indexcode) && (!classData.usecarflag || carflagset))) {
                     indexVal *= classData.classmultiplier;
                     indexStr  = indexStr + "*";
                 }
