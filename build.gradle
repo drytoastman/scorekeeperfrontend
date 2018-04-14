@@ -56,7 +56,6 @@ dependencies {
     compile 'com.jcraft:jsch:0.1.54'
     compile 'commons-io:commons-io:2.6'
     compile 'io.swagger:swagger-annotations:1.5.18'
-    compile 'org.apache.commons:commons-lang3:3.2.1'
     compile 'org.apache.httpcomponents:httpclient:4.5.5'
     compile 'org.apache.httpcomponents:fluent-hc:4.5.5'
     compile 'org.kamranzafar:jtar:2.3'
@@ -103,7 +102,6 @@ shadowJar {
     exclude '**/commons/codec/language/**'
 
     // nrjavaserial pulls these in but we don't need them
-    exclude '**/commons/lang3/**'
     exclude '**/commons/net/**'
 
     // svg only used offline for generating png
