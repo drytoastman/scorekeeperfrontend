@@ -29,10 +29,14 @@ import org.wwscc.barcodes.BarcodeController;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BrowserControl;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 public class Registration extends JFrame
@@ -82,6 +86,7 @@ public class Registration extends JFrame
         setVisible(true);
 
         Database.openDefault();
+        Discovery.get().registerService(Prefs.getServerId(), Discovery.REGISTRATION_TYPE, new ObjectNode(JsonNodeFactory.instance));
     }
 
 

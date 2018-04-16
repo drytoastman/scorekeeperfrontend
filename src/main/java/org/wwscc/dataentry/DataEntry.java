@@ -28,11 +28,15 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
 import org.wwscc.util.ApplicationState;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 
 public class DataEntry extends JFrame implements MessageListener
@@ -139,6 +143,8 @@ public class DataEntry extends JFrame implements MessageListener
         Messenger.register(MT.TIME_RECEIVED, this);
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         Database.openDefault();
+
+        Discovery.get().registerService(Prefs.getServerId(), Discovery.DATAENTRY_TYPE, new ObjectNode(JsonNodeFactory.instance));
     }
 
 

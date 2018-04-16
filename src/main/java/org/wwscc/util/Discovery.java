@@ -42,9 +42,11 @@ public class Discovery
     public static final int    DISCOVERY_PORT  = 5454;
     public static final long   DEFAULT_TIMEOUT = 10000;
 
-    public static final String BWTIMER_TYPE    = "BWTIMER";
-    public static final String PROTIMER_TYPE   = "PROTIMER";
-    public static final String DATABASE_TYPE   = "DATABASE";
+    public static final String BWTIMER_TYPE      = "BWTIMER";
+    public static final String PROTIMER_TYPE     = "PROTIMER";
+    public static final String DATABASE_TYPE     = "DATABASE";
+    public static final String DATAENTRY_TYPE    = "DATAENTRY";
+    public static final String REGISTRATION_TYPE = "REGISTRATION";
 
     private static final int READ_TIMEOUT_MS = 1000;
     private static final int COOLOFF_MS      = 3000;
