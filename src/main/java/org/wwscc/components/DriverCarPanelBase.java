@@ -333,8 +333,10 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         StringBuilder ret = new StringBuilder("");
         ret.append(d.getFullName() + " (" + d.getUserName() + ")\n");
         ret.append(d.getEmail() + "\n");
-        if (!d.getBarcode().isEmpty() || !d.getAttrS("scca").isEmpty())
-            ret.append(d.getBarcode() + " / " + d.getAttrS("scca") + "\n");
+        if (!d.getBarcode().isEmpty())
+            ret.append("Barcode: " + d.getBarcode() + "\n");
+        if (!d.getAttrS("scca").isEmpty())
+            ret.append("SCCA: " + d.getAttrS("scca") + "\n");
         ret.append(d.getAttrS("address") + "\n");
         ret.append(String.format("%s%s%s %s\n", d.getAttrS("city"), d.hasAttr("city")&&d.hasAttr("state")?", ":"", d.getAttrS("state"), d.getAttrS("zip")));
         if (!d.getAttrS("phone").isEmpty())
