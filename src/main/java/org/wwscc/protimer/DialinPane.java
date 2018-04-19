@@ -24,6 +24,7 @@ import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 
 import org.wwscc.storage.LeftRightDialin;
+import org.wwscc.util.EasyNumFilter;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -33,125 +34,125 @@ import net.miginfocom.swing.MigLayout;
 
 public class DialinPane extends JPanel implements ActionListener, MessageListener
 {
-	private JLabel leftDial;
-	private JLabel rightDial;
-	private JTextField leftField;
-	private JTextField rightField;
-	private JButton set;
+    private JLabel leftDial;
+    private JLabel rightDial;
+    private JTextField leftField;
+    private JTextField rightField;
+    private JButton set;
 
-	public DialinPane()
-	{
-		super(new MigLayout("al center", "al center"));
+    public DialinPane()
+    {
+        super(new MigLayout("al center", "al center"));
 
-		Font f = new Font("serif", Font.BOLD, 20);
+        Font f = new Font("serif", Font.BOLD, 20);
 
-		Messenger.register(MT.DIALIN_LEFT, this);
-		Messenger.register(MT.DIALIN_RIGHT, this);
-		Messenger.register(MT.INPUT_RESET_SOFT, this);
-		Messenger.register(MT.INPUT_RESET_HARD, this);
-		Messenger.register(MT.SIXTY_LEFT, this);
-		Messenger.register(MT.SIXTY_RIGHT, this);
+        Messenger.register(MT.DIALIN_LEFT, this);
+        Messenger.register(MT.DIALIN_RIGHT, this);
+        Messenger.register(MT.INPUT_RESET_SOFT, this);
+        Messenger.register(MT.INPUT_RESET_HARD, this);
+        Messenger.register(MT.SIXTY_LEFT, this);
+        Messenger.register(MT.SIXTY_RIGHT, this);
 
-		JLabel leftLbl = new JLabel("Left Dial-in");
-		JLabel rightLbl = new JLabel("Right Dial-in");
-		
-		leftDial = new JLabel("      ");
-		leftField = new JTextField(6);
-		((AbstractDocument)leftField.getDocument()).setDocumentFilter(new EasyNumFilter(3, 3));
+        JLabel leftLbl = new JLabel("Left Dial-in");
+        JLabel rightLbl = new JLabel("Right Dial-in");
 
-		rightDial = new JLabel("      ");
-		rightField = new JTextField(6);
-		((AbstractDocument)rightField.getDocument()).setDocumentFilter(new EasyNumFilter(3, 3));
+        leftDial = new JLabel("      ");
+        leftField = new JTextField(6);
+        ((AbstractDocument)leftField.getDocument()).setDocumentFilter(new EasyNumFilter(3, 3));
 
-		set = new JButton("Set");
-		set.addActionListener(this);
-	
-		leftLbl.setFont(f);
-		leftDial.setFont(f);
+        rightDial = new JLabel("      ");
+        rightField = new JTextField(6);
+        ((AbstractDocument)rightField.getDocument()).setDocumentFilter(new EasyNumFilter(3, 3));
 
-		rightLbl.setFont(f);
-		rightDial.setFont(f);
+        set = new JButton("Set");
+        set.addActionListener(this);
 
-		add(leftLbl, "");
-		add(leftDial, "w 60!");
-		add(leftField, "");
-		add(set, "");
-		add(rightField, "");
-		add(rightDial, "w 60!");
-		add(rightLbl, "");
+        leftLbl.setFont(f);
+        leftDial.setFont(f);
 
-	}
+        rightLbl.setFont(f);
+        rightDial.setFont(f);
 
-	public void doFocus(JFrame f)
-	{
-		f.setFocusTraversalPolicy(new DialinFocus());
-	}
+        add(leftLbl, "");
+        add(leftDial, "w 60!");
+        add(leftField, "");
+        add(set, "");
+        add(rightField, "");
+        add(rightDial, "w 60!");
+        add(rightLbl, "");
 
-	class DialinFocus extends FocusTraversalPolicy
-	{
-		public Component getComponentAfter(Container focusCycleRoot, Component aComponent) 
-		{
-			if (aComponent.equals(leftField))
-				return rightField;
-			else if (aComponent.equals(rightField)) 
-				return set;
-			
-			return leftField;
-		}
-		
-		public Component getComponentBefore(Container focusCycleRoot, Component aComponent) 
-		{
-			if (aComponent.equals(leftField))
-				return set;
-			else if (aComponent.equals(set)) 
-				return rightField;
-			
-			return leftField;
-		}
-		
-		public Component getDefaultComponent(Container focusCycleRoot) { return leftField; }
-		public Component getLastComponent(Container focusCycleRoot) { return set; }
-		public Component getFirstComponent(Container focusCycleRoot) { return leftField; }
-	}
+    }
+
+    public void doFocus(JFrame f)
+    {
+        f.setFocusTraversalPolicy(new DialinFocus());
+    }
+
+    class DialinFocus extends FocusTraversalPolicy
+    {
+        public Component getComponentAfter(Container focusCycleRoot, Component aComponent)
+        {
+            if (aComponent.equals(leftField))
+                return rightField;
+            else if (aComponent.equals(rightField))
+                return set;
+
+            return leftField;
+        }
+
+        public Component getComponentBefore(Container focusCycleRoot, Component aComponent)
+        {
+            if (aComponent.equals(leftField))
+                return set;
+            else if (aComponent.equals(set))
+                return rightField;
+
+            return leftField;
+        }
+
+        public Component getDefaultComponent(Container focusCycleRoot) { return leftField; }
+        public Component getLastComponent(Container focusCycleRoot) { return set; }
+        public Component getFirstComponent(Container focusCycleRoot) { return leftField; }
+    }
 
 
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-			case DIALIN_LEFT:
-				leftDial.setText(NF.format((Double)o));
-				break;
-			case DIALIN_RIGHT:
-				rightDial.setText(NF.format((Double)o));
-				break;
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case DIALIN_LEFT:
+                leftDial.setText(NF.format((Double)o));
+                break;
+            case DIALIN_RIGHT:
+                rightDial.setText(NF.format((Double)o));
+                break;
 
-			case INPUT_RESET_SOFT:
-			case INPUT_RESET_HARD:
-			case SIXTY_LEFT:
-			case SIXTY_RIGHT:
-				leftDial.setText("      ");
-				rightDial.setText("      ");
-				break;
-		}
-	}
-	
+            case INPUT_RESET_SOFT:
+            case INPUT_RESET_HARD:
+            case SIXTY_LEFT:
+            case SIXTY_RIGHT:
+                leftDial.setText("      ");
+                rightDial.setText("      ");
+                break;
+        }
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e)
-	{
-		try
-		{
-			LeftRightDialin d = new LeftRightDialin(new Double(leftField.getText()), new Double(rightField.getText()));
-			Messenger.sendEvent(MT.INPUT_SET_DIALIN, d);
-			leftField.setText("");
-			rightField.setText("");
-			leftField.requestFocus();
-		}
-		catch (NumberFormatException nfe)
-		{
-		}
-	}
+
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        try
+        {
+            LeftRightDialin d = new LeftRightDialin(new Double(leftField.getText()), new Double(rightField.getText()));
+            Messenger.sendEvent(MT.INPUT_SET_DIALIN, d);
+            leftField.setText("");
+            rightField.setText("");
+            leftField.requestFocus();
+        }
+        catch (NumberFormatException nfe)
+        {
+        }
+    }
 }
 
