@@ -11,12 +11,11 @@ package org.wwscc.dialogs;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
-import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 
+import org.wwscc.barcodes.Code39Filter;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
-import org.wwscc.util.EasyNumFilter;
 import org.wwscc.util.HintTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -61,7 +60,7 @@ public class DriverDialog extends BaseDialog<Driver>
 
         mainPanel.add(label("Barcode", false), "");
         mainPanel.add(entry("barcode", d.getBarcode()), "");
-        ((AbstractDocument)fields.get("barcode").getDocument()).setDocumentFilter(new EasyNumFilter(12));
+        ((AbstractDocument)fields.get("barcode").getDocument()).setDocumentFilter(new Code39Filter());
 
         mainPanel.add(label("SCCA #", false), "");
         mainPanel.add(entry("scca", d.getAttrS("scca")), "wrap");

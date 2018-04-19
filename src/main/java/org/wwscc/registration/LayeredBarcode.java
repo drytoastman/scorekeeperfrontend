@@ -8,6 +8,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.wwscc.barcodes.Code39;
+import org.wwscc.barcodes.InvalidBarcodeException;
 
 public class LayeredBarcode extends JComponent
 {
@@ -27,7 +28,12 @@ public class LayeredBarcode extends JComponent
         warning.setVisible(false);
     }
 
-    public void setValue(String code, String label)
+    public void clear()
+    {
+        barcode.clear();
+    }
+
+    public void setValue(String code, String label) throws InvalidBarcodeException
     {
         barcode.setValue(code, label);
     }
@@ -49,16 +55,8 @@ public class LayeredBarcode extends JComponent
         Graphics2D g2 = (Graphics2D)g;
 
         if (barcode.isVisible()) {
-            int bwidth = barcode.getMinWidth();
-            int cwidth = getWidth();
-            int offset = 0;
-            if (cwidth > bwidth) {
-                offset = (int)((cwidth - bwidth)/2.0);
-                g2.translate(offset, 0);
-            }
             barcode.setBounds(getBounds());
             barcode.paint(g2);
-            g2.translate(-offset, 0);
         }
 
         if (warning.isVisible()) {

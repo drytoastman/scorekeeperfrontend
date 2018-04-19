@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2012 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
  * All rights reserved.
  */
 
@@ -25,7 +25,6 @@ import javax.swing.JComponent;
  */
 public class Code39 extends JComponent implements Printable
 {
-    //private static final Logger log = Logger.getLogger(Code39.class.getCanonicalName());
     static protected final Map<Character, String> barChar = new HashMap<Character, String>();
     static
     {
@@ -39,26 +38,62 @@ public class Code39 extends JComponent implements Printable
         barChar.put('7', "nnnwnnwnw");
         barChar.put('8', "wnnwnnwnn");
         barChar.put('9', "nnwwnnwnn");
+        barChar.put('A', "wnnnnwnnw");
+        barChar.put('B', "nnwnnwnnw");
+        barChar.put('C', "wnwnnwnnn");
+        barChar.put('D', "nnnnwwnnw");
+        barChar.put('E', "wnnnwwnnn");
+        barChar.put('F', "nnwnwwnnn");
+        barChar.put('G', "nnnnnwwnw");
+        barChar.put('H', "wnnnnwwnn");
+        barChar.put('I', "nnwnnwwnn");
+        barChar.put('J', "nnnnwwwnn");
+        barChar.put('K', "wnnnnnnww");
+        barChar.put('L', "nnwnnnnww");
+        barChar.put('M', "wnwnnnnwn");
+        barChar.put('N', "nnnnwnnww");
+        barChar.put('O', "wnnnwnnwn");
+        barChar.put('P', "nnwnwnnwn");
+        barChar.put('Q', "nnnnnnwww");
+        barChar.put('R', "wnnnnnwwn");
+        barChar.put('S', "nnwnnnwwn");
+        barChar.put('T', "nnnnwnwwn");
+        barChar.put('U', "wwnnnnnnw");
+        barChar.put('V', "nwwnnnnnw");
+        barChar.put('W', "wwwnnnnnn");
+        barChar.put('X', "nwnnwnnnw");
+        barChar.put('Y', "wwnnwnnnn");
+        barChar.put('Z', "nwwnwnnnn");
         barChar.put('*', "nwnnwnwnn");
         barChar.put('-', "nwnnnnwnw");
     }
 
     public static final int NARROW = 1;
-    public static final int WIDE = 3;
+    public static final int WIDE   = 3;
     public static final int SYMBOLWIDTH = (16 * NARROW);
-    public static final int FULLWIDTH = (8 * SYMBOLWIDTH) + 1;
 
     protected String label = "";
     protected String codestr = "";
 
     public Code39()
     {
-        setMinimumSize(new Dimension(FULLWIDTH, 50));
-        setValue("", "");
+        setMinimumSize(new Dimension(SYMBOLWIDTH*8, 50));
+        clear();
     }
 
-    public void setValue(String code, String label)
+    public void clear()
     {
+        label = "";
+        codestr = "";
+    }
+
+    public void setValue(String code, String label) throws InvalidBarcodeException
+    {
+        for (char c : code.toCharArray()) {
+            if (!barChar.containsKey(c)) {
+                throw new InvalidBarcodeException();
+            }
+        }
         this.label = label;
         if (code.equals("")) {
             codestr = "";
@@ -67,40 +102,19 @@ public class Code39 extends JComponent implements Printable
         }
     }
 
-    public int getMinWidth()
-    {
-        int xpos = ((8 - codestr.length())*SYMBOLWIDTH)/2;
-        for (Character c : codestr.toCharArray())
-        {
-            if (!barChar.containsKey(c))
-                continue;
-            String seq = barChar.get(c);
-            for (Character bar : seq.toCharArray())
-            {
-                int width = (int)((bar == 'n') ? NARROW : WIDE);
-                xpos += width;
-            }
-            xpos += NARROW; // inter character space
-        }
-        return xpos;
-    }
-
     @Override
     public void paintComponent(Graphics g)
     {
-        int codeheight = (int)(getHeight() * 0.75);
         if (codestr.isEmpty())
             return;
 
-        g.setColor(Color.BLACK);
+        int codeheight = (int)(getHeight() * 0.75);
+        int codewidth  = codestr.length() * SYMBOLWIDTH;
+        int xpos       = (getWidth() - codewidth)/2;
 
-        int xpos = ((8 - codestr.length())*SYMBOLWIDTH)/2;
+        g.setColor(Color.BLACK);
         for (Character c : codestr.toCharArray())
         {
-            if (!barChar.containsKey(c))
-            {
-                continue;
-            }
             String seq = barChar.get(c);
             boolean draw = true;
             for (Character bar : seq.toCharArray())
@@ -115,8 +129,11 @@ public class Code39 extends JComponent implements Printable
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
         Rectangle2D metrics = g.getFontMetrics(g.getFont()).getStringBounds(label, g);
-        g.drawString(label, (int)Math.max(0, (FULLWIDTH-metrics.getWidth())/2), getHeight()-1);
+        int x = (int)Math.max(0, (getWidth() - metrics.getWidth())/2);
+        int y = getHeight() - 1;
+        g.drawString(label, x, y);
     }
+
 
     @Override
     public int print(Graphics g, PageFormat pf, int i) throws PrinterException

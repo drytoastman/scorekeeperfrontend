@@ -47,6 +47,7 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import net.miginfocom.swing.MigLayout;
 
+import org.wwscc.barcodes.InvalidBarcodeException;
 import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
@@ -582,7 +583,13 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
             weekmember.setEnabled(true);
-            barcode.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
+
+            try {
+                barcode.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
+            } catch (InvalidBarcodeException ive) {
+                log.warning("Invalid barcode '"+selectedDriver.getBarcode()+"', unable to display/print");
+                barcode.clear();
+            }
             barcode.setWarning("");
             barcode.repaint();
 
@@ -621,7 +628,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             editdriver.setEnabled(false);
             editnotes.setEnabled(false);
             weekmember.setEnabled(false);
-            barcode.setValue("", "");
+            barcode.clear();
             barcode.setWarning("");
             carVector.clear();
             setPaidDriverInfo(); // make sure to clear old data
