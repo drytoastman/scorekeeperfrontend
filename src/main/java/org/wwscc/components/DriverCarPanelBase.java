@@ -170,6 +170,12 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         }
     }
 
+    public void reloadDrivers()
+    {
+        Driver save = selectedDriver;
+        searchDrivers.changedTo("");
+        drivers.setSelectedValue(save, true);
+    }
 
     /**
      * Set the name search fields and select the name.

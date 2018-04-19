@@ -134,6 +134,7 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
 
             case ENTRANTS_CHANGED: // resync loaded cars to check status
             case COURSE_CHANGED:
+                reloadDrivers();
                 reloadCars(selectedCar);
                 break;
 

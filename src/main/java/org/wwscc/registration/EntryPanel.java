@@ -706,7 +706,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 break;
 
             case EVENT_CHANGED:
-                driverSelectionChanged();
+                reloadDrivers();
                 reloadCars(selectedCar);
                 break;
 
