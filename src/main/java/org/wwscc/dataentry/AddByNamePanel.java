@@ -9,25 +9,19 @@
 
 package org.wwscc.dataentry;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
 import java.util.UUID;
 
 import javax.swing.Action;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JTabbedPane;
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
-import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
-import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -52,10 +46,6 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.SHOW_ADD_PANE, this);
         Messenger.register(MT.COURSE_CHANGED, this);
-
-        MyListRenderer listRenderer = new MyListRenderer();
-        drivers.setCellRenderer(listRenderer);
-        cars.setCellRenderer(listRenderer);
 
         /* Buttons */
         addit = new JButton(new EventSendAction<UUID>("Add Entrant", MT.CAR_ADD, () -> (selectedCar != null) ? selectedCar.getCarId() : null));
@@ -127,7 +117,7 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
                 if (o instanceof Entrant)
                 {
                     Entrant e = (Entrant)o;
-                    focusOnDriver(e.getFirstName(), e.getLastName());
+                    focusOnDriver(new Driver(e.getFirstName(), e.getLastName(), e.getDriverId()));
                     focusOnCar(e.getCarId());
                 }
                 break;
@@ -142,45 +132,12 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
                 if (o instanceof Driver)
                 {
                     Driver d = (Driver)o;
-                    focusOnDriver(d.getFirstName(), d.getLastName());
+                    focusOnDriver(d);
                     if (getParent() instanceof JTabbedPane) {
                         ((JTabbedPane)getParent()).setSelectedComponent(this);
                     }
                 }
                 break;
-        }
-    }
-
-
-    final static class MyListRenderer extends DefaultListCellRenderer
-    {
-        private Color mygray = new Color(120,120,120);
-
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean iss, boolean chf)
-        {
-            super.getListCellRendererComponent(list, value, index, iss, chf);
-
-            setForeground(Color.BLACK);
-
-            if (value instanceof DecoratedCar)
-            {
-                DecoratedCar c = (DecoratedCar)value;
-                String myclass = c.getClassCode() + " " + Database.d.getEffectiveIndexStr(c);
-                setText(myclass + " #" + c.getNumber() + ": " + c.getYear() + " " + c.getModel() + " " + c.getColor());
-                if (c.isInRunOrder())
-                    setForeground(mygray);
-            }
-            else if (value instanceof Driver)
-            {
-                Driver d = (Driver)value;
-                if (d.getBarcode().trim().equals(""))
-                    setText(d.getFullName());
-                else
-                    setText(d.getFullName() + " - " + d.getBarcode());
-            }
-
-            return this;
         }
     }
 }

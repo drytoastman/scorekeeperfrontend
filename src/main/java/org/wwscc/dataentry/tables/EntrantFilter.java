@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
 
-import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
 import org.wwscc.util.NF;
@@ -52,7 +51,7 @@ public class EntrantFilter extends RowFilter<EntryModel, Integer> {
         matcher.reset(e.getFirstName() + " " + e.getLastName());
         if (matcher.find()) return true;
 
-        matcher.reset(e.getCarDesc() + " " +  Database.d.getEffectiveIndexStr(e.getCar()));
+        matcher.reset(e.getCarDesc() + " " +  e.getCar().getEffectiveIndexStr());
         if (matcher.find()) return true;
 
         for (Run r : e.getRuns()) {

@@ -24,6 +24,8 @@ public class Car extends AttrBase
     protected String indexcode;
     protected boolean useclsmult;
 
+    private String effectiveIndexString;
+
     /*
      * Create a blank car object.
      */
@@ -35,6 +37,7 @@ public class Car extends AttrBase
         number    = 0;
         classcode = "";
         indexcode = "";
+        effectiveIndexString = "";
     }
 
     public Car(Car other)
@@ -46,6 +49,7 @@ public class Car extends AttrBase
         indexcode  = other.indexcode;
         number     = other.number;
         useclsmult = other.useclsmult;
+        effectiveIndexString = Database.d.getEffectiveIndexStr(this);
     }
 
     public Car(ResultSet rs) throws SQLException
@@ -57,6 +61,7 @@ public class Car extends AttrBase
         indexcode  = rs.getString("indexcode");
         number     = rs.getInt("number");
         useclsmult = rs.getBoolean("useclsmult");
+        effectiveIndexString = Database.d.getEffectiveIndexStr(this);
     }
 
     public LinkedList<Object> getValues()
@@ -83,6 +88,7 @@ public class Car extends AttrBase
     public String getMake()        { return getAttrS("make"); }
     public String getModel()       { return getAttrS("model"); }
     public String getColor()       { return getAttrS("color"); }
+    public String getEffectiveIndexStr() { return effectiveIndexString; }
 
     public String getQuickEntryId() { return String.format("%010d", carid.getMostSignificantBits() >>> 32); }
 

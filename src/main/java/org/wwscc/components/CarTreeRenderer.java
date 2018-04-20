@@ -12,47 +12,46 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
 
 /**
  * Class to modify the default cell rendering for a JTree
  */
 public class CarTreeRenderer extends DefaultTreeCellRenderer
-{	 
-	/**
-	 * Create a new CarTreeRenderer and load our icons.
-	 */
-	public CarTreeRenderer()
-	{
-		setLeafIcon(null);
-	}  
+{
+    /**
+     * Create a new CarTreeRenderer and load our icons.
+     */
+    public CarTreeRenderer()
+    {
+        setLeafIcon(null);
+    }
 
-	/**
-	 * Overridden DefaultTreeCellRenderer method to change the type of drawing.
-	 * @param tree		the main tree object
-	 * @param value		the value we want to display
-	 * @param isSel		if this tree node is selected
-	 * @param isExp		if this tree node is expanded
-	 * @param isLeaf	if this is a leaf node
-	 * @param index		the index of this node in the tree node array
-	 * @param cHasFocus	if the focus is on this node
-	 */
-	@Override
-	public Component getTreeCellRendererComponent(JTree tree, Object value,
-						boolean isSel, boolean isExp, boolean isLeaf, int index, boolean cHasFocus)
-	{
-		super.getTreeCellRendererComponent(tree, value, isSel, isExp, isLeaf, index, cHasFocus);
+    /**
+     * Overridden DefaultTreeCellRenderer method to change the type of drawing.
+     * @param tree		the main tree object
+     * @param value		the value we want to display
+     * @param isSel		if this tree node is selected
+     * @param isExp		if this tree node is expanded
+     * @param isLeaf	if this is a leaf node
+     * @param index		the index of this node in the tree node array
+     * @param cHasFocus	if the focus is on this node
+     */
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value,
+                        boolean isSel, boolean isExp, boolean isLeaf, int index, boolean cHasFocus)
+    {
+        super.getTreeCellRendererComponent(tree, value, isSel, isExp, isLeaf, index, cHasFocus);
 
-		Object o = ((DefaultMutableTreeNode)value).getUserObject();
-		if (o instanceof Entrant)
-		{
-			Entrant e = (Entrant)o;
-			
-			String display = e.getNumber() + " - " + e.getName() + " - " + e.getCarModel() + " " + Database.d.getEffectiveIndexStr(e.getCar());
-			setText(display);
-		}
+        Object o = ((DefaultMutableTreeNode)value).getUserObject();
+        if (o instanceof Entrant)
+        {
+            Entrant e = (Entrant)o;
 
-		return this;
-	}
+            String display = e.getNumber() + " - " + e.getName() + " - " + e.getCarModel() + " " + e.getCar().getEffectiveIndexStr();
+            setText(display);
+        }
+
+        return this;
+    }
 }

@@ -114,8 +114,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             }
         });
 
-        drivers.setCellRenderer(new DriverRenderer());
-        cars.setCellRenderer(new CarRenderer());
+        // special renderer for registration
+        cars.setCellRenderer(new RegCarRenderer());
 
         /* Buttons */
         registerandpay = new JButton(new RegisterAndPayAction());
@@ -721,11 +721,11 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 if (o instanceof Car) {
                     Car c = (Car)o;
                     Driver d = Database.d.getDriver(c.getDriverId());
-                    focusOnDriver(d.getFirstName(), d.getLastName());
+                    focusOnDriver(d);
                     focusOnCar(c.getCarId());
                 }
                 if (o instanceof Driver)
-                    focusOnDriver(((Driver)o).getFirstName(), ((Driver)o).getLastName());
+                    focusOnDriver((Driver)o);
                 break;
 
             case BARCODE_SCANNED:
@@ -742,7 +742,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
 
                 Driver d = found.get(0);
                 log.info("Focus on driver");
-                focusOnDriver(d.getFirstName(), d.getLastName());
+                focusOnDriver(d);
                 break;
         }
     }

@@ -49,6 +49,14 @@ public class Driver extends AttrBase
         lastname = l;
     }
 
+    public Driver(String f, String l, UUID id)
+    {
+        this();
+        firstname = f;
+        lastname = l;
+        driverid = id;
+    }
+
     public Driver(ResultSet rs) throws SQLException
     {
         super(rs);

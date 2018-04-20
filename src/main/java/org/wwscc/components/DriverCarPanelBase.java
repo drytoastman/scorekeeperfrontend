@@ -6,7 +6,6 @@
  * All rights reserved.
  */
 
-
 package org.wwscc.components;
 
 import java.awt.Dimension;
@@ -95,6 +94,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         drivers.addListSelectionListener(this);
         drivers.setVisibleRowCount(1);
         drivers.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        drivers.setCellRenderer(new ListRenderers.DriverRenderer());
 
         dscroll = new JScrollPane(drivers);
         dscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -123,10 +123,16 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
 
         /* Car Section */
         carVector = new Vector<DecoratedCar>();
-        cars = new JList<DecoratedCar>();
+        cars = new JList<DecoratedCar>() {
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+        };
         cars.addListSelectionListener(this);
         cars.setVisibleRowCount(2);
         cars.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        cars.setCellRenderer(new ListRenderers.CarRenderer());
+        cars.getScrollableTracksViewportWidth();
 
         cscroll = new JScrollPane(cars);
         cscroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -181,18 +187,17 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
      * Set the name search fields and select the name.
      * @param firstname the value to put in the firstname field
      * @param lastname  the value to put in the lastname field
+     * @param driverid  if given, the specific driver to highlight (multiple name matches)
      */
-    public void focusOnDriver(String firstname, String lastname)
+    public void focusOnDriver(Driver d)
     {
         searchDrivers.enable(false);
-        firstSearch.setText(firstname);
-        lastSearch.setText(lastname);
+        firstSearch.setText(d.getFirstName());
+        lastSearch.setText(d.getLastName());
         searchDrivers.enable(true);
         searchDrivers.changedTo("");
-        drivers.setSelectedIndex(0);
-        drivers.ensureIndexIsVisible(0);
+        drivers.setSelectedValue(d, true);
     }
-
 
     /**
      * Set the car list to select a particular carid if its in the list.
@@ -250,7 +255,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
                     if (d == null) return;
                     try {
                         Database.d.newDriver(d);
-                        focusOnDriver(d.getFirstName(), d.getLastName());
+                        focusOnDriver(d);
                     } catch (Exception ioe) {
                         log.log(Level.SEVERE, "\bFailed to create driver: " + ioe, ioe);
                     }
@@ -339,8 +344,6 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         StringBuilder ret = new StringBuilder("");
         ret.append(d.getFullName() + " (" + d.getUserName() + ")\n");
         ret.append(d.getEmail() + "\n");
-        if (!d.getBarcode().isEmpty())
-            ret.append("Barcode: " + d.getBarcode() + "\n");
         if (!d.getAttrS("scca").isEmpty())
             ret.append("SCCA: " + d.getAttrS("scca") + "\n");
         ret.append(d.getAttrS("address") + "\n");
@@ -355,7 +358,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
     {
         StringBuilder ret = new StringBuilder();
         ret.append(c.getCarId()).append("\n");
-        ret.append(c.getClassCode()).append(" ").append(Database.d.getEffectiveIndexStr(c)).append(" #").append(c.getNumber()).append("\n");
+        ret.append(c.getClassCode()).append(" ").append(c.getEffectiveIndexStr()).append(" #").append(c.getNumber()).append("\n");
         ret.append(c.getYear() + " " + c.getMake() + " " + c.getModel() + " " + c.getColor());
         return ret.toString();
     }
