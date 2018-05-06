@@ -79,7 +79,7 @@ fileok: try (Scanner scan = new Scanner(importfile)) {
     {
         String ver = Database.d.getVersion();
         String date = new SimpleDateFormat("yyyy-MM-dd-HH'h'mm'm'").format(new Date());
-        return directory.resolve(String.format("%s(%s).pgdump", date, ver));
+        return directory.resolve(String.format("%s_%s.sql", date, ver));
     }
 
 
