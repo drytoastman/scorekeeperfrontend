@@ -24,6 +24,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.logging.Logger;
 import javax.swing.DropMode;
 import javax.swing.InputMap;
@@ -275,6 +276,7 @@ class DriverTransferHandler extends TransferHandler
         JTable table = (JTable)c;
         rowsidx = table.getSelectedRows();
 
+        log.info("create transfer " + Arrays.toString(rowsidx));
         Entrant store[] = new Entrant[rowsidx.length];
         for (int ii = 0; ii < rowsidx.length; ii++)
             store[ii] = (Entrant)table.getValueAt(rowsidx[ii], 0);
@@ -293,7 +295,7 @@ class DriverTransferHandler extends TransferHandler
         if (isCut)
         {
             DriverTable t = (DriverTable)c;
-            log.fine("cut driver");
+            log.fine("cut drivers " + Arrays.toString(rowsidx));
             for (int ii = 0; ii < rowsidx.length; ii++)
                 t.setValueAt(null, rowsidx[0], 0);  // as rows are removed, we are always removing the first index
         }

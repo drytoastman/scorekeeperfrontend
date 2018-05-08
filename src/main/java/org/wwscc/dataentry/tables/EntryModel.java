@@ -257,7 +257,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
                 tableData.remove(row); // remove the row which removes from runorder upon commit
                 fireEntrantsChanged();
-                fireTableDataChanged();
+                fireTableStructureChanged(); // must be structure change or filtered table update throws IOB
                 checkDeletePlaceholder(e);
             }
             else  // driver change

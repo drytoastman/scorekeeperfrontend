@@ -227,12 +227,14 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         switch (type)
         {
             case CAR_ADD:
-                int savecol = runsTable.getSelectedColumn();
-                Entrant selected = (Entrant)dataModel.getValueAt(runsTable.getSelectedRow(), 0);
+                Entrant torestore = null;
+                if ((runsTable.getSelectedRow() >= 0) && (runsTable.getSelectedColumn() >= 0)) {
+                    torestore = (Entrant)dataModel.getValueAt(runsTable.convertRowIndexToModel(runsTable.getSelectedRow()), 0);
+                }
                 dataModel.addCar((UUID)o);
-                if ((savecol >= 0) && (selected != null))
+                if (torestore != null)
                 {   // update selection after moving rows around to maintain same entrant
-                    int newrow = dataModel.getRowForEntrant(selected);
+                    int newrow = runsTable.convertRowIndexToView(dataModel.getRowForEntrant(torestore));
                     runsTable.setRowSelectionInterval(newrow, newrow);
                 }
                 else
@@ -262,8 +264,8 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                     JOptionPane.showMessageDialog(this,
                             "Can't swap entrant when more than one entrant is selected in the table.", "Error", JOptionPane.WARNING_MESSAGE);
                 } else {
-                    int row = driverTable.getSelectedRow();
-                    if ((row >= 0) && (row < driverTable.getRowCount()))
+                    int row = driverTable.convertRowIndexToModel(driverTable.getSelectedRow());
+                    if ((row >= 0) && (row < dataModel.getRowCount()))
                         dataModel.replaceCar((UUID)o, row);
                 }
                 break;
