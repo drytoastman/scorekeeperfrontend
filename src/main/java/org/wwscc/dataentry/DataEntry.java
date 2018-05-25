@@ -140,7 +140,6 @@ public class DataEntry extends JFrame implements MessageListener
         log.log(Level.INFO, "Starting Application: {0}", new java.util.Date());
 
         Messenger.register(MT.OBJECT_DCLICKED, this);
-        Messenger.register(MT.TIME_RECEIVED, this);
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
         Database.openDefault();
 
@@ -156,10 +155,6 @@ public class DataEntry extends JFrame implements MessageListener
             case OBJECT_DCLICKED:
                 if (o instanceof Entrant)
                     tabs.setSelectedComponent(addByName);
-                break;
-            case TIME_RECEIVED:
-                if (o instanceof Run)
-                    Database.d.addTimerTime(Prefs.getServerId(), (Run)o);
                 break;
             case DATABASE_NOTIFICATION:
                 @SuppressWarnings("unchecked")

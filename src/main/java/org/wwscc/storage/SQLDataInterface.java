@@ -745,10 +745,12 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void addTimerTime(UUID serverid, Run r)
+    public void addTimerTime(Run r)
     {
         try {
-            executeUpdate("INSERT INTO timertimes (serverid, raw, modified) VALUES (?, ?, now())", newList(serverid, r.raw));
+            UUID timeid = IdGenerator.generateId();
+            executeUpdate("INSERT INTO timertimes (timeid,   course,   raw,   status,   attr, modified) VALUES (?, ?, ?, ?, ?, now())",
+                                           newList(timeid, r.course, r.raw, r.status, r.attr));
         } catch (Exception ioe){
             logError("addTimerTime", ioe);
         }

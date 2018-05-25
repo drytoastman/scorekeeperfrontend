@@ -127,7 +127,7 @@ public interface DataInterface
     public void setRun(Run r) throws Exception;
     public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception;
     public void deleteRun(UUID eventid, UUID carid, int course, int run) throws Exception;
-    public void addTimerTime(UUID serverid, Run r);
+    public void addTimerTime(Run r);
 
 
     /* Challenge */

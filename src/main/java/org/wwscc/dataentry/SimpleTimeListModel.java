@@ -11,6 +11,7 @@ package org.wwscc.dataentry;
 import java.util.Vector;
 import javax.swing.AbstractListModel;
 
+import org.wwscc.storage.Database;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -22,84 +23,86 @@ import org.wwscc.util.TimeStorage;
  */
 public class SimpleTimeListModel extends AbstractListModel<Run> implements TimeStorage
 {
-	Vector<Run> data;
-	int forCourse;
-	
-	/**
-	 * Create a new time list that is linked to a course
-	 * @param course the course number
-	 */
-	public SimpleTimeListModel(int course)
-	{
-		data = new Vector<Run>();
-		forCourse = course;
-		Messenger.register(MT.TIMER_SERVICE_RUN, this);
-		Messenger.register(MT.TIMER_SERVICE_DELETE, this);
-		Messenger.register(MT.SERIAL_TIMER_DATA, this);
-	}
+    Vector<Run> data;
+    int forCourse;
 
-	@Override
-	public void event(MT type, Object o)
-	{
-		if (!(o instanceof Run))
-			return;
+    /**
+     * Create a new time list that is linked to a course
+     * @param course the course number
+     */
+    public SimpleTimeListModel(int course)
+    {
+        data = new Vector<Run>();
+        forCourse = course;
+        Messenger.register(MT.TIMER_SERVICE_RUN, this);
+        Messenger.register(MT.TIMER_SERVICE_DELETE, this);
+        Messenger.register(MT.SERIAL_TIMER_DATA, this);
+    }
 
-		Run r = (Run)o;
-		if ((forCourse > 0) && (r.course() != forCourse))
-			return;
-		if (Double.isNaN(r.getRaw()))
-			return;
-		if (r.getRaw() < 1)
-			return;
+    @Override
+    public void event(MT type, Object o)
+    {
+        if (!(o instanceof Run))
+            return;
 
-		switch (type)
-		{
-			case SERIAL_TIMER_DATA:
-				data.add(r);
-				fireIntervalAdded(this, data.size()-1, data.size()-1);
-				break;
+        Run r = (Run)o;
+        if ((forCourse > 0) && (r.course() != forCourse))
+            return;
+        if (Double.isNaN(r.getRaw()))
+            return;
+        if (r.getRaw() < 1)
+            return;
 
-			case TIMER_SERVICE_RUN:
-				data.add(r);
-				fireIntervalAdded(this, data.size()-1, data.size()-1);
-				break;
+        switch (type)
+        {
+            case SERIAL_TIMER_DATA:
+                data.add(r);
+                Database.d.addTimerTime(r);
+                fireIntervalAdded(this, data.size()-1, data.size()-1);
+                break;
 
-			case TIMER_SERVICE_DELETE:
-				data.remove(r);
-				fireIntervalRemoved(this, data.size(), data.size());
-				break;
-		}
-	}
+            case TIMER_SERVICE_RUN:
+                data.add(r);
+                Database.d.addTimerTime(r);
+                fireIntervalAdded(this, data.size()-1, data.size()-1);
+                break;
 
-	@Override
-	public Run getElementAt(int row)
-	{
-		return data.get(row);
-	}
+            case TIMER_SERVICE_DELETE:
+                data.remove(r);
+                fireIntervalRemoved(this, data.size(), data.size());
+                break;
+        }
+    }
 
-	@Override
-	public int getSize()
-	{
-		return data.size();
-	}
+    @Override
+    public Run getElementAt(int row)
+    {
+        return data.get(row);
+    }
+
+    @Override
+    public int getSize()
+    {
+        return data.size();
+    }
 
 
-	@Override
-	public Run getRun(int row)
-	{
-		return data.get(row);
-	}
+    @Override
+    public Run getRun(int row)
+    {
+        return data.get(row);
+    }
 
-	@Override
-	public int getFinishedCount()
-	{
-		return data.size();
-	}
+    @Override
+    public int getFinishedCount()
+    {
+        return data.size();
+    }
 
-	@Override
-	public void remove(int row)
-	{
-		data.remove(row);
-		fireIntervalRemoved(this, row, row);
-	}
+    @Override
+    public void remove(int row)
+    {
+        data.remove(row);
+        fireIntervalRemoved(this, row, row);
+    }
 }
