@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Database;
@@ -43,6 +44,7 @@ public class EntryModelTests
     {
     }
 
+    @Ignore("need to fill with test data as testdb is gone")
     @Test
     public void swapRuns() throws SQLException
     {

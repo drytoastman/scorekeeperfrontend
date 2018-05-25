@@ -569,7 +569,7 @@ public class DockerAPI
 
         DockerAPI api = new DockerAPI();
         api.setup(new HashMap<>());
-        //api.pull("drytoastman/scdb:testdb");
+        //api.pull("drytoastman/scdb:latest");
         //System.out.println(api.alive());
         //api.download("db", "/root/.ash_history", new File("mytestfile"));
         //api.upload("db", new File("mytestfile"), "/root");

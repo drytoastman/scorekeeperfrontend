@@ -22,7 +22,7 @@ import org.wwscc.util.BroadcastState;
 public class TestDatabaseContainer extends ExternalResource
 {
     static DockerAPI docker;
-    static String TestContainerImage = "drytoastman/scdb:testdb";
+    static String TestContainerImage = "drytoastman/scdb:latest";
     static String TestContainerName  = "testdb";
     static String TestNetName        = "testnet";
     static DockerContainer container;
