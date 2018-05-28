@@ -16,7 +16,8 @@ import org.wwscc.storage.Run;
  */
 public interface RunServiceInterface extends EventListener
 {
-	public boolean sendDial(LeftRightDialin d);
-	public boolean deleteRun(Run r);
-	public boolean sendRun(Run r);
+    public boolean sendTree();
+    public boolean sendDial(LeftRightDialin d);
+    public boolean deleteRun(Run r);
+    public boolean sendRun(Run r);
 }

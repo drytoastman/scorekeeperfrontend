@@ -69,6 +69,22 @@ public class TimerServer implements RunServiceInterface
     }
 
     @Override
+    public boolean sendTree()
+    {
+        boolean ret = true;
+        for (RunServiceInterface c : clients) {
+            if (!c.sendTree())
+            {
+                marked.add(c);
+                ret = false;
+            }
+        }
+        clients.removeAll(marked);
+        marked.clear();
+        return ret;
+    }
+
+    @Override
     public boolean sendDial(LeftRightDialin d)
     {
         boolean ret = true;

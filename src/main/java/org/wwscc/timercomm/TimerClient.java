@@ -18,6 +18,7 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.wwscc.storage.Database;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
@@ -32,6 +33,7 @@ public final class TimerClient implements RunServiceInterface
     private static final Logger log = Logger.getLogger(TimerClient.class.getName());
     private static ObjectMapper objectMapper = new ObjectMapper();
 
+    public static final String TREE_MESSAGE       = "TREE";
     public static final String DIAL_MESSAGE       = "DIAL";
     public static final String RUN_MESSAGE        = "RUN";
     public static final String RUN_DELETE_MESSAGE = "RDELETE";
@@ -95,6 +97,14 @@ public final class TimerClient implements RunServiceInterface
     }
 
     @Override
+    public boolean sendTree()
+    {
+        ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
+        data.put("type", TREE_MESSAGE);
+        return send(data);
+    }
+
+    @Override
     public boolean sendDial(LeftRightDialin d)
     {
         ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
@@ -125,8 +135,11 @@ public final class TimerClient implements RunServiceInterface
     {
         ObjectNode msg = (ObjectNode) objectMapper.readTree(line);
         String type = msg.get("type").asText();
+        Database.d.recordEvent(type, msg);
         switch (type)
         {
+            case TREE_MESSAGE:
+                break;
             case DIAL_MESSAGE:
                 Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, objectMapper.treeToValue(msg.get("data"), LeftRightDialin.class));
                 break;

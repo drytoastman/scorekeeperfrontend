@@ -274,10 +274,11 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 if (aValue instanceof Run) {
                     Run r = (Run)aValue;
                     r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
-                    Database.d.setRun(r);
+                    Database.d.setRun(r, DataEntry.state.getCurrentEvent().isPro());
                     e.setRun(r);
                 } else if (aValue == null){
-                    Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
+                    Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset,
+                            DataEntry.state.getCurrentEvent().isPro());
                     e.deleteRun(col-runoffset);
                 }
             } catch (Exception sqle) {

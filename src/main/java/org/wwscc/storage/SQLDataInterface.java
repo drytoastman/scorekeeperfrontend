@@ -700,7 +700,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void setRun(Run r) throws Exception
+    public void setRun(Run r, boolean quicksync) throws Exception
     {
         try {
             executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
@@ -708,6 +708,8 @@ public abstract class SQLDataInterface implements DataInterface
                           "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
                           newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
                                                                        r.cones, r.gates, r.raw, r.status, r.attr));
+            if (quicksync)
+                mergeServerSetQuickRuns();
         } catch (Exception sqle) {
             logError("setRun", sqle);
             throw sqle;
@@ -734,10 +736,12 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void deleteRun(UUID eventid, UUID carid, int course, int run) throws Exception
+    public void deleteRun(UUID eventid, UUID carid, int course, int run, boolean quicksync) throws Exception
     {
         try {
             executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
+            if (quicksync)
+                mergeServerSetQuickRuns();
         } catch (Exception sqle){
             logError("deleteRun", sqle);
             throw sqle;
@@ -1217,6 +1221,16 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
+    public void mergeServerSetQuickRuns()
+    {
+        try {
+            executeUpdate("UPDATE mergeservers SET quickruns='t' WHERE hoststate='A'", null);
+        } catch (Exception ioe) {
+            log.log(Level.WARNING, "mergeServerSetQuickRuns: " + ioe, ioe);
+        }
+    }
+
+    @Override
     public void mergeServerActivate(UUID serverid, String name, String ip)
     {
         try {
@@ -1272,6 +1286,15 @@ public abstract class SQLDataInterface implements DataInterface
         {
             logError("getMergeServers", ioe);
             return null;
+        }
+    }
+
+    public void recordEvent(String type, ObjectNode attr)
+    {
+        try {
+            executeUpdate("INSERT INTO localeventstream (etype, event, time) VALUES (?, ?, now())", newList(type, attr));
+        } catch (Exception ioe) {
+            log.log(Level.WARNING, "recordEvent: " + ioe, ioe);
         }
     }
 
