@@ -181,7 +181,7 @@ class TextRunAction extends AbstractAction
         try {
             for (Run r : trd.getResult()) {
                 r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
-                Database.d.setRun(r, false);
+                Database.d.setRun(r, null);
             }
         } catch (Exception sqle) {
             log.log(Level.SEVERE, "\bFailed to set run data: " + sqle, sqle);

@@ -126,9 +126,9 @@ public interface DataInterface
     public void mergeCar(Car from, Car into) throws Exception;
     public DecoratedCar decorateCar(Car c, UUID eventid, int course);
 
-    public void setRun(Run r, boolean quicksync) throws Exception;
+    public void setRun(Run r, String quicksync) throws Exception;
     public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception;
-    public void deleteRun(UUID eventid, UUID carid, int course, int run, boolean quicksync) throws Exception;
+    public void deleteRun(UUID eventid, UUID carid, int course, int run, String quicksync) throws Exception;
     public void addTimerTime(Run r);
 
 
@@ -174,7 +174,7 @@ public interface DataInterface
     public void mergeServerSetRemote(String hostname, String address, int ctimeout);
     public void mergeServerDelete(UUID serverid);
     public void mergeServerInactivateAll();
-    public void mergeServerSetQuickRuns();
+    public void mergeServerSetQuickRuns(String series);
     public void mergeServerActivate(UUID serverid, String name, String ip);
     public void mergeServerDeactivate(UUID serverid);
     public void mergeServerUpdateNow(UUID serverid);

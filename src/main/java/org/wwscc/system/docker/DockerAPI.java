@@ -390,6 +390,11 @@ public class DockerAPI
     }
 
 
+    public void pokeByName(String name)
+    {
+        requestIgnore(new Requests.Poke(name));
+    }
+
     public void poke(DockerContainer cont)
     {
         requestIgnore(new Requests.Poke(cont.getName()));
