@@ -131,7 +131,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            executeUpdate("update events set runs=? where eventid=?", newList(runs, eventid));
+            executeUpdate("update events set runs=?,modified=now() where eventid=?", newList(runs, eventid));
             return true;
         }
         catch (Exception ioe)
@@ -684,10 +684,10 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
 
             // these we can just swap
-            executeUpdate("update payments set carid=? where carid=?", sa);
-            executeUpdate("update runorder set carid=? where carid=?", sa);
-            executeUpdate("update challengerounds set car1id=? where car1id=?", sa);
-            executeUpdate("update challengerounds set car2id=? where car2id=?", sa);
+            executeUpdate("update payments set carid=?,modified=now() where carid=?", sa);
+            executeUpdate("update runorder set carid=?,modified=now() where carid=?", sa);
+            executeUpdate("update challengerounds set car1id=?,modified=now() where car1id=?", sa);
+            executeUpdate("update challengerounds set car2id=?,modified=now() where car2id=?", sa);
             executeUpdate("delete from cars where carid=?", da);
             commit();
         }
@@ -952,7 +952,7 @@ public abstract class SQLDataInterface implements DataInterface
         {
             LinkedList<Object> vals = c.getValues();
             vals.add(vals.pop());
-            executeUpdate("update challenges set eventid=?,name=?,depth=? where challengeid=?", vals);
+            executeUpdate("update challenges set eventid=?,name=?,depth=?,modified=now() where challengeid=?", vals);
         }
         catch (Exception ioe)
         {
