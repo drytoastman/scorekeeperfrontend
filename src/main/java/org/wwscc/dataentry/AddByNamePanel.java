@@ -46,6 +46,8 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.SHOW_ADD_PANE, this);
         Messenger.register(MT.COURSE_CHANGED, this);
+        Messenger.register(MT.ADD_BY_NAME, this);
+
 
         /* Buttons */
         addit = new JButton(new EventSendAction<UUID>("Add Entrant", MT.CAR_ADD, () -> (selectedCar != null) ? selectedCar.getCarId() : null));
@@ -137,6 +139,14 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
                         ((JTabbedPane)getParent()).setSelectedComponent(this);
                     }
                 }
+                break;
+
+            case ADD_BY_NAME:
+                if (getParent() instanceof JTabbedPane)
+                    ((JTabbedPane)getParent()).setSelectedComponent(this);
+                firstSearch.setText("");
+                lastSearch.setText("");
+                firstSearch.requestFocus();
                 break;
         }
     }

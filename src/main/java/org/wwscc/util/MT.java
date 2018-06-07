@@ -59,6 +59,7 @@ public enum MT {
     OPEN_BARCODE_ENTRY,
     OPEN_FILTER,
     SHOW_ADD_PANE,
+    ADD_BY_NAME,
 
     // Timer Net Service
     TIMER_SERVICE_CONNECTION_OPEN,
