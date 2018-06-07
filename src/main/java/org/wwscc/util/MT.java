@@ -58,6 +58,7 @@ public enum MT {
     FILTER_ENTRANT,
     OPEN_BARCODE_ENTRY,
     OPEN_FILTER,
+    TIME_FOCUS,
     SHOW_ADD_PANE,
     ADD_BY_NAME,
 

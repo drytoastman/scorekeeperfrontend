@@ -144,6 +144,7 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.COURSE_CHANGED, this);
         Messenger.register(MT.TIME_ENTER_REQUEST, this);
+        Messenger.register(MT.TIME_FOCUS, this);
 
         connectionStatus = new JLabel("");
         modeGroup = new ModeButtonGroup();
@@ -199,6 +200,13 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
         );
 
         status = new JComboBox<String>(new String[] { "OK", "DNF", "DNS", "RL", "NS", "DSQ" });
+        status.registerKeyboardAction(  // Combobox does feed the above registration, so we have to duplicate
+                e -> enterTime(),
+                "Enter Time",
+                KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+                JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+            );
+
         enter = new JButton("Enter Time");
         enter.addActionListener(e -> enterTime());
         enter.setDefaultCapable(true);
@@ -274,6 +282,7 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
         gates.addKeyListener(cgk);
         reaction.addKeyListener(cgk);
         sixty.addKeyListener(cgk);
+        status.addKeyListener(cgk);
         enter.addKeyListener(cgk);
     }
     /**
@@ -645,6 +654,10 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
             case TIME_ENTER_REQUEST:
                 enterTime();
                 break;
+
+            case TIME_FOCUS:
+                time.requestFocus();
+                break;
         }
     }
 
@@ -654,24 +667,19 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
         @Override
         public void keyTyped(KeyEvent e)
         {
-            Object o = e.getSource();
-            if(o instanceof JTextField || o == enter || o == timeList)
+            int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
+            switch(e.getKeyChar())
             {
-                int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
-
-                switch(e.getKeyChar())
-                {
-                    case 'c':
-                    case 'C':
-                        cones.setText(Integer.toString(cones.getInt() + increment));
-                        e.consume();
-                        break;
-                    case 'g':
-                    case 'G':
-                        gates.setText(Integer.toString(gates.getInt() + increment));
-                        e.consume();
-                        break;
-                }
+                case 'c':
+                case 'C':
+                    cones.setText(Integer.toString(cones.getInt() + increment));
+                    e.consume();
+                    break;
+                case 'g':
+                case 'G':
+                    gates.setText(Integer.toString(gates.getInt() + increment));
+                    e.consume();
+                    break;
             }
         }
     }
