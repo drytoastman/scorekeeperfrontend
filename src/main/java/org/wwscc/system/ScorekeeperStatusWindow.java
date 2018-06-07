@@ -96,6 +96,7 @@ public class ScorekeeperStatusWindow extends JFrame
         servers.add(actions.makeInactive);
         servers.add(actions.addServer);
         servers.add(actions.deleteServer);
+        servers.add(actions.serverConfig);
         servers.add(new JSeparator());
         servers.add(new JCheckBoxMenuItem(actions.discovery));
 

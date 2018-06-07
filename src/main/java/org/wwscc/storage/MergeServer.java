@@ -126,6 +126,9 @@ public class MergeServer
         return seriesstate.get(series);
     }
 
+    public void setWaitTime(int s)       { waittime = s; }
+    public void setConnectTimeout(int s) { ctimeout = s; }
+
     public String getDriversState()
     {
         for (ObjectNode o : seriesstate.values())

@@ -179,6 +179,7 @@ public interface DataInterface
     public void mergeServerDeactivate(UUID serverid);
     public void mergeServerUpdateNow(UUID serverid);
     public void mergeServerResetAll();
+    public void mergeServerUpdateConfig(MergeServer m);
     public List<MergeServer> getMergeServers();
 
     /* Local event stream */

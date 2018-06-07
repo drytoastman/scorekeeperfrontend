@@ -1273,6 +1273,17 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
+    public void mergeServerUpdateConfig(MergeServer m)
+    {
+        try {
+            executeUpdate("UPDATE mergeservers set waittime=?, ctimeout=? where serverid=?",
+                            newList(m.getWaitTime(), m.getConnectTimeout(), m.getServerId()));
+        } catch (Exception ioe) {
+            logError("mergeServerUpdateConfig", ioe);
+        }
+    }
+
+    @Override
     public List<MergeServer> getMergeServers()
     {
         try

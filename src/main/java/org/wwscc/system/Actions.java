@@ -35,6 +35,7 @@ import org.wwscc.actions.EventSendAction;
 import org.wwscc.dialogs.SeriesSelectionDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.dialogs.ListDialog;
+import org.wwscc.dialogs.MergeServerConfigDialog;
 import org.wwscc.dialogs.SeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
@@ -51,7 +52,7 @@ public class Actions
     List<Action> apps;
     List<Action> actions;
     Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
-    Action deleteServer, addServer, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
+    Action deleteServer, addServer, serverConfig, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
@@ -78,6 +79,7 @@ public class Actions
         deleteServer   = addAction(new DeleteServerAction());
         addServer      = addAction(new AddServerAction());
         initServers    = addAction(new InitServersAction());
+        serverConfig   = addAction(new ServerConfigAction());
         deleteSeries   = addAction(new DeleteLocalSeriesAction());
         discovery      = addAction(new LocalDiscoveryAction());
         resetHash      = addAction(new ResetHashAction());
@@ -224,6 +226,26 @@ public class Actions
                 }
                 Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
             }}.start();
+        }
+    }
+
+
+    static class ServerConfigAction extends AbstractAction
+    {
+        public ServerConfigAction() {
+            super("Server Configuration");
+        }
+        public void actionPerformed(ActionEvent e) {
+            MergeServerConfigDialog md = new MergeServerConfigDialog(Database.d.getMergeServers());
+            if (!md.doDialog("Set Server Configuration", null))
+                return;
+            for (MergeServer m : md.getResult()) {
+                if (m.isLocalHost())
+                    continue;
+                Database.d.mergeServerUpdateConfig(m);
+            }
+            //Database.d.mergeServerSetRemote(host, "", 10);
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
         }
     }
 
