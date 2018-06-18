@@ -386,7 +386,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
     {
         public int compare(Driver d1, Driver d2)
         {
-            return d1.getFullName().compareTo(d2.getFullName());
+            return d1.getFullName().toLowerCase().compareTo(d2.getFullName().toLowerCase());
         }
     }
 }
