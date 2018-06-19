@@ -6,22 +6,18 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.Entrant;
 import org.wwscc.storage.TestDatabaseContainer;
 import org.wwscc.util.MT;
 
 public class EntryModelTests
 {
     @ClassRule
-    public static TestDatabaseContainer db = new TestDatabaseContainer();
+    public static TestDatabaseContainer testdb = new TestDatabaseContainer();
 
     EntryModel model;
-    UUID driver0 = UUID.fromString("00000000-0000-0000-0000-000000000001");
-    UUID car0 = UUID.fromString("00000000-0000-0000-0000-000000000002");
 
     @Before
     public void setUp() throws Exception
@@ -32,11 +28,6 @@ public class EntryModelTests
         DataEntry.state.setCurrentRunGroup(1);
         model.event(MT.EVENT_CHANGED, null);
         model.event(MT.RUNGROUP_CHANGED, null);
-
-        // Sanity check our initial pro2017 data
-        Entrant e = (Entrant) model.getValueAt(0, 0);
-        Assert.assertEquals("invalid testseries database", driver0, e.getDriverId());
-        Assert.assertEquals("invalid testseries database", car0, e.getCarId());
     }
 
     @After
@@ -44,18 +35,19 @@ public class EntryModelTests
     {
     }
 
-    @Ignore("need to fill with test data as testdb is gone")
+    @SuppressWarnings("static-access")
     @Test
     public void swapRuns() throws SQLException
     {
         UUID eventid = DataEntry.state.getCurrentEventId();
-        UUID carnew = UUID.fromString("00000000-0000-0000-0000-000000000003");
 
-        model.replaceCar(carnew, 0);
+        Assert.assertArrayEquals(new Object[] { testdb.carid1 }, Database.d.getRegisteredCars(testdb.driverid, testdb.eventid).stream().map(c -> c.getCarId()).toArray());
+        model.replaceCar(testdb.carid2, 0);
 
-        // old runs should be gone, new runs should be present
-        Assert.assertEquals(0, Database.d.loadEntrant(eventid, car0,  1, true).getRuns().size());
-        Assert.assertEquals(4, Database.d.loadEntrant(eventid, carnew, 1, true).getRuns().size());
+        // old runs should be gone, new runs should be present, new car should be registered
+        Assert.assertEquals(0, Database.d.loadEntrant(eventid, testdb.carid1,  1, true).getRuns().size());
+        Assert.assertEquals(4, Database.d.loadEntrant(eventid, testdb.carid2, 1, true).getRuns().size());
+        Assert.assertArrayEquals(new Object[] { testdb.carid1, testdb.carid2 }, Database.d.getRegisteredCars(testdb.driverid, testdb.eventid).stream().map(c -> c.getCarId()).toArray());
     }
 
 }

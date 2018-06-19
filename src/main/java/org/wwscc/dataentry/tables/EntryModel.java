@@ -121,6 +121,11 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         }
 
         tableData.set(row, newe);
+        try { // once successful, make sure this new car is registered for later scans
+            Database.d.registerCar(DataEntry.state.getCurrentEventId(), carid);
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to register new car when swapping: " + e, e);
+        }
         fireRunsChanged(newe);
         fireEntrantsChanged();
         fireTableRowsUpdated(row, row);

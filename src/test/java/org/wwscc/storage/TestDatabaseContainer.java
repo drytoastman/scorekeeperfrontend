@@ -8,9 +8,12 @@
 
 package org.wwscc.storage;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.rules.ExternalResource;
 import org.wwscc.system.docker.DockerAPI;
@@ -27,6 +30,18 @@ public class TestDatabaseContainer extends ExternalResource
     static String TestNetName        = "testnet";
     static DockerContainer container;
 
+    public static final UUID driverid = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    public static final UUID carid1 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+    public static final UUID carid2 = UUID.fromString("00000000-0000-0000-0000-000000000003");
+    public static final UUID eventid = UUID.fromString("00000000-0000-0000-0000-000000000010");
+
+    static List<Object> newList(Object... args)
+    {
+        List<Object> l = new ArrayList<Object>();
+        for (Object o : args)
+            l.add(o);
+        return l;
+    }
 
     @Override
     protected void before() throws Throwable
@@ -50,8 +65,26 @@ public class TestDatabaseContainer extends ExternalResource
         docker.containersUp(Arrays.asList(container), null);
 
         while (!Database.testUp())
-            Thread.sleep(1000);
-        Database.openSeries("testseries", 0);
+            Thread.sleep(500);
+
+        Database.openSeries("template", 0);
+        PostgresqlDatabase pgdb = (PostgresqlDatabase)Database.d;
+        pgdb.start();
+        pgdb.executeUpdate("SET search_path='template','public'", null);
+        pgdb.executeUpdate("INSERT INTO indexlist (indexcode, descrip, value) VALUES ('',   '', 1.000)", null);
+        pgdb.executeUpdate("INSERT INTO indexlist (indexcode, descrip, value) VALUES ('i1', '', 1.000)", null);
+        pgdb.executeUpdate("INSERT INTO classlist (classcode, descrip, indexcode, caridxrestrict, classmultiplier, carindexed, usecarflag, eventtrophy, champtrophy, secondruns, countedruns, modified) VALUES ('c1', '', '', '', 1.0, 't', 'f', 't', 't', 'f', 0, now())", null);
+        pgdb.executeUpdate("INSERT INTO drivers  (driverid, firstname, lastname, email, username, password) VALUES (?, 'first', 'last', 'email', 'username', '$2b$12$g0z0JiGEuCudjhUF.5aawOlho3fpnPqKrV1EALTd1Cl/ThQQpFi2K')", newList(driverid));
+        pgdb.executeUpdate("INSERT INTO cars     (carid, driverid, classcode, indexcode, number, useclsmult, attr, modified) VALUES (?, ?, 'c1', 'i1', 1, 'f', '{}', now())", newList(carid1, driverid));
+        pgdb.executeUpdate("INSERT INTO cars     (carid, driverid, classcode, indexcode, number, useclsmult, attr, modified) VALUES (?, ?, 'c1', 'i1', 1, 'f', '{}', now())", newList(carid2, driverid));
+        pgdb.executeUpdate("INSERT INTO events   (eventid, name, date, regclosed, attr)  VALUES (?, 'name', now(), now(), '{}')", newList(eventid));
+        pgdb.executeUpdate("INSERT INTO runorder (eventid, course, rungroup, row, carid) VALUES (?, 1, 1, 1, ?)", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?)", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 1, 1.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 2, 2.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 3, 3.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 4, 4.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.commit();
     }
 
     @Override
