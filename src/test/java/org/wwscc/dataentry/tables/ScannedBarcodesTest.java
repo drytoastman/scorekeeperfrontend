@@ -1,10 +1,12 @@
 package org.wwscc.dataentry.tables;
 
+import java.awt.GraphicsEnvironment;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.wwscc.dataentry.DataEntry;
@@ -40,6 +42,8 @@ public class ScannedBarcodesTest
         Database.d = shim;
         Event e = new Event();
         DataEntry.state.setCurrentEvent(e);
+
+        Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         totest = new DoubleTableContainer();
     }
 
