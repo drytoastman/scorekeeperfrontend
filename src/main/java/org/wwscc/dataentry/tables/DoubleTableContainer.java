@@ -228,14 +228,17 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         {
             case CAR_ADD:
                 Entrant torestore = null;
+                int runcol = -1;
                 if ((runsTable.getSelectedRow() >= 0) && (runsTable.getSelectedColumn() >= 0)) {
                     torestore = (Entrant)dataModel.getValueAt(runsTable.convertRowIndexToModel(runsTable.getSelectedRow()), 0);
+                    runcol = runsTable.getSelectedColumn();
                 }
                 dataModel.addCar((UUID)o);
                 if (torestore != null)
                 {   // update selection after moving rows around to maintain same entrant
                     int newrow = runsTable.convertRowIndexToView(dataModel.getRowForEntrant(torestore));
                     runsTable.setRowSelectionInterval(newrow, newrow);
+                    runsTable.setColumnSelectionInterval(runcol, runcol);
                 }
                 else
                 {   // only scroll to bottom if there is nothing selected
