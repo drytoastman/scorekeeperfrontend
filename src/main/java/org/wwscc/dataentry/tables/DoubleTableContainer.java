@@ -183,6 +183,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
     {
         List<Car> available = Database.d.getRegisteredCars(d.getDriverId(), DataEntry.state.getCurrentEventId());
         Iterator<Car> iter = available.iterator();
+        Messenger.sendEvent(MT.DRIVER_SCAN_ACCEPTED, d);
 
         while (iter.hasNext()) {
             Car c = iter.next();

@@ -9,6 +9,7 @@
 
 package org.wwscc.dataentry;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,12 +26,14 @@ import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.components.CurrentSeriesLabel;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.Driver;
 import org.wwscc.storage.Event;
 import org.wwscc.util.BrowserControl;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.TimedLabel;
 
 
 class SelectionBar extends JPanel implements ActionListener, MessageListener
@@ -40,6 +43,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
     JButton refreshButton, resultsButton;
     CurrentSeriesLabel seriesLabel;
     JLabel entrantCountLabel;
+    TimedLabel scannedLabel;
 
     JComboBox<Event> eventSelect;
     JComboBox<Integer> courseSelect;
@@ -52,6 +56,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         Messenger.register(MT.SERIES_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
         Messenger.register(MT.ENTRANTS_CHANGED, this);
+        Messenger.register(MT.DRIVER_SCAN_ACCEPTED, this);
         setBorder(new BevelBorder(0));
 
         Font f = new Font(Font.DIALOG, Font.BOLD, 14);
@@ -68,6 +73,10 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         seriesLabel.setFont(fn);
         entrantCountLabel = new JLabel("0");
         entrantCountLabel.setFont(fn);
+
+        scannedLabel = new TimedLabel(5000);
+        scannedLabel.setFont(fn.deriveFont(Font.BOLD));
+        scannedLabel.setForeground(new Color(200, 130, 0));
 
         courseSelect = createCombo("courseChange");
         groupSelect  = createCombo("groupChange");
@@ -88,7 +97,9 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         add(groupSelect, "gapright 5");
 
         add(createLabel("Count:", f));
-        add(entrantCountLabel, "gapright 5");
+        add(entrantCountLabel, "gapright 10");
+
+        add(scannedLabel, "gapright 5");
 
         add(new JLabel(""), "growx 100, pushx 100");
 
@@ -142,6 +153,11 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             case ENTRANTS_CHANGED:
                 List<UUID> runorder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                 entrantCountLabel.setText(""+runorder.size());
+                break;
+
+            case DRIVER_SCAN_ACCEPTED:
+                Driver d = (Driver)o;
+                scannedLabel.setText("Scan Driver " + d.getBarcode());
                 break;
         }
     }
