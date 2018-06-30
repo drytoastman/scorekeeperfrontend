@@ -38,7 +38,7 @@ public class ClassData
         indexes = new HashMap<String, ClassData.Index>();
     }
 
-    protected void add(ClassData.Class c)
+    public void add(ClassData.Class c)
     {
         classes.put(c.getCode(), c);
     }
@@ -156,6 +156,12 @@ public class ClassData
 
         public Class()
         {
+        }
+
+        public Class(String classcode, boolean secondruns)
+        {
+            this.classcode = classcode;
+            this.secondruns = secondruns;
         }
 
         public Class(ResultSet rs) throws SQLException

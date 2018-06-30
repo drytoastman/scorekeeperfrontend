@@ -18,12 +18,12 @@ import java.util.UUID;
 
 public class Entrant
 {
-    UUID driverid;
-    String firstname;
-    String lastname;
-    Car car;
-    Map<Integer, Run> runs;
-    double paid = 0.0;
+    protected UUID driverid;
+    protected String firstname;
+    protected String lastname;
+    protected Car car;
+    protected Map<Integer, Run> runs;
+    protected double paid = 0.0;
 
     public Entrant()
     {

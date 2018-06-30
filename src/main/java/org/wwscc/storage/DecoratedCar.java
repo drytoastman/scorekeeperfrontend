@@ -9,6 +9,7 @@
 package org.wwscc.storage;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -40,4 +41,14 @@ public class DecoratedCar extends Car
     public boolean isRegistered()      { return registered; }
     public boolean isInRunOrder()      { return inRunOrder; }
     public boolean hasOtherActivity()  { return otherActivity; }
+
+    public static class PaidOrder implements Comparator<DecoratedCar>
+    {
+        @Override
+        public int compare(DecoratedCar o1, DecoratedCar o2) {
+            if (o1.hasPaid() && !o2.hasPaid()) return -1;
+            if (o2.hasPaid() && !o1.hasPaid()) return  1;
+            return 0;
+        }
+    }
 }

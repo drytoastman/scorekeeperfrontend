@@ -15,6 +15,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,8 +37,10 @@ import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.ClassData;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
+import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -196,9 +199,16 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
             return;
         }
 
-        for (Car c : available) {  // multiple available, skip second runs classes, pick other items first
-            if (Database.d.getClassData().getClass(c.getClassCode()).isSecondRuns()) continue;
-            event(MT.CAR_ADD, c.getCarId());
+        ClassData cd = Database.d.getClassData();
+        UUID eid = IdGenerator.generateId();
+        Optional<DecoratedCar> car = available.stream()
+                          .filter(c -> !cd.getClass(c.getClassCode()).isSecondRuns()) // not second runs
+                          .map(c -> Database.d.decorateCar(c, eid, 1))  // get decorated cars
+                          .sorted(new DecoratedCar.PaidOrder())
+                          .findFirst();
+
+        if (car.isPresent()) {
+            event(MT.CAR_ADD, car.get().getCarId());
             return;
         }
 
