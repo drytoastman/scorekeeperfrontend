@@ -10,8 +10,10 @@ package org.wwscc.barcodes;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
@@ -20,6 +22,8 @@ import java.awt.print.PrinterException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JComponent;
+
+import org.wwscc.util.Prefs;
 
 /**
  */
@@ -128,10 +132,23 @@ public class Code39 extends JComponent implements Printable
         }
 
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-        Rectangle2D metrics = g.getFontMetrics(g.getFont()).getStringBounds(label, g);
-        int x = (int)Math.max(0, (getWidth() - metrics.getWidth())/2);
+        FontMetrics metrics = g.getFontMetrics(g.getFont());
+        Rectangle2D bounds = new Rectangle();
+        String printlabel = new String(label);
+        int diff = 1;
+        while (diff > 0) {
+            bounds = metrics.getStringBounds(printlabel, g);
+            diff = codewidth - (int)bounds.getWidth();
+            if (diff > 0) {
+                printlabel = " " + printlabel + " ";
+            }
+        }
+
+        printlabel = "*  "+printlabel+"*";
+        bounds = metrics.getStringBounds(printlabel, g);
+        int x = (int)Math.max(0, (getWidth() - bounds.getWidth())/2);
         int y = getHeight() - 1;
-        g.drawString(label, x, y);
+        g.drawString(printlabel, x, y);
     }
 
 
@@ -146,17 +163,11 @@ public class Code39 extends JComponent implements Printable
 
         // now attempt to scale if needed
         double scale = Math.min(pf.getImageableWidth() / getWidth(), pf.getImageableHeight() / getHeight());
-        int width = getWidth();
         if ((scale > 1.05) || (scale < 0.95)) {
             g2.scale(scale, scale);
-            width *= scale;
         }
 
-        // final translate to center of printable area after we know scaled size
-        if (width < pf.getImageableWidth()) {
-            int centerx = (int) ((pf.getImageableWidth() - width)/2.0);
-            g2.translate(centerx, 0);
-        }
+        g2.translate(Prefs.getPrintLabelOffset(), 0); // PT2730, prints backwards and leaves a gap so we remove that gap here, user adjustable
 
         paint(g);
         return PAGE_EXISTS;
