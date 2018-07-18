@@ -10,20 +10,16 @@ package org.wwscc.barcodes;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JComponent;
-
-import org.wwscc.util.Prefs;
 
 /**
  */
@@ -106,15 +102,31 @@ public class Code39 extends JComponent implements Printable
         }
     }
 
-    @Override
-    public void paintComponent(Graphics g)
+    protected int codeWidth()
+    {
+        return SYMBOLWIDTH * codestr.length();
+    }
+
+    protected int necessaryWidth(Graphics g)
+    {
+        return (int)Math.max(codeWidth() + SYMBOLWIDTH*2,  // code with plus space for quiet zones
+                             g.getFontMetrics(g.getFont()).getStringBounds(label, g).getWidth());
+    }
+
+    protected void draw(Graphics g)
     {
         if (codestr.isEmpty())
             return;
+        drawBarcode(g);
+        drawLabel((Graphics2D)g);
+        drawQuietZoneHolders(g);
+    }
 
+    protected void drawBarcode(Graphics g)
+    {
         int codeheight = (int)(getHeight() * 0.75);
-        int codewidth  = codestr.length() * SYMBOLWIDTH;
-        int xpos       = (getWidth() - codewidth)/2;
+        int sidespace  = getWidth() - codeWidth();
+        int xpos       = sidespace > 0 ? sidespace/2 : 0;
 
         g.setColor(Color.BLACK);
         for (Character c : codestr.toCharArray())
@@ -130,46 +142,47 @@ public class Code39 extends JComponent implements Printable
             }
             xpos += NARROW; // inter character space
         }
-
-        ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-        FontMetrics metrics = g.getFontMetrics(g.getFont());
-        Rectangle2D bounds = new Rectangle();
-        String printlabel = new String(label);
-        int diff = 1;
-        while (diff > 0) {
-            bounds = metrics.getStringBounds(printlabel, g);
-            diff = codewidth - (int)bounds.getWidth();
-            if (diff > 0) {
-                printlabel = " " + printlabel + " ";
-            }
-        }
-
-        printlabel = "*  "+printlabel+"*";
-        bounds = metrics.getStringBounds(printlabel, g);
-        int x = (int)Math.max(0, (getWidth() - bounds.getWidth())/2);
-        int y = getHeight() - 1;
-        g.drawString(printlabel, x, y);
     }
 
+    protected void drawLabel(Graphics2D g)
+    {
+        int labelwidth = (int)g.getFontMetrics(g.getFont()).getStringBounds(label, g).getWidth();
+        g.setColor(Color.BLACK);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+        g.drawString(label, (int)Math.max(0, (getWidth() - labelwidth)/2), getHeight() - 1);
+    }
+
+    protected void drawQuietZoneHolders(Graphics g)
+    {
+        g.setColor(Color.LIGHT_GRAY);
+        g.drawString(".", 0, getHeight() - 1);
+        g.drawString(".", getWidth()-2, getHeight() - 1);
+    }
+
+    @Override
+    public void paintComponent(Graphics g)
+    {
+        draw(g);
+    }
 
     @Override
     public int print(Graphics g, PageFormat pf, int i) throws PrinterException
     {
         if (i > 0) return NO_SUCH_PAGE;
+
         Graphics2D g2 = (Graphics2D)g;
 
-        // translate to printable area
+        Code39 dup = new Code39();
+        dup.codestr = codestr;
+        dup.label = label;
+        int width = necessaryWidth(g2);
+        dup.setBounds(new Rectangle(0, 0, width, (int)pf.getImageableHeight()));
+
+        // translate to printable area and shift out any extra whitespace
         g2.translate(pf.getImageableX(), pf.getImageableY());
+        g2.translate(pf.getImageableWidth() - width, 0);
 
-        // now attempt to scale if needed
-        double scale = Math.min(pf.getImageableWidth() / getWidth(), pf.getImageableHeight() / getHeight());
-        if ((scale > 1.05) || (scale < 0.95)) {
-            g2.scale(scale, scale);
-        }
-
-        g2.translate(Prefs.getPrintLabelOffset(), 0); // PT2730, prints backwards and leaves a gap so we remove that gap here, user adjustable
-
-        paint(g);
+        dup.draw(g);
         return PAGE_EXISTS;
     }
 }

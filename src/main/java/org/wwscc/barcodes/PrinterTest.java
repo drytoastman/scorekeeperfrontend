@@ -1,7 +1,5 @@
 package org.wwscc.barcodes;
 
-import java.awt.Rectangle;
-
 import javax.print.DocFlavor;
 import javax.print.PrintException;
 import javax.print.PrintService;
@@ -29,8 +27,7 @@ public class PrinterTest
     public static void main(String args[]) throws InvalidBarcodeException, PrintException
     {
         Code39 barcode = new Code39();
-        barcode.setValue("123456", "Somename Here");
-        barcode.setBounds(new Rectangle(0, 0, 100, 40));
+        barcode.setValue("123456", "123456 - Somename");
 
         HashPrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
         aset.add(new Copies(2)); // silly request but cuts out fax, xps, etc.

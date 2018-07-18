@@ -192,7 +192,6 @@ public class Prefs
     public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
     public static String getIssuer()           { return prefs.get("issuer", ""); }
     public static String getIssuerMem()        { return prefs.get("issuermem", ""); }
-    public static int getPrintLabelOffset()    { return prefs.getInt("printlabeloffset", 72); }
 
     public static String getScannerConfig(String type) { return prefs.get("scannerconfig-"+type, ""); }
     public static String getScannerInput() { return prefs.get("scannerinput", ""); }
