@@ -55,6 +55,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         items = new HashMap <String,JMenuItem>();
         Messenger.register(MT.SERIES_CHANGED, this);
         Messenger.register(MT.EVENT_CHANGED, this);
+        Messenger.register(MT.SCRATCH_WINDOW, this);
 
         /* File Menu */
         JMenu file = new JMenu("File");
@@ -71,6 +72,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         edit.add(new EventSendAction<>("Add By Name", MT.ADD_BY_NAME, null, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK)));
         edit.add(new EventSendAction<>("Filter Table", MT.OPEN_FILTER, null, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK)));
         edit.add(new EventSendAction<>("Time Focus", MT.TIME_FOCUS, null, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK)));
+        edit.add(new EventSendAction<>("Scratch Window", MT.SCRATCH_WINDOW, null, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK)));
 
         /* Event Menu */
         event = new JMenu("Options");
@@ -194,6 +196,10 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
                     if (run == DataEntry.state.getCurrentEvent().getRuns())
                         b.setSelected(true);
                 }
+                break;
+
+            case SCRATCH_WINDOW:
+                new ScratchWindow(40, 10);
                 break;
         }
     }
