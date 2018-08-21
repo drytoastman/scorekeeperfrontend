@@ -40,8 +40,7 @@ public class ContainerMonitor extends MonitorBase
 
     public static final String NET_NAME        = "scnet";
     public static final String DB_IMAGE_NAME   = "drytoastman/scdb:"+Prefs.getFullVersion();
-    public static final String WEB_IMAGE_NAME  = "drytoastman/scweb:"+Prefs.getFullVersion();
-    public static final String SYNC_IMAGE_NAME = "drytoastman/scsync:"+Prefs.getFullVersion();
+    public static final String PY_IMAGE_NAME   = "drytoastman/scpython:"+Prefs.getFullVersion();
     public static final String SOCK_VOL_NAME   = "scsocket";
     public static final String DB_VOL_NAME     = "scdatabase-"+Prefs.getVersionBase();
     public static final String LOG_VOL_NAME    = "sclogs-"+Prefs.getVersionBase();
@@ -87,14 +86,16 @@ public class ContainerMonitor extends MonitorBase
         db.addPort("0.0.0.0",  54329, 5432);
         all.add(db);
 
-        web = new DockerContainer("web", WEB_IMAGE_NAME, NET_NAME);
+        web = new DockerContainer("web", PY_IMAGE_NAME, NET_NAME);
+        web.addCmdItem("webserver.py");
         web.addVolume(LOG_VOL_NAME,  "/var/log");
         web.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
         web.addPort("0.0.0.0", 80, 80);
         all.add(web);
         nondb.add(web);
 
-        sync = new DockerContainer("sync", SYNC_IMAGE_NAME, NET_NAME);
+        sync = new DockerContainer("sync", PY_IMAGE_NAME, NET_NAME);
+        sync.addCmdItem("syncserver");
         sync.addVolume(LOG_VOL_NAME,  "/var/log");
         sync.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
         all.add(sync);
