@@ -108,8 +108,7 @@ begin
    Result := ExpandConstant('{tmp}\pullimages.bat')
    if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
        SaveStringToFile(Result, 'docker pull drytoastman/scdb:{#Version}'#10, True);
-       SaveStringToFile(Result, 'docker pull drytoastman/scweb:{#Version}'#10, True);
-       SaveStringToFile(Result, 'docker pull drytoastman/scsync:{#Version}'#10, True);
+       SaveStringToFile(Result, 'docker pull drytoastman/scpython:{#Version}'#10, True);
    end;
 end;
 

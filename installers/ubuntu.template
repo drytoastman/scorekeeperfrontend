@@ -90,6 +90,5 @@ fi
 
 # Pull the latest images, so everything it ready to go
 docker pull drytoastman/scdb:${git_version}
-docker pull drytoastman/scweb:${git_version}
-docker pull drytoastman/scsync:${git_version}
+docker pull drytoastman/scpython:${git_version}
 
