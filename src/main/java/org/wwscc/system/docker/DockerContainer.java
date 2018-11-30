@@ -36,7 +36,7 @@ public class DockerContainer extends CreateContainerConfig
         this.up      = true;
 
         addEnvItem("UI_TIME_ZONE="+TimeZone.getDefault().getID());
-        addEnvItem("SECRET='"+Prefs.getCookieSecret()+"'");
+        addEnvItem("FLASK_SECRET='"+Prefs.getCookieSecret()+"'");
         addEnvItem("LOG_LEVEL="+Prefs.getLogLevel().getPythonLevel());
         addEnvItem("ONSITE=1");
         setHostConfig(new HostConfig().autoRemove(false).portBindings(new PortMap()).binds(new ArrayList<>()));
