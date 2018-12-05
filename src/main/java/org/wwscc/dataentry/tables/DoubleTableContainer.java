@@ -110,6 +110,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         Messenger.register(MT.FILTER_ENTRANT, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
         Messenger.register(MT.OBJECT_SCANNED, this);
+        Messenger.register(MT.ENTRANTS_CHANGED, this);
     }
 
     public RunsTable getRunsTable() { return runsTable; }
@@ -286,6 +287,21 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
             case FILTER_ENTRANT:
                 sorter.setRowFilter(new EntrantFilter((String)o));
+                break;
+
+            case ENTRANTS_CHANGED:
+                // Check if runorder changed behind our backs, reload table in that case, otherwise ignore so we don't mess up cell selection
+                List<Entrant> dborder = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                if (dborder.size() == dataModel.tableData.size()) {
+                    for (int ii = 0; ii < dborder.size(); ii++) {
+                        if (!dborder.get(ii).getCarId().equals(dataModel.tableData.get(ii).getCarId())) {
+                            Messenger.sendEventNow(MT.RUNGROUP_CHANGED, DataEntry.state.getCurrentRunGroup());
+                            break;
+                        }
+                    }
+                } else {
+                    Messenger.sendEventNow(MT.RUNGROUP_CHANGED, DataEntry.state.getCurrentRunGroup());
+                }
                 break;
         }
     }

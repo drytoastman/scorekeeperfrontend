@@ -293,14 +293,9 @@ public abstract class SQLDataInterface implements DataInterface
         try
         {
             HashSet<UUID> ret = new HashSet<UUID>();
-            ResultSet d = executeSelect("select cars from runorder where eventid=? AND course=?", newList(eventid, course));
+            ResultSet d = executeSelect("select unnest(cars) as carid from runorder where eventid=? AND course=?", newList(eventid, course));
             while (d.next())
-            {
-                for (UUID u : (UUID[])d.getArray("cars").getArray())
-                {
-                    ret.add(u);
-                }
-            }
+                ret.add((UUID)d.getObject("carid"));
             closeLeftOvers();
             return ret;
         }
@@ -343,7 +338,6 @@ public abstract class SQLDataInterface implements DataInterface
         }
         catch (Exception ioe)
         {
-            rollback();
             logError("setRunOrder", ioe);
         }
     }
@@ -659,16 +653,16 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("DELETE FROM runs WHERE carid=?", da);
 
             executeUpdate("INSERT INTO registered (eventid, carid) " +
-                                    "(SELECT eventid,	 ? FROM registered WHERE carid=?)", sa);
+                                    "(SELECT eventid,	 ? FROM registered WHERE carid=?) ON CONFLICT (eventid, carid) DO NOTHING", sa);
             executeUpdate("DELETE FROM registered WHERE carid=?", da);
 
             executeUpdate("INSERT INTO challengeruns (challengeid, round, carid, course, reaction, sixty, raw, cones, gates, status) " +
                                              "(SELECT challengeid, round,	 ?, course, reaction, sixty, raw, cones, gates, status FROM challengeruns WHERE carid=?)", sa);
             executeUpdate("DELETE FROM challengeruns WHERE carid=?", da);
 
-            // these we can just swap
+            // these we can just swap or delete
             executeUpdate("update payments set carid=?,modified=now() where carid=?", sa);
-            executeUpdate("update runorder set cars=(SELECT COALESCE(array_agg(el), '{}') FROM (SELECT unnest(cars) EXCEPT SELECT carid from cars WHERE driverid=%s) t(el)), modified=now()", sa);
+            executeUpdate("update runorder set cars=array_remove(cars, ?), modified=now()", newList(from.getCarId()));
             executeUpdate("update challengerounds set car1id=?,modified=now() where car1id=?", sa);
             executeUpdate("update challengerounds set car2id=?,modified=now() where car2id=?", sa);
             executeUpdate("delete from cars where carid=?", da);

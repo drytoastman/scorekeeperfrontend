@@ -325,7 +325,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
             c.rollback();
             c.setAutoCommit(true);
         } catch (SQLException sqle) {
-            log.warning("\bDatabase rollback failed.  You should probably restart the application.");
+            log.log(Level.WARNING, "\bDatabase rollback failed.  You should probably restart the application.", sqle);
         }
     }
 

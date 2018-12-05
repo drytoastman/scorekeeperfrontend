@@ -394,7 +394,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
             try {
                 Database.d.deleteCar(old.getCar());
-                Messenger.sendEvent(MT.ENTRANTS_CHANGED, null); // force car panel to update, FINISH ME, move to Notifications from database someday instead
             } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bUnable delete car as it is still in use\n\n" + sqle, sqle);
             }
