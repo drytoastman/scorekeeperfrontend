@@ -360,6 +360,12 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 p.setTimestamp(ii+1, (Timestamp)v, Database.utc);
             } else if (v instanceof LocalDate) {
                 p.setObject(ii+1, v);
+            } else if (v.getClass().isArray()) {
+                String t = "text";
+                switch (v.getClass().getComponentType().getName()) {
+                    case "java.util.UUID": t = "uuid"; break;
+                }
+                p.setArray(ii+1, getConnection().createArrayOf(t, (Object[])v));
             } else {
                 throw new SQLException("unexpected param type: " + v.getClass());
             }

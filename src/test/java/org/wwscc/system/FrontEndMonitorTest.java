@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.FakeDatabase;
+import org.wwscc.util.Discovery;
 import org.wwscc.util.Prefs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,6 +42,7 @@ public class FrontEndMonitorTest
         shim = new DatabaseShim();
         Database.d = shim;
         totest = new FrontEndMonitor();
+        Discovery.get();
     }
 
     @After

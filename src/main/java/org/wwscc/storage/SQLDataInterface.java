@@ -241,14 +241,15 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("SELECT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
-                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid JOIN runorder r ON r.carid=c.carid " +
-                        "LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=r.eventid LEFT JOIN payments p ON reg.carid=p.carid AND reg.eventid=p.eventid  " +
-                        "WHERE r.eventid=? AND r.course=? AND r.rungroup=? GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup));
+            ResultSet d = executeSelect("WITH r AS (SELECT x.cid,x.row from runorder, unnest(runorder.cars) WITH ORDINALITY x(cid,row) WHERE eventid=? and course=? and rungroup=?) " +
+                        "SELECT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
+                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid JOIN r ON c.carid=r.cid " +
+                        "LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=? LEFT JOIN payments p ON reg.carid=p.carid AND reg.eventid=p.eventid  " +
+                        "GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup, eventid));
             if (d == null)
                 return new ArrayList<Entrant>();
             ResultSet runs = executeSelect("select * from runs where eventid=? and course=? and carid in " +
-                        "(select carid from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, eventid, course, rungroup));
+                        "(select unnest(cars) from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, eventid, course, rungroup));
             List<Entrant> ret = loadEntrants(d, runs);
             closeLeftOvers();
             return ret;
@@ -291,10 +292,15 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=?", newList(eventid, course));
             HashSet<UUID> ret = new HashSet<UUID>();
+            ResultSet d = executeSelect("select cars from runorder where eventid=? AND course=?", newList(eventid, course));
             while (d.next())
-                ret.add((UUID)d.getObject("carid"));
+            {
+                for (UUID u : (UUID[])d.getArray("cars").getArray())
+                {
+                    ret.add(u);
+                }
+            }
             closeLeftOvers();
             return ret;
         }
@@ -310,7 +316,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select carid from runorder where eventid=? AND course=? AND rungroup=? order by row", newList(eventid, course, rungroup));
+            ResultSet d = executeSelect("select unnest(cars) as carid from runorder where eventid=? AND course=? AND rungroup=?", newList(eventid, course, rungroup));
             List<UUID> ret = new ArrayList<UUID>();
             while (d.next())
                 ret.add((UUID)d.getObject("carid"));
@@ -330,33 +336,10 @@ public abstract class SQLDataInterface implements DataInterface
         {
             if (rungroup <= 0) return; // Shouldn't be doing this if rungroup isn't valid
 
-            /* Start transaction */
-            start();
-
-            List<List<Object>> lists = new ArrayList<List<Object>>(carids.size());
-
-            int row = 0;
-            for (UUID carid : carids)
-            {
-                row++;
-                List<Object> items = new ArrayList<Object>(6);
-                items.add(eventid);
-                items.add(course);
-                items.add(rungroup);
-                items.add(row);
-                items.add(carid);
-                items.add(carid);
-                lists.add(items);
-            }
-
-            // update our ids
-            executeGroupUpdate("INSERT INTO runorder VALUES (?,?,?,?,?,now()) " +
-                                "ON CONFLICT (eventid, course, rungroup, row) DO UPDATE " +
-                                "SET carid=?,modified=now()", lists);
-
-            // clear out any leftovers from previous values
-            executeUpdate("DELETE FROM runorder where eventid=? and course=? and rungroup=? and row>?", newList(eventid, course, rungroup, row));
-            commit();
+            UUID cars[] = carids.toArray(new UUID[0]);
+            executeUpdate("INSERT INTO runorder (eventid, course, rungroup, cars, modified) VALUES (?,?,?,?,now()) " +
+                          "ON CONFLICT (eventid, course, rungroup) DO UPDATE SET cars=?, modified=now()",
+                          newList(eventid, course, rungroup, cars, cars));
         }
         catch (Exception ioe)
         {
@@ -385,7 +368,7 @@ public abstract class SQLDataInterface implements DataInterface
             }
 
             // check if in runorder for the given course
-            ResultSet rr = executeSelect("select row from runorder where carid=? and eventid=? and course=? limit 1", newList(c.getCarId(), eventid, course));
+            ResultSet rr = executeSelect("select 1 from runorder where eventid=? and course=? and ?=ANY(cars) limit 1", newList(eventid, course, c.getCarId()));
             dcar.inRunOrder = rr.next();
 
             // check for activity outside this event
@@ -393,7 +376,7 @@ public abstract class SQLDataInterface implements DataInterface
             if (!c1.next()) {
                 ResultSet c2 = executeSelect("select carid from runs where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
                 if (!c2.next()) {
-                    ResultSet c3 = executeSelect("select carid from runorder where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+                    ResultSet c3 = executeSelect("select 1 from runorder where ?=ANY(cars) and eventid!=? limit 1", newList(c.getCarId(), eventid));
                     dcar.otherActivity = c3.next();
                 } else {
                     dcar.otherActivity = true;
@@ -685,7 +668,7 @@ public abstract class SQLDataInterface implements DataInterface
 
             // these we can just swap
             executeUpdate("update payments set carid=?,modified=now() where carid=?", sa);
-            executeUpdate("update runorder set carid=?,modified=now() where carid=?", sa);
+            executeUpdate("update runorder set cars=(SELECT COALESCE(array_agg(el), '{}') FROM (SELECT unnest(cars) EXCEPT SELECT carid from cars WHERE driverid=%s) t(el)), modified=now()", sa);
             executeUpdate("update challengerounds set car1id=?,modified=now() where car1id=?", sa);
             executeUpdate("update challengerounds set car2id=?,modified=now() where car2id=?", sa);
             executeUpdate("delete from cars where carid=?", da);
@@ -1122,7 +1105,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND carid=?", newList(eventid, course, carid));
+            ResultSet rs = executeSelect("select 1 from runorder where eventid=? AND course=? AND ?=ANY(cars)", newList(eventid, course, carid));
             return rs.next();
         }
         catch (Exception ioe)
@@ -1137,7 +1120,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet rs = executeSelect("select row from runorder where eventid=? AND course=? AND rungroup=? AND carid=?", newList(eventid, course, rungroup, carid));
+            ResultSet rs = executeSelect("select 1 from runorder where eventid=? AND course=? AND rungroup=? AND ?=ANY(cars)", newList(eventid, course, rungroup, carid));
             return rs.next();
         }
         catch (Exception ioe)
