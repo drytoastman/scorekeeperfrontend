@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.ListModel;
 import javax.swing.UIManager;
 import org.wwscc.storage.Car;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Driver;
 
 import net.miginfocom.swing.MigLayout;
@@ -95,9 +96,11 @@ public class ListRenderers extends DefaultListCellRenderer
     }
 
 
-    public static class CarRenderer extends ListRenderers
+    public static class DecoratedCarRenderer extends ListRenderers
     {
         private static Font codeFont = new Font(Font.SANS_SERIF, Font.BOLD, 13);
+        private static Font descFont = new Font(Font.SANS_SERIF, Font.PLAIN, 13);
+        private static Color inUseColor = new Color(120, 100, 120);
         private CarPanel p = new CarPanel();
         private FontMetrics codeMetrics = p.getFontMetrics(codeFont);
 
@@ -111,8 +114,14 @@ public class ListRenderers extends DefaultListCellRenderer
             }
             p.setCodesLayoutWidth(leftwidth);
 
-            Car c = (Car)value;
+            DecoratedCar c = (DecoratedCar)value;
             setupPanel(list, p, isSelected, cellHasFocus);
+            if (c.isInRunOrder()) {
+                p.setForeground(inUseColor);
+                p.setItalic(true);
+            } else {
+                p.setItalic(false);
+            }
             p.codes.setText(getCodesStr(c));
             p.desc.setText(String.join(" ", c.getYear(), c.getModel(), c.getColor()));
             return p;
@@ -133,11 +142,12 @@ public class ListRenderers extends DefaultListCellRenderer
                 setLayout(new MigLayout("fill, ins 1", "[120:120:120][0]", ""));
 
                 codes = new JLabel();
-                codes.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
+                codes.setFont(codeFont);
                 codes.setOpaque(false);
                 add(codes, "");
 
                 desc = new JLabel();
+                desc.setFont(descFont);
                 desc.setOpaque(true);
                 add(desc, "ax right");
             }
@@ -147,11 +157,17 @@ public class ListRenderers extends DefaultListCellRenderer
                 ((MigLayout)getLayout()).setColumnConstraints(String.format("[%d:%d:%d][0]", width, width, width));
             }
 
+            public void setItalic(boolean b)
+            {
+                if (codes != null) codes.setFont(b ? codeFont.deriveFont(Font.ITALIC) : codeFont);
+                if (desc  != null) desc.setFont( b ? descFont.deriveFont(Font.ITALIC) : descFont);
+            }
+
             @Override
             public void setForeground(Color f)
             {
                 super.setForeground(f);
-                if (codes != null)    codes.setForeground(f);
+                if (codes != null) codes.setForeground(f);
                 if (desc != null) desc.setForeground(f);
             }
 
@@ -159,10 +175,9 @@ public class ListRenderers extends DefaultListCellRenderer
             public void setBackground(Color f)
             {
                 super.setBackground(f);
-                if (codes != null)    codes.setBackground(f);
+                if (codes != null) codes.setBackground(f);
                 if (desc != null) desc.setBackground(f);
             }
         }
     }
 }
-

@@ -131,7 +131,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         cars.addListSelectionListener(this);
         cars.setVisibleRowCount(2);
         cars.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        cars.setCellRenderer(new ListRenderers.CarRenderer());
+        cars.setCellRenderer(new ListRenderers.DecoratedCarRenderer());
         cars.getScrollableTracksViewportWidth();
 
         cscroll = new JScrollPane(cars);
