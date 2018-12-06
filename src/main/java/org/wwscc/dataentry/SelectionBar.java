@@ -13,11 +13,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -27,10 +25,11 @@ import javax.swing.border.BevelBorder;
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.components.CurrentSeriesLabel;
+import org.wwscc.dialogs.PlaceOrphansDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
+import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Event;
-import org.wwscc.storage.Run;
 import org.wwscc.util.BrowserControl;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -74,6 +73,20 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
         placeOrphanedButton = new JButton("");
         placeOrphanedButton.setVisible(false);
+        placeOrphanedButton.addActionListener(e -> {
+            List<UUID> carids = Database.d.getOrphanedCars(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
+            List<Entrant> entrants = new ArrayList<Entrant>();
+            for (UUID carid : carids) {
+                entrants.add(Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true));
+            }
+            PlaceOrphansDialog pd = new PlaceOrphansDialog(entrants);
+            if (pd.doDialog("Place Orphans", null)) {
+                for (UUID carid : pd.getResult()) {
+                    Messenger.sendEvent(MT.CAR_ADD, carid);
+                }
+                Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
+            }
+        });
 
         seriesLabel = new CurrentSeriesLabel();
         seriesLabel.setFont(fn);
@@ -161,12 +174,9 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
                 List<UUID> runorder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                 entrantCountLabel.setText(""+runorder.size());
 
-                List<Run> orphaned = Database.d.getOrphanedRuns(DataEntry.state.getCurrentEventId());
-                Map<UUID, Long> x = orphaned.stream()
-                            .filter(r -> r.course() == DataEntry.state.getCurrentCourse())
-                            .collect(Collectors.groupingBy(r -> { return r.getCarId(); }, Collectors.counting()));
-                placeOrphanedButton.setText(x.size() + " orphaned cars for this course");
-                placeOrphanedButton.setVisible(x.size() > 0);
+                List<UUID> orphaned = Database.d.getOrphanedCars(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
+                placeOrphanedButton.setText("orphaned cars for this course: " + orphaned.size());
+                placeOrphanedButton.setVisible(orphaned.size() > 0);
                 break;
 
             case DRIVER_SCAN_ACCEPTED:

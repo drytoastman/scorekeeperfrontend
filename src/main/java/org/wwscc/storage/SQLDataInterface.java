@@ -344,24 +344,25 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     /**
-     * Gets all the runs based on the current event for cars that have no assigned rungroup.
+     * Gets all the orphaned cars based on the current event for cars that have runs no assigned rungroup
      * They show up in results but not in dataentry normal rungroups.
      */
     @Override
-    public List<Run> getOrphanedRuns(UUID eventid)
+    public List<UUID> getOrphanedCars(UUID eventid, int course)
     {
-        ArrayList<Run> ret = new ArrayList<Run>();
+        ArrayList<UUID> ret = new ArrayList<UUID>();
         try
         {
-            ResultSet rs = executeSelect("SELECT * FROM runs WHERE eventid=? AND carid NOT IN (SELECT DISTINCT(unnest(runorder.cars)) FROM runorder WHERE eventid=?)", newList(eventid, eventid));
+            ResultSet rs = executeSelect("SELECT DISTINCT(carid) FROM runs WHERE eventid=? AND course=? AND carid NOT IN " +
+                                         "(SELECT DISTINCT(unnest(runorder.cars)) FROM runorder WHERE eventid=? AND course=?)", newList(eventid, course, eventid, course));
             while (rs.next()) {
-                ret.add(new Run(rs));
+                ret.add((UUID)rs.getObject(1));
             }
             closeLeftOvers();
         }
         catch (Exception ioe)
         {
-            logError("getOrphanedRuns", ioe);
+            logError("getOrphanedCars", ioe);
         }
         return ret;
     }
