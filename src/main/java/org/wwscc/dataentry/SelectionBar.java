@@ -14,7 +14,9 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -28,6 +30,7 @@ import org.wwscc.components.CurrentSeriesLabel;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Event;
+import org.wwscc.storage.Run;
 import org.wwscc.util.BrowserControl;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -40,7 +43,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 {
     //private static Logger log = Logger.getLogger(SelectionBar.class.getCanonicalName());
 
-    JButton refreshButton, resultsButton;
+    JButton refreshButton, resultsButton, placeOrphanedButton;
     CurrentSeriesLabel seriesLabel;
     JLabel entrantCountLabel;
     TimedLabel scannedLabel;
@@ -51,7 +54,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
     public SelectionBar()
     {
-        super(new MigLayout("fill, ins 3", "fill"));
+        super(new MigLayout("fill, ins 3, hidemode 3", "fill"));
 
         Messenger.register(MT.SERIES_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
@@ -68,6 +71,9 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
         refreshButton = new JButton("Refresh");
         refreshButton.addActionListener(e -> Messenger.sendEvent(MT.RUNGROUP_CHANGED, null));
+
+        placeOrphanedButton = new JButton("");
+        placeOrphanedButton.setVisible(false);
 
         seriesLabel = new CurrentSeriesLabel();
         seriesLabel.setFont(fn);
@@ -99,6 +105,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         add(createLabel("Count:", f));
         add(entrantCountLabel, "gapright 10");
 
+        add(placeOrphanedButton, "gapright 5");
         add(scannedLabel, "gapright 5");
 
         add(new JLabel(""), "growx 100, pushx 100");
@@ -153,6 +160,13 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             case ENTRANTS_CHANGED:
                 List<UUID> runorder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                 entrantCountLabel.setText(""+runorder.size());
+
+                List<Run> orphaned = Database.d.getOrphanedRuns(DataEntry.state.getCurrentEventId());
+                Map<UUID, Long> x = orphaned.stream()
+                            .filter(r -> r.course() == DataEntry.state.getCurrentCourse())
+                            .collect(Collectors.groupingBy(r -> { return r.getCarId(); }, Collectors.counting()));
+                placeOrphanedButton.setText(x.size() + " orphaned cars for this course");
+                placeOrphanedButton.setVisible(x.size() > 0);
                 break;
 
             case DRIVER_SCAN_ACCEPTED:

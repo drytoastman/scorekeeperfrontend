@@ -291,10 +291,10 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
             case ENTRANTS_CHANGED:
                 // Check if runorder changed behind our backs, reload table in that case, otherwise ignore so we don't mess up cell selection
-                List<Entrant> dborder = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                List<UUID> dborder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                 if (dborder.size() == dataModel.tableData.size()) {
                     for (int ii = 0; ii < dborder.size(); ii++) {
-                        if (!dborder.get(ii).getCarId().equals(dataModel.tableData.get(ii).getCarId())) {
+                        if (!dborder.get(ii).equals(dataModel.tableData.get(ii).getCarId())) {
                             Messenger.sendEventNow(MT.RUNGROUP_CHANGED, DataEntry.state.getCurrentRunGroup());
                             break;
                         }
