@@ -10,6 +10,7 @@ package org.wwscc.dataentry;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +36,8 @@ import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -177,6 +180,18 @@ public class DataEntry extends JFrame implements MessageListener
     {
         try
         {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode n = mapper.readTree(new URL("http://127.0.0.1/results/pro2018/event/77e09ac6-f9a3-11e7-91ff-0242ac120003/grid?order=number&idsonly"));
+
+            n.fields().forEachRemaining(e -> {
+                String group = e.getKey();
+                System.out.println(group);
+                e.getValue().forEach(l -> {
+                    System.out.println(l);
+                });
+            });
+
+
             AppSetup.appSetup("dataentry");
             new DataEntry();
         }
