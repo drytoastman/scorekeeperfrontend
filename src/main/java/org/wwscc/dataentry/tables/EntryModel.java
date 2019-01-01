@@ -368,7 +368,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         ArrayList<UUID> ids = new ArrayList<UUID>();
         for (Entrant e : tableData)
             ids.add(e.getCarId());
-        Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), ids);
+        Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), ids, false);
         // Database notification will cause this event for us, don't double the reload
         // Messenger.sendEvent(MT.ENTRANTS_CHANGED, null);
     }

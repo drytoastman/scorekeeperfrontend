@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
@@ -28,6 +29,8 @@ import javax.swing.KeyStroke;
 import org.wwscc.actions.OpenSeriesAction;
 import org.wwscc.actions.EventSendAction;
 import org.wwscc.actions.QuitAction;
+import org.wwscc.dataentry.actions.RunOrderFromGridAction;
+import org.wwscc.dataentry.actions.ScratchWindowAction;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.GroupDialog;
 import org.wwscc.storage.Database;
@@ -44,41 +47,49 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
     private static final Logger log = Logger.getLogger("org.wwscc.dataentry.Menus");
 
     Map <String,JMenuItem> items;
-    JMenu edit, event, results;
+    JMenu shortcuts, event, prosolo, preferences, reports;
     JCheckBoxMenuItem paidInfoMode;
     JCheckBoxMenuItem reorderMode;
     JCheckBoxMenuItem printMode;
     ButtonGroup runGrouping;
 
-    public Menus()
+    public Menus(JMenu barcode, JMenu timer)
     {
         items = new HashMap <String,JMenuItem>();
         Messenger.register(MT.SERIES_CHANGED, this);
         Messenger.register(MT.EVENT_CHANGED, this);
-        Messenger.register(MT.SCRATCH_WINDOW, this);
 
         /* File Menu */
         JMenu file = new JMenu("File");
-        add(file);
-
         file.add(new OpenSeriesAction());
         file.add(new QuitAction());
 
         /* Edit Menu */
-        edit = new JMenu("Shortcuts");
-        add(edit);
-        edit.add(new EventSendAction<>("Manual Barcode Entry", MT.OPEN_BARCODE_ENTRY, null, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction<>("Quick Entry", MT.QUICKID_SEARCH, null, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction<>("Add By Name", MT.ADD_BY_NAME, null, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction<>("Filter Table", MT.OPEN_FILTER, null, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction<>("Time Focus", MT.TIME_FOCUS, null, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK)));
-        edit.add(new EventSendAction<>("Scratch Window", MT.SCRATCH_WINDOW, null, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.CTRL_MASK)));
+        shortcuts = new JMenu("Shortcuts");
+        shortcuts.add(new EventSendAction<>("Manual Barcode Entry", MT.OPEN_BARCODE_ENTRY, null, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK)));
+        shortcuts.add(new EventSendAction<>("Quick Entry", MT.QUICKID_SEARCH, null, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK)));
+        shortcuts.add(new EventSendAction<>("Add By Name", MT.ADD_BY_NAME, null, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK)));
+        shortcuts.add(new EventSendAction<>("Filter Table", MT.OPEN_FILTER, null, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.CTRL_MASK)));
+        shortcuts.add(new EventSendAction<>("Time Focus", MT.TIME_FOCUS, null, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK)));
+        shortcuts.add(new ScratchWindowAction());
+
+        /* Options Menu */
+        preferences = new JMenu("Preferences");
+
+        printMode = new JCheckBoxMenuItem("Print Directly", Prefs.getPrintDirectly());
+        printMode.addActionListener(e -> Prefs.setPrintDirectly(printMode.isSelected()));
+        preferences.add(printMode);
+
+        paidInfoMode = new JCheckBoxMenuItem("Highlight Unpaid Entries", Prefs.usePaidFlag());
+        paidInfoMode.addActionListener(e -> { Prefs.setUsePaidFlag(paidInfoMode.isSelected()); Messenger.sendEvent(MT.EVENT_CHANGED, null); });
+        preferences.add(paidInfoMode);
+
+        reorderMode = new JCheckBoxMenuItem("Constant Staging Mode", Prefs.useReorderingTable());
+        reorderMode.addActionListener(e -> Prefs.setReorderingTable(reorderMode.isSelected()));
+        preferences.add(reorderMode);
 
         /* Event Menu */
-        event = new JMenu("Options");
-        add(event);
-
-        /* Runs Submenu */
+        event = new JMenu("Event");
         runGrouping = new ButtonGroup();
         JMenu runs = new JMenu("Set Runs");
         event.add(runs);
@@ -90,31 +101,34 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
             runs.add(m);
         }
 
-        printMode = new JCheckBoxMenuItem("Print Directly", Prefs.getPrintDirectly());
-        printMode.addActionListener(e -> Prefs.setPrintDirectly(printMode.isSelected()));
-        event.add(printMode);
-
-        paidInfoMode = new JCheckBoxMenuItem("Highlight Unpaid Entries", Prefs.usePaidFlag());
-        paidInfoMode.addActionListener(e -> { Prefs.setUsePaidFlag(paidInfoMode.isSelected()); Messenger.sendEvent(MT.EVENT_CHANGED, null); });
-        event.add(paidInfoMode);
-
-        reorderMode = new JCheckBoxMenuItem("Constant Staging Mode", Prefs.useReorderingTable());
-        reorderMode.addActionListener(e -> Prefs.setReorderingTable(reorderMode.isSelected()));
-        event.add(reorderMode);
+        prosolo = new JMenu("ProSolo");
+        prosolo.add(new RunOrderFromGridAction());
+        //prosolo.add(new ReorderByNetAction());
 
         /* Results Menu */
-        results = new JMenu("Reports");
-        add(results);
-
+        reports = new JMenu("Reports");
         JMenu audit = new JMenu("Current Group Audit");
         audit.add(createItem("In Run Order", null));
         audit.add(createItem("Order By First Name", null));
         audit.add(createItem("Order By Last Name", null));
+        reports.add(createItem("Multiple Group Results", null));
+        reports.add(audit);
+        reports.add(createItem("Results Page", null));
+        reports.add(createItem("Admin Page", null));
 
-        results.add(createItem("Multiple Group Results", null));
-        results.add(audit);
-        results.add(createItem("Results Page", null));
-        results.add(createItem("Admin Page", null));
+
+        JMenu spacer = new JMenu("  |  ");
+        spacer.setEnabled(false);
+
+        add(file);
+        add(event);
+        add(prosolo);
+        add(reports);
+        add(spacer);
+        add(shortcuts);
+        add(preferences);
+        add(barcode);
+        add(timer);
     }
 
     protected final JMenuItem createItem(String title, KeyStroke ks)
@@ -181,9 +195,9 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
         {
             case SERIES_CHANGED:
                 boolean blank = ((data == null) || (data.equals("<none>")));
-                edit.setEnabled(!blank);
+                shortcuts.setEnabled(!blank);
                 event.setEnabled(!blank);
-                results.setEnabled(!blank);
+                reports.setEnabled(!blank);
                 break;
 
             case EVENT_CHANGED:
@@ -196,10 +210,8 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
                     if (run == DataEntry.state.getCurrentEvent().getRuns())
                         b.setSelected(true);
                 }
-                break;
 
-            case SCRATCH_WINDOW:
-                new ScratchWindow(40, 10);
+                prosolo.setEnabled(DataEntry.state.getCurrentEvent().isPro());
                 break;
         }
     }

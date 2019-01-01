@@ -62,7 +62,6 @@ public enum MT {
     TIME_FOCUS,
     SHOW_ADD_PANE,
     ADD_BY_NAME,
-    SCRATCH_WINDOW,
 
     // Timer Net Service
     TIMER_SERVICE_CONNECTION_OPEN,

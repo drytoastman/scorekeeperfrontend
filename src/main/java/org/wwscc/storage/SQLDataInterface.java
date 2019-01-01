@@ -111,7 +111,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return executeSelect("select * from events order by date", null, Event.class.getConstructor(ResultSet.class));
+            return executeSelect("SELECT * FROM events WHERE NOT isexternal ORDER BY date", null, Event.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)
         {
@@ -325,15 +325,16 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids)
+    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append)
     {
         try
         {
             if (rungroup <= 0) return; // Shouldn't be doing this if rungroup isn't valid
 
+            String cararg = append ? "array_cat(runorder.cars, ?)" : "?";
             UUID cars[] = carids.toArray(new UUID[0]);
             executeUpdate("INSERT INTO runorder (eventid, course, rungroup, cars, modified) VALUES (?,?,?,?,now()) " +
-                          "ON CONFLICT (eventid, course, rungroup) DO UPDATE SET cars=?, modified=now()",
+                          "ON CONFLICT (eventid, course, rungroup) DO UPDATE SET cars="+cararg+", modified=now()",
                           newList(eventid, course, rungroup, cars, cars));
         }
         catch (Exception ioe)

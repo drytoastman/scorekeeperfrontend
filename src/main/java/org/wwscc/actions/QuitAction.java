@@ -16,7 +16,6 @@ public class QuitAction extends AbstractAction
     public QuitAction()
     {
         super("Quit");
-        //putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
     }
 
     @Override
