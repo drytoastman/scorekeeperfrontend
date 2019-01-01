@@ -259,8 +259,14 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 /* We are being asked to delete this entry, check if they have runs first. */
                 if (e.hasRuns())
                 {
-                    log.warning("\bCan't remove an entrant that has runs");
-                    return;
+                    if (JOptionPane.showConfirmDialog(
+                          FocusManager.getCurrentManager().getActiveWindow(),
+                          "This entrant has runs, removing it will orphan it.  Are you sure you wish to remove it?",
+                          "Remove Entrant With Runs",
+                          JOptionPane.YES_NO_OPTION)
+                              != JOptionPane.YES_OPTION) {
+                        return;
+                    }
                 }
 
                 tableData.remove(row); // remove the row which removes from runorder upon commit
