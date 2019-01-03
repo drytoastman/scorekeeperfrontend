@@ -32,6 +32,8 @@ import net.miginfocom.swing.MigLayout;
 public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
 {
     private static final UUID inOrderId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    private static int saveGrouping = 1;
+    private static String saveOrder = "Number";
 
     public static class GridEntry
     {
@@ -106,21 +108,32 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
                 for (int ii = model.getRowCount(); ii <= row; ii++) {
                     model.addRow(new Object[] { null, null });
                 }
-                model.setValueAt(e.entrant, row, col);
-                if (order.contains(e.entrant.getCarId())) {
-                    e.entrant.getCar().setCarId(inOrderId);
+                if (e.entrant != null) {
+                    model.setValueAt(e.entrant, row, col);
+                    if (order.contains(e.entrant.getCarId())) {
+                        e.entrant.getCar().setCarId(inOrderId);
+                    }
                 }
             }
         }
 
         mainPanel.add(label("Grouping", true), "al right");
-        mainPanel.add(select("grouping", 1, models.get("Number").keySet().stream().filter(i -> i < 100).sorted().collect(Collectors.toList()), e -> reload()), "growx");
+        mainPanel.add(select("grouping",
+                             saveGrouping,
+                             models.get("Number").keySet().stream().filter(i -> i < 100).sorted().collect(Collectors.toList()),
+                             e -> { reload(); saveGrouping = (int)getSelect("grouping"); }),
+                      "growx");
+
         mainPanel.add(label("Overwrite Current Order", true), "al right");
         mainPanel.add(checkbox("overwrite", false), "wrap");
         checks.get("overwrite").addActionListener(e -> { first.repaint(); second.repaint(); });
 
         mainPanel.add(label("Order", true), "al right");
-        mainPanel.add(select("order", "Number", new String[] { "Number", "Position" }, e -> reload()), "growx, wrap");
+        mainPanel.add(select("order",
+                             saveOrder,
+                             new String[] { "Number", "Position" },
+                             e -> { reload(); saveOrder = (String)getSelect("order");} ),
+                      "growx, wrap");
 
         JPanel toscroll = new JPanel(new MigLayout("fill, gap 2, ins 0", "", "5[grow 0][grow 0]10[grow 0][grow 0][grow 100]"));
         toscroll.add(label("First Drivers", true), "wrap");
