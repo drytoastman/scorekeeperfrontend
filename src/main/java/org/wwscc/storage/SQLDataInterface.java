@@ -43,11 +43,11 @@ public abstract class SQLDataInterface implements DataInterface
     public abstract void start() throws Exception;
     public abstract void commit() throws Exception;
     public abstract void rollback();
-    public abstract void executeUpdate(String sql, List<Object> args) throws SQLException, IOException;
-    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException, IOException;
-    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException, IOException;
+    public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
+    public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
+    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
     public abstract void closeLeftOvers();
-    public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws Exception, IOException;
+    public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException;
 
     /**
      * Utility function to create a list for passing args
@@ -325,22 +325,33 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append)
+    public Set<UUID> activeRunOrderForEvent(UUID eventid)
     {
         try
         {
-            if (rungroup <= 0) return; // Shouldn't be doing this if rungroup isn't valid
-
-            String cararg = append ? "array_cat(runorder.cars, ?)" : "?";
-            UUID cars[] = carids.toArray(new UUID[0]);
-            executeUpdate("INSERT INTO runorder (eventid, course, rungroup, cars, modified) VALUES (?,?,?,?,now()) " +
-                          "ON CONFLICT (eventid, course, rungroup) DO UPDATE SET cars="+cararg+", modified=now()",
-                          newList(eventid, course, rungroup, cars, cars));
+            ResultSet d = executeSelect("select distinct unnest(cars) as carid from runorder where eventid=? ", newList(eventid));
+            Set<UUID> ret = new HashSet<UUID>();
+            while (d.next())
+                ret.add((UUID)d.getObject("carid"));
+            return ret;
         }
         catch (Exception ioe)
         {
-            logError("setRunOrder", ioe);
+            logError("getCarIdsForRunGroup", ioe);
+            return null;
         }
+    }
+
+    @Override
+    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append) throws SQLException
+    {
+        if (rungroup <= 0) throw new SQLException("Invalid rungroup"); // Shouldn't be doing this if rungroup isn't valid
+
+        String cararg = append ? "array_cat(runorder.cars, ?)" : "?";
+        UUID cars[] = carids.toArray(new UUID[0]);
+        executeUpdate("INSERT INTO runorder (eventid, course, rungroup, cars, modified) VALUES (?,?,?,?,now()) " +
+                      "ON CONFLICT (eventid, course, rungroup) DO UPDATE SET cars="+cararg+", modified=now()",
+                      newList(eventid, course, rungroup, cars, cars));
     }
 
 

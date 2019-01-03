@@ -8,15 +8,16 @@
 
 package org.wwscc.dialogs;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -26,11 +27,12 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.wwscc.storage.Entrant;
-
 import net.miginfocom.swing.MigLayout;
 
 public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
 {
+    private static final UUID inOrderId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     public static class GridEntry
     {
         public int group;
@@ -48,31 +50,46 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
     {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
         {
-            JLabel l = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (isSelected) {
+                super.setForeground(table.getSelectionForeground());
+                super.setBackground(table.getSelectionBackground());
+            } else {
+                super.setForeground(table.getForeground());
+                super.setBackground(table.getBackground());
+            }
+
             if (value instanceof Entrant) {
                 Entrant e = (Entrant)value;
-                l.setText(String.format("%4s - %s", e.getClassCode(), e.getName()));
+                setValue(String.format("%4s - %s", e.getClassCode(), e.getName()));
+                if (!isChecked("overwrite") && e.getCarId().equals(inOrderId)) {
+                    super.setForeground(Color.LIGHT_GRAY);
+                }
+            } else {
+                setValue("");
             }
-            return l;
+
+            return this;
         }
     }
 
     Map<String, Map<Integer, DefaultTableModel>> models;
     JTable first, second;
-    int course;
+    Set<UUID> order;
 
     /**
      * Create the dialog.
      * @param d the driver data to source initially
      */
-    public GridImportDialog(Map<String, List<GridEntry>> entries, int initialcourse)
+    public GridImportDialog(Map<String, List<GridEntry>> entries, Set<UUID> currentorder)
     {
         super(new MigLayout("fill, w 400, h 600, gap 2, ins 0", "", "[grow 0][grow 0]10[grow 100]"), true);
 
         models = new HashMap<String, Map<Integer, DefaultTableModel>>();
         first  = table();
         second = table();
-        course = initialcourse;
+        order  = currentorder;
 
         for (String key : entries.keySet()) {
             Map<Integer, DefaultTableModel> outer = new HashMap<Integer, DefaultTableModel>();
@@ -90,18 +107,20 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
                     model.addRow(new Object[] { null, null });
                 }
                 model.setValueAt(e.entrant, row, col);
+                if (order.contains(e.entrant.getCarId())) {
+                    e.entrant.getCar().setCarId(inOrderId);
+                }
             }
         }
 
-        mainPanel.add(label("RunGroup", true), "al right");
-        mainPanel.add(select("rungroup", 1, models.get("Number").keySet().stream().filter(i -> i < 100).sorted().collect(Collectors.toList()), e -> reload()), "growx");
+        mainPanel.add(label("Grouping", true), "al right");
+        mainPanel.add(select("grouping", 1, models.get("Number").keySet().stream().filter(i -> i < 100).sorted().collect(Collectors.toList()), e -> reload()), "growx");
         mainPanel.add(label("Overwrite Current Order", true), "al right");
         mainPanel.add(checkbox("overwrite", false), "wrap");
+        checks.get("overwrite").addActionListener(e -> { first.repaint(); second.repaint(); });
 
         mainPanel.add(label("Order", true), "al right");
-        mainPanel.add(select("order", "Number", new String[] { "Number", "Position" }, e -> reload()), "growx");
-        mainPanel.add(label("Load Both Courses", true), "al right");
-        mainPanel.add(checkbox("bothcourses", false), "wrap");
+        mainPanel.add(select("order", "Number", new String[] { "Number", "Position" }, e -> reload()), "growx, wrap");
 
         JPanel toscroll = new JPanel(new MigLayout("fill, gap 2, ins 0", "", "5[grow 0][grow 0]10[grow 0][grow 0][grow 100]"));
         toscroll.add(label("First Drivers", true), "wrap");
@@ -120,10 +139,10 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
 
     private void reload()
     {
-        int group = (int) getSelect("rungroup");
+        int grouping = (int) getSelect("grouping");
         String order = (String) getSelect("order");
-        first.setModel(models.get(order).get(group));
-        second.setModel(models.get(order).get(group+100));
+        first.setModel(models.get(order).get(grouping));
+        second.setModel(models.get(order).get(grouping+100));
         this.getLayout().layoutContainer(this);
     }
 
@@ -157,13 +176,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             return null;
 
         Map<Integer, List<UUID>> ret = new HashMap<>();
-
-        int courses[] = new int[] { course };
-        if (isChecked("bothcourses")) {
-            courses = new int[] { 1, 2 };
-        }
-
-        for (int c : courses) {
+        for (int c : new int[] { 1, 2 }) {
             ArrayList<UUID> ids = new ArrayList<>();
             ret.put(c, ids);
             int i1 = (c == 1) ? 0 : 1;
@@ -181,7 +194,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
     {
         for (int ii :  tbl.getSelectedRows()) {
             Entrant e = (Entrant)tbl.getValueAt(ii, col);
-            if (e != null) {
+            if ((e != null) && (!e.getCarId().equals(inOrderId))) {
                 ids.add(e.getCarId());
             }
         }

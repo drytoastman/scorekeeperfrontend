@@ -8,6 +8,7 @@
 
 package org.wwscc.storage;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -85,8 +86,9 @@ public interface DataInterface
     public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns); // load an entrant by carid and all of the associated runs if desired
 
     public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup); // get the carids based on the current run group
+    public Set<UUID> activeRunOrderForEvent(UUID eventid);
     public Set<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
-    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append); // set the run order of the current rungroup to carids
+    public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append) throws SQLException;
     public List<UUID> getOrphanedCars(UUID eventid, int course); // get all car ids that have runs but are not in any rungroup
 
     public void newDriver(Driver d) throws Exception; // create a new driver from data in d and set the id variable

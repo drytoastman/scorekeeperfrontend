@@ -8,7 +8,6 @@
 
 package org.wwscc.storage;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -38,6 +37,7 @@ import org.postgresql.util.PGobject;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -329,7 +329,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         }
     }
 
-    void bindParam(PreparedStatement p, List<Object> args) throws SQLException,IOException
+    void bindParam(PreparedStatement p, List<Object> args) throws SQLException
     {
         if (args == null)
             return;
@@ -354,7 +354,11 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
             } else if (v instanceof ObjectNode) {
                 PGobject pgo = new PGobject();
                 pgo.setType("json");
-                pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
+                try {
+                    pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
+                } catch (JsonProcessingException e) {
+                    throw new SQLException(e);
+                }
                 p.setObject(ii+1, pgo);
             } else if (v instanceof Timestamp) {
                 p.setTimestamp(ii+1, (Timestamp)v, Database.utc);
@@ -373,7 +377,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     }
 
     @Override
-    public void executeUpdate(String sql, List<Object> args) throws SQLException, IOException
+    public void executeUpdate(String sql, List<Object> args) throws SQLException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         bindParam(p, args);
@@ -382,7 +386,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     }
 
     @Override
-    public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException, IOException
+    public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         for (List<Object> l : args) {
@@ -394,7 +398,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
 
 
     @Override
-    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException, IOException
+    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         if (args != null)
@@ -434,10 +438,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     /**
      * Run a SELECT statement and create objects with the results using the given constructor that takes a
      * ResultSet as an argument.
-     * @throws IOException
      */
     @Override
-    public <T> List<T> executeSelect(String sql, List<Object> args, Constructor<T> objc) throws SQLException, IOException
+    public <T> List<T> executeSelect(String sql, List<Object> args, Constructor<T> objc) throws SQLException
     {
         try
         {

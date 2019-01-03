@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,7 +40,8 @@ public class RunOrderFromGridAction extends AbstractAction
     public void actionPerformed(ActionEvent e)
     {
         try {
-            GridImportDialog gi = new GridImportDialog(fetchGrid(), DataEntry.state.getCurrentCourse());
+            Set<UUID> order = Database.d.activeRunOrderForEvent(DataEntry.state.getCurrentEventId());
+            GridImportDialog gi = new GridImportDialog(fetchGrid(), order);
             if (gi.doDialog("Grid Import", null)) {
                 Map<Integer, List<UUID>> toadd = gi.getResult();
                 for (int course : toadd.keySet()) {
@@ -47,7 +49,7 @@ public class RunOrderFromGridAction extends AbstractAction
                 }
             }
         } catch (Exception ex) {
-            log.log(Level.WARNING, "RunOrder From Grid: " + ex, ex);
+            log.log(Level.WARNING, "\bUpdated runorder failed: " + ex, ex);
         }
     }
 

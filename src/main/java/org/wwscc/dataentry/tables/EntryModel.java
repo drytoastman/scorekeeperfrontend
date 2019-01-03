@@ -8,6 +8,7 @@
 
 package org.wwscc.dataentry.tables;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -374,7 +375,11 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         ArrayList<UUID> ids = new ArrayList<UUID>();
         for (Entrant e : tableData)
             ids.add(e.getCarId());
-        Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), ids, false);
+        try {
+            Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), ids, false);
+        } catch (SQLException e) {
+            log.log(Level.SEVERE, "\bsetRunOrder failed: " + e.getMessage(), e);
+        }
         // Database notification will cause this event for us, don't double the reload
         // Messenger.sendEvent(MT.ENTRANTS_CHANGED, null);
     }
