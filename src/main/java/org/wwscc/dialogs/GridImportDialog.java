@@ -27,26 +27,14 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import org.wwscc.storage.Entrant;
+import org.wwscc.storage.BackendDataLoader.GridEntry;
+
 import net.miginfocom.swing.MigLayout;
 
 public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
 {
-    private static final UUID inOrderId = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private static int saveGrouping = 1;
     private static String saveOrder = "Number";
-
-    public static class GridEntry
-    {
-        public int group;
-        public int grid;
-        public Entrant entrant;
-        public GridEntry(int group, int grid, Entrant entrant)
-        {
-            this.group = group;
-            this.grid = grid;
-            this.entrant = entrant;
-        }
-    }
 
     class NameRenderer extends DefaultTableCellRenderer
     {
@@ -65,7 +53,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             if (value instanceof Entrant) {
                 Entrant e = (Entrant)value;
                 setValue(String.format("%4s - %s", e.getClassCode(), e.getName()));
-                if (!isChecked("overwrite") && e.getCarId().equals(inOrderId)) {
+                if (!isChecked("overwrite") && order.contains(e.getCarId())) {
                     super.setForeground(Color.LIGHT_GRAY);
                 }
             } else {
@@ -110,9 +98,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
                 }
                 if (e.entrant != null) {
                     model.setValueAt(e.entrant, row, col);
-                    if (order.contains(e.entrant.getCarId())) {
-                        e.entrant.getCar().setCarId(inOrderId);
-                    }
+
                 }
             }
         }
@@ -207,7 +193,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
     {
         for (int ii :  tbl.getSelectedRows()) {
             Entrant e = (Entrant)tbl.getValueAt(ii, col);
-            if ((e != null) && (!e.getCarId().equals(inOrderId))) {
+            if ((e != null) && (isChecked("overwrite") || !order.contains(e.getCarId()))) {
                 ids.add(e.getCarId());
             }
         }

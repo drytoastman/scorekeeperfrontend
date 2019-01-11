@@ -43,6 +43,15 @@ public class Entrant
         }
     }
 
+    static public Entrant testEntrant(UUID carid, String classcode)
+    {
+        Entrant ret = new Entrant();
+        ret.car = new Car();
+        ret.car.setCarId(carid);
+        ret.car.setClassCode(classcode);
+        return ret;
+    }
+
     static public class NumOrder implements Comparator<Entrant>
     {
         public int compare(Entrant e1, Entrant e2) { return e1.car.number - e2.car.number; }
