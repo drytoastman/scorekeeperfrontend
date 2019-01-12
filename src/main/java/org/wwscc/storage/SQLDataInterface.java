@@ -1346,6 +1346,22 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
+    public boolean changePassword(String seriesname, String password)
+    {
+        try
+        {
+            ResultSet a = executeSelect("select verify_user(?, ?)", newList(seriesname, password));
+            return (a.next() && a.getBoolean(1));
+        }
+        catch (Exception ioe)
+        {
+            logError("changePassword", ioe);
+        }
+        return false;
+    }
+
+
+    @Override
     public boolean deleteUserAndSeries(String seriesname)
     {
         try

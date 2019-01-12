@@ -9,6 +9,7 @@
 package org.wwscc.system;
 
 import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.net.InetAddress;
@@ -52,7 +53,7 @@ public class Actions
     List<Action> apps;
     List<Action> actions;
     Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
-    Action deleteServer, addServer, serverConfig, initServers, deleteSeries, discovery, resetHash, quit, openStatus;
+    Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
@@ -81,6 +82,7 @@ public class Actions
         initServers    = addAction(new InitServersAction());
         serverConfig   = addAction(new ServerConfigAction());
         deleteSeries   = addAction(new DeleteLocalSeriesAction());
+        changeSeriesPassword = addAction(new ChangeSeriesPasswordAction());
         discovery      = addAction(new LocalDiscoveryAction());
         resetHash      = addAction(new ResetHashAction());
 
@@ -390,6 +392,32 @@ public class Actions
                     Database.d.deletePublicTables();
                 Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
             }}.start();
+        }
+    }
+
+    static class ChangeSeriesPasswordAction extends AbstractAction
+    {
+        public ChangeSeriesPasswordAction() {
+            super("Change Local Series Password");
+        }
+        public void actionPerformed(ActionEvent e) {
+            String serieslist[] = Database.d.getSeriesList().toArray(new String[0]);
+            if (serieslist.length == 0)
+                return;
+
+            String series = (String)JOptionPane.showInputDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow(),
+                    "Select a series", "Change Local Series Password", JOptionPane.QUESTION_MESSAGE, null, serieslist, serieslist[0]);
+
+            if (series != null) {
+                String password = JOptionPane.showInputDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow(),
+                    "Enter the new password for " + series, "Change Local Series Password", JOptionPane.QUESTION_MESSAGE);
+                if (password != null) {
+                    if (!Database.d.changePassword(series, password)) {
+                        JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow(),
+                            "Password change failed", "Change Local Series Password", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
         }
     }
 

@@ -87,9 +87,15 @@ public class ScorekeeperStatusWindow extends JFrame
         JMenu file = new JMenu("File");
         file.add(actions.backupRequest);
         file.add(actions.importRequest);
-        file.add(actions.deleteSeries);
         file.add(new JSeparator());
         file.add(actions.quit);
+
+        JMenu series = new JMenu("Series");
+        series.add(actions.deleteSeries);
+        series.add(actions.changeSeriesPassword);
+
+        JMenu spacer = new JMenu("  |  ");
+        spacer.setEnabled(false);
 
         JMenu servers = new JMenu("Servers");
         servers.add(actions.makeActive);
@@ -129,9 +135,10 @@ public class ScorekeeperStatusWindow extends JFrame
 
         JMenuBar bar = new JMenuBar();
         bar.add(file);
+        bar.add(series);
         bar.add(servers);
         bar.add(debug);
-        bar.add(new JMenu(" "));
+        bar.add(spacer);
         bar.add(launch);
         setJMenuBar(bar);
 
