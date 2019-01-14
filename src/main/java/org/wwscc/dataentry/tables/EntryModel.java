@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
@@ -53,6 +55,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
+        Messenger.register(MT.DATABASE_NOTIFICATION, this);
     }
 
     public void addCar(UUID carid)
@@ -95,7 +98,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
          *  2: for simplicity, do the same for updates
          */
         fireTableDataChanged();
-        fireEntrantsChanged();
+        writeNewRunOrder();
     }
 
     public void replaceCar(UUID carid, int row)
@@ -127,18 +130,17 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         } catch (Exception e) {
             log.log(Level.WARNING, "Unable to register new car when swapping: " + e, e);
         }
-        fireRunsChanged(newe);
-        fireEntrantsChanged();
+        writeNewRunOrder();
+        Messenger.sendEvent(MT.RUN_CHANGED, newe);
         fireTableRowsUpdated(row, row);
-
         checkDeletePlaceholder(old);
     }
 
-    public int getRowForEntrant(Entrant find)
+    public int getRowForCarId(UUID find)
     {
         for (int ii = 0; ii < tableData.size(); ii++)
         {
-            if (tableData.get(ii).equals(find))
+            if (tableData.get(ii).getCarId().equals(find))
                 return ii;
         }
         return -1;
@@ -271,13 +273,13 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 }
 
                 tableData.remove(row); // remove the row which removes from runorder upon commit
-                fireEntrantsChanged();
+                writeNewRunOrder();
                 fireTableStructureChanged(); // must be structure change or filtered table update throws IOB
                 checkDeletePlaceholder(e);
             }
             else  // driver change
             {
-                fireEntrantsChanged();
+                writeNewRunOrder();
                 fireTableRowsUpdated(row, row);
             }
         }
@@ -301,8 +303,8 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 log.log(Level.SEVERE, "\bFailed to update run data: " + sqle, sqle);
             }
 
-            fireRunsChanged(e);
             fireTableCellUpdated(row, col);
+            Messenger.sendEvent(MT.RUN_CHANGED, e);
         }
     }
 
@@ -347,7 +349,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
             tableData.set(ii+x, tmp.get(ii));
 
         fireTableRowsUpdated(a, c-1);
-        fireEntrantsChanged();
+        writeNewRunOrder();
     }
 
 
@@ -368,27 +370,15 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         }
     }
 
-
-    /* Notifying Listeners, committing */
-    public void fireEntrantsChanged()
+    public void writeNewRunOrder()
     {
-        ArrayList<UUID> ids = new ArrayList<UUID>();
-        for (Entrant e : tableData)
-            ids.add(e.getCarId());
         try {
-            Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), ids, false);
+            Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(),
+                                    tableData.stream().map(e -> e.getCarId()).collect(Collectors.toList()), false);
+            // don't need to send ENTRANTS_CHANGED as the database notification will push that for us
         } catch (SQLException e) {
-            log.log(Level.SEVERE, "\bsetRunOrder failed: " + e.getMessage(), e);
+            log.log(Level.SEVERE, "\bwriteNewRunOrder failed: " + e.getMessage(), e);
         }
-        // Database notification will cause this event for us, don't double the reload
-        // Messenger.sendEvent(MT.ENTRANTS_CHANGED, null);
-    }
-
-
-    /* */
-    public void fireRunsChanged(Entrant e)
-    {
-        Messenger.sendEvent(MT.RUN_CHANGED, e);
     }
 
     /**

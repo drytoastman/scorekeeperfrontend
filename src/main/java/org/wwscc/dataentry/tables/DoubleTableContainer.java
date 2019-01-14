@@ -13,9 +13,14 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -110,7 +115,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         Messenger.register(MT.FILTER_ENTRANT, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
         Messenger.register(MT.OBJECT_SCANNED, this);
-        Messenger.register(MT.ENTRANTS_CHANGED, this);
+        Messenger.register(MT.DATABASE_NOTIFICATION, this);
     }
 
     public RunsTable getRunsTable() { return runsTable; }
@@ -143,6 +148,11 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
      */
     public void processBarcode(String barcode)
     {
+        if (barcode.trim().equals("")) {
+            Messenger.sendEvent(MT.DRIVER_SCAN_REJECTED, "Barcode was blank");
+            return;
+        }
+
         List<Driver> found = Database.d.findDriverByBarcode(barcode);
         Driver d = null;
 
@@ -159,12 +169,13 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
             try {
                 Database.d.newDriver(d);
             } catch (Exception e) {
-                log.log(Level.WARNING, "\bUnable to create driver placeholder entry: " + e, e);
+                Messenger.sendEvent(MT.DRIVER_SCAN_REJECTED, "Driver placeholder creation failed");
+                return;
             }
         }
         else
         {
-            log.severe("\bNegative number of elements in list of drivers?!");
+            Messenger.sendEvent(MT.DRIVER_SCAN_REJECTED, "Negative elements?!");
             return;
         }
 
@@ -233,27 +244,101 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
     }
 
 
+    private boolean fullCompare(List<Entrant> l1, List<Entrant> l2)
+    {
+        if (l1.size() != l2.size()) return false;
+        ListIterator<Entrant> i1 = l1.listIterator();
+        ListIterator<Entrant> i2 = l2.listIterator();
+        while (i1.hasNext()) {
+            if (!i1.next().fullCompare(i2.next())) return false;
+        }
+        return true;
+    }
+
+    static class RunSelection
+    {
+        public UUID carid;
+        public int run;
+        public RunSelection(UUID carid, int run) {
+            this.carid = carid;
+            this.run = run;
+        }
+    }
+
+    class SavedSelection
+    {
+        List<UUID> cars;
+        List<RunSelection> runs;
+        boolean driversrestored = false;
+        boolean runsrestored = false;
+
+        public SavedSelection()
+        {
+            cars = new ArrayList<>();
+            runs = new ArrayList<>();
+            for (int cc : runsTable.getSelectedColumns()) {
+                for (int rr : runsTable.getSelectedRows()) {
+                    Entrant e = (Entrant)dataModel.getValueAt(runsTable.convertRowIndexToModel(rr), 0);
+                    runs.add(new RunSelection(e.getCarId(), cc));
+                }
+            }
+            for (int rr : driverTable.getSelectedRows()) {
+                Entrant e = (Entrant)dataModel.getValueAt(driverTable.convertRowIndexToModel(rr), 0);
+                cars.add(e.getCarId());
+            }
+        }
+
+        private void restore()
+        {
+            runsTable.clearSelection();
+            for (RunSelection rs : runs) {
+                int modelrow = dataModel.getRowForCarId(rs.carid);
+                if (modelrow < 0) continue;
+                int viewrow = runsTable.convertRowIndexToView(modelrow);
+                runsTable.addRowSelectionInterval(viewrow, viewrow);
+                runsTable.addColumnSelectionInterval(rs.run, rs.run);
+                runsrestored = true;
+            }
+            for (UUID carid : cars) {
+                int modelrow = dataModel.getRowForCarId(carid);
+                int viewrow = driverTable.convertRowIndexToView(modelrow);
+                driverTable.addRowSelectionInterval(viewrow, viewrow);
+                driverTable.setColumnSelectionInterval(0, 1);
+                driversrestored = true;
+            }
+        }
+    }
+
+    private static Set<String> watchlist = new HashSet<>(Arrays.asList("runorder", "runs", "cars", "drivers"));
     @Override
     public void event(MT type, Object o)
     {
         switch (type)
         {
+            case DATABASE_NOTIFICATION:
+                @SuppressWarnings("unchecked")
+                Set<String> tables = new HashSet<>((Set<String>)o);
+                tables.retainAll(watchlist);
+                if (tables.size()  > 0) {
+                    List<Entrant> dbData = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                    List<Entrant> tblData = dataModel.tableData;
+                    if (!fullCompare(dbData, tblData)) {
+                        log.fine("table data changed notification, refreshing from database");
+                        SavedSelection saved = new SavedSelection();
+                        // figure out selection and restore after change
+                        dataModel.tableData = dbData;
+                        dataModel.fireTableDataChanged();
+                        saved.restore();
+                    }
+                }
+                break;
+
             case CAR_ADD:
-                Entrant torestore = null;
-                int runcol = -1;
-                if ((runsTable.getSelectedRow() >= 0) && (runsTable.getSelectedColumn() >= 0)) {
-                    torestore = (Entrant)dataModel.getValueAt(runsTable.convertRowIndexToModel(runsTable.getSelectedRow()), 0);
-                    runcol = runsTable.getSelectedColumn();
-                }
+                SavedSelection saved = new SavedSelection();
                 dataModel.addCar((UUID)o);
-                if (torestore != null)
-                {   // update selection after moving rows around to maintain same entrant
-                    int newrow = runsTable.convertRowIndexToView(dataModel.getRowForEntrant(torestore));
-                    runsTable.setRowSelectionInterval(newrow, newrow);
-                    runsTable.setColumnSelectionInterval(runcol, runcol);
-                }
-                else
-                {   // only scroll to bottom if there is nothing selected
+                saved.restore();
+                if (!saved.runsrestored)
+                {   // only scroll to bottom if nothing was previously selected
                     driverTable.scrollTable(dataModel.getRowCount(), 0);
                 }
                 driverTable.repaint();
@@ -287,21 +372,6 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
             case FILTER_ENTRANT:
                 sorter.setRowFilter(new EntrantFilter((String)o));
-                break;
-
-            case ENTRANTS_CHANGED:
-                // Check if runorder changed behind our backs, reload table in that case, otherwise ignore so we don't mess up cell selection
-                List<UUID> dborder = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
-                if (dborder.size() == dataModel.tableData.size()) {
-                    for (int ii = 0; ii < dborder.size(); ii++) {
-                        if (!dborder.get(ii).equals(dataModel.tableData.get(ii).getCarId())) {
-                            Messenger.sendEventNow(MT.RUNGROUP_CHANGED, DataEntry.state.getCurrentRunGroup());
-                            break;
-                        }
-                    }
-                } else {
-                    Messenger.sendEventNow(MT.RUNGROUP_CHANGED, DataEntry.state.getCurrentRunGroup());
-                }
                 break;
         }
     }

@@ -16,6 +16,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -26,7 +28,6 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
-import javax.swing.border.LineBorder;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -44,7 +45,7 @@ import org.wwscc.util.NF;
 /**
  * Table used for DataEntry
  */
-public class RunsTable extends TableBase implements MessageListener, ActionListener
+public class RunsTable extends TableBase implements MessageListener, ActionListener, FocusListener
 {
     static class NoEditModel extends DefaultTableModel
     {
@@ -72,6 +73,7 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
             JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
         );
 
+        addFocusListener(this);
         Messenger.register(MT.TIME_ENTERED, this);
     }
 
@@ -141,6 +143,18 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
     {
         Messenger.sendEvent(MT.TIME_ENTER_REQUEST, null);
     }
+
+    @Override
+    public void focusGained(FocusEvent e)
+    {
+        repaint();
+    }
+
+    @Override
+    public void focusLost(FocusEvent e)
+    {
+        repaint();
+    }
 }
 
 
@@ -180,7 +194,6 @@ class TimeRenderer extends DefaultTableCellRenderer
         else if (isSelected)
         {
             setBackground(backgroundSelectNoFocus);
-            setBorder(new LineBorder(Color.RED, 2));
         }
         else
         {

@@ -494,7 +494,11 @@ public abstract class SQLDataInterface implements DataInterface
         List<Driver> ret = new ArrayList<Driver>();
         try
         {
-            return executeSelect("select * from drivers where barcode like ? order by driverid", newList(barcode),
+            if (barcode.trim().equals("")) {
+                log.warning("Empty barcode passed to findDriverByBarcode");
+                return ret;
+            }
+            return executeSelect("select * from drivers where barcode like ? order by driverid", newList(barcode.trim()),
                     Driver.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)

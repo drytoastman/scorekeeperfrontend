@@ -112,6 +112,16 @@ public class Car extends AttrBase
         return ((Car)o).carid.equals(carid);
     }
 
+    public boolean fullCompare(Car o)
+    {
+        return  carid.equals(o.carid) &&
+                driverid.equals(o.driverid) &&
+                number == o.number &&
+                classcode.equals(o.classcode) &&
+                indexcode.equals(o.indexcode) &&
+                useclsmult == o.useclsmult;
+    }
+
     public boolean canMerge(Car c)
     {
         return c.getClassCode().equals(classcode) && c.getIndexCode().equals(indexcode);

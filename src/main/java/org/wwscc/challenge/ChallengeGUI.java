@@ -99,9 +99,9 @@ public class ChallengeGUI extends JFrame
         Messenger.register(MT.DATABASE_NOTIFICATION, (m, o) -> {
             @SuppressWarnings("unchecked")
             Set<String> tables = (Set<String>)o;
-            if (tables.contains("runs") || tables.contains("cars") || tables.contains("drivers")) {
+            if (tables.contains("runs") || tables.contains("cars") || tables.contains("drivers") || tables.contains("events")) {
                 log.fine("directing db notification into entrants changed");
-                Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
+                Messenger.sendEventNow(MT.EVENT_CHANGED, null);
             }
         });
 

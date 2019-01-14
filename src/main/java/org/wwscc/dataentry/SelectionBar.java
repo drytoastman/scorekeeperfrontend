@@ -59,6 +59,8 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         Messenger.register(MT.RUNGROUP_CHANGED, this);
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.DRIVER_SCAN_ACCEPTED, this);
+        Messenger.register(MT.DRIVER_SCAN_REJECTED, this);
+
         setBorder(new BevelBorder(0));
 
         Font f = new Font(Font.DIALOG, Font.BOLD, 14);
@@ -93,7 +95,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         entrantCountLabel = new JLabel("0");
         entrantCountLabel.setFont(fn);
 
-        scannedLabel = new TimedLabel(5000);
+        scannedLabel = new TimedLabel(10000);
         scannedLabel.setFont(fn.deriveFont(Font.BOLD));
         scannedLabel.setForeground(new Color(200, 130, 0));
 
@@ -177,6 +179,10 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
                 List<UUID> orphaned = Database.d.getOrphanedCars(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
                 placeOrphanedButton.setText("orphaned cars for this course: " + orphaned.size());
                 placeOrphanedButton.setVisible(orphaned.size() > 0);
+                break;
+
+            case DRIVER_SCAN_REJECTED:
+                scannedLabel.setText("Failed Scan: " + o);
                 break;
 
             case DRIVER_SCAN_ACCEPTED:

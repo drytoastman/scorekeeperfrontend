@@ -140,6 +140,18 @@ public class Entrant
         }
         return true;
     }
+
+    public boolean fullCompare(Entrant o)
+    {
+        return driverid.equals(o.driverid) &&
+                firstname.equals(o.firstname) &&
+                lastname.equals(o.lastname) &&
+                car.fullCompare(o.car) &&
+                runs.equals(o.runs) &&
+                paid == o.paid;
+        // NOTE: runs comparison does not look at eventid or carid but that shouldn't matter in our use case
+        //  carid is already compared in car and eventid is set when doing database lookups
+    }
 }
 
 
