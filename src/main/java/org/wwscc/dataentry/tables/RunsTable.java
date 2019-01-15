@@ -11,6 +11,7 @@ package org.wwscc.dataentry.tables;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -34,7 +35,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
-import org.wwscc.dataentry.tables.TableBase.SimpleDataTransfer;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -245,7 +245,7 @@ class TimeRenderer extends DefaultTableCellRenderer
 class RunsTransferHandler extends TransferHandler
 {
     private static final Logger log = Logger.getLogger(RunsTransferHandler.class.getCanonicalName());
-    private static DataFlavor flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + "; class=org.wwscc.storage.Run", "RunData");
+    private static DataFlavor runFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + "; class=org.wwscc.storage.Run", "RunData");
     private int[] rowsidx = null;
     private int[] colsidx = null;
     private boolean isCut = false;
@@ -285,7 +285,32 @@ class RunsTransferHandler extends TransferHandler
             for (int jj = 0; jj < colsidx.length; jj++)
                 store[ii][jj] = (Run)table.getValueAt(rowsidx[ii], colsidx[jj]);
 
-        return new SimpleDataTransfer(flavor, store);
+        return new RunsTransfer(store);
+    }
+
+
+    class RunsTransfer implements Transferable, ClipboardOwner
+    {
+        Run data[][];
+        public RunsTransfer(Run data[][]) { this.data = data; }
+        @SuppressWarnings("deprecation")
+        @Override public DataFlavor[] getTransferDataFlavors() { return new DataFlavor[] { runFlavor, DataFlavor.plainTextFlavor }; }
+        @Override public boolean isDataFlavorSupported(DataFlavor testflavor) { return testflavor.equals(runFlavor); }
+        @Override public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+        @Override
+        public Object getTransferData(DataFlavor outflavor) throws UnsupportedFlavorException, IOException {
+            if (!outflavor.equals(runFlavor)) {
+                StringBuilder b = new StringBuilder();
+                for (Run[] ro : data) {
+                    for (Run r : ro) {
+                        b.append(String.format("%.3f (%d,%d) ", r.getRaw(), r.getCones(), r.getGates()));
+                    }
+                    b.append("\n");
+                }
+                return b.toString();
+            }
+            return data;
+        }
     }
 
 
@@ -328,7 +353,7 @@ class RunsTransferHandler extends TransferHandler
     {
         try
         {
-            Run newdata[][] = (Run[][])support.getTransferable().getTransferData(flavor);
+            Run newdata[][] = (Run[][])support.getTransferable().getTransferData(runFlavor);
             JTable target = (JTable)support.getComponent();
             int dr,dc;
 

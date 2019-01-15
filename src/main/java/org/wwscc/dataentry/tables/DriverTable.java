@@ -18,12 +18,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 import javax.swing.DropMode;
@@ -38,7 +41,7 @@ import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import org.wwscc.dataentry.tables.TableBase.SimpleDataTransfer;
+
 import org.wwscc.storage.Entrant;
 import org.wwscc.util.Prefs;
 
@@ -243,7 +246,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 class DriverTransferHandler extends TransferHandler
 {
     private static Logger log = Logger.getLogger(DriverTransferHandler.class.getCanonicalName());
-    private static DataFlavor flavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + "; class=org.wwscc.storage.Driver", "DriverData");
+    private static DataFlavor entrantFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + "; class=org.wwscc.storage.Entrant", "EntrantData");
     private int[] rowsidx = null;
     private boolean isCut = false;
 
@@ -281,7 +284,45 @@ class DriverTransferHandler extends TransferHandler
         for (int ii = 0; ii < rowsidx.length; ii++)
             store[ii] = (Entrant)table.getValueAt(rowsidx[ii], 0);
 
-        return new SimpleDataTransfer(flavor, store);
+        boolean classcode = false, name = false;
+        for (int col : table.getSelectedColumns()) {
+            if (col == 0) classcode = true;
+            if (col == 1) name = true;
+        }
+        return new EntrantTransfer(store, classcode, name);
+    }
+
+    class EntrantTransfer implements Transferable, ClipboardOwner
+    {
+        Entrant data[];
+        boolean exportcode;
+        boolean exportname;
+        public EntrantTransfer(Entrant data[], boolean exportcode, boolean exportname) {
+            this.data = data;
+            this.exportcode = exportcode;
+            this.exportname = exportname;
+        }
+        @SuppressWarnings("deprecation")
+        @Override public DataFlavor[] getTransferDataFlavors() { return new DataFlavor[] { entrantFlavor, DataFlavor.plainTextFlavor }; }
+        @Override public boolean isDataFlavorSupported(DataFlavor testflavor) { return testflavor.equals(entrantFlavor); }
+        @Override public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+        @Override
+        public Object getTransferData(DataFlavor outflavor) throws UnsupportedFlavorException, IOException {
+            if (!outflavor.equals(entrantFlavor)) {
+                StringBuilder b = new StringBuilder();
+                for (Entrant e : data) {
+                    if (exportcode)
+                        b.append(e.getClassCode() + " " + e.getNumber());
+                    if (exportcode && exportname)
+                        b.append(" - ");
+                    if (exportname)
+                        b.append(e.getName() + " " + e.getCarDesc() + " " + e.getCar().getEffectiveIndexStr());
+                    b.append("\n");
+                }
+                return b.toString();
+            }
+            return data;
+        }
     }
 
 
@@ -289,6 +330,8 @@ class DriverTransferHandler extends TransferHandler
     protected void exportDone(JComponent c, Transferable data, int action)
     {
         if ((rowsidx == null)|| (rowsidx.length == 0))
+            return;
+        if (action == COPY)
             return;
 
         /* use isCut to determine if we cut or were just dragging columns around */
