@@ -14,7 +14,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -95,9 +97,14 @@ class DriverContextMenu extends MouseAdapter
         if (removelast)
             menu.remove(menu.getComponentCount()-1);
 
+        addTitle("Move to Another RunGroup");
+        for (int ii = 1; ii <= 6; ii++) {
+            menu.add(new MoveGroupAction(selectedE, ii));
+        }
+
         addTitle("Other");
-        menu.add(new JMenuItem(new TextRunAction(selectedE))).setFont(itemFont);
         menu.add(new JMenuItem(new PaidAction(selectedE))).setFont(itemFont);
+        //menu.add(new JMenuItem(new TextRunAction(selectedE))).setFont(itemFont);
 
         menu.show(target, e.getX(), e.getY());
     }
@@ -131,6 +138,44 @@ class DriverContextMenu extends MouseAdapter
         }
 
         menu.add(lbl);
+    }
+}
+
+
+class MoveGroupAction extends AbstractAction
+{
+    private static final Logger log = Logger.getLogger(PaidAction.class.getCanonicalName());
+
+    Entrant entrant;
+    int group;
+    public MoveGroupAction(Entrant e, int g)
+    {
+        super(""+g);
+        entrant = e;
+        group = g;
+        setEnabled(g != DataEntry.state.getCurrentRunGroup());
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e)
+    {
+        try {
+            UUID eventid     = DataEntry.state.getCurrentEventId();
+            int course       = DataEntry.state.getCurrentCourse();
+            int currentgroup = DataEntry.state.getCurrentRunGroup();
+            List<UUID> from  = Database.d.getCarIdsForRunGroup(eventid, course, currentgroup);
+            List<UUID> to    = Database.d.getCarIdsForRunGroup(eventid, course, group);
+
+            from.remove(entrant.getCarId());
+            to.add(entrant.getCarId());
+
+            Database.d.setRunOrder(eventid, course, currentgroup, from, false);
+            Database.d.setRunOrder(eventid, course, group, to, false);
+
+            Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
+        } catch (SQLException sqle) {
+            log.severe("\bFailed to move driver to rungroup: " + sqle.getMessage());
+        }
     }
 }
 
