@@ -308,6 +308,69 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         }
     }
 
+    public void removeRows(int rows[])
+    {
+        if (tableData == null) return;
+
+        boolean runswarning = false;
+        boolean placeholders = false;
+        boolean removeemptyplaceholders = false;
+        List<Entrant> toremove = new ArrayList<Entrant>();
+
+        for (int row : rows) {
+            Entrant e = tableData.get(row);
+            if (e.hasRuns())
+                runswarning = true;
+            if (!e.hasRuns() && e.getClassCode().equals(ClassData.PLACEHOLDER_CLASS))
+                placeholders = true;
+            toremove.add(e);
+        }
+
+        /* We are being asked to delete this entry, check if they have runs first. */
+        if (runswarning)
+        {
+            if (JOptionPane.showConfirmDialog(
+                  FocusManager.getCurrentManager().getActiveWindow(),
+                  "Some of the selected entrants have runs, removing them will orphan the entries.  Do you wish to continue?",
+                  "Remove Entrant With Runs",
+                  JOptionPane.YES_NO_OPTION)
+                      != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+
+        if (placeholders)
+        {
+            removeemptyplaceholders = JOptionPane.showConfirmDialog(
+                    FocusManager.getCurrentManager().getActiveWindow(),
+                    "Some of the selected entrants are placeholders without runs, do you wish to delete those placeholder entries?",
+                    "Remove PlaceHolders",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+        }
+
+        for (Entrant e : toremove) {
+            if (removeemptyplaceholders && e.getClassCode().equals(ClassData.PLACEHOLDER_CLASS)) {
+                try {
+                    Database.d.deleteCar(e.getCar());
+                } catch (Exception sqle) {
+                    log.log(Level.WARNING, "Unable delete car as it is still in use", sqle);
+                }
+
+                try {
+                    if (e.getFirstName().equals(Driver.PLACEHOLDER))
+                        Database.d.deleteDriver(e.getDriverId()); // this may fail if there are multiple placeholder cars still available, but that is okay
+                } catch (Exception sqle) {
+                    log.info(""+sqle);
+                }
+            }
+
+            tableData.remove(e); // using entrant list relieves us of having to deal with changing list indexes during the removal
+        }
+
+        writeNewRunOrder();
+        fireTableStructureChanged(); // must be structure change or filtered table update throws IOB
+    }
+
 
     /* This will only effect the 'runorder' table and nothing else */
     public void moveRow(int start, int end, int to)
