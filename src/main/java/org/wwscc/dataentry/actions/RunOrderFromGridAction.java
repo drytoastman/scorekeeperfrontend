@@ -38,6 +38,7 @@ public class RunOrderFromGridAction extends AbstractAction
                 for (int course : toadd.keySet()) {
                     Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), course, DataEntry.state.getCurrentRunGroup(), toadd.get(course), !gi.doOverwrite());
                 }
+                DataEntry.poker.poke();
             }
         } catch (Exception ex) {
             log.log(Level.WARNING, "\bUpdated runorder failed: " + ex, ex);

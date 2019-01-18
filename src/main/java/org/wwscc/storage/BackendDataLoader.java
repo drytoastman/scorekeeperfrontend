@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.wwscc.dataentry.DataEntry;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,20 +22,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class BackendDataLoader
 {
     public static final String resultsURL = "http://127.0.0.1/api/%s/event/%s";
-    public static final String gridURL = "http://127.0.0.1/results/%s/event/%s/grid?order=%s&idsonly";
+    public static final String gridURL = "http://127.0.0.1/results/%s/event/%s/grid?order=%s&json";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static class GridEntry
     {
         public int group;
         public int grid;
-        public Entrant entrant;
-        public GridEntry(int group, int grid, Entrant entrant)
-        {
-            this.group = group;
-            this.grid = grid;
-            this.entrant = entrant;
-        }
+        public UUID carid;
+        public String classcode;
+        public String name;
+        public double net;
+        public int number;
     }
 
     public static Map<String, List<UUID>> fetchResults() throws MalformedURLException, IOException
@@ -53,44 +52,27 @@ public class BackendDataLoader
 
     public static Map<String, List<GridEntry>> fetchGrid() throws MalformedURLException, IOException
     {
-        // make sure we get anyone registered or with runs
-        Map<UUID,Entrant> entrants = new HashMap<UUID, Entrant>();
-        for (Entrant e : Database.d.getRegisteredEntrants(DataEntry.state.getCurrentEventId())) {
-            entrants.put(e.getCarId(), e);
-        }
-        for (Entrant e : Database.d.getEntrantsByEvent(DataEntry.state.getCurrentEventId())) {
-            entrants.put(e.getCarId(), e);
-        }
-
         Map<String, List<GridEntry>> ret = new HashMap<String, List<GridEntry>>();
         ret.put("Number", new ArrayList<GridEntry>());
         ret.put("Position", new ArrayList<GridEntry>());
 
-        createList(mapper.readTree(new URL(String.format(gridURL, DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), "number"))),
-                   Database.d.getRegisteredEntrants(DataEntry.state.getCurrentEventId()),
-                   ret.get("Number"));
-        createList(mapper.readTree(new URL(String.format(gridURL, DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), "position"))),
-                   Database.d.getEntrantsByEvent(DataEntry.state.getCurrentEventId()),
-                   ret.get("Position"));
+        createList(mapper.readTree(new URL(String.format(gridURL, DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), "number"))), ret.get("Number"));
+        createList(mapper.readTree(new URL(String.format(gridURL, DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), "position"))), ret.get("Position"));
         return ret;
     }
 
-    private static void createList(JsonNode node, List<Entrant> entrantlist, List<GridEntry> dest)
+    private static void createList(JsonNode node, List<GridEntry> dest)
     {
-        Map<UUID,Entrant> entrants = new HashMap<UUID, Entrant>();
-        for (Entrant e : entrantlist) {
-            entrants.put(e.getCarId(), e);
-        }
-
         node.fields().forEachRemaining(e -> {
             int group = Integer.parseInt(e.getKey());
             e.getValue().forEach(l -> {
-                String carid = l.get("carid").asText();
-                Entrant entrant = null;
-                if (!carid.trim().equals("")) {
-                    entrant = entrants.get(UUID.fromString(carid));
+                try {
+                    GridEntry ge = mapper.treeToValue(l, GridEntry.class);
+                    ge.group = group;
+                    dest.add(ge);
+                } catch (JsonProcessingException e1) {
+                    e1.printStackTrace();
                 }
-                dest.add(new GridEntry(group, l.get("grid").asInt(), entrant));
             });
         });
     }

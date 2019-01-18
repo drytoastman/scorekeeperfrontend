@@ -27,7 +27,6 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
-import org.wwscc.system.docker.SyncPoker;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -43,7 +42,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     List<Entrant> tableData;
     int runoffset;
     int colCount;
-    SyncPoker poker;
 
     public EntryModel()
     {
@@ -51,7 +49,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         tableData = null;
         runoffset = 1; /* based on number of non run columns before runs - 1 */
         colCount = 0;
-        poker = new SyncPoker();
 
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
@@ -298,7 +295,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                     Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset, quicksync);
                     e.deleteRun(col-runoffset);
                 }
-                poker.poke();
+                DataEntry.poker.poke();
             } catch (Exception sqle) {
                 log.log(Level.SEVERE, "\bFailed to update run data: " + sqle, sqle);
             }
@@ -369,6 +366,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
         writeNewRunOrder();
         fireTableStructureChanged(); // must be structure change or filtered table update throws IOB
+        DataEntry.poker.poke();
     }
 
 

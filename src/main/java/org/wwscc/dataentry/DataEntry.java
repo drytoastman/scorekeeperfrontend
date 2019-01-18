@@ -27,6 +27,7 @@ import org.wwscc.dataentry.tables.DoubleTableContainer;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
+import org.wwscc.system.docker.SyncPoker;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.AppSetup;
@@ -43,6 +44,7 @@ public class DataEntry extends JFrame implements MessageListener
 {
     private static final Logger log = Logger.getLogger(DataEntry.class.getName());
     public static final ApplicationState state = new ApplicationState();
+    public static final SyncPoker poker = new SyncPoker();
 
     Menus menus;
     SelectionBar setupBar;

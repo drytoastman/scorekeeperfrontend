@@ -66,19 +66,28 @@ public class ReorderByNetAction extends AbstractAction
     @Override
     public void actionPerformed(ActionEvent e)
     {
-        int rg = DataEntry.state.getCurrentRunGroup();
-        if (JOptionPane.showConfirmDialog(
-                FocusManager.getCurrentManager().getActiveWindow(),
-                "This will reorder the entrants on both courses for rungroup "+rg+" using the current order as a template, continue?",
-                "Reorder Entrants",
-                JOptionPane.YES_NO_OPTION)
-                    != JOptionPane.YES_OPTION)
-              return;
-
-
         try {
+            int rg = DataEntry.state.getCurrentRunGroup();
             List<Entrant> orderleft  = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), 1, rg);
             List<Entrant> orderright = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), 2, rg);
+
+            boolean allhaveruns = true;
+            for (Entrant l : orderleft) { allhaveruns &= l.hasRuns(); }
+            for (Entrant r: orderright) { allhaveruns &= r.hasRuns(); }
+            if (!allhaveruns) {
+                JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(),
+                        "Not all of the entries in the left course or right course have runs, reorder will not work for rungroup " + rg,
+                        "Missing Runs", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if (JOptionPane.showConfirmDialog(
+                    FocusManager.getCurrentManager().getActiveWindow(),
+                    "This will reorder the entrants on both courses for rungroup "+rg+" using the current order as a template, continue?",
+                    "Reorder Entrants",
+                    JOptionPane.YES_NO_OPTION)
+                        != JOptionPane.YES_OPTION)
+                  return;
 
             List<List<Placement>> placements = calculatePlacements(orderleft, orderright);
             Map<String, List<UUID>> results  = BackendDataLoader.fetchResults();
@@ -94,6 +103,7 @@ public class ReorderByNetAction extends AbstractAction
 
             Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), 1, rg, newleft,  false);
             Database.d.setRunOrder(DataEntry.state.getCurrentEventId(), 2, rg, newright, false);
+            DataEntry.poker.poke();
         } catch (Exception ex) {
             log.log(Level.WARNING, "\bReorder failed: " + ex, ex);
         }
