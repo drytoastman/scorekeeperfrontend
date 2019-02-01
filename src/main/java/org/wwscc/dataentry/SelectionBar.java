@@ -164,7 +164,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             case SERIES_CHANGED:
                 DataEntry.state.setCurrentSeries((String)o);
                 eventSelect.setModel(new DefaultComboBoxModel<Event>(Database.d.getEvents().toArray(new Event[0])));
-                int select = Prefs.getEventId(0);
+                int select = Prefs.getEventIndex(0);
                 if (select < eventSelect.getItemCount())
                     eventSelect.setSelectedIndex(select);
                 else if (eventSelect.getItemCount() > 0)
@@ -209,7 +209,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             {
                 DataEntry.state.setCurrentEvent((Event)o);
                 Messenger.sendEvent(MT.EVENT_CHANGED, null);
-                Prefs.setEventId(eventSelect.getSelectedIndex());
+                Prefs.setEventIndex(eventSelect.getSelectedIndex());
                 setCourseList(DataEntry.state.getCurrentEvent().getCourses());
                 courseSelect.setSelectedIndex(0);
             }

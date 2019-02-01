@@ -17,41 +17,45 @@ import java.util.UUID;
  */
 public class Challenge
 {
-	//private static final Logger log = Logger.getLogger("org.wwscc.storage.Challenge");
+    //private static final Logger log = Logger.getLogger("org.wwscc.storage.Challenge");
 
-	protected UUID challengeid;
-	protected UUID eventid;
-	protected String name;
-	protected int depth;
-	
-	public Challenge(ResultSet rs) throws SQLException
-	{
-		challengeid = (UUID)rs.getObject("challengeid");
-		eventid     = (UUID)rs.getObject("eventid");
-		name        = rs.getString("name");
-		depth       = rs.getShort("depth");
-	}
-	
-	public LinkedList<Object> getValues()
-	{
-		LinkedList<Object> ret = new LinkedList<Object>();
-		ret.add(challengeid);
-		ret.add(eventid);
-		ret.add(name);
-		ret.add(depth);
-		return ret;
-	}
+    protected UUID challengeid;
+    protected UUID eventid;
+    protected String name;
+    protected int depth;
 
-	public UUID getChallengeId() { return challengeid; }
-	public UUID getEventId() { return eventid; }
-	public String getName() { return name; }
-	public int getDepth() { return depth; }
+    protected Challenge()
+    {
+    }
 
-	public void setName(String s) { name = s; }
-	
-	@Override
-	public String toString()
-	{
-		return name;
-	}
+    public Challenge(ResultSet rs) throws SQLException
+    {
+        challengeid = (UUID)rs.getObject("challengeid");
+        eventid     = (UUID)rs.getObject("eventid");
+        name        = rs.getString("name");
+        depth       = rs.getShort("depth");
+    }
+
+    public LinkedList<Object> getValues()
+    {
+        LinkedList<Object> ret = new LinkedList<Object>();
+        ret.add(challengeid);
+        ret.add(eventid);
+        ret.add(name);
+        ret.add(depth);
+        return ret;
+    }
+
+    public UUID getChallengeId() { return challengeid; }
+    public UUID getEventId() { return eventid; }
+    public String getName() { return name; }
+    public int getDepth() { return depth; }
+
+    public void setName(String s) { name = s; }
+
+    @Override
+    public String toString()
+    {
+        return name;
+    }
 }

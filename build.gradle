@@ -7,21 +7,6 @@ buildscript {
 
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'application'
-apply plugin: 'eclipse'
-
-eclipse {
-    classpath {
-        file {
-            whenMerged {
-              // remove warnings about non-API class use
-              // these are javafx API, I don't know why it complains about those classes
-                def jre = entries.find { it.path.contains 'org.eclipse.jdt.launching.JRE_CONTAINER' }
-                jre.accessRules.add(new AccessRule('0', 'javafx/**'))
-            }
-        }
-    }
-}
-
 
 def getVersionName = { ->
     try {
@@ -51,7 +36,7 @@ repositories {
 dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
     compile 'com.github.jnr:jnr-unixsocket:0.18'
-    compile 'com.miglayout:miglayout-swing:5.0'
+    compile 'com.miglayout:miglayout-swing:5.2'
     compile 'com.neuronrobotics:nrjavaserial:3.12.1'
     compile 'com.jcraft:jsch:0.1.54'
     compile 'commons-io:commons-io:2.6'

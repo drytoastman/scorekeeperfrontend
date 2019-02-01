@@ -12,6 +12,7 @@ package org.wwscc.challenge;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,11 +84,12 @@ public class Menus extends JMenuBar implements ActionListener
         if (!d.isValid())
             return;
 
-        UUID newid = Database.d.newChallenge(ChallengeGUI.state.getCurrentEventId(), d.getChallengeName(), d.getChallengeSize());
-        if (newid != null)
-        {
-            ChallengeGUI.state.setCurrentChallengeId(newid);
-            Messenger.sendEvent(MT.NEW_CHALLENGE, newid);
+        try {
+            Challenge newc = Database.d.newChallenge(ChallengeGUI.state.getCurrentEventId(), d.getChallengeName(), d.getChallengeSize());
+            ChallengeGUI.state.setCurrentChallengeId(newc.getChallengeId());
+            Messenger.sendEvent(MT.NEW_CHALLENGE, newc.getChallengeId());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 

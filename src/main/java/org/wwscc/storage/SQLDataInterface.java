@@ -40,8 +40,8 @@ public abstract class SQLDataInterface implements DataInterface
     ClassData classCache = null;
     long classCacheTimestamp = 0;
 
-    public abstract void start() throws Exception;
-    public abstract void commit() throws Exception;
+    public abstract void start() throws SQLException;
+    public abstract void commit() throws SQLException;
     public abstract void rollback();
     public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
     public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
@@ -803,7 +803,7 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public UUID newChallenge(UUID eventid, String name, int size)
+    public Challenge newChallenge(UUID eventid, String name, int size) throws SQLException
     {
         try
         {
@@ -826,15 +826,19 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate(sql, rargs);
 
             commit();
-            return challengeid;
+            Challenge ret = new Challenge();
+            ret.challengeid = challengeid;
+            ret.eventid = eventid;
+            ret.name = name;
+            ret.depth = depth;
+            return ret;
         }
-        catch (Exception ioe)
+        catch (SQLException sqle)
         {
-            logError("newChallenge", ioe);
+            logError("newChallenge", sqle);
             rollback();
+            throw sqle;
         }
-
-        return null;
     }
 
     @Override

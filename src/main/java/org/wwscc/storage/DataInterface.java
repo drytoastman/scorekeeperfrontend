@@ -137,7 +137,7 @@ public interface DataInterface
 
     /* Challenge */
     public Set<UUID> getCarIdsByChallenge(UUID challengeid);
-    public UUID newChallenge(UUID eventid, String name, int size);
+    public Challenge newChallenge(UUID eventid, String name, int size) throws SQLException;
     public void deleteChallenge(UUID challengeid);
     public List<Challenge> getChallengesForEvent(UUID eventid);
     public List<ChallengeRound> getRoundsForChallenge(UUID challengeid);

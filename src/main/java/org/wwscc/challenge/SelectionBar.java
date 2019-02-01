@@ -112,7 +112,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
                 seriesLabel.setText(ChallengeGUI.state.getCurrentSeries());
                 eventSelect.setModel(new DefaultComboBoxModel<Event>(Database.d.getEvents().toArray(new Event[0])));
 
-                int select = Prefs.getEventId(0);
+                int select = Prefs.getEventIndex(0);
                 if (select < eventSelect.getItemCount())
                     eventSelect.setSelectedIndex(select);
                 else
@@ -151,10 +151,10 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             {
                 ChallengeGUI.state.setCurrentEvent((Event)o);
                 Messenger.sendEvent(MT.EVENT_CHANGED, null);
-                Prefs.setEventId(eventSelect.getSelectedIndex());
+                Prefs.setEventIndex(eventSelect.getSelectedIndex());
                 challengeSelect.setModel(new DefaultComboBoxModel<Challenge>(Database.d.getChallengesForEvent(ChallengeGUI.state.getCurrentEventId()).toArray(new Challenge[0])));
 
-                int select = Prefs.getChallengeId(0);
+                int select = Prefs.getChallengeIndex(0);
                 if (select < challengeSelect.getItemCount())
                     challengeSelect.setSelectedIndex(select);
                 else if (challengeSelect.getItemCount() > 0)
@@ -169,7 +169,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             {
                 ChallengeGUI.state.setCurrentChallengeId(((Challenge)o).getChallengeId());
                 Messenger.sendEvent(MT.CHALLENGE_CHANGED, (Challenge)o);
-                Prefs.setChallengeId(challengeSelect.getSelectedIndex());
+                Prefs.setChallengeIndex(challengeSelect.getSelectedIndex());
             }
         }
     }
