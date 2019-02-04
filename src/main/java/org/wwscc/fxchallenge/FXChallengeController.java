@@ -85,7 +85,7 @@ public class FXChallengeController implements Initializable
     public void newChallenge(ActionEvent event)
     {
         List<String> names = Database.d.getChallengesForEvent(appState.getCurrentEventId()).stream().map(c -> c.getName()).collect(Collectors.toList());
-        FXDialogs.newChallengeDialog(names).showAndWait().ifPresent(pair -> {
+        new NewChallengeDialog(names).showAndWait().ifPresent(pair -> {
             try {
                 currentChallenge = Database.d.newChallenge(appState.getCurrentEventId(), pair.getKey(), pair.getValue());
                 eventChanged();
@@ -112,6 +112,48 @@ public class FXChallengeController implements Initializable
             Database.d.deleteChallenge(currentChallenge.getChallengeId());
             eventChanged();
         }
+    }
+
+    public void loadEntrants(ActionEvent event)
+    {
+        //int baseRounds = depthToBaseRounds(currentChallenge.getDepth());
+        Optional<List<ChallengeEntry>> ret = new LoadEntrantsDialog(currentChallenge).showAndWait();
+        if (!ret.isPresent())
+            return;
+        List<ChallengeEntry> toload = ret.get();
+
+        int[] pos = null;
+        switch (currentChallenge.getBaseRounds())
+        {
+            case 16: pos = Positions.POS32; break;
+            case 8: pos = Positions.POS16; break;
+            case 4: pos = Positions.POS8; break;
+            case 2: pos = Positions.POS4; break;
+        }
+
+        // build a list of things to update
+        int bys = currentChallenge.getMaxEntrantCount() - toload.size();
+        for (int ii = 0; ii < toload.size(); ii++)
+        {
+            int placement = pos[ii];
+            int rndidx = currentChallenge.getFirstRoundNumber() - placement/2;
+            Ids.Location.Level level = (placement%2 != 0) ? Ids.Location.Level.LOWER : Ids.Location.Level.UPPER;
+            Ids.Location loc = new Ids.Location(currentChallenge.getChallengeId(), rndidx, level);
+            if (bys > 0)
+            {
+                loc = loc.advancesTo();
+                bys--;
+            }
+
+            toload.get(ii).setLocation(loc);
+        }
+
+        System.out.println(toload);
+        // make the actual call to update the model
+        //model.setEntrants(updates);
+
+        // call set challenge to update all of our labels
+        //setChallenge(challenge);
     }
 
     public void eventSelected(ActionEvent event)

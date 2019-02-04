@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 
 import org.wwscc.util.Prefs;
 import org.wwscc.util.AppSetup;
+import org.wwscc.util.Messenger;
 
 public class FXChallengeGUI extends Application
 {
@@ -59,6 +60,7 @@ public class FXChallengeGUI extends Application
     {
         try
         {
+            Messenger.setFXMode();
             AppSetup.appSetup("challengegui");
             launch(args);
         }

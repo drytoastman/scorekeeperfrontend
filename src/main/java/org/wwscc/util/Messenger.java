@@ -17,15 +17,23 @@ import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 
+import javafx.application.Platform;
+
 public class Messenger
 {
+    private static enum Mode { SWING_THREAD, FX_THREAD, SENDER_THREAD };
     private static final Logger log = Logger.getLogger(Messenger.class.getCanonicalName());
     private static EnumMap<MT, Set<MessageListener>> listPtrs = new EnumMap<MT, Set<MessageListener>>(MT.class);
-    private static boolean testMode = false;
+    private static Mode mode = Mode.SWING_THREAD;
 
     static public void setTestMode()
     {
-        testMode = true;
+        mode = Mode.SENDER_THREAD;
+    }
+
+    static public void setFXMode()
+    {
+        mode = Mode.FX_THREAD;
     }
 
     static public synchronized void unregisterAll(MessageListener listener)
@@ -54,18 +62,31 @@ public class Messenger
 
     public static void sendEvent(final MT type, final Object data)
     {
-        if (testMode) { // in test mode we don't need to let it step through the event thread
-            sendEventNow(type, data);
-            return;
-        }
 
-        SwingUtilities.invokeLater(new Runnable() { public void run() {
-            try {
-                sendEventNow(type, data);
-            } catch (Exception e) {
-                log.log(Level.WARNING, "Error sending " + type.toString() + ": " + e.getMessage(), e);
-            }
-        }});
+        switch (mode)
+        {
+            case SWING_THREAD:
+                SwingUtilities.invokeLater(() -> sendEventNowWrapper(type, data));
+                break;
+
+            case FX_THREAD:
+                Platform.runLater(() -> sendEventNowWrapper(type, data));
+                break;
+
+            case SENDER_THREAD:
+            default:
+                sendEventNowWrapper(type, data);
+                break;
+        }
+    }
+
+    private static void sendEventNowWrapper(MT type, Object data)
+    {
+        try {
+            sendEventNow(type, data);
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Error sending " + type.toString() + ": " + e.getMessage(), e);
+        }
     }
 
     public static synchronized void sendEventNow(MT type, Object data)

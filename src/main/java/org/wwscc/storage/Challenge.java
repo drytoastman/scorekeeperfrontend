@@ -51,6 +51,11 @@ public class Challenge
     public String getName() { return name; }
     public int getDepth() { return depth; }
 
+    public int getBaseRounds() { return (int)Math.pow(2, depth-1); }
+    public int getMinEntrantCount() { return getBaseRounds()+1; }
+    public int getMaxEntrantCount() { return getBaseRounds()*2; }
+    public int getFirstRoundNumber() { return getMaxEntrantCount() - 1; }
+
     public void setName(String s) { name = s; }
 
     @Override

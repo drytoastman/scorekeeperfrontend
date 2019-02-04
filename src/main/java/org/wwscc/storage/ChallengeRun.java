@@ -68,11 +68,19 @@ public class ChallengeRun
         status       = rs.getString("status");
     }
 
+    @Deprecated // This goes away when the old challenge GUI does
     public void setChallengeRound(Id.Run id)
     {
         challengeid = id.challengeid;
         round = id.round;
         course = id.isLeft() ? Run.LEFT : Run.RIGHT;
+    }
+
+    public void setChallengeRound(UUID challengeid, int round, int course)
+    {
+        this.challengeid = challengeid;
+        this.round = round;
+        this.course = course;
     }
 
     public UUID getChallengeId(){ return challengeid; }
