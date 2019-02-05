@@ -38,12 +38,9 @@ public class FXChallengeGUI extends Application
         stage.setScene(scene);
         stage.show();
 
-        FXChallengeController con = loader.getController();
+        MainController con = loader.getController();
         Platform.runLater(() ->  {
-            String series = Prefs.getSeries("");
-            if (series.trim().isEmpty())
-                return;
-            con.attemptSeriesChange(series);
+            con.connectSeries(Prefs.getSeries(""));
         });
 
         } catch (Exception e) {

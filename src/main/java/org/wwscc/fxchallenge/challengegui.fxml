@@ -17,7 +17,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.web.WebView?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.wwscc.fxchallenge.FXChallengeController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.wwscc.fxchallenge.MainController">
    <children>
       <MenuBar>
         <menus>
@@ -55,10 +55,10 @@
             <Label fx:id="seriesLabel" style="-fx-font-size: 14;" text="&lt;none&gt;" />
             <Region prefWidth="15.0" />
             <Label style="-fx-font-size: 14;" text="Event:" />
-            <ComboBox fx:id="eventSelect" onAction="#eventSelected" prefWidth="200.0" style="-fx-font-size: 14;" />
+            <ComboBox fx:id="eventSelect" prefWidth="200.0" style="-fx-font-size: 14;" />
             <Region prefWidth="15.0" />
             <Label style="-fx-font-size: 14;" text="Challenge:" />
-            <ComboBox fx:id="challengeSelect" onAction="#challengeSelected" prefWidth="150.0" style="-fx-font-size: 14;" />
+            <ComboBox fx:id="challengeSelect" prefWidth="150.0" style="-fx-font-size: 14;" />
             <Region prefWidth="15.0" />
             <Label style="-fx-font-size: 14;" text="Timer:" />
             <Label fx:id="timerLabel" text="Not Connected" textFill="RED">

@@ -90,24 +90,19 @@ public class Database
      * Used when the user wants to select a new specific series, don't allow blank series
      * @param series the series to connect to
      * @param timeoutms a statement timeout after the database is connected in ms, <=0 means no timeout
-     * @return true if the series was opened, false otherwise
+     * @return name of the series is actually opened, blank for no series but active database
+     * @throws SQLException
      */
-    public static boolean openSeriesStrict(String series, int timeoutms)
+    public static String openSeriesNM(String series, int timeoutms) throws SQLException
     {
         if (d != null)
             d.close();
 
-        try {
-            d = new PostgresqlDatabase("localuser", timeoutms);
-            if (series.equals("") || !d.getSeriesList().contains(series))
-                return false;
-            d.useSeries(series);
-            Messenger.sendEvent(MT.SERIES_CHANGED, series);
-            return true;
-        } catch (SQLException sqle) {
-            log.severe(String.format("\bUnable to open series %s due to error %s", series, sqle));
-            return false;
-        }
+        d = new PostgresqlDatabase("localuser", timeoutms);
+        if (series.equals("") || !d.getSeriesList().contains(series))
+            return "";
+        d.useSeries(series);
+        return series;
     }
 
 
