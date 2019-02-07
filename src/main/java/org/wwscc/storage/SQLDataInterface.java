@@ -983,7 +983,6 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
-
     protected void _updateChallengeRound(ChallengeRound r) throws Exception
     {
         List<Object> list = newList();
@@ -997,6 +996,20 @@ public abstract class SQLDataInterface implements DataInterface
         executeUpdate("UPDATE challengerounds SET swappedstart=?,car1id=?,car1dial=?,car2id=?,car2dial=?,modified=now() WHERE challengeid=? AND round=?", list);
     }
 
+    @Override
+    public void updateChallengeRound(UUID challengeid, int round, int level, UUID carid, double dialin) throws SQLException
+    {
+        List<Object> list = newList();
+        list.add(carid);
+        list.add(dialin);
+        list.add(challengeid);
+        list.add(round);
+        if (level == 1) {
+            executeUpdate("UPDATE challengerounds SET car1id=?,car1dial=?,modified=now() WHERE challengeid=? AND round=?", list);
+        } else {
+            executeUpdate("UPDATE challengerounds SET car2id=?,car2dial=?,modified=now() WHERE challengeid=? AND round=?", list);
+        }
+    }
 
     @Override
     public void updateChallengeRound(ChallengeRound r)

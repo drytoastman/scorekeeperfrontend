@@ -45,4 +45,14 @@ public class FXDialogs
         dialog.setGraphic(null);
         return dialog;
     }
+
+    public static Alert warning(String title, String header, String content)
+    {
+        Alert dialog = new Alert(AlertType.WARNING);
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
+        dialog.setContentText(content);
+        dialog.setGraphic(null);
+        return dialog;
+    }
 }

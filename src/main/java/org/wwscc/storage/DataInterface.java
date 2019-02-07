@@ -145,7 +145,8 @@ public interface DataInterface
     public Dialins loadDialins(UUID eventid);
     public void updateChallenge(Challenge c);
     public void updateChallengeRound(ChallengeRound r);
-    public void updateChallengeRounds(List<ChallengeRound> rounds);
+    public void updateChallengeRound(UUID challengeid, int round, int entry, UUID carid, double dialin) throws SQLException;
+    @Deprecated public void updateChallengeRounds(List<ChallengeRound> rounds);
     public void setChallengeRun(ChallengeRun r);
     public void deleteChallengeRun(ChallengeRun r);
 

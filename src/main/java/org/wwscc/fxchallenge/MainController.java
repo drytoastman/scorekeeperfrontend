@@ -8,11 +8,12 @@
 
 package org.wwscc.fxchallenge;
 
-import java.net.URL;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,7 +33,6 @@ import javafx.collections.FXCollections;
 import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
@@ -45,9 +45,15 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MainController implements Initializable
+public class MainController
 {
     private static final Logger log = Logger.getLogger(MainController.class.getCanonicalName());
+
+    // these are the placements into the bracket as per SCCA rulebook
+    static final int[] RANK4 =  new int[] { 3, 2, 4, 1 };
+    static final int[] RANK8 =  new int[] { 6, 3, 7, 2, 5, 4, 8, 1 };
+    static final int[] RANK16 = new int[] { 11, 6, 14, 3, 10, 7, 15, 2, 12, 5, 13, 4, 9, 8, 16, 1 };
+    static final int[] RANK32 = new int[] { 22, 11, 27, 6, 19, 14, 30, 3, 23, 10, 26, 7, 18, 15, 31, 2, 21, 12, 28, 5, 20, 13, 29, 4, 24, 9, 25, 8, 17, 16, 32, 1 };
 
     @FXML private Label seriesLabel;
     @FXML private Label timerLabel;
@@ -62,7 +68,6 @@ public class MainController implements Initializable
     private ContextMenu contextMenu;
     private double webx, weby;
 
-
     public MainController()
     {
         contextMenu      = new ContextMenu();
@@ -71,8 +76,8 @@ public class MainController implements Initializable
         currentChallenge = new SimpleObjectProperty<>();
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources)
+    @FXML
+    public void initialize()
     {
         currentSeries.addListener((ob, old, name) -> {
             List<Event> events = Database.d.getEvents();
@@ -84,30 +89,18 @@ public class MainController implements Initializable
 
         currentEvent.bind(eventSelect.valueProperty());
         currentEvent.addListener((ob, old, newevent) -> {
-            List<Challenge> challenges = Database.d.getChallengesForEvent(newevent.getEventId());
-            challengeSelect.setItems(FXCollections.observableArrayList(challenges));
-            challengeSelect.getSelectionModel().select(Math.min(Prefs.getChallengeIndex(0), challengeSelect.getItems().size()-1));
+            reloadChallengeSelect();
             Prefs.setEventIndex(eventSelect.getSelectionModel().getSelectedIndex());
         });
 
-        currentChallenge.bind(challengeSelect.valueProperty());
+        currentChallenge.bindBidirectional(challengeSelect.valueProperty());
         currentChallenge.addListener((ob, old, newchallenge) -> {
             Prefs.setChallengeIndex(challengeSelect.getSelectionModel().getSelectedIndex());
-            setBracketURL(newchallenge);
+            loadBracket();
         });
-    }
 
-    public void connectSeries(String name)
-    {
-        try {
-            String seriesattached = Database.openSeriesNM(name, 0);
-            currentSeries.set(seriesattached);
-            return;
-        } catch (SQLException sqle) {
-            log.log(Level.WARNING, "Unable to make a database connection: " + sqle, sqle);
-        }
+        bracketView.setContextMenuEnabled(false);
     }
-
 
     public void quit(ActionEvent event)
     {
@@ -155,44 +148,42 @@ public class MainController implements Initializable
 
     public void loadEntrants(ActionEvent event)
     {
-        //int baseRounds = depthToBaseRounds(currentChallenge.getDepth());
-        Optional<List<ChallengeEntry>> ret = new LoadEntrantsDialog(currentChallenge.get()).showAndWait();
+        Challenge c = currentChallenge.get();
+        Optional<List<ChallengeEntry>> ret = new LoadEntrantsDialog(c).showAndWait();
         if (!ret.isPresent())
             return;
         List<ChallengeEntry> toload = ret.get();
 
-        int[] pos = null;
-        switch (currentChallenge.get().getBaseRounds())
+        int[] rank = null;
+        switch (c.getBaseRounds())
         {
-            case 16: pos = Positions.POS32; break;
-            case 8: pos = Positions.POS16; break;
-            case 4: pos = Positions.POS8; break;
-            case 2: pos = Positions.POS4; break;
+            case 16: rank = RANK32; break;
+            case 8:  rank = RANK16; break;
+            case 4:  rank = RANK8;  break;
+            case 2:  rank = RANK4;  break;
         }
 
-        // build a list of things to update
-        int bys = currentChallenge.get().getMaxEntrantCount() - toload.size();
-        for (int ii = 0; ii < toload.size(); ii++)
-        {
-            int placement = pos[ii];
-            int rndidx = currentChallenge.get().getFirstRoundNumber() - placement/2;
-            Ids.Location.Level level = (placement%2 != 0) ? Ids.Location.Level.LOWER : Ids.Location.Level.UPPER;
-            Ids.Location loc = new Ids.Location(currentChallenge.get().getChallengeId(), rndidx, level);
-            if (bys > 0)
-            {
-                loc = loc.advancesTo();
-                bys--;
+        List<SQLException> exceptions = new ArrayList<>();
+        int bys = c.getMaxEntrantCount() - toload.size();
+        int finishpos;
+
+        // load first round, possibly some bys as well
+        for (int rndidx = c.getFirstRoundNumber(), ii = 0; rndidx >= c.getBaseRounds(); rndidx--) {
+            try {
+                finishpos = rank[ii++];
+                loadOne(toload, new Ids.Location(c.getChallengeId(), rndidx, Ids.Location.Level.UPPER), finishpos, finishpos <= bys);
+                finishpos = rank[ii++];
+                loadOne(toload, new Ids.Location(c.getChallengeId(), rndidx, Ids.Location.Level.LOWER), finishpos, finishpos <= bys);
+            } catch (SQLException sqle) {
+                exceptions.add(sqle);
             }
-
-            toload.get(ii).setLocation(loc);
         }
 
-        System.out.println(toload);
-        // make the actual call to update the model
-        //model.setEntrants(updates);
+        if (exceptions.size() > 0) {
+            FXDialogs.warning("Challenge Loading Error", null, Arrays.toString(exceptions.toArray()));
+        }
 
-        // call set challenge to update all of our labels
-        //setChallenge(challenge);
+        loadBracket();
     }
 
     public void bracketViewMousePressed(MouseEvent event)
@@ -201,13 +192,44 @@ public class MainController implements Initializable
         weby = event.getScreenY();
     }
 
+    // --------------------------------------------------------
+
+    public void connectSeries(String name)
+    {
+        try {
+            String seriesattached = Database.openSeriesNM(name, 0);
+            currentSeries.set(seriesattached);
+            return;
+        } catch (SQLException sqle) {
+            log.log(Level.WARNING, "Unable to make a database connection: " + sqle, sqle);
+        }
+    }
 
     public void reloadChallengeSelect()
     {
         List<Challenge> challenges = Database.d.getChallengesForEvent(currentEvent.get().getEventId());
         challengeSelect.setItems(FXCollections.observableArrayList(challenges));
         challengeSelect.getSelectionModel().select(Math.min(Prefs.getChallengeIndex(0), challengeSelect.getItems().size()-1));
-    };
+    }
+
+    private void loadOne(List<ChallengeEntry> toload, Ids.Location location, int finishpos, boolean by) throws SQLException
+    {
+        UUID carid = null;
+        double dialin = 999.999;
+
+        finishpos--; // convert to 0 index
+        if (finishpos < toload.size()) {
+            ChallengeEntry entry = toload.get(finishpos);
+            carid = entry.entrant.getCarId();
+            dialin = entry.dialin.get();
+            if (by) {
+                Database.d.updateChallengeRound(location.challengeid, location.round, 1, null, 999.999);
+                Database.d.updateChallengeRound(location.challengeid, location.round, 2, null, 999.999);
+                location = location.advancesTo();
+            }
+        }
+        Database.d.updateChallengeRound(location.challengeid, location.round, location.level == Ids.Location.Level.UPPER ? 1 : 2, carid, dialin);
+    }
 
     public void doPopup(int rnd)
     {
@@ -231,16 +253,16 @@ public class MainController implements Initializable
     }
 
 
-    private void setBracketURL(Challenge challenge)
+    private void loadBracket()
     {
         WebEngine engine = bracketView.getEngine();
 
-        if (challenge == null) {
+        if (currentChallenge.get() == null) {
             engine.loadContent("");
             return;
         }
 
-        String url = String.format("http://127.0.0.1/results/%s/challenge/%s/bracket", currentSeries.get(), challenge.getChallengeId());
+        String url = String.format("http://127.0.0.1/results/%s/challenge/%s/bracket", currentSeries.get(), currentChallenge.get().getChallengeId());
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == State.SUCCEEDED) {
                 Document doc = engine.getDocument() ;
@@ -253,12 +275,10 @@ public class MainController implements Initializable
                 doc.getDocumentElement().getElementsByTagName("head").item(0).appendChild(styleNode);
 
                 JSObject win = (JSObject)engine.executeScript("window");
-                win.setMember("fxcontroller", this);
-                //engine.executeScript("openround = function(ev, rnd) { fxcontroller.doPopup(rnd); }");
+                win.setMember("maincontroller", this);
+                engine.executeScript("openround = function(ev, rnd) { maincontroller.doPopup(rnd); }");
             }
         });
         engine.load(url);
     }
-
-
 }

@@ -16,7 +16,7 @@ final class ChallengeEntry
     DoubleProperty net, dialin;
     StringProperty first, last, classCode;
 
-    Ids.Location location;
+    //Ids.Location location;
 
     public ChallengeEntry(Entrant e, int position, double net, double dialin)
     {
@@ -28,11 +28,11 @@ final class ChallengeEntry
         this.net       = new SimpleDoubleProperty(net);
         this.dialin    = new SimpleDoubleProperty(dialin);
 
-        this.location     = null;
+        //this.location     = null;
     }
 
-    public void setLocation(Ids.Location location)
+    public void XsetLocation(Ids.Location location)
     {
-        this.location = location;
+        //this.location = location;
     }
 }

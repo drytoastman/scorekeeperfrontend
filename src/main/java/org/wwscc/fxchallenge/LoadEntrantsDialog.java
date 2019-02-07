@@ -15,6 +15,7 @@ import org.wwscc.storage.Entrant;
 import org.wwscc.util.NF;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener.Change;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -109,7 +110,7 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
         public void initialize()
         {
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            table.getSelectionModel().selectedItemProperty().addListener((obs, olds, news) -> {
+            table.getSelectionModel().getSelectedItems().addListener((Change<? extends ChallengeEntry> chg) -> {
                 int cnt = table.getSelectionModel().getSelectedIndices().size();
                 selectedCount.setText(""+cnt);
                 pane.lookupButton(ButtonType.OK).setDisable(cnt < target.getMinEntrantCount() || cnt > target.getMaxEntrantCount());
