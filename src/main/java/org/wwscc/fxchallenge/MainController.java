@@ -93,9 +93,11 @@ public class MainController
             Prefs.setEventIndex(eventSelect.getSelectionModel().getSelectedIndex());
         });
 
-        currentChallenge.bindBidirectional(challengeSelect.valueProperty());
+        currentChallenge.bind(challengeSelect.valueProperty());
         currentChallenge.addListener((ob, old, newchallenge) -> {
-            Prefs.setChallengeIndex(challengeSelect.getSelectionModel().getSelectedIndex());
+            int index = challengeSelect.getSelectionModel().getSelectedIndex();
+            if (index >= 0)
+                Prefs.setChallengeIndex(index);
             loadBracket();
         });
 
@@ -119,9 +121,9 @@ public class MainController
         List<String> names = Database.d.getChallengesForEvent(currentEvent.get().getEventId()).stream().map(c -> c.getName()).collect(Collectors.toList());
         new NewChallengeDialog(names).showAndWait().ifPresent(pair -> {
             try {
-                currentChallenge.set(Database.d.newChallenge(currentEvent.get().getEventId(), pair.getKey(), pair.getValue()));
+                Challenge c = Database.d.newChallenge(currentEvent.get().getEventId(), pair.getKey(), pair.getValue());
                 reloadChallengeSelect();
-                challengeSelect.getSelectionModel().selectLast();
+                challengeSelect.getSelectionModel().select(c);
             } catch (SQLException sqle) {
                 log.log(Level.WARNING, "\bFailed to create challenge: " + sqle, sqle);
             }
@@ -139,9 +141,10 @@ public class MainController
 
     public void deleteChallenge(ActionEvent event)
     {
-        Alert dialog = FXDialogs.confirm("Delete Challenge", null, "Are you sure you want to delete " + currentChallenge.getName() + ".  This will delete all data assoicated with this challenge");
+        Alert dialog = FXDialogs.confirm("Delete Challenge", null, "Are you sure you want to delete " + currentChallenge.get().getName() + ".  This will delete all data assoicated with this challenge");
         if (dialog.showAndWait().get().equals(ButtonType.OK)) {
             Database.d.deleteChallenge(currentChallenge.get().getChallengeId());
+            Prefs.setChallengeIndex(0);
             reloadChallengeSelect();
         }
     }

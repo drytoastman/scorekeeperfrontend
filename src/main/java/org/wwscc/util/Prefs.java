@@ -181,8 +181,8 @@ public class Prefs
 
 
     public static String getSeries(String def) { return prefs.get("series", def); }
-    public static int getEventIndex(int def)   { return prefs.getInt("eventid", def); }
-    public static int getChallengeIndex(int def) { return prefs.getInt("challengeid", def); }
+    public static int getEventIndex(int def)   { return prefs.getInt("eventindex", def); }
+    public static int getChallengeIndex(int def) { return prefs.getInt("challengeindex", def); }
     public static boolean useReorderingTable() { return prefs.getBoolean("reorderingtable", false); }
     public static int getLightCount()          { return prefs.getInt("lights", 2); }
     public static String getDefaultPrinter()   { return prefs.get("defaultprinter", ""); }
@@ -207,8 +207,8 @@ public class Prefs
     }
 
     public static void setSeries(String s)           { prefs.put("series", s); }
-    public static void setEventIndex(int i)          { prefs.putInt("eventid", i); }
-    public static void setChallengeIndex(int i)      { prefs.putInt("challengeid", i); }
+    public static void setEventIndex(int i)          { prefs.putInt("eventindex", i); }
+    public static void setChallengeIndex(int i)      { prefs.putInt("challengeindex", i); }
     public static void setReorderingTable(boolean b) { prefs.putBoolean("reorderingtable", b); }
     public static void setLightCount(int i)          { prefs.putInt("lights", i); }
     public static void setDefaultPrinter(String s)   { prefs.put("defaultprinter", s); }

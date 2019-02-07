@@ -860,7 +860,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return executeSelect("select * from challenges where eventid = ?", newList(eventid), Challenge.class.getConstructor(ResultSet.class));
+            return executeSelect("select * from challenges where eventid = ? order by name", newList(eventid), Challenge.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)
         {
