@@ -32,8 +32,8 @@ public class FXChallengeGUI extends Application
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/wwscc/fxchallenge/challengegui.fxml"));
         Parent root = loader.load();
-        //root.getStylesheets().add(getClass().getResource("/org/wwscc/fxchallenge/stylesheet.css").toString());
-        Scene scene = new Scene(root, 1000, 800);
+        root.getStylesheets().add(getClass().getResource("/org/wwscc/fxchallenge/challengestyle.css").toString());
+        Scene scene = new Scene(root, 1366, 768);
         stage.setTitle("Challenge");
         stage.setScene(scene);
         stage.show();

@@ -74,26 +74,42 @@
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                <children>
-                  <TableView AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                  <TableView fx:id="stageTable" editable="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <columns>
-                        <TableColumn prefWidth="45.0" text="Round" />
-                      <TableColumn prefWidth="100.0" text="Dial Left" />
-                      <TableColumn prefWidth="200.0" text="Name" />
-                        <TableColumn prefWidth="24.0" text="C" />
-                        <TableColumn prefWidth="25.0" text="G" />
-                        <TableColumn prefWidth="20.0" text="S" />
-                        <TableColumn prefWidth="60.0" text="Time" />
-                        <TableColumn prefWidth="60.0" style="-fx-background: black;" />
-                        <TableColumn prefWidth="100.0" text="Dial Right" />
-                        <TableColumn prefWidth="200.0" text="Name" />
-                        <TableColumn prefWidth="24.0" text="C" />
-                        <TableColumn prefWidth="25.0" text="G" />
-                        <TableColumn prefWidth="20.0" text="S" />
-                        <TableColumn prefWidth="60.0" text="Time" />
+                        <TableColumn fx:id="colRound" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" text="Round" />
+                        <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
+
+                        <TableColumn fx:id="colTimerLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" text="0.000">
+                           <columns>
+                              <TableColumn fx:id="colDialLeft" resizable="false" sortable="false" text="Dial Left" />
+                           </columns>
+                        </TableColumn>
+                        <TableColumn fx:id="colNameLeft" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
+                        <TableColumn fx:id="colReactionLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
+                        <TableColumn fx:id="colSixtyLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
+                        <TableColumn fx:id="colTimeLeft" maxWidth="65.0" minWidth="65.0" prefWidth="65.0" resizable="false" sortable="false" text="Time" />
+                        <TableColumn fx:id="colConesLeft" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="C" />
+                        <TableColumn fx:id="colGatesLeft" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="G" />
+                        <TableColumn fx:id="colStatusLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="S" />
+                        <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
+
+                        <TableColumn fx:id="colTimerRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" text="0.000">
+                           <columns>
+                              <TableColumn fx:id="colDialRight" resizable="false" sortable="false" text="Dial Right" />
+                           </columns>
+                        </TableColumn>
+                        <TableColumn fx:id="colNameRight" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
+                        <TableColumn fx:id="colReactionRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
+                        <TableColumn fx:id="colSixtyRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
+                        <TableColumn fx:id="colTimeRight" maxWidth="65.0" minWidth="65.0" prefWidth="65.0" resizable="false" sortable="false" text="Time" />
+                        <TableColumn fx:id="colConesRight" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="C" />
+                        <TableColumn fx:id="colGatesRight" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="G" />
+                        <TableColumn fx:id="colStatusRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="S" />
+                        <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
+
+                        <TableColumn fx:id="colAnnouncer" minWidth="100" prefWidth="${stageTable.width - 1057}" sortable="false" text="Announcer" />
+
                     </columns>
-                     <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                     </columnResizePolicy>
                   </TableView>
                </children>
             </AnchorPane>

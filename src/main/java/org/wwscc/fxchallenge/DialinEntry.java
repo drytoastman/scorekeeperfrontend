@@ -9,16 +9,18 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-final class ChallengeEntry
+final class DialinEntry
 {
     Entrant entrant;
     IntegerProperty position;
     DoubleProperty net, dialin;
     StringProperty first, last, classCode;
 
-    //Ids.Location location;
+    public DialinEntry()
+    {
+    }
 
-    public ChallengeEntry(Entrant e, int position, double net, double dialin)
+    public DialinEntry(Entrant e, int position, double net, double dialin)
     {
         this.entrant   = e;
         this.first     = new SimpleStringProperty(e.getFirstName());
@@ -27,12 +29,5 @@ final class ChallengeEntry
         this.position  = new SimpleIntegerProperty(position);
         this.net       = new SimpleDoubleProperty(net);
         this.dialin    = new SimpleDoubleProperty(dialin);
-
-        //this.location     = null;
-    }
-
-    public void XsetLocation(Ids.Location location)
-    {
-        //this.location = location;
     }
 }

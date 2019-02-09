@@ -41,6 +41,20 @@ public class ChallengeRun
         status = "";
     }
 
+    public ChallengeRun(UUID challengeid, UUID carid, double reaction, double sixty, double raw, int round, int course, int cones, int gates, String status)
+    {
+        challengeid = IdGenerator.generateId();
+        carid = null;
+        reaction = -1;
+        sixty = -1;
+        raw = -1;
+        round = -1;
+        course = -1;
+        cones = 0;
+        gates = 0;
+        status = "";
+    }
+
     public ChallengeRun(Run r)
     {
         this();
@@ -84,7 +98,9 @@ public class ChallengeRun
     }
 
     public UUID getChallengeId(){ return challengeid; }
+    public UUID getCarId()      { return carid; }
     public int getRound()       { return round; }
+    public int getCourse()      { return course; }
     public int getCones()       { return cones; }
     public int getGates()       { return gates; }
     public double getRaw()      { return raw; }

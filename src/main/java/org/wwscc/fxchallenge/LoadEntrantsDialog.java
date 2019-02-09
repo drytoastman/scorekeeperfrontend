@@ -30,7 +30,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
-public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
+public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
 {
     private static Logger log = Logger.getLogger(LoadEntrantsDialog.class.getCanonicalName());
 
@@ -61,16 +61,16 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
     }
 
 
-    final static class DoubleCell extends TableCell<ChallengeEntry, Number>
+    final static class DoubleCell extends TableCell<DialinEntry, Double>
     {
         @Override
-        protected void updateItem(Number val, boolean empty)
+        protected void updateItem(Double val, boolean empty)
         {
             super.updateItem(val, empty);
             if (empty) {
                 setText(null);
             } else {
-                setText(NF.format(val.doubleValue()));
+                setText(NF.format(val));
             }
         }
     }
@@ -83,13 +83,13 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
         @FXML CheckBox openCheck;
         @FXML CheckBox bonusCheck;
 
-        @FXML TableView<ChallengeEntry> table;
-        @FXML TableColumn<ChallengeEntry, Number> positionColumn;
-        @FXML TableColumn<ChallengeEntry, String> firstNameColumn;
-        @FXML TableColumn<ChallengeEntry, String> lastNameColumn;
-        @FXML TableColumn<ChallengeEntry, String> classCodeColumn;
-        @FXML TableColumn<ChallengeEntry, Number> netColumn;
-        @FXML TableColumn<ChallengeEntry, Number> dialinColumn;
+        @FXML TableView<DialinEntry> table;
+        @FXML TableColumn<DialinEntry, Integer> positionColumn;
+        @FXML TableColumn<DialinEntry, String> firstNameColumn;
+        @FXML TableColumn<DialinEntry, String> lastNameColumn;
+        @FXML TableColumn<DialinEntry, String> classCodeColumn;
+        @FXML TableColumn<DialinEntry, Double> netColumn;
+        @FXML TableColumn<DialinEntry, Double> dialinColumn;
 
         Challenge target;
         DialogPane pane;
@@ -101,7 +101,7 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
             this.pane = dialog;
         }
 
-        public List<ChallengeEntry> getResults()
+        public List<DialinEntry> getResults()
         {
             return table.getSelectionModel().getSelectedItems();
         }
@@ -110,18 +110,18 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
         public void initialize()
         {
             table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            table.getSelectionModel().getSelectedItems().addListener((Change<? extends ChallengeEntry> chg) -> {
+            table.getSelectionModel().getSelectedItems().addListener((Change<? extends DialinEntry> chg) -> {
                 int cnt = table.getSelectionModel().getSelectedIndices().size();
                 selectedCount.setText(""+cnt);
                 pane.lookupButton(ButtonType.OK).setDisable(cnt < target.getMinEntrantCount() || cnt > target.getMaxEntrantCount());
             });
 
-             positionColumn.setCellValueFactory(cellData -> { return cellData.getValue().position; });
+             positionColumn.setCellValueFactory(cellData -> { return cellData.getValue().position.asObject(); });
             firstNameColumn.setCellValueFactory(cellData -> { return cellData.getValue().first; });
              lastNameColumn.setCellValueFactory(cellData -> { return cellData.getValue().last; });
             classCodeColumn.setCellValueFactory(cellData -> { return cellData.getValue().classCode; });
-                  netColumn.setCellValueFactory(cellData -> { return cellData.getValue().net; });
-               dialinColumn.setCellValueFactory(cellData -> { return cellData.getValue().dialin; });
+                  netColumn.setCellValueFactory(cellData -> { return cellData.getValue().net.asObject(); });
+               dialinColumn.setCellValueFactory(cellData -> { return cellData.getValue().dialin.asObject(); });
 
                   netColumn.setCellFactory(tc -> new DoubleCell());
                dialinColumn.setCellFactory(tc -> new DoubleCell());
@@ -142,14 +142,14 @@ public class LoadEntrantsDialog extends Dialog<List<ChallengeEntry>>
                     entrants.put(e.getCarId(), e);
             }
 
-            List<ChallengeEntry> data = new ArrayList<ChallengeEntry>();
+            List<DialinEntry> data = new ArrayList<DialinEntry>();
             Dialins dialins = Database.d.loadDialins(target.getEventId());
             int pos = 1;
             for (UUID id : dialins.getNetOrder())
             {
                 if (!entrants.containsKey(id))
                     continue;
-                data.add(new ChallengeEntry(entrants.get(id), pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected())));
+                data.add(new DialinEntry(entrants.get(id), pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected())));
                 pos++;
             }
 

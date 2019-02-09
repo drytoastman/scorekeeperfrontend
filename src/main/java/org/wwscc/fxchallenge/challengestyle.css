@@ -1,0 +1,11 @@
+.table-view .label {
+  -fx-text-alignment: center;
+}
+
+.table-column {
+  -fx-alignment: center-right;
+}
+
+.stageDivider {
+  -fx-background-color: lightgray;
+}

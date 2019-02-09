@@ -26,10 +26,13 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
 import org.wwscc.util.Prefs;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Worker.State;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -40,9 +43,15 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.cell.ChoiceBoxTableCell;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.util.Callback;
 import netscape.javascript.JSObject;
 
 public class MainController
@@ -50,10 +59,14 @@ public class MainController
     private static final Logger log = Logger.getLogger(MainController.class.getCanonicalName());
 
     // these are the placements into the bracket as per SCCA rulebook
-    static final int[] RANK4 =  new int[] { 3, 2, 4, 1 };
-    static final int[] RANK8 =  new int[] { 6, 3, 7, 2, 5, 4, 8, 1 };
-    static final int[] RANK16 = new int[] { 11, 6, 14, 3, 10, 7, 15, 2, 12, 5, 13, 4, 9, 8, 16, 1 };
-    static final int[] RANK32 = new int[] { 22, 11, 27, 6, 19, 14, 30, 3, 23, 10, 26, 7, 18, 15, 31, 2, 21, 12, 28, 5, 20, 13, 29, 4, 24, 9, 25, 8, 17, 16, 32, 1 };
+    public static final int[] RANK4 =  new int[] { 3, 2, 4, 1 };
+    public static final int[] RANK8 =  new int[] { 6, 3, 7, 2, 5, 4, 8, 1 };
+    public static final int[] RANK16 = new int[] { 11, 6, 14, 3, 10, 7, 15, 2, 12, 5, 13, 4, 9, 8, 16, 1 };
+    public static final int[] RANK32 = new int[] { 22, 11, 27, 6, 19, 14, 30, 3, 23, 10, 26, 7, 18, 15, 31, 2, 21, 12, 28, 5, 20, 13, 29, 4, 24, 9, 25, 8, 17, 16, 32, 1 };
+
+    private static Callback<TableColumn<ChallengePair, Integer>, TableCell<ChallengePair, Integer>> CONESGATES = ChoiceBoxTableCell.forTableColumn(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5));
+    private static Callback<TableColumn<ChallengePair, String>, TableCell<ChallengePair, String>> STATUS = ChoiceBoxTableCell.forTableColumn(FXCollections.observableArrayList("OK", "RL", "NS", "DNF", "DNS"));
+    private static Callback<TableColumn<ChallengePair, Double>, TableCell<ChallengePair, Double>> TIME = TextFieldTableCell.forTableColumn(new DoubleConverter());
 
     @FXML private Label seriesLabel;
     @FXML private Label timerLabel;
@@ -61,19 +74,36 @@ public class MainController
     @FXML private ComboBox<Challenge> challengeSelect;
     @FXML private WebView bracketView;
 
+    @FXML private TableView<ChallengePair> stageTable;
+    @FXML private TableColumn<ChallengePair, Integer> colRound;
+    @FXML private TableColumn<ChallengePair, String> colAnnouncer;
+    @FXML private TableColumn<ChallengePair, String> colTimerLeft,  colNameLeft, colStatusLeft;
+    @FXML private TableColumn<ChallengePair, Integer> colConesLeft, colGatesLeft;
+    @FXML private TableColumn<ChallengePair, Double> colDialLeft, colReactionLeft, colSixtyLeft, colTimeLeft;
+    @FXML private TableColumn<ChallengePair, String> colTimerRight, colNameRight, colStatusRight;
+    @FXML private TableColumn<ChallengePair, Integer> colConesRight, colGatesRight;
+    @FXML private TableColumn<ChallengePair, Double> colDialRight, colReactionRight, colSixtyRight, colTimeRight;
+
     private StringProperty currentSeries;
     private SimpleObjectProperty<Event> currentEvent;
     private SimpleObjectProperty<Challenge> currentChallenge;
 
     private ContextMenu contextMenu;
+    private MenuItem stageNormal, stageReversed, highlight;
     private double webx, weby;
 
     public MainController()
     {
-        contextMenu      = new ContextMenu();
         currentSeries    = new SimpleStringProperty();
         currentEvent     = new SimpleObjectProperty<>();
         currentChallenge = new SimpleObjectProperty<>();
+
+        contextMenu      = new ContextMenu();
+        stageNormal      = new MenuItem("Stage normal");
+        stageReversed    = new MenuItem("Stage reversed");
+        highlight        = new MenuItem("Highlight in table");
+        contextMenu.getItems().addAll(stageNormal, stageReversed, highlight);
+        highlight.setOnAction(e -> { System.out.println("highlight"); });
     }
 
     @FXML
@@ -102,6 +132,51 @@ public class MainController
         });
 
         bracketView.setContextMenuEnabled(false);
+
+        colTimerLeft.setText("44.123");
+        colTimerRight.setText("42.555");
+
+        DoubleProperty x = new SimpleDoubleProperty();
+        colTimeLeft.setCellValueFactory(cellData -> x.asObject());
+        x.addListener((obs, oldv, newv) -> { System.out.println("is now " + newv); });
+
+
+        colDialLeft.setCellFactory(TIME);
+        colConesLeft.setCellFactory(CONESGATES);
+        colGatesLeft.setCellFactory(CONESGATES);
+        colStatusLeft.setCellFactory(STATUS);
+        colTimeLeft.setCellFactory(TIME);
+
+        colDialRight.setCellFactory(TIME);
+        colConesRight.setCellFactory(CONESGATES);
+        colGatesRight.setCellFactory(CONESGATES);
+        colStatusRight.setCellFactory(STATUS);
+        colTimeRight.setCellFactory(TIME);
+
+        colRound.setCellValueFactory(p -> p.getValue().round.asObject());
+
+        colNameLeft.setCellValueFactory(p -> p.getValue().left.name);
+        colDialLeft.setCellValueFactory(p -> p.getValue().left.dial.asObject());
+        colReactionLeft.setCellValueFactory(p -> p.getValue().left.reaction.asObject());
+        colSixtyLeft.setCellValueFactory(p -> p.getValue().left.sixty.asObject());
+        colTimeLeft.setCellValueFactory(p -> p.getValue().left.raw.asObject());
+        colConesLeft.setCellValueFactory(p -> p.getValue().left.cones.asObject());
+        colGatesLeft.setCellValueFactory(p -> p.getValue().left.gates.asObject());
+        colStatusLeft.setCellValueFactory(p -> p.getValue().left.status);
+
+        colNameRight.setCellValueFactory(p -> p.getValue().right.name);
+        colDialRight.setCellValueFactory(p -> p.getValue().right.dial.asObject());
+        colReactionRight.setCellValueFactory(p -> p.getValue().right.reaction.asObject());
+        colSixtyRight.setCellValueFactory(p -> p.getValue().right.sixty.asObject());
+        colTimeRight.setCellValueFactory(p -> p.getValue().right.raw.asObject());
+        colConesRight.setCellValueFactory(p -> p.getValue().right.cones.asObject());
+        colGatesRight.setCellValueFactory(p -> p.getValue().right.gates.asObject());
+        colStatusRight.setCellValueFactory(p -> p.getValue().right.status);
+
+        ObservableList<ChallengePair> items = FXCollections.observableArrayList();
+        ChallengePair p = new ChallengePair();
+        items.add(p);
+        stageTable.setItems(items);
     }
 
     public void quit(ActionEvent event)
@@ -152,10 +227,10 @@ public class MainController
     public void loadEntrants(ActionEvent event)
     {
         Challenge c = currentChallenge.get();
-        Optional<List<ChallengeEntry>> ret = new LoadEntrantsDialog(c).showAndWait();
+        Optional<List<DialinEntry>> ret = new LoadEntrantsDialog(c).showAndWait();
         if (!ret.isPresent())
             return;
-        List<ChallengeEntry> toload = ret.get();
+        List<DialinEntry> toload = ret.get();
 
         int[] rank = null;
         switch (c.getBaseRounds())
@@ -215,14 +290,14 @@ public class MainController
         challengeSelect.getSelectionModel().select(Math.min(Prefs.getChallengeIndex(0), challengeSelect.getItems().size()-1));
     }
 
-    private void loadOne(List<ChallengeEntry> toload, Ids.Location location, int finishpos, boolean by) throws SQLException
+    private void loadOne(List<DialinEntry> toload, Ids.Location location, int finishpos, boolean by) throws SQLException
     {
         UUID carid = null;
         double dialin = 999.999;
 
         finishpos--; // convert to 0 index
         if (finishpos < toload.size()) {
-            ChallengeEntry entry = toload.get(finishpos);
+            DialinEntry entry = toload.get(finishpos);
             carid = entry.entrant.getCarId();
             dialin = entry.dialin.get();
             if (by) {
@@ -236,22 +311,6 @@ public class MainController
 
     public void doPopup(int rnd)
     {
-        if (contextMenu.isShowing()) {
-            contextMenu.hide();
-        }
-
-        contextMenu.getItems().clear();
-
-        // create menuitems
-        MenuItem menuItem1 = new MenuItem(""+webx);
-        MenuItem menuItem2 = new MenuItem(""+weby);
-        MenuItem menuItem3 = new MenuItem(""+rnd);
-
-        // add menu items to menu
-        contextMenu.getItems().add(menuItem1);
-        contextMenu.getItems().add(menuItem2);
-        contextMenu.getItems().add(menuItem3);
-
         contextMenu.show(bracketView, webx, weby);
     }
 
