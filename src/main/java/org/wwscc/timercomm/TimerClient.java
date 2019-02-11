@@ -33,10 +33,12 @@ public final class TimerClient implements RunServiceInterface
     private static final Logger log = Logger.getLogger(TimerClient.class.getName());
     private static ObjectMapper objectMapper = new ObjectMapper();
 
-    public static final String TREE_MESSAGE       = "TREE";
-    public static final String DIAL_MESSAGE       = "DIAL";
-    public static final String RUN_MESSAGE        = "RUN";
-    public static final String RUN_DELETE_MESSAGE = "RDELETE";
+    private static final String TREE_MESSAGE       = "TREE";
+    private static final String DIAL2_MESSAGE      = "DIAL";
+    private static final String DIALL_MESSAGE      = "DIALL";
+    private static final String DIALR_MESSAGE      = "DIALR";
+    private static final String RUN_MESSAGE        = "RUN";
+    private static final String RUN_DELETE_MESSAGE = "RDELETE";
 
     Socket sock;
     BufferedReader in;
@@ -113,10 +115,29 @@ public final class TimerClient implements RunServiceInterface
     public boolean sendDial(LeftRightDialin d)
     {
         ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
-        data.put("type", DIAL_MESSAGE);
+        data.put("type", DIAL2_MESSAGE);
         data.set("data", objectMapper.valueToTree(d));
         return send(data);
     }
+
+    @Override
+    public boolean sendLDial(double left)
+    {
+        ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
+        data.put("type", DIALL_MESSAGE);
+        data.put("data", left);
+        return send(data);
+    }
+
+    @Override
+    public boolean sendRDial(double right)
+    {
+        ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
+        data.put("type", DIALR_MESSAGE);
+        data.put("data", right);
+        return send(data);
+    }
+
 
     @Override
     public boolean sendRun(Run r)
@@ -145,8 +166,14 @@ public final class TimerClient implements RunServiceInterface
         {
             case TREE_MESSAGE:
                 break;
-            case DIAL_MESSAGE:
+            case DIAL2_MESSAGE:
                 Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, objectMapper.treeToValue(msg.get("data"), LeftRightDialin.class));
+                break;
+            case DIALL_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN_L, msg.get("data").asDouble());
+                break;
+            case DIALR_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN_R, msg.get("data").asDouble());
                 break;
             case RUN_MESSAGE:
                 Messenger.sendEvent(MT.TIMER_SERVICE_RUN, objectMapper.treeToValue(msg.get("data"), Run.class));

@@ -185,9 +185,21 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
             switch (type)
             {
-                case TREE: createNewEntry(); break;
-                case DIALIN_LEFT: holdLeftDial = (Double)o; break;
-                case DIALIN_RIGHT: holdRightDial = (Double)o; break;
+                case TREE:
+                    createNewEntry();
+                    break;
+
+                case DIALIN_LEFT:
+                    holdLeftDial = (Double)o;
+                    for (RunServiceInterface l : listeners)
+                        l.sendLDial(holdLeftDial);
+                    break;
+
+                case DIALIN_RIGHT:
+                    holdRightDial = (Double)o;
+                    for (RunServiceInterface l : listeners)
+                        l.sendRDial(holdRightDial);
+                    break;
 
                 case REACTION_LEFT:
                     addReaction(true, (ColorTime)o);

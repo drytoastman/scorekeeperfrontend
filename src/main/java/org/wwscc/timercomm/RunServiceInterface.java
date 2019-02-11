@@ -18,6 +18,8 @@ public interface RunServiceInterface extends EventListener
 {
     public boolean sendTree();
     public boolean sendDial(LeftRightDialin d);
+    public boolean sendLDial(double l);
+    public boolean sendRDial(double r);
     public boolean deleteRun(Run r);
     public boolean sendRun(Run r);
 }

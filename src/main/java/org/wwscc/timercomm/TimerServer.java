@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2012 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
 
@@ -14,7 +14,6 @@ import java.net.Socket;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.Discovery;
@@ -37,8 +36,7 @@ public class TimerServer implements RunServiceInterface
 
     String servicetype;
     ServerSocket serversock;
-    Vector<RunServiceInterface> clients;
-    Vector<RunServiceInterface> marked;
+    Vector<TimerClient> clients;
     boolean done;
 
     public TimerServer(String type) throws IOException
@@ -51,8 +49,7 @@ public class TimerServer implements RunServiceInterface
         servicetype = type;
         log.log(Level.INFO, "Service {0} started on port {1}", new Object[]{type, serversock.getLocalPort()});
 
-        clients = new Vector<RunServiceInterface>();
-        marked = new Vector<RunServiceInterface>();
+        clients = new Vector<TimerClient>();
         done = true;
     }
 
@@ -71,65 +68,49 @@ public class TimerServer implements RunServiceInterface
     @Override
     public boolean sendTree()
     {
-        boolean ret = true;
-        for (RunServiceInterface c : clients) {
-            if (!c.sendTree())
-            {
-                marked.add(c);
-                ret = false;
-            }
-        }
-        clients.removeAll(marked);
-        marked.clear();
-        return ret;
+        boolean somefail = clients.stream().map(tc -> tc.sendTree()).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
     }
 
     @Override
     public boolean sendDial(LeftRightDialin d)
     {
-        boolean ret = true;
-        for (RunServiceInterface c : clients) {
-            if (!c.sendDial(d))
-            {
-                marked.add(c);
-                ret = false;
-            }
-        }
-        clients.removeAll(marked);
-        marked.clear();
-        return ret;
+        boolean somefail = clients.stream().map(tc -> tc.sendDial(d)).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
+    }
+
+    @Override
+    public boolean sendLDial(double left)
+    {
+        boolean somefail = clients.stream().map(tc -> tc.sendLDial(left)).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
+    }
+
+    @Override
+    public boolean sendRDial(double right)
+    {
+        boolean somefail = clients.stream().map(tc -> tc.sendRDial(right)).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
     }
 
     @Override
     public boolean sendRun(Run r)
     {
-        boolean ret = true;
-        for (RunServiceInterface c : clients) {
-            if (!c.sendRun(r))
-            {
-                marked.add(c);
-                ret = false;
-            }
-        }
-        clients.removeAll(marked);
-        marked.clear();
-        return ret;
+        boolean somefail = clients.stream().map(tc -> tc.sendRun(r)).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
     }
 
     @Override
     public boolean deleteRun(Run r)
     {
-        boolean ret = true;
-        for (RunServiceInterface c : clients) {
-            if (!c.deleteRun(r))
-            {
-                marked.add(c);
-                ret = false;
-            }
-        }
-        clients.removeAll(marked);
-        marked.clear();
-        return ret;
+        boolean somefail = clients.stream().map(tc -> tc.deleteRun(r)).anyMatch(b -> b==false);
+        clients.removeIf(tc -> tc.done);
+        return !somefail;
     }
 
 
@@ -160,9 +141,9 @@ public class TimerServer implements RunServiceInterface
                     }
                 }
 
-                for (RunServiceInterface tc : clients)
+                for (TimerClient tc : clients)
                 {
-                    ((TimerClient)tc).stop();
+                    tc.stop();
                 }
 
                 Discovery.get().unregisterService(Prefs.getServerId(), servicetype);

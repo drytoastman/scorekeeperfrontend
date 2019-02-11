@@ -28,6 +28,8 @@ public class TimingInterface implements MessageListener
         Messenger.register(MT.CONTROL_DATA, this);
 
         Messenger.register(MT.TIMER_SERVICE_DIALIN, this);
+        Messenger.register(MT.TIMER_SERVICE_DIALIN_L, this);
+        Messenger.register(MT.TIMER_SERVICE_DIALIN_R, this);
         Messenger.register(MT.INPUT_SET_DIALIN, this);
         Messenger.register(MT.INPUT_SET_RUNMODE, this);
         Messenger.register(MT.INPUT_SET_ALIGNMODE, this);
@@ -80,6 +82,14 @@ public class TimingInterface implements MessageListener
                 if ((data.length == 3) && (data[0].equals("DIAL")))
                     doCommand("DIAL L " + data[1]);
                     doCommand("DIAL R " + data[2]);
+                break;
+
+            case TIMER_SERVICE_DIALIN_L:
+                doCommand("DIAL L " + (double)o);
+                break;
+
+            case TIMER_SERVICE_DIALIN_R:
+                doCommand("DIAL L " + (double)o);
                 break;
 
             case TIMER_SERVICE_DIALIN:

@@ -62,6 +62,8 @@ public class StagingController implements MessageListener
         Messenger.register(MT.TIMER_SERVICE_RUN, this);
         Messenger.register(MT.TIMER_SERVICE_CONNECTION_CLOSED, this);
         Messenger.register(MT.TIMER_SERVICE_CONNECTION_OPEN, this);
+        Messenger.register(MT.TIMER_SERVICE_DIALIN_L, this);
+        Messenger.register(MT.TIMER_SERVICE_DIALIN_R, this);
 
         rounds = new HashMap<>();
         currentChallenge = challenge;
@@ -280,6 +282,14 @@ public class StagingController implements MessageListener
 
             case TIMER_SERVICE_RUN:
                 stageTable.getItems().get(0).timerData((Run)data);
+                break;
+
+            case TIMER_SERVICE_DIALIN_L:
+                timerLabel.setText("L " + data.toString());
+                break;
+
+            case TIMER_SERVICE_DIALIN_R:
+                timerLabel.setText("R " + data.toString());
                 break;
         }
     }
