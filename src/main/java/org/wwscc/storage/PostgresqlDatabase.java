@@ -38,8 +38,8 @@ import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseable
 {
@@ -351,11 +351,11 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                 p.setBoolean(ii+1, (Boolean)v);
             } else if (v instanceof UUID) {
                 p.setObject(ii+1, v);
-            } else if (v instanceof ObjectNode) {
+            } else if (v instanceof JsonNode) {
                 PGobject pgo = new PGobject();
                 pgo.setType("json");
                 try {
-                    pgo.setValue(objectMapper.writeValueAsString((ObjectNode)v));
+                    pgo.setValue(objectMapper.writeValueAsString((JsonNode)v));
                 } catch (JsonProcessingException e) {
                     throw new SQLException(e);
                 }

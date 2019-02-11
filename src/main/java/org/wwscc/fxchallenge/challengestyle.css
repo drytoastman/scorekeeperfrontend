@@ -1,9 +1,16 @@
-.table-view .label {
-  -fx-text-alignment: center;
-}
 
 .table-column {
   -fx-alignment: center-right;
+  -fx-padding: 0 6 0 0;
+}
+
+.table-cell {
+  -fx-font-size: 14px;
+}
+
+.table-column .choice-box {
+  -fx-font-size: 12px;
+  -fx-padding: 0 0 0 0;
 }
 
 .stageDivider {

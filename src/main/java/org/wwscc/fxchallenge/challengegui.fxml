@@ -44,7 +44,7 @@
           </Menu>
           <Menu mnemonicParsing="false" text="Timer">
             <items>
-              <MenuItem mnemonicParsing="false" text="Connect" />
+              <MenuItem mnemonicParsing="false" onAction="#timerConnect" text="Connect" />
             </items>
           </Menu>
         </menus>
@@ -78,30 +78,20 @@
                     <columns>
                         <TableColumn fx:id="colRound" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" text="Round" />
                         <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
-
-                        <TableColumn fx:id="colTimerLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" text="0.000">
-                           <columns>
-                              <TableColumn fx:id="colDialLeft" resizable="false" sortable="false" text="Dial Left" />
-                           </columns>
-                        </TableColumn>
+                        <TableColumn fx:id="colDialLeft" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Dial" />
                         <TableColumn fx:id="colNameLeft" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
-                        <TableColumn fx:id="colReactionLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
-                        <TableColumn fx:id="colSixtyLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
-                        <TableColumn fx:id="colTimeLeft" maxWidth="65.0" minWidth="65.0" prefWidth="65.0" resizable="false" sortable="false" text="Time" />
-                        <TableColumn fx:id="colConesLeft" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="C" />
-                        <TableColumn fx:id="colGatesLeft" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="G" />
+                        <TableColumn fx:id="colReactionLeft" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
+                        <TableColumn fx:id="colSixtyLeft" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
+                        <TableColumn fx:id="colTimeLeft" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Time" />
+                        <TableColumn fx:id="colConesLeft" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" resizable="false" sortable="false" text="C" />
+                        <TableColumn fx:id="colGatesLeft" maxWidth="40.0" minWidth="40.0" prefWidth="40.0" resizable="false" sortable="false" text="G" />
                         <TableColumn fx:id="colStatusLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="S" />
                         <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
-
-                        <TableColumn fx:id="colTimerRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" text="0.000">
-                           <columns>
-                              <TableColumn fx:id="colDialRight" resizable="false" sortable="false" text="Dial Right" />
-                           </columns>
-                        </TableColumn>
+                        <TableColumn fx:id="colDialRight" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Dial" />
                         <TableColumn fx:id="colNameRight" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
-                        <TableColumn fx:id="colReactionRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
-                        <TableColumn fx:id="colSixtyRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
-                        <TableColumn fx:id="colTimeRight" maxWidth="65.0" minWidth="65.0" prefWidth="65.0" resizable="false" sortable="false" text="Time" />
+                        <TableColumn fx:id="colReactionRight" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
+                        <TableColumn fx:id="colSixtyRight" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
+                        <TableColumn fx:id="colTimeRight" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Time" />
                         <TableColumn fx:id="colConesRight" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="C" />
                         <TableColumn fx:id="colGatesRight" maxWidth="30.0" minWidth="30.0" prefWidth="30.0" resizable="false" sortable="false" text="G" />
                         <TableColumn fx:id="colStatusRight" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="S" />

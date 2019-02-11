@@ -68,6 +68,11 @@ public final class TimerClient implements RunServiceInterface
         done = true;
     }
 
+    public InetSocketAddress getRemote()
+    {
+        return (InetSocketAddress)sock.getRemoteSocketAddress();
+    }
+
     public void start()
     {
         if (!done) return;

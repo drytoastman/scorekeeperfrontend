@@ -33,8 +33,8 @@ public class Driver extends AttrBase
     {
         super();
         driverid = IdGenerator.generateId();
-        firstname = "";
-        lastname = "";
+        firstname = "null";
+        lastname = "name";
         email = "";
         username = driverid.toString().substring(0, 8);
         password = "";

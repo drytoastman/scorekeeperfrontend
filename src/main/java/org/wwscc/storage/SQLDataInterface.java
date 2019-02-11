@@ -488,6 +488,24 @@ public abstract class SQLDataInterface implements DataInterface
         return null;
     }
 
+
+    @Override
+    public Driver getDriverForCarId(UUID carid)
+    {
+        try
+        {
+            List<Driver> ret = executeSelect("SELECT d.* FROM drivers d JOIN cars c ON c.driverid=d.driverid WHERE carid=?", newList(carid), Driver.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0)
+                return ret.get(0);
+        }
+        catch (Exception ioe)
+        {
+            logError("getDriverForCarId", ioe);
+        }
+        return new Driver();
+    }
+
+
     @Override
     public List<Driver> findDriverByBarcode(String barcode)
     {
@@ -899,6 +917,20 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
+    public ChallengeStaging getStagingForChallenge(UUID challengeid)
+    {
+        try {
+            List<ChallengeStaging> ret = executeSelect("select * from challengestaging where challengeid=?", newList(challengeid), ChallengeStaging.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0) {
+                return ret.get(0);
+            }
+        } catch (Exception e) {
+            logError("getStagingForChallenge", e);
+        }
+        return new ChallengeStaging(challengeid);
+    }
+
+    @Override
     public Dialins loadDialins(UUID eventid)
     {
         String sql = "SELECT c.classcode,c.indexcode,c.useclsmult,r.* "
@@ -1065,6 +1097,14 @@ public abstract class SQLDataInterface implements DataInterface
         } catch (Exception ioe){
             logError("deleteChallengeRun", ioe);
         }
+    }
+
+
+    @Override
+    public void setChallengeStaging(ChallengeStaging s) throws SQLException
+    {
+        executeUpdate("INSERT INTO challengestaging (challengeid, stageinfo) VALUES (?,?) ON CONFLICT (challengeid) DO UPDATE SET stageinfo=?,modified=now()",
+                       newList(s.challengeid, s.getStageInfo(), s.getStageInfo()));
     }
 
 

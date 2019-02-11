@@ -43,16 +43,16 @@ public class ChallengeRun
 
     public ChallengeRun(UUID challengeid, UUID carid, double reaction, double sixty, double raw, int round, int course, int cones, int gates, String status)
     {
-        challengeid = IdGenerator.generateId();
-        carid = null;
-        reaction = -1;
-        sixty = -1;
-        raw = -1;
-        round = -1;
-        course = -1;
-        cones = 0;
-        gates = 0;
-        status = "";
+        this.challengeid = challengeid;
+        this.carid = carid;
+        this.reaction = reaction;
+        this.sixty = sixty;
+        this.raw = raw;
+        this.round = round;
+        this.course = course;
+        this.cones = cones;
+        this.gates = gates;
+        this.status = status;
     }
 
     public ChallengeRun(Run r)

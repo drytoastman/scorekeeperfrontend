@@ -24,6 +24,7 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
@@ -89,6 +90,11 @@ public class SimpleFinderDialog extends BaseDialog<InetSocketAddress> implements
     {
         Discovery.get().removeServiceListener(list);
         super.close();
+    }
+
+    public JComponent getMainPanel()
+    {
+        return mainPanel;
     }
 
     /**

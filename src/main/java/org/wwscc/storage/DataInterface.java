@@ -97,6 +97,7 @@ public interface DataInterface
     public void deleteDriver(UUID driverid) throws Exception;
     public void deleteDrivers(Collection<Driver> d) throws Exception;
     public Driver getDriver(UUID driverid);
+    public Driver getDriverForCarId(UUID carid);
     public List<Driver> findDriverByBarcode(String barcode);
     public List<Driver> getDriversLike(String firstname, String lastname);
     public Driver getDriverByUsername(String username);
@@ -142,6 +143,7 @@ public interface DataInterface
     public List<Challenge> getChallengesForEvent(UUID eventid);
     public List<ChallengeRound> getRoundsForChallenge(UUID challengeid);
     public List<ChallengeRun> getRunsForChallenge(UUID challengeid);
+    public ChallengeStaging getStagingForChallenge(UUID challengeid);
     public Dialins loadDialins(UUID eventid);
     public void updateChallenge(Challenge c);
     public void updateChallengeRound(ChallengeRound r);
@@ -149,6 +151,7 @@ public interface DataInterface
     @Deprecated public void updateChallengeRounds(List<ChallengeRound> rounds);
     public void setChallengeRun(ChallengeRun r);
     public void deleteChallengeRun(ChallengeRun r);
+    public void setChallengeStaging(ChallengeStaging s) throws SQLException;
 
 
     /**
