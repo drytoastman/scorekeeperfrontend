@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Vector;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.wwscc.storage.LeftRightDialin;
@@ -68,49 +69,44 @@ public class TimerServer implements RunServiceInterface
     @Override
     public boolean sendTree()
     {
-        boolean somefail = clients.stream().map(tc -> tc.sendTree()).anyMatch(b -> b==false);
-        clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return forEachClient(tc -> tc.sendTree());
     }
 
     @Override
     public boolean sendDial(LeftRightDialin d)
     {
-        boolean somefail = clients.stream().map(tc -> tc.sendDial(d)).anyMatch(b -> b==false);
-        clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return forEachClient(tc -> tc.sendDial(d));
     }
 
     @Override
     public boolean sendLDial(double left)
     {
-        boolean somefail = clients.stream().map(tc -> tc.sendLDial(left)).anyMatch(b -> b==false);
-        clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return forEachClient(tc -> tc.sendLDial(left));
     }
 
     @Override
     public boolean sendRDial(double right)
     {
-        boolean somefail = clients.stream().map(tc -> tc.sendRDial(right)).anyMatch(b -> b==false);
-        clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return forEachClient(tc -> tc.sendRDial(right));
     }
 
     @Override
     public boolean sendRun(Run r)
     {
-        boolean somefail = clients.stream().map(tc -> tc.sendRun(r)).anyMatch(b -> b==false);
-        clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return forEachClient(tc -> tc.sendRun(r));
     }
 
     @Override
     public boolean deleteRun(Run r)
     {
-        boolean somefail = clients.stream().map(tc -> tc.deleteRun(r)).anyMatch(b -> b==false);
+        return forEachClient(tc -> tc.deleteRun(r));
+    }
+
+    private boolean forEachClient(Function<TimerClient, Boolean> operation)
+    {
+        boolean ok = clients.stream().map(operation).reduce(true, (a,b) -> a&&b);
         clients.removeIf(tc -> tc.done);
-        return !somefail;
+        return ok;
     }
 
 

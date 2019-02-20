@@ -165,6 +165,7 @@ public final class TimerClient implements RunServiceInterface
         switch (type)
         {
             case TREE_MESSAGE:
+                Messenger.sendEvent(MT.TIMER_SERVICE_TREE, null);
                 break;
             case DIAL2_MESSAGE:
                 Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN, objectMapper.treeToValue(msg.get("data"), LeftRightDialin.class));
