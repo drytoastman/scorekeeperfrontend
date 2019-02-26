@@ -15,48 +15,52 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import org.wwscc.fxchallenge.StagingCellFactory.CellType;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.ChallengeRound;
 import org.wwscc.storage.ChallengeRun;
 import org.wwscc.storage.ChallengeStaging;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.Run;
 import org.wwscc.storage.ChallengeRound.RoundEntrant;
 import org.wwscc.timercomm.TimerClient;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.ChoiceBoxTableCell;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.paint.Color;
-import javafx.util.Callback;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })  // Generics just makes everything messy in the columns case
 public class StagingController implements MessageListener
 {
     private static final Logger log = Logger.getLogger(StagingController.class.getCanonicalName());
 
-    private static Callback CONESGATES = ChoiceBoxTableCell.forTableColumn(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5));
-    private static Callback STATUS = ChoiceBoxTableCell.forTableColumn(FXCollections.observableArrayList("OK", "RL", "NS", "DNF", "DNS"));
-    private static Callback TIME = TextFieldTableCell.forTableColumn(new DoubleConverter());
-
     private TableView<ChallengePair> stageTable;
-    private Label timerLabel;
-    //private TableColumn colTimerLeft, colTimerRight;
-    private SimpleObjectProperty<Challenge> currentChallenge;
+    private ObjectProperty<Challenge> currentChallenge;
+
+    private IntegerProperty highlightRound;
+    private IntegerProperty leftStartPtr, rightStartPtr;
+    private IntegerProperty leftFinishPtr, rightFinishPtr;
+
     private Map<Integer, ChallengeRound> rounds;
     private ChallengeStaging stageOrder;
     private TimerClient timerclient;
 
-    public StagingController(TableView<ChallengePair> table, SimpleObjectProperty<Challenge> challenge, Label label)
+    StringProperty timerHost, timerLeftDial, timerRightDial;
+
+    public StagingController(TableView<ChallengePair> table, SimpleObjectProperty<Challenge> challenge)
     {
         Messenger.register(MT.TIMER_SERVICE_DELETE, this);
         Messenger.register(MT.TIMER_SERVICE_RUN, this);
@@ -64,24 +68,41 @@ public class StagingController implements MessageListener
         Messenger.register(MT.TIMER_SERVICE_CONNECTION_OPEN, this);
         Messenger.register(MT.TIMER_SERVICE_DIALIN_L, this);
         Messenger.register(MT.TIMER_SERVICE_DIALIN_R, this);
+        Messenger.register(MT.TIMER_SERVICE_TREE, this);
 
-        rounds = new HashMap<>();
+        rounds         = new HashMap<>();
+        timerHost      = new SimpleStringProperty("Not Connected");
+        timerLeftDial  = new SimpleStringProperty();
+        timerRightDial = new SimpleStringProperty();
+        highlightRound = new SimpleIntegerProperty();
+        leftStartPtr   = new SimpleIntegerProperty(0);
+        leftFinishPtr  = new SimpleIntegerProperty(0);
+        rightStartPtr  = new SimpleIntegerProperty(0);
+        rightFinishPtr = new SimpleIntegerProperty(0);
         currentChallenge = challenge;
         stageTable = table;
-        timerLabel = label;
 
         currentChallenge.addListener((ob, old, newchallenge) -> {
             rounds.clear();
-            for (ChallengeRound r : Database.d.getRoundsForChallenge(currentChallenge.get().getChallengeId()))
-                rounds.put(r.getRound(), r);
-            stageOrder = Database.d.getStagingForChallenge(currentChallenge.get().getChallengeId());
-            loadTable();
+            if (newchallenge != null) {
+                for (ChallengeRound r : Database.d.getRoundsForChallenge(newchallenge.getChallengeId()))
+                    rounds.put(r.getRound(), r);
+                stageOrder = Database.d.getStagingForChallenge(newchallenge.getChallengeId());
+                loadTable();
+            } else {
+                stageTable.getItems().clear();
+            }
         });
 
+        table.setRowFactory(new StagingRowFactory(highlightRound));
         setupColumns(stageTable.getColumns());
 
-        //colTimerLeft.setText("44.123");
-        //colTimerRight.setText("42.555");
+        KeyCombination cut = new KeyCodeCombination(KeyCode.X, KeyCombination.SHORTCUT_DOWN);
+        table.setOnKeyPressed(e -> {
+            if (cut.match(e)) {
+                System.out.println("CUT");
+            }
+        });
     }
 
     private void setupColumns(List<TableColumn<ChallengePair,?>> columns)
@@ -92,9 +113,6 @@ public class StagingController implements MessageListener
             if (id == null) continue;
 
             switch(id) {
-                //case "colTimerLeft":  colTimerLeft  = col; break;
-                //case "colTimerRight": colTimerRight = col; break;
-
                 case "colRound":
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().round);
                     break;
@@ -103,66 +121,68 @@ public class StagingController implements MessageListener
                     break;
 
                 case "colDialLeft":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, leftStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.dial);
                     break;
                 case "colNameLeft":
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.STRING, leftStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.name);
                     break;
                 case "colReactionLeft":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, leftStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.reaction);
                     break;
                 case "colSixtyLeft":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, leftStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.sixty);
                     break;
                 case "colTimeLeft":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, leftFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.raw);
                     break;
                 case "colConesLeft":
-                    col.setCellFactory(CONESGATES);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.CONESGATES, leftFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.cones);
                     break;
                 case "colGatesLeft":
-                    col.setCellFactory(CONESGATES);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.CONESGATES, leftFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.gates);
                     break;
                 case "colStatusLeft":
-                    col.setCellFactory(STATUS);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.STATUS, leftFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().left.status);
                     break;
 
                 case "colDialRight":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, rightStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.dial);
                     break;
                 case "colNameRight":
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.STRING, rightStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.name);
                     break;
                 case "colReactionRight":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, rightStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.reaction);
                     break;
                 case "colSixtyRight":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, rightStartPtr, "nextDialCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.sixty);
                     break;
                 case "colTimeRight":
-                    col.setCellFactory(TIME);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.TIME, rightFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.raw);
                     break;
                 case "colConesRight":
-                    col.setCellFactory(CONESGATES);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.CONESGATES, rightFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.cones);
                     break;
                 case "colGatesRight":
-                    col.setCellFactory(CONESGATES);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.CONESGATES, rightFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.gates);
                     break;
                 case "colStatusRight":
-                    col.setCellFactory(STATUS);
+                    col.setCellFactory(StagingCellFactory.Factory(CellType.STATUS, rightFinishPtr, "nextResultCell"));
                     col.setCellValueFactory(p -> (ObservableValue)p.getValue().right.status);
                     break;
 
@@ -190,8 +210,6 @@ public class StagingController implements MessageListener
 
     public boolean isStaged(int round)
     {
-        if (!hasBothEntries(round)) return false;
-
         ChallengeRound r = rounds.get(round);
         UUID topid = r.getTopCar().getCarId();
         UUID botid = r.getBottomCar().getCarId();
@@ -199,7 +217,9 @@ public class StagingController implements MessageListener
             if (p.round.get() != round) continue;
             UUID lid = p.left.carid.get();
             UUID rid = p.right.carid.get();
-            if (topid.equals(lid) || topid.equals(rid) || botid.equals(lid) || botid.equals(rid))
+            if ((topid!=null) && (topid.equals(lid) || topid.equals(rid)))
+                return true;
+            if ((botid!=null) && (botid.equals(lid) || botid.equals(rid)))
                 return true;
         }
         return false;
@@ -211,21 +231,30 @@ public class StagingController implements MessageListener
         return r.getTopCar().getCarId() != null && r.getBottomCar().getCarId() != null;
     }
 
-    public void stage(int round, boolean swapped)
+    public void stage(int round, boolean samecar)
     {
         try {
-            if (swapped) {
-                stageOrder.getEntries().add(new ChallengeStaging.Entry(round, "L", "U"));
-                stageOrder.getEntries().add(new ChallengeStaging.Entry(round, "U", "L"));
+            List<ChallengeStaging.Entry> entries = stageOrder.getEntries();
+            if (samecar) {
+                entries.add(new ChallengeStaging.Entry(round, "U", null));
+                entries.add(new ChallengeStaging.Entry(round, null, "U"));
+                entries.add(new ChallengeStaging.Entry(round, null, "L"));
+                entries.add(new ChallengeStaging.Entry(round, "L", null));
             } else {
-                stageOrder.getEntries().add(new ChallengeStaging.Entry(round, "U", "L"));
-                stageOrder.getEntries().add(new ChallengeStaging.Entry(round, "L", "U"));
+                entries.add(new ChallengeStaging.Entry(round, "U", "L"));
+                entries.add(new ChallengeStaging.Entry(round, "L", "U"));
             }
             Database.d.setChallengeStaging(stageOrder);
             loadTable();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void highlight(int round)
+    {
+        highlightRound.set(round);
+        stageTable.refresh();
     }
 
     private void loadTable()
@@ -265,31 +294,30 @@ public class StagingController implements MessageListener
         switch (type)
         {
             case TIMER_SERVICE_CONNECTION_OPEN:
-                TimerClient t = (TimerClient)data;
-                timerLabel.setText(t.getRemote().getHostString());
-                //timerLabel.setText("Dial L 0.000 Dial R 0.000");
-                timerLabel.setTextFill(Color.BLACK);
+                timerHost.set(((TimerClient)data).getRemote().getHostString());
                 break;
 
             case TIMER_SERVICE_CONNECTION_CLOSED:
-                timerLabel.setText("Not Connected");
-                timerLabel.setTextFill(Color.RED);
+                timerHost.set("Not Connected");
                 break;
 
+            case TIMER_SERVICE_TREE:
             case TIMER_SERVICE_DELETE:
-                log.info("Don't implement DELETE yet");
+                log.info("Don't implement " + type.toString() + " yet");
                 break;
 
             case TIMER_SERVICE_RUN:
-                stageTable.getItems().get(0).timerData((Run)data);
+                //stageTable.getItems().get(0).timerData((Run)data);
+                rightStartPtr.set(rightStartPtr.get()+1);
+                //stageTable.refresh();
                 break;
 
             case TIMER_SERVICE_DIALIN_L:
-                timerLabel.setText("L " + data.toString());
+                timerLeftDial.set(data.toString());
                 break;
 
             case TIMER_SERVICE_DIALIN_R:
-                timerLabel.setText("R " + data.toString());
+                timerRightDial.set(data.toString());
                 break;
         }
     }

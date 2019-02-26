@@ -16,3 +16,25 @@
 .stageDivider {
   -fx-background-color: lightgray;
 }
+
+.highlightedRow {
+  -fx-background-color: #EEE8AA;
+}
+.highlightedRow:selected {
+  -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar;
+}
+
+.nextDialCell {
+  -fx-background-color: #FEF8BA;
+  -fx-font-size: 18px;
+}
+
+.nextResultCell {
+  -fx-background-color: #BEF8DA;
+  -fx-font-size: 18px;
+}
+
+.table-row-cell:selected .nextResultCell,  .table-row-cell:selected .nextDialCell {
+  -fx-text-fill: black;
+}
+

@@ -42,6 +42,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
@@ -56,8 +57,7 @@ public class MainController
     public static final int[] RANK16 = new int[] { 11, 6, 14, 3, 10, 7, 15, 2, 12, 5, 13, 4, 9, 8, 16, 1 };
     public static final int[] RANK32 = new int[] { 22, 11, 27, 6, 19, 14, 30, 3, 23, 10, 26, 7, 18, 15, 31, 2, 21, 12, 28, 5, 20, 13, 29, 4, 24, 9, 25, 8, 17, 16, 32, 1 };
 
-    @FXML private Label seriesLabel;
-    @FXML private Label timerLabel;
+    @FXML private Label seriesLabel, timerHost, timerDialLeft, timerDialRight;
     @FXML private ComboBox<Event> eventSelect;
     @FXML private ComboBox<Challenge> challengeSelect;
     @FXML private WebView bracketView;
@@ -70,7 +70,7 @@ public class MainController
     private StagingController staging;
     private ContextMenu contextMenu;
     private int contextRound;
-    private MenuItem stageNormal, stageReversed, highlight;
+    private MenuItem stageNormal, stageSameCar, highlight;
     private double webx, weby;
 
     public MainController()
@@ -83,20 +83,26 @@ public class MainController
         stageNormal      = new MenuItem("Stage normal");
         stageNormal.setOnAction(e -> staging.stage(contextRound, false));
 
-        stageReversed    = new MenuItem("Stage reversed");
-        stageReversed.setOnAction(e -> staging.stage(contextRound, true));
+        stageSameCar    = new MenuItem("Stage sharing car");
+        stageSameCar.setOnAction(e -> staging.stage(contextRound, true));
 
         highlight        = new MenuItem("Highlight in table");
-        highlight.setOnAction(e -> highlight());
+        highlight.setOnAction(e -> staging.highlight(contextRound));
 
-        contextMenu.getItems().addAll(stageNormal, stageReversed, highlight);
-        highlight.setOnAction(e -> { System.out.println("highlight"); });
+        contextMenu.getItems().addAll(stageNormal, stageSameCar, highlight);
     }
 
     @FXML
     public void initialize()
     {
-        staging = new StagingController(stageTable, currentChallenge, timerLabel);
+        staging = new StagingController(stageTable, currentChallenge);
+
+        timerHost.textProperty().bind(staging.timerHost);
+        timerHost.textProperty().addListener((obs,oldv,newv) -> {
+            timerHost.setTextFill((newv.contains("Not")) ? Color.RED : Color.BLACK);
+        });
+        timerDialLeft.textProperty().bind(staging.timerLeftDial);
+        timerDialRight.textProperty().bind(staging.timerRightDial);
 
         currentSeries.addListener((ob, old, name) -> {
             List<Event> events = Database.d.getEvents();
@@ -121,6 +127,10 @@ public class MainController
         });
 
         bracketView.setContextMenuEnabled(false);
+        bracketView.getEngine().setOnAlert(we -> {
+            System.out.println(we);
+        });
+
     }
 
     public void quit(ActionEvent event)
@@ -258,18 +268,13 @@ public class MainController
         Database.d.updateChallengeRound(location.challengeid, location.round, location.level == Ids.Location.Level.UPPER ? 1 : 2, carid, dialin);
     }
 
-
-    public void highlight()
-    {
-        System.out.println("highlight " + contextRound);
-    }
-
     public void doPopup(int rnd)
     {
         contextRound = rnd;
-        stageNormal.setDisable(!staging.isStaged(rnd));
-        stageReversed.setDisable(!staging.isStaged(rnd));
-        highlight.setDisable(staging.isStaged(rnd));
+        boolean hidestage = !staging.hasBothEntries(rnd) || staging.isStaged(rnd);
+        stageNormal.setDisable(hidestage);
+        stageSameCar.setDisable(hidestage);
+        highlight.setDisable(!staging.isStaged(rnd));
         contextMenu.show(bracketView, webx, weby);
     }
 

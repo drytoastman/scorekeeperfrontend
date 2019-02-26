@@ -51,20 +51,55 @@
       </MenuBar>
       <HBox alignment="CENTER_LEFT" prefHeight="48.0" spacing="5.0">
          <children>
-            <Label style="-fx-font-size: 14;" text="Series:" />
-            <Label fx:id="seriesLabel" style="-fx-font-size: 14;" text="&lt;none&gt;" />
+            <Label text="Series:">
+               <font>
+                  <Font size="14.0" />
+               </font></Label>
+            <Label fx:id="seriesLabel" text="&lt;none&gt;">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font></Label>
             <Region prefWidth="15.0" />
-            <Label style="-fx-font-size: 14;" text="Event:" />
+            <Label text="Event:">
+               <font>
+                  <Font size="14.0" />
+               </font></Label>
             <ComboBox fx:id="eventSelect" prefWidth="200.0" style="-fx-font-size: 14;" />
             <Region prefWidth="15.0" />
-            <Label style="-fx-font-size: 14;" text="Challenge:" />
+            <Label text="Challenge:">
+               <font>
+                  <Font size="14.0" />
+               </font></Label>
             <ComboBox fx:id="challengeSelect" prefWidth="150.0" style="-fx-font-size: 14;" />
             <Region prefWidth="15.0" />
-            <Label style="-fx-font-size: 14;" text="Timer:" />
-            <Label fx:id="timerLabel" text="Not Connected" textFill="RED">
+            <Label text="Timer:">
                <font>
-                  <Font size="18.0" />
+                  <Font size="14.0" />
                </font></Label>
+            <Label fx:id="timerHost" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" text="Not Connected" textFill="RED">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font></Label>
+            <Label text="Left Dial:">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="timerDialLeft" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="00.000">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font>
+            </Label>
+            <Label text="Right Dial:">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="timerDialRight" maxWidth="60.0" minWidth="60.0" prefWidth="60.0" text="00.000">
+               <font>
+                  <Font name="System Bold" size="16.0" />
+               </font>
+            </Label>
          </children>
          <padding>
             <Insets left="15.0" right="15.0" />
@@ -79,7 +114,7 @@
                         <TableColumn fx:id="colRound" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" text="Round" />
                         <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
                         <TableColumn fx:id="colDialLeft" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Dial" />
-                        <TableColumn fx:id="colNameLeft" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
+                        <TableColumn fx:id="colNameLeft" editable="false" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
                         <TableColumn fx:id="colReactionLeft" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
                         <TableColumn fx:id="colSixtyLeft" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
                         <TableColumn fx:id="colTimeLeft" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Time" />
@@ -88,7 +123,7 @@
                         <TableColumn fx:id="colStatusLeft" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="S" />
                         <TableColumn maxWidth="1" prefWidth="1" resizable="false" sortable="false" styleClass="stageDivider" />
                         <TableColumn fx:id="colDialRight" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Dial" />
-                        <TableColumn fx:id="colNameRight" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
+                        <TableColumn fx:id="colNameRight" editable="false" maxWidth="120.0" minWidth="120.0" prefWidth="120.0" resizable="false" sortable="false" text="Name" />
                         <TableColumn fx:id="colReactionRight" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Reaction" />
                         <TableColumn fx:id="colSixtyRight" editable="false" maxWidth="55.0" minWidth="55.0" prefWidth="55.0" resizable="false" sortable="false" text="Sixty" />
                         <TableColumn fx:id="colTimeRight" maxWidth="67.0" minWidth="67.0" prefWidth="67.0" resizable="false" sortable="false" text="Time" />

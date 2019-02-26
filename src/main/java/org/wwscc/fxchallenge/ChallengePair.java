@@ -36,7 +36,12 @@ public final class ChallengePair
 
         public Entry(int course)
         {
-            carid    = new SimpleObjectProperty<UUID>();
+            this.course = course;
+            this.carid  = new SimpleObjectProperty<UUID>();
+        }
+
+        private void init()
+        {
             dial     = new SimpleDoubleProperty();
             reaction = new SimpleDoubleProperty();
             sixty    = new SimpleDoubleProperty();
@@ -45,8 +50,6 @@ public final class ChallengePair
             gates    = new SimpleIntegerProperty();
             name     = new SimpleStringProperty();
             status   = new SimpleStringProperty("");
-
-            this.course = course;
 
             //carid.addListener(this);
             dial.addListener(this);
@@ -62,6 +65,8 @@ public final class ChallengePair
         public void set(String name, double dial, UUID carid, ChallengeRun run)
         {
             initializing = true;
+            if (this.dial == null)
+                init();
             this.name.set(name);
             this.dial.set(dial);
             this.carid.set(carid);
