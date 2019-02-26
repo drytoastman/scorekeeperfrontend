@@ -31,10 +31,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+
 /**
  */
 public class AppSetup
 {
+    public static enum Mode { SWING_MODE, FX_MODE };
+
     public static void unitLogging()
     {
         // Start with a fresh root set at warning
@@ -58,6 +64,11 @@ public class AppSetup
      * @param name the application name used for Java logging and database logging
      */
     public static void appSetup(String name)
+    {
+        appSetup(name, Mode.SWING_MODE);
+    }
+
+    public static void appSetup(String name, Mode mode)
     {
         // Set our platform wide L&F
         System.setProperty("swing.defaultlaf", "javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -86,7 +97,7 @@ public class AppSetup
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
         applog.setLevel(Prefs.getLogLevel().getJavaLevel());
-        applog.addHandler(new AlertHandler());
+        applog.addHandler(new AlertHandler(mode));
 
         // Add console handler if running in debug mode
         if (Prefs.isDebug()) {
@@ -134,8 +145,10 @@ public class AppSetup
      */
     public static class AlertHandler extends Handler
     {
-        public AlertHandler()
+        Mode mode;
+        public AlertHandler(Mode mode)
         {
+            this.mode = mode;
             setLevel(Level.ALL);
             setFormatter(new SimpleFormatter());
         }
@@ -144,7 +157,8 @@ public class AppSetup
         {
             if (isLoggable(logRecord))
             {
-                int type;
+                AlertType fxtype;
+                int swingtype;
                 String title;
                 if (logRecord.getMessage().charAt(0) != '\b') {
                     return;
@@ -154,30 +168,36 @@ public class AppSetup
                 if (val >= Level.SEVERE.intValue())
                 {
                     title = "Error";
-                    type = JOptionPane.ERROR_MESSAGE;
+                    swingtype = JOptionPane.ERROR_MESSAGE;
+                    fxtype = AlertType.ERROR;
                 }
                 else if (val >= Level.WARNING.intValue())
                 {
                     title = "Warning";
-                    type = JOptionPane.WARNING_MESSAGE;
+                    swingtype = JOptionPane.WARNING_MESSAGE;
+                    fxtype = AlertType.WARNING;
                 }
                 else
                 {
                     title = "Note";
-                    type = JOptionPane.INFORMATION_MESSAGE;
+                    swingtype = JOptionPane.INFORMATION_MESSAGE;
+                    fxtype = AlertType.INFORMATION;
                 }
 
-                String record = getFormatter().formatMessage(logRecord).replaceAll("[\b]","");
-                if (record.contains("\n"))
-                    record = "<HTML>" + record.replace("\n", "<br>") + "</HTML>";
+                final String record = getFormatter().formatMessage(logRecord).replaceAll("[\b]","");
 
-                // stay off FX or other problem threads
-                final String msg = record;
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override public void run() {
-                        JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, type);
-                    }
-                });
+                if (mode.equals(Mode.FX_MODE)) {
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(fxtype);
+                        alert.setTitle(title);
+                        alert.setHeaderText(null);
+                        alert.setContentText(record);
+                        alert.showAndWait();
+                    });
+                } else {
+                    final String msg = (record.contains("\n")) ? "<HTML>" + record.replace("\n", "<br>") + "</HTML>" : record;
+                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, swingtype));
+                }
             }
         }
 
