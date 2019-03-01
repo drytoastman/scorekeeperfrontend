@@ -96,6 +96,11 @@ public enum MT {
     CONNECT_REQUEST,
     PRELOAD_MENU,
 
+    // FXChallengeGUI
+    REMOVE_ROUND_PAIR,
+    CLEAR_ROW_DATA,
+    MAKE_ROW_ACTIVE,
+
 
     // ProTimer
     TREE,

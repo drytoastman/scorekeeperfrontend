@@ -63,7 +63,9 @@ public class Discovery
     {
         if (singleton == null) {
             singleton = new Discovery();
-            new Thread(singleton.new DiscoveryThread(), "DiscoveryThread").start();
+            Thread t = new Thread(singleton.new DiscoveryThread(), "DiscoveryThread");
+            t.setDaemon(true);
+            t.start();
         }
         return singleton;
     }

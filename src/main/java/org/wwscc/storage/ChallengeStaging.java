@@ -61,6 +61,11 @@ public class ChallengeStaging
         }
     }
 
+    public UUID getChallengeId()
+    {
+        return challengeid;
+    }
+
     public List<Entry> getEntries()
     {
         return entries;

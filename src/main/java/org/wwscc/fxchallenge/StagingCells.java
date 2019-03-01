@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 
 import org.wwscc.util.NF;
 
-import javafx.beans.property.IntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
@@ -14,7 +13,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
 
-public class StagingCellFactory
+public class StagingCells
 {
     public enum CellType { STRING, CONESGATES, TIME, STATUS };
     private static ObservableList<Integer> ConesGatesOptions = FXCollections.observableArrayList(0, 1, 2, 3, 4, 5);
@@ -38,81 +37,84 @@ public class StagingCellFactory
     }
 
     @SuppressWarnings("rawtypes")
-    static Callback Factory(CellType type, IntegerProperty active, String cssClass)
+    static Callback Factory(CellType type, String startClass, String finishClass)
     {
         return tcolumn -> {
             final TableCell ret;
             switch (type) {
                 case CONESGATES:
-                    ret = conesGatesCell(active, cssClass);
+                    ret = conesGatesCell(startClass, finishClass);
                     break;
                 case TIME:
-                    ret = timeCell(active, cssClass);
+                    ret = timeCell(startClass, finishClass);
                     break;
                 case STATUS:
-                    ret = statusCell(active, cssClass);
+                    ret = statusCell(startClass, finishClass);
                     break;
                 default:
-                    ret = textCell(active, cssClass);
+                    ret = textCell(startClass, finishClass);
                     break;
             }
 
-            if (active != null) {
-                active.addListener((obs, oldv, newv) -> {
-                    if (newv.intValue() == ret.getIndex())
-                        ret.getStyleClass().add(cssClass);
-                    else
-                        ret.getStyleClass().remove(cssClass);
-                }
-            );}
-
+            /*  We end up having to call refresh anyhow, so don't bother with listeners */
             return ret;
         };
     }
 
-    static TableCell<ChallengePair,String> textCell(IntegerProperty active, String cssClass)
+    static void updateCss(TableCell<ChallengePair,? extends Object> cell, String startClass, String finishClass)
+    {
+        ChallengePair pair = (ChallengePair)cell.getTableRow().getItem();
+        if ((pair != null) && pair.isActiveStart())
+            cell.getStyleClass().add(startClass);
+        else
+            cell.getStyleClass().remove(startClass);
+
+        if ((pair != null) && pair.isActiveFinish())
+            cell.getStyleClass().add(finishClass);
+        else
+            cell.getStyleClass().remove(finishClass);
+    }
+
+
+    static TableCell<ChallengePair,String> textCell(String startClass, String finishClass)
     {
         return new TextFieldTableCell<ChallengePair, String>() {
             public void updateItem(String t, boolean empty) {
                 super.updateItem(t, empty);
-                if ((active != null) && (this.getIndex() == active.get())) getStyleClass().add(cssClass);
-                else getStyleClass().remove(cssClass);
+                updateCss(this, startClass, finishClass);
                 setEditable(t != null);
             }
         };
     }
 
-    static TableCell<ChallengePair,Double> timeCell(IntegerProperty active, String cssClass)
+    static TableCell<ChallengePair,Double> timeCell(String startClass, String finishClass)
     {
         return new TextFieldTableCell<ChallengePair, Double>(new DoubleConverter()) {
             public void updateItem(Double t, boolean empty) {
                 super.updateItem(t, empty);
-                if ((active != null) && (this.getIndex() == active.get())) getStyleClass().add(cssClass);
-                else getStyleClass().remove(cssClass);
+                updateCss(this, startClass, finishClass);
                 setEditable(t != null);
             }
         };
     }
 
-    static TableCell<ChallengePair,Integer> conesGatesCell(IntegerProperty active, String cssClass)
+    static TableCell<ChallengePair,Integer> conesGatesCell(String startClass, String finishClass)
     {
         return new ChoiceBoxTableCell<ChallengePair, Integer>(ConesGatesOptions) {
             public void updateItem(Integer t, boolean empty) {
                 super.updateItem(t, empty);
-                if ((active != null) && (this.getIndex() == active.get())) getStyleClass().add(cssClass);
-                else getStyleClass().remove(cssClass);
+                updateCss(this, startClass, finishClass);
                 setEditable(t != null);
             }
         };
     }
 
-    static TableCell<ChallengePair,String> statusCell(IntegerProperty active, String cssClass)
+    static TableCell<ChallengePair,String> statusCell(String startClass, String finishClass)
     {
         return new ChoiceBoxTableCell<ChallengePair, String>(StatusOptions) {
             public void updateItem(String t, boolean empty) {
                 super.updateItem(t, empty);
-                if ((active != null) && (this.getIndex() == active.get())) getStyleClass().add(cssClass);
-                else getStyleClass().remove(cssClass);
+                updateCss(this, startClass, finishClass);
                 setEditable(t != null);
             }
         };

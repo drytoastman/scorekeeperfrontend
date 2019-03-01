@@ -79,7 +79,9 @@ public final class TimerClient implements RunServiceInterface
     {
         if (!done) return;
         done = false;
-        new Thread(new ReceiverThread()).start();
+        Thread t = new Thread(new ReceiverThread());
+        t.setDaemon(true);
+        t.start();
     }
 
     public void stop()

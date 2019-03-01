@@ -48,17 +48,15 @@ public final class ChallengePair
             raw      = new SimpleDoubleProperty();
             cones    = new SimpleIntegerProperty();
             gates    = new SimpleIntegerProperty();
-            name     = new SimpleStringProperty();
             status   = new SimpleStringProperty("");
+            name     = new SimpleStringProperty();
 
-            //carid.addListener(this);
             dial.addListener(this);
             reaction.addListener(this);
             sixty.addListener(this);
             raw.addListener(this);
             cones.addListener(this);
             gates.addListener(this);
-            //name.addListener(this);
             status.addListener(this);
         }
 
@@ -81,10 +79,23 @@ public final class ChallengePair
             initializing = false;
         }
 
+        public void clear()
+        {
+            initializing = true;
+            reaction.set(0);
+            sixty.set(0);
+            raw.set(0);
+            cones.set(0);
+            gates.set(0);
+            status.set("");
+            Database.d.setChallengeRun(new ChallengeRun(challengeid.get(), carid.get(), reaction.get(), sixty.get(), raw.get(), round.get(), course, cones.get(), gates.get(), status.get()));
+            initializing = false;
+        }
+
         public void timerData(Run r)
         {
-            reaction.set(r.getReaction());
-            sixty.set(r.getSixty());
+            reaction.set(r.getReaction() < 0 ? 0 : r.getReaction()); // difference between Run object and ChallengeRun
+            sixty.set(r.getSixty() < 0 ? 0 : r.getSixty());
             raw.set(r.getRaw());
             status.set(r.getStatus());
         }
@@ -116,12 +127,101 @@ public final class ChallengePair
         right.set(name, dialin, carid, run);
     }
 
-    public void timerData(Run r)
+    public void clearData()
+    {
+        left.clear();
+        right.clear();
+    }
+
+    public void reactionData(Run r)
+    {
+        if (r.isOK()) r.setStatus("");
+        boolean sixty = (r.getSixty() >= 0);
+        r.setRaw(0);
+        if (r.course() == 1) {
+            left.timerData(r);
+            leftSixtyFlag = sixty;
+            leftReactionFlag = true;
+        } else {
+            right.timerData(r);
+            rightSixtyFlag = sixty;
+            rightReactionFlag = true;
+        }
+        timestamp = System.currentTimeMillis();
+    }
+
+    public void runData(Run r)
     {
         if (r.course() == 1) {
             left.timerData(r);
+            leftFinishFlag = true;
         } else {
             right.timerData(r);
+            rightFinishFlag = true;
         }
+    }
+
+    // Tag on state info
+
+    private boolean activeStart, activeFinish;
+    private boolean leftReactionFlag, rightReactionFlag, leftSixtyFlag, rightSixtyFlag;
+    private boolean leftFinishFlag, rightFinishFlag;
+    private long timestamp;
+
+    public void makeActiveStart()
+    {
+        activeStart = true;
+        leftReactionFlag = rightReactionFlag = leftSixtyFlag = rightSixtyFlag = false;
+    }
+
+    public boolean isActiveStart()
+    {
+        return activeStart;
+    }
+
+    public boolean startComplete()
+    {
+        return activeStart && leftSixtyFlag && rightSixtyFlag;
+    }
+
+    public boolean startTimeoutComplete()
+    {
+        return activeStart && leftReactionFlag && rightReactionFlag && (System.currentTimeMillis() - timestamp > 4000);
+    }
+
+    public void deactivateStart()
+    {
+        activeStart = false;
+    }
+
+    //---
+
+    public void makeActiveFinish()
+    {
+        activeFinish = true;
+        leftFinishFlag = rightFinishFlag = false;
+    }
+
+    public boolean isActiveFinish()
+    {
+        return activeFinish;
+    }
+
+    public boolean finishComplete()
+    {
+        return activeFinish && leftFinishFlag && rightFinishFlag;
+    }
+
+    public void deactivateFinish()
+    {
+        activeFinish = false;
+    }
+
+    //--
+
+    public void deactivate()
+    {
+        activeStart = false;
+        activeFinish = false;
     }
 }

@@ -18,7 +18,7 @@
 }
 
 .highlightedRow {
-  -fx-background-color: #EEE8AA;
+  -fx-background-color: #add8e6;
 }
 .highlightedRow:selected {
   -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar;
