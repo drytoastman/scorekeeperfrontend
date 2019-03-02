@@ -26,6 +26,7 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
 import org.wwscc.util.Prefs;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -98,11 +99,11 @@ public class MainController
         staging = new StagingController(stageTable, currentChallenge);
 
         timerHost.textProperty().bind(staging.timerHost);
-        timerHost.textProperty().addListener((obs,oldv,newv) -> {
-            timerHost.setTextFill((newv.contains("Not")) ? Color.RED : Color.BLACK);
-        });
+        timerHost.textFillProperty().bind(Bindings.when(staging.timerHost.isNotEqualTo("Not Connected")).then(Color.BLACK).otherwise(Color.RED));
         timerDialLeft.textProperty().bind(staging.timerLeftDial);
+        timerDialLeft.textFillProperty().bind(Bindings.when(staging.leftDialOK()).then(Color.BLACK).otherwise(Color.RED));
         timerDialRight.textProperty().bind(staging.timerRightDial);
+        timerDialRight.textFillProperty().bind(Bindings.when(staging.rightDialOK()).then(Color.BLACK).otherwise(Color.RED));
 
         currentSeries.addListener((ob, old, name) -> {
             List<Event> events = Database.d.getEvents();
@@ -244,8 +245,10 @@ public class MainController
 
     public void reloadChallengeSelect()
     {
-        List<Challenge> challenges = Database.d.getChallengesForEvent(currentEvent.get().getEventId());
-        challengeSelect.setItems(FXCollections.observableArrayList(challenges));
+        if (currentEvent.get() != null)
+            challengeSelect.setItems(FXCollections.observableArrayList(Database.d.getChallengesForEvent(currentEvent.get().getEventId())));
+        else
+            challengeSelect.setItems(FXCollections.observableArrayList());
         challengeSelect.getSelectionModel().select(Math.min(Prefs.getChallengeIndex(0), challengeSelect.getItems().size()-1));
     }
 

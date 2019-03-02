@@ -97,7 +97,7 @@ public enum MT {
     PRELOAD_MENU,
 
     // FXChallengeGUI
-    REMOVE_ROUND_PAIR,
+    REMOVE_ROUND,
     CLEAR_ROW_DATA,
     MAKE_ROW_ACTIVE,
 

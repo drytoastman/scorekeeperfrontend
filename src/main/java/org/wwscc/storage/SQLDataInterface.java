@@ -917,6 +917,23 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
+    public ChallengeRun getRunForChallengeEntry(UUID challengeid, int round, UUID carid, int course)
+    {
+        try
+        {
+            List<ChallengeRun> ret = executeSelect("select * from challengeruns where challengeid=? and round=? and carid=? and course=?", newList(challengeid, round, carid, course), ChallengeRun.class.getConstructor(ResultSet.class));
+            if (ret.size() > 0)
+                return ret.get(0);
+            return null;
+        }
+        catch (Exception ioe)
+        {
+            logError("getRunsForChallengeEntry", ioe);
+            return null;
+        }
+    }
+
+    @Override
     public ChallengeStaging getStagingForChallenge(UUID challengeid)
     {
         try {

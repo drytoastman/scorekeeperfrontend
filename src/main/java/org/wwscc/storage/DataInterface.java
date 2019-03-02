@@ -143,6 +143,7 @@ public interface DataInterface
     public List<Challenge> getChallengesForEvent(UUID eventid);
     public List<ChallengeRound> getRoundsForChallenge(UUID challengeid);
     public List<ChallengeRun> getRunsForChallenge(UUID challengeid);
+    public ChallengeRun getRunForChallengeEntry(UUID challengeid, int round, UUID carid, int course);
     public ChallengeStaging getStagingForChallenge(UUID challengeid);
     public Dialins loadDialins(UUID eventid);
     public void updateChallenge(Challenge c);

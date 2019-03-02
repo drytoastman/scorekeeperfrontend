@@ -1,6 +1,6 @@
 package org.wwscc.fxchallenge;
 
-import java.util.Collections;
+import java.util.Arrays;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
@@ -34,8 +34,8 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
         activateRow = new MenuItem("Make Row Active");
         activateRow.setOnAction(e -> Messenger.sendEvent(MT.MAKE_ROW_ACTIVE, contextRow.getIndex()));
 
-        removeRoundPair = new MenuItem("Remove Round Pair");
-        removeRoundPair.setOnAction(e -> Messenger.sendEvent(MT.REMOVE_ROUND_PAIR, contextRow.getItem().round.get()));
+        removeRoundPair = new MenuItem("Remove Round From Staging");
+        removeRoundPair.setOnAction(e -> Messenger.sendEvent(MT.REMOVE_ROUND, contextRow.getItem().round.get()));
 
         clearRowData    = new MenuItem("Clear Run Data");
         clearRowData.setOnAction(e -> Messenger.sendEvent(MT.CLEAR_ROW_DATA, contextRow.getIndex()));
@@ -58,12 +58,19 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
 
         private void updateCss(ChallengePair pair)
         {
-            if ((pair != null) &&  pair.round.get() == highlightRound.get()) {
-                if (!getStyleClass().contains("highlightedRow")) {
+            if (pair != null) {
+                if (pair.round.get() == highlightRound.get()) {
                     getStyleClass().add("highlightedRow");
+                } else {
+                    getStyleClass().remove("highlightedRow");
+                }
+                if ((pair.round.get() % 2) != 0) {
+                    getStyleClass().add("oddRoundRow");
+                } else {
+                    getStyleClass().remove("oddRoundRow");
                 }
             } else {
-                getStyleClass().removeAll(Collections.singleton("highlightedRow"));
+                getStyleClass().removeAll(Arrays.asList("highlightedRow", "oddRoundRow"));
             }
         }
 

@@ -1,4 +1,8 @@
 
+.root {
+    -fx-control-inner-background-alt: -fx-control-inner-background ;
+}
+
 .table-column {
   -fx-alignment: center-right;
   -fx-padding: 0 6 0 0;
@@ -20,21 +24,26 @@
 .highlightedRow {
   -fx-background-color: #add8e6;
 }
-.highlightedRow:selected {
+.oddRoundRow {
+  -fx-background-color: #eee;
+}
+
+.highlightedRow:selected, .oddRoundRow:selected {
   -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar;
 }
 
 .nextDialCell {
   -fx-background-color: #FEF8BA;
-  -fx-font-size: 18px;
+  -fx-font-size: 16px;
 }
 
 .nextResultCell {
   -fx-background-color: #BEF8DA;
-  -fx-font-size: 18px;
+  -fx-font-size: 16px;
 }
 
 .table-row-cell:selected .nextResultCell,  .table-row-cell:selected .nextDialCell {
-  -fx-text-fill: black;
+  -fx-text-fill: #555;
+  -fx-border-color: #ccc;
 }
 
