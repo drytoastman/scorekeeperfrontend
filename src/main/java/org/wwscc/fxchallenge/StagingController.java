@@ -20,6 +20,7 @@ import org.wwscc.storage.Challenge;
 import org.wwscc.storage.ChallengeRound;
 import org.wwscc.storage.ChallengeStaging;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.Event;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.storage.ChallengeRound.RoundEntrant;
@@ -54,10 +55,12 @@ public class StagingController implements MessageListener
 
     private TimerClient timerclient;
     private Map<UUID, Store> data;
+    private RoundWinnerLogic winnerLogic;
 
     StringProperty timerHost, timerLeftDial, timerRightDial;
-    StringProperty activeLeftDial, activeRightDial;
-    IntegerProperty highlightRound;
+
+    private StringProperty activeLeftDial, activeRightDial;
+    private IntegerProperty highlightRound;
 
     static class Store
     {
@@ -78,18 +81,18 @@ public class StagingController implements MessageListener
 
             if (e.left().isPresent()) {
                 en = e.left().get().equals("U") ? r.getTopCar() : r.getBottomCar();
-                p.setLeft(Database.d.getDriverForCarId(en.getCarId()).getFullName(), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 1));
+                p.setLeft(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 1));
             }
             if (e.right().isPresent()) {
                 en = e.right().get().equals("U") ? r.getTopCar() : r.getBottomCar();
-                p.setRight(Database.d.getDriverForCarId(en.getCarId()).getFullName(), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 2));
+                p.setRight(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 2));
             }
 
             pairs.add(p);
         }
     }
 
-    public StagingController(TableView<ChallengePair> table, SimpleObjectProperty<Challenge> challenge)
+    public StagingController(TableView<ChallengePair> table, SimpleObjectProperty<Event> event, SimpleObjectProperty<Challenge> challenge)
     {
         Messenger.register(MT.TIMER_SERVICE_DELETE, this);
         Messenger.register(MT.TIMER_SERVICE_RUN, this);
@@ -114,6 +117,8 @@ public class StagingController implements MessageListener
         currentChallenge = challenge;
         currentChallenge.addListener((ob, old, newchallenge) -> changeVisibleChallenge(newchallenge));
 
+        winnerLogic = new RoundWinnerLogic(event, challenge, data);
+
         table.setRowFactory(new StagingRows(highlightRound));
         StagingColumns.setupColumns(stageTable.getColumns());
 
@@ -124,24 +129,6 @@ public class StagingController implements MessageListener
 
     public BooleanBinding leftDialOK() { return activeLeftDial.isEqualTo(timerLeftDial); }
     public BooleanBinding rightDialOK() { return activeRightDial.isEqualTo(timerRightDial); }
-
-    public void changeVisibleChallenge(Challenge newchallenge)
-    {
-        if (newchallenge != null) {
-            UUID cid = newchallenge.getChallengeId();
-            if (!data.containsKey(cid)) {
-                Store store = new Store(cid);
-                data.put(cid, store);
-                for (ChallengeRound r : Database.d.getRoundsForChallenge(cid))
-                    store.rounds.put(r.getRound(), r);
-                for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(cid).getEntries())
-                    store.addEntry(e);
-            }
-            stageTable.setItems(data.get(cid).pairs);
-        } else {
-            stageTable.setItems(FXCollections.observableArrayList());
-        }
-    }
 
     public void timerConnect()
     {
@@ -223,14 +210,36 @@ public class StagingController implements MessageListener
         highlightRound.set(round);
     }
 
-    public void clearRow(int rowindex)
+
+    private void changeVisibleChallenge(Challenge newchallenge)
+    {
+        if (newchallenge != null) {
+            UUID cid = newchallenge.getChallengeId();
+            if (!data.containsKey(cid)) {
+                Store store = new Store(cid);
+                data.put(cid, store);
+                for (ChallengeRound r : Database.d.getRoundsForChallenge(cid))
+                    store.rounds.put(r.getRound(), r);
+                for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(cid).getEntries())
+                    store.addEntry(e);
+                for (int round : store.rounds.keySet()) {
+                    winnerLogic.checkForWinner(round, true);
+                }
+            }
+            stageTable.setItems(data.get(cid).pairs);
+        } else {
+            stageTable.setItems(FXCollections.observableArrayList());
+        }
+    }
+
+    private void clearRow(int rowindex)
     {
         if (FXDialogs.confirm("Clear Data", null, "You are about to reset all run data for this row.  Continue?").showAndWait().get().equals(ButtonType.OK)) {
             stageTable.getItems().get(rowindex).clearData();
         }
     }
 
-    public void activateRow(int rowindex)
+    private void activateRow(int rowindex)
     {
         if (timerclient == null) {
             FXDialogs.warning("Not Connected", null, "You are trying to active a pair but you are not connected to the timer.").showAndWait();
@@ -258,7 +267,7 @@ public class StagingController implements MessageListener
         }
     }
 
-    public void newRunData(Run r)
+    private void newRunData(Run r)
     {
         Iterator<ChallengePair> iter = stageTable.getItems().iterator();
 
@@ -318,8 +327,6 @@ public class StagingController implements MessageListener
         activeRightDial.set(NF.format(pair.right.dial.get()));
         timerclient.sendDial(new LeftRightDialin(pair.left.dial.get(), pair.right.dial.get()));
     }
-
-
 
     @Override
     public void event(MT type, Object data)

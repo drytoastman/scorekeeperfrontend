@@ -125,6 +125,8 @@ public class ChallengeRound
 
         public void applyRun(ChallengeRun r)
         {
+            if (r == null)
+                return;
             if (r.course == Run.LEFT)
                 left = r;
             else if (r.course == Run.RIGHT)

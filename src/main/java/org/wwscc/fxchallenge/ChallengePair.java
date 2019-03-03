@@ -4,8 +4,10 @@ import java.util.UUID;
 
 import org.wwscc.storage.ChallengeRun;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.Driver;
 import org.wwscc.storage.Run;
-
+import org.wwscc.util.MT;
+import org.wwscc.util.Messenger;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -32,12 +34,29 @@ public final class ChallengePair
         protected IntegerProperty cones, gates;
         protected StringProperty  name, status;
         private int course;
-        private boolean initializing;
+
+        private boolean changelock;  // we only want single events when updating several items at once
+        private Driver driver;
 
         public Entry(int course)
         {
             this.course = course;
             this.carid  = new SimpleObjectProperty<UUID>();
+        }
+
+        public boolean hasRaw()
+        {
+            return (this.raw != null) && (this.raw.get() > 0);
+        }
+
+        public String getFirstName()
+        {
+            return (driver != null) ? driver.getFirstName() : "";
+        }
+
+        public boolean isOK()
+        {
+            return status.get().equals("OK");
         }
 
         private void init()
@@ -51,7 +70,7 @@ public final class ChallengePair
             status   = new SimpleStringProperty("");
             name     = new SimpleStringProperty();
 
-            dial.addListener(this);
+            dial.addListener((ob, oldv, newv) -> { System.out.println("FINISH ME!"); });
             reaction.addListener(this);
             sixty.addListener(this);
             raw.addListener(this);
@@ -60,12 +79,20 @@ public final class ChallengePair
             status.addListener(this);
         }
 
-        public void set(String name, double dial, UUID carid, ChallengeRun run)
+        private void commitRun()
         {
-            initializing = true;
+            if ((challengeid.get() == null) || (carid.get() == null)) return;
+            Database.d.setChallengeRun(new ChallengeRun(challengeid.get(), carid.get(), reaction.get(), sixty.get(), raw.get(), round.get(), course, cones.get(), gates.get(), status.get()));
+            Messenger.sendEvent(MT.CHALLENGE_RUN_UPDATED, round.get());
+        }
+
+        public void set(Driver driver, double dial, UUID carid, ChallengeRun run)
+        {
+            changelock = true;
             if (this.dial == null)
                 init();
-            this.name.set(name);
+            this.driver = driver;
+            this.name.set(driver.getFullName());
             this.dial.set(dial);
             this.carid.set(carid);
             if (run != null) {
@@ -76,35 +103,40 @@ public final class ChallengePair
                 gates.set(run.getGates());
                 status.set(run.getStatus());
             }
-            initializing = false;
+            changelock = false;
+            //Messenger.sendEvent(MT.CHALLENGE_RUN_UPDATED, round.get());
         }
 
         public void clear()
         {
-            initializing = true;
+            changelock = true;
             reaction.set(0);
             sixty.set(0);
             raw.set(0);
             cones.set(0);
             gates.set(0);
             status.set("");
-            Database.d.setChallengeRun(new ChallengeRun(challengeid.get(), carid.get(), reaction.get(), sixty.get(), raw.get(), round.get(), course, cones.get(), gates.get(), status.get()));
-            initializing = false;
+            changelock = false;
+            commitRun();
         }
 
         public void timerData(Run r)
         {
-            reaction.set(r.getReaction() < 0 ? 0 : r.getReaction()); // difference between Run object and ChallengeRun
+            changelock = true;
+            reaction.set(r.getReaction() < 0 ? 0 : r.getReaction()); // difference between Run object and ChallengeRun object
             sixty.set(r.getSixty() < 0 ? 0 : r.getSixty());
             raw.set(r.getRaw());
             status.set(r.getStatus());
+            changelock = false;
+            commitRun();
         }
 
         @Override
         public void changed(ObservableValue<? extends Object> observable, Object oldValue, Object newValue)
         {
-            if (!initializing)
-                Database.d.setChallengeRun(new ChallengeRun(challengeid.get(), carid.get(), reaction.get(), sixty.get(), raw.get(), round.get(), course, cones.get(), gates.get(), status.get()));
+            if (!changelock) {
+                commitRun();
+            }
         }
     }
 
@@ -117,14 +149,14 @@ public final class ChallengePair
         right = new Entry(2);
     }
 
-    public void setLeft(String name, double dialin, UUID carid, ChallengeRun run)
+    public void setLeft(Driver driver, double dialin, UUID carid, ChallengeRun run)
     {
-        left.set(name, dialin, carid, run);
+        left.set(driver, dialin, carid, run);
     }
 
-    public void setRight(String name, double dialin, UUID carid, ChallengeRun run)
+    public void setRight(Driver driver, double dialin, UUID carid, ChallengeRun run)
     {
-        right.set(name, dialin, carid, run);
+        right.set(driver, dialin, carid, run);
     }
 
     public void clearData()

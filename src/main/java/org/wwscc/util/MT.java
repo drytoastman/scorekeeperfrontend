@@ -100,6 +100,8 @@ public enum MT {
     REMOVE_ROUND,
     CLEAR_ROW_DATA,
     MAKE_ROW_ACTIVE,
+    CHALLENGE_RUN_UPDATED,
+    RELOAD_BRACKET,
 
 
     // ProTimer

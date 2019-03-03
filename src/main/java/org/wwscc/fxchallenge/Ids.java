@@ -37,6 +37,11 @@ public class Ids
             round = r;
         }
 
+        public int getRound()
+        {
+            return round;
+        }
+
         public Location advancesTo()
         {
             if (round == 99) /* third place winner */

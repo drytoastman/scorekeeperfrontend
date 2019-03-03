@@ -125,8 +125,13 @@ public class ChallengeRun
 
     public int statusLevel()
     {
+        return statusLevel(status);
+    }
+
+    public static int statusLevel(String status)
+    {
         if (status.equals("RL") || status.equals("NS")) return 2;
-        if (status.endsWith("DNF")) return 1;
+        if (status.endsWith("DNF") || status.equals("DNS") || status.equals("")) return 1;
         return 0;
     }
 }
