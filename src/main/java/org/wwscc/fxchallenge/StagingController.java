@@ -35,7 +35,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -51,8 +50,9 @@ public class StagingController implements MessageListener
     private static final Logger log = Logger.getLogger(StagingController.class.getCanonicalName());
 
     private TableView<ChallengePair> stageTable;
-    private ObjectProperty<Challenge> currentChallenge;
+    //private ObjectProperty<Challenge> currentChallenge;
 
+    private UUID shownId, activeId;
     private TimerClient timerclient;
     private Map<UUID, Store> data;
     private RoundWinnerLogic winnerLogic;
@@ -70,25 +70,27 @@ public class StagingController implements MessageListener
 
         public Store(UUID challengeid) { this.challengeid = challengeid; }
 
-        void addEntry(ChallengeStaging.Entry e)
+        void addEntry(ChallengeStaging.Entry stg)
         {
-            if (!e.valid())
+            if (!stg.valid())
                 return;
 
-            ChallengePair p = new ChallengePair(challengeid, e.round());
-            ChallengeRound r = rounds.get(e.round());
+            ChallengePair pair = new ChallengePair(challengeid, stg.round());
+            ChallengeRound r = rounds.get(stg.round());
             RoundEntrant en;
 
-            if (e.left().isPresent()) {
-                en = e.left().get().equals("U") ? r.getTopCar() : r.getBottomCar();
-                p.setLeft(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 1));
+            if (stg.left().isPresent()) {
+                en = stg.left().get().equals("U") ? r.getTopCar() : r.getBottomCar();
+                pair.setLeft(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(),
+                             Database.d.getRunForChallengeEntry(challengeid, stg.round(), en.getCarId(), 1));
             }
-            if (e.right().isPresent()) {
-                en = e.right().get().equals("U") ? r.getTopCar() : r.getBottomCar();
-                p.setRight(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(), Database.d.getRunForChallengeEntry(challengeid, e.round(), en.getCarId(), 2));
+            if (stg.right().isPresent()) {
+                en = stg.right().get().equals("U") ? r.getTopCar() : r.getBottomCar();
+                pair.setRight(Database.d.getDriverForCarId(en.getCarId()), en.getDial(), en.getCarId(),
+                              Database.d.getRunForChallengeEntry(challengeid, stg.round(), en.getCarId(), 2));
             }
 
-            pairs.add(p);
+            pairs.add(pair);
         }
     }
 
@@ -104,30 +106,29 @@ public class StagingController implements MessageListener
         Messenger.register(MT.REMOVE_ROUND, this);
         Messenger.register(MT.CLEAR_ROW_DATA, this);
         Messenger.register(MT.MAKE_ROW_ACTIVE, this);
+        Messenger.register(MT.DEACTIVATE, this);
 
-        timerHost      = new SimpleStringProperty("Not Connected");
-        timerLeftDial  = new SimpleStringProperty();
-        timerRightDial = new SimpleStringProperty();
-        activeLeftDial = new SimpleStringProperty();
+        timerHost       = new SimpleStringProperty("Not Connected");
+        timerLeftDial   = new SimpleStringProperty();
+        timerRightDial  = new SimpleStringProperty();
+        activeLeftDial  = new SimpleStringProperty();
         activeRightDial = new SimpleStringProperty();
-        highlightRound = new SimpleIntegerProperty(-1);
-        data           = new HashMap<>();
+        highlightRound  = new SimpleIntegerProperty(-1);
+        data            = new HashMap<>();
+        winnerLogic     = new RoundWinnerLogic(event, challenge, data);
 
-        stageTable       = table;
-        currentChallenge = challenge;
-        currentChallenge.addListener((ob, old, newchallenge) -> changeVisibleChallenge(newchallenge));
-
-        winnerLogic = new RoundWinnerLogic(event, challenge, data);
+        challenge.addListener((ob, old, newchallenge) -> changeVisibleChallenge(newchallenge));
 
         table.setRowFactory(new StagingRows(highlightRound));
-        StagingColumns.setupColumns(stageTable.getColumns());
+        StagingColumns.setupColumns(table.getColumns());
+        stageTable = table;
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(3000), ae -> checkStarts()));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(3000), ae -> checkAdvanceActiveStart()));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
     }
 
-    public BooleanBinding leftDialOK() { return activeLeftDial.isEqualTo(timerLeftDial); }
+    public BooleanBinding leftDialOK()  { return activeLeftDial.isEqualTo(timerLeftDial); }
     public BooleanBinding rightDialOK() { return activeRightDial.isEqualTo(timerRightDial); }
 
     public void timerConnect()
@@ -147,20 +148,20 @@ public class StagingController implements MessageListener
 
     public boolean isStaged(int round)
     {
-        return stageTable.getItems().stream().anyMatch(pair -> pair.round.get() == round);
+        return data.get(shownId).pairs.stream().anyMatch(pair -> pair.round.get() == round);
     }
 
     public boolean hasBothEntries(int round)
     {
-        ChallengeRound r = data.get(currentChallenge.get().getChallengeId()).rounds.get(round);
+        ChallengeRound r = data.get(shownId).rounds.get(round);
         return r.getTopCar().getCarId() != null && r.getBottomCar().getCarId() != null;
     }
 
     public void stage(int round, boolean samecar)
     {
         try {
-            Store store = data.get(currentChallenge.get().getChallengeId());
-            ChallengeStaging stageOrder = Database.d.getStagingForChallenge(currentChallenge.get().getChallengeId());
+            Store store = data.get(shownId);
+            ChallengeStaging stageOrder = Database.d.getStagingForChallenge(shownId);
             List<ChallengeStaging.Entry> entries = stageOrder.getEntries();
             if (samecar) {
                 entries.add(new ChallengeStaging.Entry(round, "U", null));
@@ -177,29 +178,9 @@ public class StagingController implements MessageListener
                     store.addEntry(entries.get(ii));
                 }
             }
+            winnerLogic.checkForWinner(round, true); // just in case it was removed and added again, update the comment
             Database.d.setChallengeStaging(stageOrder);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void removeRound(int round)
-    {
-        try {
-            for (ChallengePair pair : stageTable.getItems().filtered(pair -> pair.round.get() == round)) {
-                if (pair.isActiveStart() || pair.isActiveFinish()) {
-                    if (!FXDialogs.confirm("Removing Active Row", null, "You are about to remove staged entrants that are currently active. Continue?").showAndWait().get().equals(ButtonType.OK))
-                        return;
-                    break;
-                }
-            }
-
-            stageTable.getItems().removeIf(pair -> pair.round.get() == round);
-            ChallengeStaging stageOrder = Database.d.getStagingForChallenge(currentChallenge.get().getChallengeId());
-            if (stageOrder.getEntries().removeIf(pair -> pair.round() == round)) {
-                Database.d.setChallengeStaging(stageOrder);
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -210,32 +191,71 @@ public class StagingController implements MessageListener
         highlightRound.set(round);
     }
 
+    public void overrideDialins(int round)
+    {
+        Store store = data.get(shownId);
+        ChallengeRound r = store.rounds.get(round);
+
+        new OverrideDialinDialog(r.getTopCar().getDial(), r.getBottomCar().getDial()).showAndWait().ifPresent(p -> {
+            r.getTopCar().setDial(p.getKey());
+            r.getBottomCar().setDial(p.getValue());
+            Database.d.updateChallengeRound(r);
+            for (ChallengePair pair : store.pairs) { // in place update of table dialins
+                if (pair.round.get() != round) continue;
+                pair.overrideDial(r.getTopCar().getCarId(), p.getKey());
+                pair.overrideDial(r.getBottomCar().getCarId(), p.getValue());
+            }
+            Messenger.sendEvent(MT.RELOAD_BRACKET, null);
+        });
+    }
+
 
     private void changeVisibleChallenge(Challenge newchallenge)
     {
         if (newchallenge != null) {
-            UUID cid = newchallenge.getChallengeId();
-            if (!data.containsKey(cid)) {
-                Store store = new Store(cid);
-                data.put(cid, store);
-                for (ChallengeRound r : Database.d.getRoundsForChallenge(cid))
+            shownId = newchallenge.getChallengeId();
+            if (!data.containsKey(shownId)) {
+                Store store = new Store(shownId);
+                data.put(shownId, store);
+                for (ChallengeRound r : Database.d.getRoundsForChallenge(shownId))
                     store.rounds.put(r.getRound(), r);
-                for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(cid).getEntries())
+                for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(shownId).getEntries())
                     store.addEntry(e);
                 for (int round : store.rounds.keySet()) {
                     winnerLogic.checkForWinner(round, true);
                 }
             }
-            stageTable.setItems(data.get(cid).pairs);
+            stageTable.setItems(data.get(shownId).pairs);
         } else {
             stageTable.setItems(FXCollections.observableArrayList());
+        }
+    }
+
+    private void removeRound(int round)
+    {
+        try {
+            for (ChallengePair pair : data.get(shownId).pairs.filtered(pair -> pair.round.get() == round)) {
+                if (pair.isActiveStart() || pair.isActiveFinish()) {
+                    if (!FXDialogs.confirm("Removing Active Row", null, "You are about to remove staged entrants that are currently active. Continue?").showAndWait().get().equals(ButtonType.OK))
+                        return;
+                    break;
+                }
+            }
+
+            data.get(shownId).pairs.removeIf(pair -> pair.round.get() == round);
+            ChallengeStaging stageOrder = Database.d.getStagingForChallenge(shownId);
+            if (stageOrder.getEntries().removeIf(pair -> pair.round() == round)) {
+                Database.d.setChallengeStaging(stageOrder);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void clearRow(int rowindex)
     {
         if (FXDialogs.confirm("Clear Data", null, "You are about to reset all run data for this row.  Continue?").showAndWait().get().equals(ButtonType.OK)) {
-            stageTable.getItems().get(rowindex).clearData();
+            data.get(shownId).pairs.get(rowindex).clearData();
         }
     }
 
@@ -246,7 +266,7 @@ public class StagingController implements MessageListener
             return;
         }
 
-        List<ChallengePair> active = stageTable.getItems().filtered(p -> p.isActiveStart() || p.isActiveFinish());
+        List<ChallengePair> active = data.get(shownId).pairs.filtered(p -> p.isActiveStart() || p.isActiveFinish());
         if (active.size() > 0) {
             if (!FXDialogs.confirm("Set Pair Active", null, "You are about to manually change the next active pair.  Continue?").showAndWait().get().equals(ButtonType.OK)) {
                 return;
@@ -257,8 +277,9 @@ public class StagingController implements MessageListener
         }
 
         try {
-            ChallengePair p = stageTable.getItems().get(rowindex);
-            setDials(p);
+            ChallengePair p = data.get(shownId).pairs.get(rowindex);
+            activeId = shownId;
+            sendDialsToTimer(p);
             p.makeActiveStart();
             p.makeActiveFinish();
             stageTable.refresh();
@@ -269,7 +290,10 @@ public class StagingController implements MessageListener
 
     private void newRunData(Run r)
     {
-        Iterator<ChallengePair> iter = stageTable.getItems().iterator();
+        if (activeId == null)
+            return;
+
+        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
 
         if (Double.isNaN(r.getRaw())) { // reaction/sixty
             while (iter.hasNext())
@@ -277,7 +301,7 @@ public class StagingController implements MessageListener
                 ChallengePair p = iter.next();
                 if (p.isActiveStart()) {
                     p.reactionData(r);
-                    checkStarts();
+                    checkAdvanceActiveStart();
                     break;
                 }
             }
@@ -288,22 +312,46 @@ public class StagingController implements MessageListener
                 ChallengePair p = iter.next();
                 if (p.isActiveFinish()) {
                     p.runData(r);
-                    if (p.finishComplete()) {
-                        p.deactivateFinish();
-                        if (iter.hasNext()) {
-                            iter.next().makeActiveFinish();
-                        }
-                        stageTable.refresh();
-                    }
+                    checkAdvanceActiveFinish();
                     break;
                 }
             }
         }
     }
 
-    private void checkStarts()
+
+    private void deactivate()
     {
-        Iterator<ChallengePair> iter = stageTable.getItems().iterator();
+        if (activeId == null) return;
+        for (ChallengePair p : data.get(activeId).pairs) {
+            p.deactivate();
+        }
+        stageTable.refresh();
+    }
+
+    private void checkAdvanceActiveFinish()
+    {
+        if (activeId == null) return;
+        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
+        while (iter.hasNext()) {
+            ChallengePair p = iter.next();
+            if (p.isActiveFinish()) {
+                if (p.finishComplete()) {
+                    p.deactivateFinish();
+                    if (iter.hasNext()) {
+                        iter.next().makeActiveFinish();
+                    }
+                    stageTable.refresh();
+                }
+                break;
+            }
+        }
+    }
+
+    private void checkAdvanceActiveStart()
+    {
+        if (activeId == null) return;
+        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
         while (iter.hasNext()) {
             ChallengePair p = iter.next();
             if (p.isActiveStart()) {
@@ -312,7 +360,7 @@ public class StagingController implements MessageListener
                     if (iter.hasNext()) {
                         ChallengePair next = iter.next();
                         next.makeActiveStart();
-                        setDials(next);
+                        sendDialsToTimer(next);
                     }
                     stageTable.refresh();
                 }
@@ -321,8 +369,10 @@ public class StagingController implements MessageListener
         }
     }
 
-    private void setDials(ChallengePair pair)
+    private void sendDialsToTimer(ChallengePair pair)
     {
+        if ((pair.left.dial == null) || (pair.right.dial == null))
+            return;
         activeLeftDial.set(NF.format(pair.left.dial.get()));
         activeRightDial.set(NF.format(pair.right.dial.get()));
         timerclient.sendDial(new LeftRightDialin(pair.left.dial.get(), pair.right.dial.get()));
@@ -368,6 +418,10 @@ public class StagingController implements MessageListener
 
             case MAKE_ROW_ACTIVE:
                 activateRow((int)data);
+                break;
+
+            case DEACTIVATE:
+                deactivate();
                 break;
         }
     }

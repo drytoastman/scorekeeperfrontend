@@ -176,7 +176,7 @@ public class RoundWinnerLogic
                 break;
         }
 
-        if (!noupdate) Database.d.updateChallengeRound(cround);
+        //if (!noupdate) Database.d.updateChallengeRound(cround);
 
         List<ChallengePair> found = store.pairs.stream().filter(pair -> pair.round.get() == round).collect(Collectors.toList());
         for (int ii = 0; ii < found.size(); ii++) {
@@ -184,7 +184,7 @@ public class RoundWinnerLogic
             p.announcer.set(getPairResult(p.left, p.right));
         }
 
-        if (winner == null)
+        if ((winner == null) || (found.size() == 0))
             return;
 
         String winnername = "ERROR";
@@ -199,6 +199,9 @@ public class RoundWinnerLogic
         }
         found.get(found.size()-1).announcer.set(winnername + " wins by " + ((margin!= null) ? NF.format(margin) : "default"));
 
+        if (noupdate)
+            return;
+
         /* Advance the winner */
         Ids.Round rid = new Ids.Round(cid, round);
         Ids.Location eid = rid.advancesTo();
@@ -208,7 +211,7 @@ public class RoundWinnerLogic
         else
             next.getBottomCar().setTo(winner.getCarId(), getNewDial(winner));
 
-        if (!noupdate) Database.d.updateChallengeRound(next);
+        Database.d.updateChallengeRound(next);
 
         /* Special advance to third place bracket for losers in semifinal */
         Ids.Location thirdid = rid.advanceThird();
@@ -222,7 +225,7 @@ public class RoundWinnerLogic
             else
                 third.getBottomCar().setTo(loser.getCarId(), getNewDial(loser));
 
-            if (!noupdate) Database.d.updateChallengeRound(third);
+            Database.d.updateChallengeRound(third);
         }
 
         Messenger.sendEvent(MT.RELOAD_BRACKET, null);

@@ -5,16 +5,33 @@
 
 .table-column {
   -fx-alignment: center-right;
-  -fx-padding: 0 6 0 0;
+  -fx-padding: 6 5 2 0;
 }
 
 .table-cell {
-  -fx-font-size: 14px;
+  -fx-font-size: 15px;
+  -fx-font-weight: bold;
+  -fx-text-fill: #349;
+}
+
+.table-cell.noneditable {
+  -fx-text-fill: #000;
+  -fx-font-weight: normal;
+  -fx-font-size: 13px;
+}
+
+.rightname, .roundcol {
+  -fx-border-color: #999;
+  -fx-border-width: 0 0 0 3;
+}
+
+.dialcol {
+  -fx-border-color: #888;
+  -fx-border-width: 0 1 0 0;
 }
 
 .table-column .choice-box {
-  -fx-font-size: 12px;
-  -fx-padding: 0 0 0 0;
+  -fx-padding: 0 -10 0 5;
 }
 
 .stageDivider {
@@ -22,28 +39,25 @@
 }
 
 .highlightedRow {
-  -fx-background-color: #add8e6;
+  -fx-background-color: #add8e6 !important;
 }
 .oddRoundRow {
   -fx-background-color: #eee;
 }
 
-.highlightedRow:selected, .oddRoundRow:selected {
+.highlightedRow:selected, .oddRoundRow:selected, :selected .table-cell, :selected .table-cell.noneditable
+{
   -fx-background-color: -fx-focus-color, -fx-cell-focus-inner-border, -fx-selection-bar;
+  -fx-text-fill: #FFF;
 }
 
-.nextDialCell {
-  -fx-background-color: #FEF8BA;
-  -fx-font-size: 16px;
+.nextDialCell, .nextResultCell {
+  -fx-background-color: #fef5b1 !important;
 }
 
-.nextResultCell {
-  -fx-background-color: #BEF8DA;
-  -fx-font-size: 16px;
-}
-
-.table-row-cell:selected .nextResultCell,  .table-row-cell:selected .nextDialCell {
-  -fx-text-fill: #555;
+:selected .nextDialCell, :selected .nextResultCell {
+  -fx-text-fill: #444 !important;
   -fx-border-color: #ccc;
+  -fx-border-width: 1;
 }
 

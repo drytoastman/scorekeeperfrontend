@@ -24,7 +24,7 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
 
     private ContextMenu contextMenu;
     private TableRow<ChallengePair> contextRow;
-    private MenuItem activateRow, removeRoundPair, clearRowData, removeHighlight;
+    private MenuItem activateRow, deactivate, removeRoundPair, clearRowData, removeHighlight;
     private IntegerProperty highlightRound;
 
     public StagingRows(IntegerProperty highlightRound)
@@ -37,6 +37,9 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
         removeRoundPair = new MenuItem("Remove Round From Staging");
         removeRoundPair.setOnAction(e -> Messenger.sendEvent(MT.REMOVE_ROUND, contextRow.getItem().round.get()));
 
+        deactivate = new MenuItem("Deactivate");
+        deactivate.setOnAction(e -> Messenger.sendEvent(MT.DEACTIVATE, null));
+
         clearRowData    = new MenuItem("Clear Run Data");
         clearRowData.setOnAction(e -> Messenger.sendEvent(MT.CLEAR_ROW_DATA, contextRow.getIndex()));
 
@@ -44,7 +47,7 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
         removeHighlight.setOnAction(e -> { highlightRound.set(-1); });
 
         contextMenu = new ContextMenu();
-        contextMenu.getItems().addAll(activateRow, removeRoundPair, new SeparatorMenuItem(), clearRowData, removeHighlight);
+        contextMenu.getItems().addAll(activateRow, removeRoundPair, deactivate, new SeparatorMenuItem(), clearRowData, removeHighlight);
     }
 
 
@@ -95,6 +98,7 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
 
         row.setOnContextMenuRequested(event -> {
             contextRow = row;
+            deactivate.setDisable(!row.getItem().isActiveStart() && !row.getItem().isActiveFinish());
             contextMenu.show(row.getTableView(), event.getScreenX(), event.getScreenY());
             event.consume();
         });

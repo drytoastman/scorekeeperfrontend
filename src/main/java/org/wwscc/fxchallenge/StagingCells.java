@@ -1,13 +1,18 @@
 package org.wwscc.fxchallenge;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.function.UnaryOperator;
 
+import org.wwscc.util.EasyNumFilter;
 import org.wwscc.util.NF;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.cell.ChoiceBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
@@ -19,7 +24,7 @@ public class StagingCells
     private static ObservableList<Integer> ConesGatesOptions = FXCollections.observableArrayList(0, 1, 2, 3, 4, 5);
     private static ObservableList<String> StatusOptions = FXCollections.observableArrayList("OK", "RL", "NS", "DNF", "DNS");
 
-    static class DoubleConverter extends StringConverter<Double>
+    public static class DoubleConverter extends StringConverter<Double>
     {
         @Override
         public String toString(Double d) {
@@ -35,6 +40,70 @@ public class StagingCells
             return bd.doubleValue();
         }
     }
+
+    public static class TimeFormatter extends TextFormatter<Double>
+    {
+        static UnaryOperator<TextFormatter.Change> filter = c -> {
+            String text = c.getControlNewText();
+            if (EasyNumFilter.verifyString(true, 3, 3, text)) {
+                return c ;
+            } else {
+                return null ;
+            }
+        };
+
+        public TimeFormatter()
+        {
+            super(new DoubleConverter(), 0.0, filter);
+        }
+    }
+
+    public static class TimeCell extends TextFieldTableCell<ChallengePair, Double>
+    {
+        private TextFormatter<Double> formatter;
+        private TextField textAlias;
+
+        public TimeCell() {
+            this(new TimeFormatter());
+        }
+
+        private TimeCell(TextFormatter<Double> formatter) {
+            super(formatter.getValueConverter());
+            this.formatter = formatter;
+        }
+
+        /**
+         * Overridden to install the formatter. <p>
+         * Beware: implementation detail! super creates and configures
+         * the textField lazy on first access, so have to install after
+         * calling super.
+         */
+        @Override
+        public void startEdit() {
+            super.startEdit();
+            installFormatter();
+        }
+
+        private void installFormatter() {
+            if (formatter != null && isEditing() && textAlias == null) {
+                textAlias = invokeTextField();
+                textAlias.setTextFormatter(formatter);
+            }
+        }
+
+        private TextField invokeTextField() {
+            Class<?> clazz = TextFieldTableCell.class;
+            try {
+                Field field = clazz.getDeclaredField("textField");
+                field.setAccessible(true);
+                return (TextField) field.get(this);
+            } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
 
     @SuppressWarnings("rawtypes")
     static Callback Factory(CellType type, String startClass, String finishClass)
@@ -89,7 +158,7 @@ public class StagingCells
 
     static TableCell<ChallengePair,Double> timeCell(String startClass, String finishClass)
     {
-        return new TextFieldTableCell<ChallengePair, Double>(new DoubleConverter()) {
+        return new TimeCell() {
             public void updateItem(Double t, boolean empty) {
                 super.updateItem(t, empty);
                 updateCss(this, startClass, finishClass);

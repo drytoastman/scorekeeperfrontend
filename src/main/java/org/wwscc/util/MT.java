@@ -97,11 +97,12 @@ public enum MT {
     PRELOAD_MENU,
 
     // FXChallengeGUI
-    REMOVE_ROUND,
-    CLEAR_ROW_DATA,
-    MAKE_ROW_ACTIVE,
     CHALLENGE_RUN_UPDATED,
+    CLEAR_ROW_DATA,
+    DEACTIVATE,
+    MAKE_ROW_ACTIVE,
     RELOAD_BRACKET,
+    REMOVE_ROUND,
 
 
     // ProTimer

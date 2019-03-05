@@ -70,9 +70,6 @@ public final class ChallengePair
             status   = new SimpleStringProperty("");
             name     = new SimpleStringProperty();
 
-            dial.addListener((ob, oldv, newv) -> { System.out.println("FINISH ME!"); });
-            reaction.addListener(this);
-            sixty.addListener(this);
             raw.addListener(this);
             cones.addListener(this);
             gates.addListener(this);
@@ -109,6 +106,8 @@ public final class ChallengePair
 
         public void clear()
         {
+            if (this.dial == null)
+                return;
             changelock = true;
             reaction.set(0);
             sixty.set(0);
@@ -157,6 +156,14 @@ public final class ChallengePair
     public void setRight(Driver driver, double dialin, UUID carid, ChallengeRun run)
     {
         right.set(driver, dialin, carid, run);
+    }
+
+    public void overrideDial(UUID carid, double dialin)
+    {
+        if (left.carid.get().equals(carid))
+            left.dial.set(dialin);
+        if (right.carid.get().equals(carid))
+            right.dial.set(dialin);
     }
 
     public void clearData()
@@ -218,7 +225,7 @@ public final class ChallengePair
 
     public boolean startTimeoutComplete()
     {
-        return activeStart && leftReactionFlag && rightReactionFlag && (System.currentTimeMillis() - timestamp > 4000);
+        return activeStart && leftReactionFlag && rightReactionFlag && (System.currentTimeMillis() - timestamp > 10000);
     }
 
     public void deactivateStart()

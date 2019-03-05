@@ -43,6 +43,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
@@ -73,7 +74,7 @@ public class MainController
     private StagingController staging;
     private ContextMenu contextMenu;
     private int contextRound;
-    private MenuItem stageNormal, stageSameCar, highlight;
+    private MenuItem stageNormal, stageSameCar, highlight, override;
     private double webx, weby;
 
     public MainController()
@@ -86,13 +87,16 @@ public class MainController
         stageNormal      = new MenuItem("Stage normal");
         stageNormal.setOnAction(e -> staging.stage(contextRound, false));
 
-        stageSameCar    = new MenuItem("Stage sharing car");
+        stageSameCar     = new MenuItem("Stage sharing car");
         stageSameCar.setOnAction(e -> staging.stage(contextRound, true));
 
         highlight        = new MenuItem("Highlight in table");
         highlight.setOnAction(e -> staging.highlight(contextRound));
 
-        contextMenu.getItems().addAll(stageNormal, stageSameCar, highlight);
+        override         = new MenuItem("Override Dialins");
+        override.setOnAction(e -> staging.overrideDialins(contextRound));
+
+        contextMenu.getItems().addAll(stageNormal, stageSameCar, new SeparatorMenuItem(), highlight, override);
 
         Messenger.register(MT.RELOAD_BRACKET, (m,o) -> loadBracket());
     }
@@ -278,6 +282,7 @@ public class MainController
         stageNormal.setDisable(hidestage);
         stageSameCar.setDisable(hidestage);
         highlight.setDisable(!staging.isStaged(rnd));
+        override.setDisable(!staging.hasBothEntries(rnd));
         contextMenu.show(bracketView, webx, weby);
     }
 
