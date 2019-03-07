@@ -64,6 +64,7 @@ public class Actions
         apps.add(new EventSendAction<>("Registration", MT.LAUNCH_REQUEST, "org.wwscc.registration.Registration"));
         apps.add(new EventSendAction<>("ProTimer",     MT.LAUNCH_REQUEST, "org.wwscc.protimer.ProSoloInterface"));
         apps.add(new EventSendAction<>("ChallengeGUI", MT.LAUNCH_REQUEST, "org.wwscc.challenge.ChallengeGUI"));
+        apps.add(new EventSendAction<>("FXChallengeGUI (Beta)", MT.LAUNCH_REQUEST, "org.wwscc.fxchallenge.FXChallengeGUI"));
 
         quit           = new EventSendAction<>("Shutdown",        MT.SHUTDOWN_REQUEST);
         openStatus     = new EventSendAction<>("Status Window",   MT.OPEN_STATUS_REQUEST);
