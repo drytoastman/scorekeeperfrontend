@@ -142,7 +142,7 @@ public final class TimerClient implements RunServiceInterface
 
 
     @Override
-    public boolean sendRun(Run r)
+    public boolean sendRun(Run.WithRowId r)
     {
         ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
         data.put("type", RUN_MESSAGE);
@@ -151,7 +151,7 @@ public final class TimerClient implements RunServiceInterface
     }
 
     @Override
-    public boolean deleteRun(Run r)
+    public boolean deleteRun(Run.WithRowId r)
     {
         ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
         data.put("type", RUN_DELETE_MESSAGE);
@@ -179,10 +179,10 @@ public final class TimerClient implements RunServiceInterface
                 Messenger.sendEvent(MT.TIMER_SERVICE_DIALIN_R, msg.get("data").asDouble());
                 break;
             case RUN_MESSAGE:
-                Messenger.sendEvent(MT.TIMER_SERVICE_RUN, objectMapper.treeToValue(msg.get("data"), Run.class));
+                Messenger.sendEvent(MT.TIMER_SERVICE_RUN, objectMapper.treeToValue(msg.get("data"), Run.WithRowId.class));
                 break;
             case RUN_DELETE_MESSAGE:
-                Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, objectMapper.treeToValue(msg.get("data"), Run.class));
+                Messenger.sendEvent(MT.TIMER_SERVICE_DELETE, objectMapper.treeToValue(msg.get("data"), Run.WithRowId.class));
                 break;
             default:
                 log.warning("Unknown message type: " + type);

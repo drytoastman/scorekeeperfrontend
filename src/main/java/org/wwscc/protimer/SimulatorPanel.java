@@ -116,6 +116,8 @@ public class SimulatorPanel extends JFrame
             Messenger.register(MT.TIMER_SERVICE_DIALIN_L, this);
             Messenger.register(MT.TIMER_SERVICE_DIALIN_R, this);
             Messenger.register(MT.TIMER_SERVICE_DIALIN, this);
+            Messenger.register(MT.INPUT_DELETE_FINISH_LEFT, this);
+            Messenger.register(MT.INPUT_DELETE_FINISH_RIGHT, this);
         }
 
         public void shutdown()
@@ -123,6 +125,8 @@ public class SimulatorPanel extends JFrame
             Messenger.unregister(MT.TIMER_SERVICE_DIALIN_L, this);
             Messenger.unregister(MT.TIMER_SERVICE_DIALIN_R, this);
             Messenger.unregister(MT.TIMER_SERVICE_DIALIN, this);
+            Messenger.unregister(MT.INPUT_DELETE_FINISH_LEFT, this);
+            Messenger.unregister(MT.INPUT_DELETE_FINISH_RIGHT, this);
         }
 
         @Override
@@ -137,6 +141,8 @@ public class SimulatorPanel extends JFrame
                     Messenger.sendEvent(MT.DIALIN_LEFT, d.left);
                     Messenger.sendEvent(MT.DIALIN_RIGHT, d.right);
                     break;
+                case INPUT_DELETE_FINISH_LEFT: Messenger.sendEvent(MT.DELETE_FINISH_LEFT, data); break;
+                case INPUT_DELETE_FINISH_RIGHT: Messenger.sendEvent(MT.DELETE_FINISH_RIGHT, data); break;
             }
         }
     }

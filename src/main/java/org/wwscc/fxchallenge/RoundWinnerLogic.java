@@ -189,10 +189,10 @@ public class RoundWinnerLogic
 
         String winnername = "ERROR";
         for (ChallengePair p : found) {
-            if (p.left.carid.get().equals(winner.getCarId())) {
+            if (winner.getCarId().equals(p.left.carid.get())) {
                 winnername = p.left.getFirstName();
                 break;
-            } else if (p.right.carid.get().equals(winner.getCarId())) {
+            } else if (winner.getCarId().equals(p.right.carid.get())) {
                 winnername = p.right.getFirstName();
                 break;
             }

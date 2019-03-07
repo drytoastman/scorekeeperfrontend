@@ -220,6 +220,7 @@ public class MainController
             FXDialogs.warning("Challenge Loading Error", null, Arrays.toString(exceptions.toArray()));
         }
 
+        staging.reloadRoundsFromDatabase(currentChallenge.get().getChallengeId());
         loadBracket();
     }
 

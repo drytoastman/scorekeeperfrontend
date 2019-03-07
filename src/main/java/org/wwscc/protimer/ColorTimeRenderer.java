@@ -21,65 +21,65 @@ import org.wwscc.util.NF;
  */
 public class ColorTimeRenderer extends DefaultTableCellRenderer
 {
-	//private static final Logger log = Logger.getLogger(ColorTimeRenderer.class.getCanonicalName());
-	private int size;
+    //private static final Logger log = Logger.getLogger(ColorTimeRenderer.class.getCanonicalName());
+    private int size;
 
-	/**
-	 * Create the renderer using a particular font, if given.
-	 * @param fsize the HTML font size value
-	 */
-	public ColorTimeRenderer(int fsize)
-	{
-		super();
-		setHorizontalAlignment(TRAILING);
-		size = fsize;
-	}
+    /**
+     * Create the renderer using a particular font, if given.
+     * @param fsize the HTML font size value
+     */
+    public ColorTimeRenderer(int fsize)
+    {
+        super();
+        setHorizontalAlignment(TRAILING);
+        size = fsize;
+    }
 
-	@Override
-	public Component getTableCellRendererComponent(JTable tbl, Object o, boolean is, boolean hf, int r, int c)
-	{
-		setBackground(Color.WHITE);
-		ResultsModel m = (ResultsModel)tbl.getModel();
-		if (((c == 2) && (r == m.getLastLeftFinish())) ||
-			((c == 6) && (r == m.getLastRightFinish())))
-		{
-			setBackground(Color.LIGHT_GRAY);
-		}
+    @Override
+    public Component getTableCellRendererComponent(JTable tbl, Object o, boolean is, boolean hf, int r, int c)
+    {
+        setBackground(Color.WHITE);
+        ResultsModel m = (ResultsModel)tbl.getModel();
+        if (((c == 2) && (r == m.getLastLeftFinish())) ||
+            ((c == 6) && (r == m.getLastRightFinish())))
+        {
+            setBackground(Color.LIGHT_GRAY);
+        }
 
-		if (o instanceof ColorTime)
-		{
-			ColorTime bt = (ColorTime)o;
-			if (Double.isNaN(bt.time))
-			{
-				setText("");
-			}
-			else
-			{
-				String color = bt.getColorString();
-				String time = NF.format(bt.time);
-				String msg = bt.getColorMsg();
+        if (o instanceof ColorTime)
+        {
+            ColorTime bt = (ColorTime)o;
+            if (Double.isNaN(bt.time))
+            {
+                setText("");
+            }
+            else
+            {
+                String color = bt.getColorString();
+                String time = NF.format(bt.time);
+                String msg = bt.getColorMsg();
 
-				if ((bt.state == ColorTime.NORMAL) && !Double.isNaN(bt.dial))
-				{
-					setText("<HTML><FONT face=fixed size=+" + size + " color=" + color + ">" + time + " </FONT></HTML>");
-					setText("<HTML><FONT face=fixed size=+"+size+" color="+color+">"+time+" </FONT>" +
-							"<br><center><FONT size=3 color="+color+">dial "+NF.format(bt.dial)+"</FONT></center></HTML>");
-				}
-				else if (bt.state == ColorTime.NORMAL)
-				{
-					setText("<HTML><FONT face=fixed size=+" + size + " color=" + color + ">" + time + " </FONT></HTML>");
-				}
-				else
-				{
-					setText("<HTML><FONT face=fixed size=+"+size+" color="+color+">"+time+" </FONT>" +
-							"<br><center><FONT size=3 color="+color+">"+msg+"</FONT></center></HTML>");
-				}
-			}
-		}
-		else
-			setText("");
+                if ((bt.state == ColorTime.NORMAL) && !Double.isNaN(bt.dial))
+                {
+                    setText("<HTML><FONT face=fixed size=+" + size + " color=" + color + ">" + time + " </FONT></HTML>");
+                    setText("<HTML><FONT face=fixed size=+"+size+" color="+color+">"+time+" </FONT>" +
+                            "<br><center><FONT size=3 color="+color+">dial "+NF.format(bt.dial)+"</FONT></center></HTML>");
+                }
+                else if (bt.state == ColorTime.NORMAL)
+                {
+                    setText("<HTML><FONT face=fixed size=+" + size + " color=" + color + ">" + time + " </FONT></HTML>");
+                }
+                else
+                {
+                    setText("<HTML><FONT face=fixed size=+"+size+" color="+color+">"+time+" </FONT>" +
+                            "<br><center><FONT size=3 color="+color+">"+msg+"</FONT></center></HTML>");
+                }
+            }
+        }
+        else
+            setText("");
 
-		return this;
-	}
+        return this;
+    }
 }
 

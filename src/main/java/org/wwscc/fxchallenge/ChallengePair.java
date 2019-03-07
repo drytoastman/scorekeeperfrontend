@@ -1,6 +1,7 @@
 package org.wwscc.fxchallenge;
 
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import org.wwscc.storage.ChallengeRun;
 import org.wwscc.storage.Database;
@@ -22,6 +23,9 @@ import javafx.beans.value.ObservableValue;
 
 public final class ChallengePair
 {
+    @SuppressWarnings("unused")
+    private static final Logger log = Logger.getLogger(ChallengePair.class.getCanonicalName());
+
     protected ReadOnlyObjectProperty<UUID> challengeid;
     protected IntegerProperty round;
     protected StringProperty announcer;
@@ -121,6 +125,7 @@ public final class ChallengePair
 
         public void timerData(Run r)
         {
+            if (reaction == null) { return; } // not a staged side
             changelock = true;
             reaction.set(r.getReaction() < 0 ? 0 : r.getReaction()); // difference between Run object and ChallengeRun object
             sixty.set(r.getSixty() < 0 ? 0 : r.getSixty());
@@ -128,6 +133,11 @@ public final class ChallengePair
             status.set(r.getStatus());
             changelock = false;
             commitRun();
+        }
+
+        public void deleteFinish()
+        {
+            raw.set(0.0);
         }
 
         @Override
@@ -172,45 +182,49 @@ public final class ChallengePair
         right.clear();
     }
 
-    public void reactionData(Run r)
+    public void runData(Run.WithRowId r)
     {
-        if (r.isOK()) r.setStatus("");
-        boolean sixty = (r.getSixty() >= 0);
-        r.setRaw(0);
-        if (r.course() == 1) {
-            left.timerData(r);
-            leftSixtyFlag = sixty;
-            leftReactionFlag = true;
-        } else {
-            right.timerData(r);
-            rightSixtyFlag = sixty;
-            rightReactionFlag = true;
+        timerRowId = r.getRowId(); // always set the id here, matched from outside
+
+        if (Double.isNaN(r.getRaw())) {
+            if (r.isOK()) r.setStatus("");
+            r.setRaw(0);
+            if (r.course() == 1) {
+                leftReactionFlag = true;
+            } else {
+                rightReactionFlag = true;
+            }
+            timestamp = System.currentTimeMillis();
         }
-        timestamp = System.currentTimeMillis();
+
+        if (r.course() == 1)
+            left.timerData(r);
+        else
+            right.timerData(r);
     }
 
-    public void runData(Run r)
+    public void delete(Run.WithRowId r)
     {
         if (r.course() == 1) {
-            left.timerData(r);
-            leftFinishFlag = true;
+            left.deleteFinish();
         } else {
-            right.timerData(r);
-            rightFinishFlag = true;
+            right.deleteFinish();
         }
     }
+
 
     // Tag on state info
 
-    private boolean activeStart, activeFinish;
-    private boolean leftReactionFlag, rightReactionFlag, leftSixtyFlag, rightSixtyFlag;
-    private boolean leftFinishFlag, rightFinishFlag;
+    private boolean activeStart;
+    private boolean leftReactionFlag, rightReactionFlag;
     private long timestamp;
+    protected UUID timerRowId;
 
     public void makeActiveStart()
     {
         activeStart = true;
-        leftReactionFlag = rightReactionFlag = leftSixtyFlag = rightSixtyFlag = false;
+        leftReactionFlag = rightReactionFlag = false;
+        timerRowId = null;  // We now accept a new row from the timer
     }
 
     public boolean isActiveStart()
@@ -220,47 +234,14 @@ public final class ChallengePair
 
     public boolean startComplete()
     {
-        return activeStart && leftSixtyFlag && rightSixtyFlag;
-    }
-
-    public boolean startTimeoutComplete()
-    {
-        return activeStart && leftReactionFlag && rightReactionFlag && (System.currentTimeMillis() - timestamp > 10000);
+        if (!activeStart) return false;
+        long activity = System.currentTimeMillis() - timestamp;
+        return (leftReactionFlag && rightReactionFlag && (activity > 5000)) ||
+              ((leftReactionFlag || rightReactionFlag) && (activity > 10000));
     }
 
     public void deactivateStart()
     {
         activeStart = false;
-    }
-
-    //---
-
-    public void makeActiveFinish()
-    {
-        activeFinish = true;
-        leftFinishFlag = rightFinishFlag = false;
-    }
-
-    public boolean isActiveFinish()
-    {
-        return activeFinish;
-    }
-
-    public boolean finishComplete()
-    {
-        return activeFinish && leftFinishFlag && rightFinishFlag;
-    }
-
-    public void deactivateFinish()
-    {
-        activeFinish = false;
-    }
-
-    //--
-
-    public void deactivate()
-    {
-        activeStart = false;
-        activeFinish = false;
     }
 }

@@ -9,6 +9,7 @@
 
 package org.wwscc.protimer;
 
+import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -290,7 +291,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
             dr.setLeftDial(holdLeftDial);
             holdLeftDial = Double.NaN;
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.left, 1));
+                l.sendRun(resultToRun(dr.left, 1, dr.rowid));
         }
         else
         {
@@ -298,7 +299,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
             dr.setRightDial(holdRightDial);
             holdRightDial = Double.NaN;
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.right, 2));
+                l.sendRun(resultToRun(dr.right, 2, dr.rowid));
         }
     }
 
@@ -312,13 +313,13 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
         {
             dr.setLeftSixty((ColorTime)c);
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.left, 1));
+                l.sendRun(resultToRun(dr.left, 1, dr.rowid));
         }
         else
         {
             dr.setRightSixty((ColorTime)c);
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.right, 2));
+                l.sendRun(resultToRun(dr.right, 2, dr.rowid));
         }
     }
 
@@ -337,25 +338,27 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
     {
         if (left)
         {
-            if (runs.size() <= nextLeftFinish)
+            if ((nextLeftFinish == 0) || (nextLeftFinish-1 >= runs.size()))
                 return;
-            Result r = runs.get(nextLeftFinish-1).deleteLeftFinish();
+            DualResult dr = runs.get(nextLeftFinish-1);
+            Result r = dr.deleteLeftFinish();
             if (r != null)
             {
                 for (RunServiceInterface l : listeners)
-                    l.deleteRun(resultToRun(r, 1));
+                    l.deleteRun(resultToRun(r, 1, dr.rowid));
                 nextLeftFinish--;
             }
         }
         else
         {
-            if (runs.size() <= nextRightFinish)
+            if ((nextRightFinish == 0) || (nextRightFinish-1 >= runs.size()))
                 return;
-            Result r = runs.get(nextRightFinish-1).deleteRightFinish();
+            DualResult dr = runs.get(nextRightFinish-1);
+            Result r = dr.deleteRightFinish();
             if (r != null)
             {
                 for (RunServiceInterface l : listeners)
-                    l.deleteRun(resultToRun(r, 2));
+                    l.deleteRun(resultToRun(r, 2, dr.rowid));
                 nextRightFinish--;
             }
         }
@@ -364,6 +367,12 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
     public void addFinish(boolean left, ColorTime c, double dial)
     {
+        if (Double.isNaN(c.time)) {
+            log.warning("Trying to set finish time to NaN!");
+            (new Throwable()).printStackTrace();
+            return;
+        }
+
         if (left)
         {
             if (nextLeftFinish >= runs.size())
@@ -379,7 +388,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
             nextLeftFinish++;
 
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.left, 1));
+                l.sendRun(resultToRun(dr.left, 1, dr.rowid));
         }
         else
         {
@@ -396,17 +405,18 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
             nextRightFinish++;
 
             for (RunServiceInterface l : listeners)
-                l.sendRun(resultToRun(dr.right, 2));
+                l.sendRun(resultToRun(dr.right, 2, dr.rowid));
         }
     }
 
-    private Run resultToRun(Result r, int course)
+    private Run.WithRowId resultToRun(Result r, int course, UUID rowid)
     {
-        Run run = new Run(0.0); // constructor turns NaN into 999.999
+        Run.WithRowId run = new Run.WithRowId();
         run.setRaw(r.finish);
         run.setCourse(course);
         run.setReaction(r.rt);
         run.setSixty(r.sixty);
+        run.setRowId(rowid);
         switch (r.state)
         {
             case Result.REDLIGHT: run.setStatus("RL"); break;

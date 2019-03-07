@@ -46,6 +46,16 @@ public class Run extends AttrBase implements Cloneable
     @JsonProperty
     protected double raw;
 
+
+    public static class WithRowId extends Run
+    {
+        @JsonProperty
+        protected UUID rowid;  // help us to double check which run data went with what reaction, etc
+        public void setRowId(UUID u) { rowid = u; }
+        public UUID getRowId() { return rowid; }
+        public WithRowId() { super(0.0); }
+    }
+
     @JsonCreator
     protected Run()
     {

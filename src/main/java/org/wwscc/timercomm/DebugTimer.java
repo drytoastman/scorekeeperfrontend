@@ -44,7 +44,9 @@ public class DebugTimer extends JPanel
         defaultButton.addActionListener(new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                server.sendRun(new Run(DebugTimer.this.tf.getTime()));
+                Run.WithRowId r = new Run.WithRowId();
+                r.setRaw(DebugTimer.this.tf.getTime());
+                server.sendRun(r);
             }
         });
 

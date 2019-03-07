@@ -91,13 +91,13 @@ public class TimerServer implements RunServiceInterface
     }
 
     @Override
-    public boolean sendRun(Run r)
+    public boolean sendRun(Run.WithRowId r)
     {
         return forEachClient(tc -> tc.sendRun(r));
     }
 
     @Override
-    public boolean deleteRun(Run r)
+    public boolean deleteRun(Run.WithRowId r)
     {
         return forEachClient(tc -> tc.deleteRun(r));
     }

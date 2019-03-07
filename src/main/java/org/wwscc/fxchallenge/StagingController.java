@@ -10,7 +10,6 @@ package org.wwscc.fxchallenge;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,6 +40,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableView;
 import javafx.util.Duration;
@@ -50,8 +50,6 @@ public class StagingController implements MessageListener
     private static final Logger log = Logger.getLogger(StagingController.class.getCanonicalName());
 
     private TableView<ChallengePair> stageTable;
-    //private ObjectProperty<Challenge> currentChallenge;
-
     private UUID shownId, activeId;
     private TimerClient timerclient;
     private Map<UUID, Store> data;
@@ -102,7 +100,7 @@ public class StagingController implements MessageListener
         Messenger.register(MT.TIMER_SERVICE_CONNECTION_OPEN, this);
         Messenger.register(MT.TIMER_SERVICE_DIALIN_L, this);
         Messenger.register(MT.TIMER_SERVICE_DIALIN_R, this);
-        Messenger.register(MT.TIMER_SERVICE_TREE, this);
+        //Messenger.register(MT.TIMER_SERVICE_TREE, this);
         Messenger.register(MT.REMOVE_ROUND, this);
         Messenger.register(MT.CLEAR_ROW_DATA, this);
         Messenger.register(MT.MAKE_ROW_ACTIVE, this);
@@ -123,7 +121,7 @@ public class StagingController implements MessageListener
         StagingColumns.setupColumns(table.getColumns());
         stageTable = table;
 
-        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(3000), ae -> checkAdvanceActiveStart()));
+        Timeline timeline = new Timeline(new KeyFrame(Duration.millis(3000), ae -> checkAdvanceActive()));
         timeline.setCycleCount(Animation.INDEFINITE);
         timeline.play();
     }
@@ -214,28 +212,36 @@ public class StagingController implements MessageListener
     {
         if (newchallenge != null) {
             shownId = newchallenge.getChallengeId();
-            if (!data.containsKey(shownId)) {
-                Store store = new Store(shownId);
-                data.put(shownId, store);
-                for (ChallengeRound r : Database.d.getRoundsForChallenge(shownId))
-                    store.rounds.put(r.getRound(), r);
-                for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(shownId).getEntries())
-                    store.addEntry(e);
-                for (int round : store.rounds.keySet()) {
-                    winnerLogic.checkForWinner(round, true);
-                }
+            if (data.containsKey(shownId)) {
+                stageTable.setItems(data.get(shownId).pairs);
+            } else {
+                reloadRoundsFromDatabase(shownId);
             }
-            stageTable.setItems(data.get(shownId).pairs);
         } else {
             stageTable.setItems(FXCollections.observableArrayList());
         }
+    }
+
+    public void reloadRoundsFromDatabase(UUID newid)
+    {
+        data.remove(shownId);
+        Store store = new Store(shownId);
+        data.put(shownId, store);
+        for (ChallengeRound r : Database.d.getRoundsForChallenge(shownId))
+            store.rounds.put(r.getRound(), r);
+        for (ChallengeStaging.Entry e : Database.d.getStagingForChallenge(shownId).getEntries())
+            store.addEntry(e);
+        for (int round : store.rounds.keySet()) {
+            winnerLogic.checkForWinner(round, true);
+        }
+        stageTable.setItems(store.pairs);
     }
 
     private void removeRound(int round)
     {
         try {
             for (ChallengePair pair : data.get(shownId).pairs.filtered(pair -> pair.round.get() == round)) {
-                if (pair.isActiveStart() || pair.isActiveFinish()) {
+                if (pair.isActiveStart()) { // || pair.isActiveFinish()) {
                     if (!FXDialogs.confirm("Removing Active Row", null, "You are about to remove staged entrants that are currently active. Continue?").showAndWait().get().equals(ButtonType.OK))
                         return;
                     break;
@@ -266,13 +272,13 @@ public class StagingController implements MessageListener
             return;
         }
 
-        List<ChallengePair> active = data.get(shownId).pairs.filtered(p -> p.isActiveStart() || p.isActiveFinish());
+        List<ChallengePair> active = data.get(shownId).pairs.filtered(p -> p.isActiveStart()); // || p.isActiveFinish());
         if (active.size() > 0) {
             if (!FXDialogs.confirm("Set Pair Active", null, "You are about to manually change the next active pair.  Continue?").showAndWait().get().equals(ButtonType.OK)) {
                 return;
             }
             for (ChallengePair p : active) {
-                p.deactivate();
+                p.deactivateStart();
             }
         }
 
@@ -281,86 +287,71 @@ public class StagingController implements MessageListener
             activeId = shownId;
             sendDialsToTimer(p);
             p.makeActiveStart();
-            p.makeActiveFinish();
             stageTable.refresh();
         } catch (Exception e) {
             log.log(Level.WARNING, "Failed to active row: " + e, e);
         }
     }
 
-    private void newRunData(Run r)
+    private void deleteFinish(Run.WithRowId r)
     {
-        if (activeId == null)
-            return;
-
-        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
-
-        if (Double.isNaN(r.getRaw())) { // reaction/sixty
-            while (iter.hasNext())
-            {
-                ChallengePair p = iter.next();
-                if (p.isActiveStart()) {
-                    p.reactionData(r);
-                    checkAdvanceActiveStart();
-                    break;
-                }
-            }
-
-        } else {
-            while (iter.hasNext())
-            {
-                ChallengePair p = iter.next();
-                if (p.isActiveFinish()) {
-                    p.runData(r);
-                    checkAdvanceActiveFinish();
-                    break;
-                }
-            }
-        }
-    }
-
-
-    private void deactivate()
-    {
-        if (activeId == null) return;
-        for (ChallengePair p : data.get(activeId).pairs) {
-            p.deactivate();
-        }
-        stageTable.refresh();
-    }
-
-    private void checkAdvanceActiveFinish()
-    {
-        if (activeId == null) return;
-        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
-        while (iter.hasNext()) {
-            ChallengePair p = iter.next();
-            if (p.isActiveFinish()) {
-                if (p.finishComplete()) {
-                    p.deactivateFinish();
-                    if (iter.hasNext()) {
-                        iter.next().makeActiveFinish();
-                    }
-                    stageTable.refresh();
-                }
+        for (Store s : data.values())
+        {
+            FilteredList<ChallengePair> f = s.pairs.filtered(p -> r.getRowId().equals(p.timerRowId));
+            if (f.size() > 0) {
+                f.forEach(p -> p.delete(r));
                 break;
             }
         }
     }
 
-    private void checkAdvanceActiveStart()
+    private void newRunData(Run.WithRowId r)
+    {
+        for (Store s : data.values())
+        {
+            FilteredList<ChallengePair> f = s.pairs.filtered(p -> r.getRowId().equals(p.timerRowId));
+            if (f.size() > 0) {
+                f.forEach(p -> p.runData(r));
+                checkAdvanceActive();
+                return;
+            }
+        }
+
+        /* If we didn't find a match but there is an active start row, we can apply a new row if just reaction/sixty */
+        if ((activeId == null) || !Double.isNaN(r.getRaw())) return;
+        for (ChallengePair p : data.get(activeId).pairs) {
+            if (p.isActiveStart()) {
+                p.runData(r);
+            }
+        }
+        checkAdvanceActive();
+    }
+
+    private void deactivate()
     {
         if (activeId == null) return;
-        Iterator<ChallengePair> iter = data.get(activeId).pairs.iterator();
-        while (iter.hasNext()) {
-            ChallengePair p = iter.next();
+        for (ChallengePair p : data.get(activeId).pairs) {
+            p.deactivateStart();
+        }
+        stageTable.refresh();
+    }
+
+    private void checkAdvanceActive()
+    {
+        if (activeId == null) return;
+        List<ChallengePair> l = data.get(activeId).pairs;
+
+        for (int ii = 0; ii < l.size(); ii++)
+        {
+            ChallengePair p = l.get(ii);
+            ChallengePair n = (ii+1 < l.size()) ? l.get(ii+1) : null;
+
             if (p.isActiveStart()) {
-                if (p.startComplete() || p.startTimeoutComplete()) {
+                if (p.startComplete()) {
                     p.deactivateStart();
-                    if (iter.hasNext()) {
-                        ChallengePair next = iter.next();
-                        next.makeActiveStart();
-                        sendDialsToTimer(next);
+                    if (n != null) {
+                        n.makeActiveStart();
+                        sendDialsToTimer(n);
                     }
                     stageTable.refresh();
                 }
@@ -371,11 +362,18 @@ public class StagingController implements MessageListener
 
     private void sendDialsToTimer(ChallengePair pair)
     {
-        if ((pair.left.dial == null) || (pair.right.dial == null))
-            return;
-        activeLeftDial.set(NF.format(pair.left.dial.get()));
-        activeRightDial.set(NF.format(pair.right.dial.get()));
-        timerclient.sendDial(new LeftRightDialin(pair.left.dial.get(), pair.right.dial.get()));
+        double left, right;
+        if (pair.left.dial == null) {
+            left = right = pair.right.dial.get();
+        } else if (pair.right.dial == null) {
+            left = right = pair.left.dial.get();
+        } else {
+            left = pair.left.dial.get();
+            right = pair.right.dial.get();
+        }
+        activeLeftDial.set(NF.format(left));
+        activeRightDial.set(NF.format(right));
+        timerclient.sendDial(new LeftRightDialin(left, right));
     }
 
     @Override
@@ -391,13 +389,12 @@ public class StagingController implements MessageListener
                 timerHost.set("Not Connected");
                 break;
 
-            case TIMER_SERVICE_TREE:
             case TIMER_SERVICE_DELETE:
-                log.info("Don't implement " + type.toString() + " yet");
+                deleteFinish((Run.WithRowId)data);
                 break;
 
             case TIMER_SERVICE_RUN:
-                newRunData((Run)data);
+                newRunData((Run.WithRowId)data);
                 break;
 
             case TIMER_SERVICE_DIALIN_L:

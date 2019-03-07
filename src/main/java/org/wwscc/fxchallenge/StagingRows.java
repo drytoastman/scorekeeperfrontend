@@ -98,7 +98,7 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
 
         row.setOnContextMenuRequested(event -> {
             contextRow = row;
-            deactivate.setDisable(!row.getItem().isActiveStart() && !row.getItem().isActiveFinish());
+            deactivate.setDisable(!row.getItem().isActiveStart()); // && !row.getItem().isActiveFinish());
             contextMenu.show(row.getTableView(), event.getScreenX(), event.getScreenY());
             event.consume();
         });

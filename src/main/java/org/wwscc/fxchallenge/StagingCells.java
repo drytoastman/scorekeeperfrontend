@@ -137,11 +137,6 @@ public class StagingCells
             cell.getStyleClass().add(startClass);
         else
             cell.getStyleClass().remove(startClass);
-
-        if ((pair != null) && pair.isActiveFinish())
-            cell.getStyleClass().add(finishClass);
-        else
-            cell.getStyleClass().remove(finishClass);
     }
 
 

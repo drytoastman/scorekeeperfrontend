@@ -23,7 +23,7 @@ public class TimerClientTests
     private static Object lastRun;
     private static Object lastDelete;
     private static Object lastDial;
-    private Run run;
+    private Run.WithRowId run;
 
     @BeforeClass
     public static void init()
@@ -37,7 +37,11 @@ public class TimerClientTests
     @Before
     public void setup()
     {
-        run = new Run(123.456, 2, 1, "RL");
+        run = new Run.WithRowId();
+        run.setRaw(123.456);
+        run.setCones(2);
+        run.setGates(1);
+        run.setStatus("RL");
         run.setCourse(2);
         run.setReaction(0.501);
         run.setSixty(2.100);
