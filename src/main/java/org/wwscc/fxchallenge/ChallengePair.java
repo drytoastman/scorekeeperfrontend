@@ -170,9 +170,9 @@ public final class ChallengePair
 
     public void overrideDial(UUID carid, double dialin)
     {
-        if (left.carid.get().equals(carid))
+        if (carid.equals(left.carid.get()))
             left.dial.set(dialin);
-        if (right.carid.get().equals(carid))
+        if (carid.equals(right.carid.get()))
             right.dial.set(dialin);
     }
 

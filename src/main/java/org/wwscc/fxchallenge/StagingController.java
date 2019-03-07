@@ -202,6 +202,7 @@ public class StagingController implements MessageListener
                 if (pair.round.get() != round) continue;
                 pair.overrideDial(r.getTopCar().getCarId(), p.getKey());
                 pair.overrideDial(r.getBottomCar().getCarId(), p.getValue());
+                winnerLogic.checkForWinner(round, false);
             }
             Messenger.sendEvent(MT.RELOAD_BRACKET, null);
         });
