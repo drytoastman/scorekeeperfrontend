@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,6 +48,7 @@ public class TimerClientTests
         run.setSixty(2.100);
         run.setSegment(2, 22.333);
         run.setSegment(2, 23.456);
+        run.setRowId(UUID.randomUUID());
         lastRun = null;
         lastDelete = null;
         lastDial = null;
@@ -55,7 +57,7 @@ public class TimerClientTests
     @Test
     public void encodeRun() throws Exception
     {
-        String fields[] = new String[] { "course", "run", "cones", "gates", "status", "raw", "attr" };
+        String fields[] = new String[] { "course", "run", "cones", "gates", "status", "raw", "attr", "rowid" };
 
         ObjectNode encoded = objectMapper.valueToTree(run);
         int index = 0;
@@ -69,6 +71,9 @@ public class TimerClientTests
 
         String json = objectMapper.writeValueAsString(encoded);
         Run result = objectMapper.readValue(json, Run.class);
+        Run.WithRowId resultid = objectMapper.readValue(json, Run.WithRowId.class);
+        resultid.getRowId().equals(run.getRowId());
+
         Assert.assertEquals(run, result);
     }
 
