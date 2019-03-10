@@ -178,8 +178,6 @@ public class RoundWinnerLogic
                 break;
         }
 
-        //if (!noupdate) Database.d.updateChallengeRound(cround);
-
         List<ChallengePair> found = store.pairs.stream().filter(pair -> pair.round.get() == round).collect(Collectors.toList());
         for (int ii = 0; ii < found.size(); ii++) {
             ChallengePair p = found.get(ii);
@@ -203,6 +201,16 @@ public class RoundWinnerLogic
 
         if (noupdate)
             return;
+
+        advanceWinner(round, winner);
+    }
+
+
+    public void advanceWinner(int round, ChallengeRound.RoundEntrant winner)
+    {
+        UUID cid = currentChallenge.get().getChallengeId();
+        Store store = data.get(cid);
+        ChallengeRound cround    = store.rounds.get(round);
 
         /* Advance the winner */
         Ids.Round rid = new Ids.Round(cid, round);

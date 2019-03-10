@@ -9,6 +9,7 @@
 package org.wwscc.fxchallenge;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableView;
 import javafx.util.Duration;
+import javafx.util.Pair;
 
 public class StagingController implements MessageListener
 {
@@ -155,6 +157,28 @@ public class StagingController implements MessageListener
         ChallengeRound r = data.get(shownId).rounds.get(round);
         return r.getTopCar().getCarId() != null && r.getBottomCar().getCarId() != null;
     }
+
+    public List<Pair<Ids.Location.Level, String>> bracketDrivers(int round)
+    {
+        List<Pair<Ids.Location.Level, String>> ret = new ArrayList<>();
+        ChallengeRound r = data.get(shownId).rounds.get(round);
+        UUID topid = r.getTopCar().getCarId();
+        UUID botid = r.getBottomCar().getCarId();
+        if (topid != null) {
+            ret.add(new Pair<>(Ids.Location.Level.UPPER, Database.d.getDriverForCarId(topid).getFullName()));
+        }
+        if (botid != null) {
+            ret.add(new Pair<>(Ids.Location.Level.LOWER, Database.d.getDriverForCarId(botid).getFullName()));
+        }
+        return ret;
+    }
+
+    public void autoAdvance(int round, Ids.Location.Level level)
+    {
+        ChallengeRound r = data.get(shownId).rounds.get(round);
+        winnerLogic.advanceWinner(round, level == Ids.Location.Level.UPPER ? r.getTopCar() : r.getBottomCar());
+    }
+
 
     public void stage(int round, boolean samecar)
     {
