@@ -24,6 +24,7 @@ import org.w3c.dom.Text;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
+import org.wwscc.util.BrowserControl;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
@@ -222,6 +223,11 @@ public class MainController
 
         staging.reloadRoundsFromDatabase(currentChallenge.get().getChallengeId());
         loadBracket();
+    }
+
+    public void viewInBrowser(ActionEvent event)
+    {
+        BrowserControl.openURL(String.format("http://127.0.0.1/results/%s/challenge/%s/bracket", currentSeries.get(), currentChallenge.get().getChallengeId()));
     }
 
     public void timerConnect(ActionEvent event)

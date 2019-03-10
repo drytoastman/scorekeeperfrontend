@@ -103,6 +103,7 @@ public enum MT {
     MAKE_ROW_ACTIVE,
     RELOAD_BRACKET,
     REMOVE_ROUND,
+    ROWS_MOVED,
 
 
     // ProTimer

@@ -48,19 +48,19 @@ public final class ChallengePair
             this.carid  = new SimpleObjectProperty<UUID>();
         }
 
-        public boolean hasRaw()
-        {
-            return (this.raw != null) && (this.raw.get() > 0);
-        }
-
         public String getFirstName()
         {
             return (driver != null) ? driver.getFirstName() : "";
         }
 
+        public boolean hasStatus()
+        {
+            return (status != null) && !status.get().equals("");
+        }
+
         public boolean isOK()
         {
-            return status.get().equals("OK");
+            return (status != null) && status.get().equals("OK");
         }
 
         private void init()

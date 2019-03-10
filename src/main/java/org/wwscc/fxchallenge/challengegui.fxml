@@ -40,6 +40,7 @@
                   <MenuItem mnemonicParsing="false" onAction="#editChallenge" text="Edit Challenge" />
                   <MenuItem mnemonicParsing="false" onAction="#deleteChallenge" text="Delete Challenge" />
                   <MenuItem mnemonicParsing="false" onAction="#loadEntrants" text="Load Entrants" />
+                  <MenuItem mnemonicParsing="false" onAction="#viewInBrowser" text="View In Browser" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Timer">
@@ -127,8 +128,8 @@
                         <TableColumn fx:id="colConesRight" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" resizable="false" sortable="false" text="C" />
                         <TableColumn fx:id="colGatesRight" maxWidth="35.0" minWidth="35.0" prefWidth="35.0" resizable="false" sortable="false" text="G" />
                         <TableColumn fx:id="colStatusRight" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" text="S" />
-                        <TableColumn fx:id="colRound" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" text="Rnd" styleClass="noneditable, roundcol"/>
-                        <TableColumn fx:id="colAnnouncer" minWidth="100" prefWidth="${stageTable.width - 1025}" sortable="false" text="Announcer" styleClass="noneditable" />
+                        <TableColumn fx:id="colRound" maxWidth="45.0" minWidth="45.0" prefWidth="45.0" resizable="false" sortable="false" styleClass="noneditable, roundcol" text="Rnd" />
+                        <TableColumn fx:id="colAnnouncer" minWidth="100" prefWidth="${stageTable.width - 1025}" sortable="false" styleClass="noneditable" text="Announcer" />
 
                     </columns>
                   </TableView>

@@ -123,6 +123,12 @@ public class ChallengeRun
         return status.equals("OK");
     }
 
+    public boolean hasStatus()
+    {
+        if (status == null) return false;
+        return !status.equals("");
+    }
+
     public int statusLevel()
     {
         return statusLevel(status);

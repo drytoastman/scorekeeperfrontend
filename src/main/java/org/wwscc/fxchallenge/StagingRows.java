@@ -136,6 +136,7 @@ public class StagingRows implements Callback<TableView<ChallengePair>,TableRow<C
                 event.setDropCompleted(true);
                 table.getSelectionModel().select(dropIndex);
                 event.consume();
+                Messenger.sendEvent(MT.ROWS_MOVED, null);
             }
         });
 

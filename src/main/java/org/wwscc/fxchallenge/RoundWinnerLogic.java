@@ -48,10 +48,10 @@ public class RoundWinnerLogic
     public RoundState getState(ChallengeRun ul, ChallengeRun ur, ChallengeRun ll, ChallengeRun lr)
     {
         int val = 0;
-        if (ul != null && ul.getRaw() > 0) val |= 0x08;
-        if (ur != null && ur.getRaw() > 0) val |= 0x04;
-        if (ll != null && ll.getRaw() > 0) val |= 0x02;
-        if (lr != null && lr.getRaw() > 0) val |= 0x01;
+        if (ul != null && (ul.getRaw() > 0 || ul.hasStatus())) val |= 0x08;
+        if (ur != null && (ur.getRaw() > 0 || ur.hasStatus())) val |= 0x04;
+        if (ll != null && (ll.getRaw() > 0 || ll.hasStatus())) val |= 0x02;
+        if (lr != null && (lr.getRaw() > 0 || lr.hasStatus())) val |= 0x01;
 
         switch (val)
         {
@@ -134,21 +134,23 @@ public class RoundWinnerLogic
         switch (getState(topLeft, topRight, bottomLeft, bottomRight))
         {
             case HALFNORMAL:
-                if (topLeft.statusLevel() == bottomRight.statusLevel()) // both OK, both DNF or both RL
+                int diffn = topLeft.statusLevel() - bottomRight.statusLevel();
+                if (diffn == 0) // both OK, both DNF or both RL
                     break;
-                else if (topLeft.statusLevel() < bottomRight.statusLevel())
+                else if (diffn < 0) // bottom higher
                     winner = cround.getTopCar();
                 else
                     winner = cround.getBottomCar();
                 break;
 
             case HALFINVERSE:
-                if (topRight.statusLevel() == bottomLeft.statusLevel()) // both OK, both DNF or both RL
+                int diffi = topRight.statusLevel() - bottomLeft.statusLevel();
+                if (diffi == 0) // both OK, both DNF or both RL
                     break;
-                else if (topRight.statusLevel() < bottomLeft.statusLevel())
-                    winner = cround.getBottomCar();
-                else
+                else if (diffi < 0) // bottom higher
                     winner = cround.getTopCar();
+                else
+                    winner = cround.getBottomCar();
                 break;
 
             case DONE:
@@ -234,7 +236,7 @@ public class RoundWinnerLogic
 
     private String getPairResult(ChallengePair.Entry left, ChallengePair.Entry right)
     {
-        if (!left.hasRaw() || !right.hasRaw()) {
+        if (!left.hasStatus() && !right.hasStatus()) {
             return "";
         }
 

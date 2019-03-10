@@ -31,6 +31,8 @@ public class ChallengeStaging
             this.left  = Optional.ofNullable(left);
             this.right = Optional.ofNullable(right);
         }
+        public void setLeft(String s)   { left = Optional.ofNullable(s); }
+        public void setRight(String s)  { right = Optional.ofNullable(s); }
         public Optional<String> left()  { return left;  }
         public Optional<String> right() { return right; }
         public boolean valid() { return left.isPresent() || right.isPresent(); }

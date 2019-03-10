@@ -105,6 +105,7 @@ public class StagingController implements MessageListener
         Messenger.register(MT.CLEAR_ROW_DATA, this);
         Messenger.register(MT.MAKE_ROW_ACTIVE, this);
         Messenger.register(MT.DEACTIVATE, this);
+        Messenger.register(MT.ROWS_MOVED, this);
 
         timerHost       = new SimpleStringProperty("Not Connected");
         timerLeftDial   = new SimpleStringProperty();
@@ -237,6 +238,38 @@ public class StagingController implements MessageListener
         }
         stageTable.setItems(store.pairs);
     }
+
+
+    private void writeStagingToDatabase(UUID challengeid)
+    {
+        try {
+            Store store = data.get(challengeid);
+            ChallengeStaging stageOrder = new ChallengeStaging(challengeid);
+            for (ChallengePair p : store.pairs) {
+                ChallengeRound r = store.rounds.get(p.round.get());
+                ChallengeStaging.Entry e = new ChallengeStaging.Entry(p.round.get(), null, null);
+                UUID topid = r.getTopCar().getCarId();
+                UUID botid = r.getBottomCar().getCarId();
+                if (topid.equals(p.left.carid.get())) {
+                    e.setLeft("U");
+                } else if (topid.equals(p.right.carid.get())) {
+                    e.setRight("U");
+                }
+                if (botid.equals(p.left.carid.get())) {
+                    e.setLeft("L");
+                } else if (botid.equals(p.right.carid.get())) {
+                    e.setRight("L");
+                }
+
+                stageOrder.getEntries().add(e);
+            }
+            Database.d.setChallengeStaging(stageOrder);
+
+        } catch (Exception e) {
+            log.log(Level.WARNING, "\bFailed to write to database: " + e, e);
+        }
+    }
+
 
     private void removeRound(int round)
     {
@@ -420,6 +453,10 @@ public class StagingController implements MessageListener
 
             case DEACTIVATE:
                 deactivate();
+                break;
+
+            case ROWS_MOVED:
+                writeStagingToDatabase(shownId);
                 break;
         }
     }
