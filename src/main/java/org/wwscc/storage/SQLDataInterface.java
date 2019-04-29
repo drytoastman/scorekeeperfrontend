@@ -1466,6 +1466,7 @@ public abstract class SQLDataInterface implements DataInterface
         {
             start();
             executeUpdate("DELETE FROM weekendmembers", null);
+            executeUpdate("DELETE FROM unsubscribe", null);
             executeUpdate("DELETE FROM drivers", null);
             executeUpdate("DELETE FROM publiclog", null);
             commit();
