@@ -47,7 +47,7 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
             getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
             getDialogPane().setContent(root);
             getDialogPane().lookupButton(ButtonType.OK).setDisable(true);
-            getDialogPane().setPrefSize(400, 700);
+            getDialogPane().setPrefSize(400, 650);
 
             setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {

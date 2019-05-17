@@ -78,14 +78,14 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
         table.getColumnModel().getColumn(4).setMaxWidth(75);
 
         mainPanel.add(new JLabel("Number of Drivers"), "split");
-        mainPanel.add(spinner, "gapbottom 10, wrap");
+        mainPanel.add(spinner, "gapbottom 4, wrap");
 
         mainPanel.add(ladiesCheck, "wrap");
         mainPanel.add(openCheck, "wrap");
-        mainPanel.add(bonusCheck, "gapbottom 10, wrap");
+        mainPanel.add(bonusCheck, "gapbottom 4, wrap");
 
         mainPanel.add(new JLabel("Click on column header to sort"), "center, wrap");
-        mainPanel.add(new JScrollPane(table), "width 400, height 600, grow");
+        mainPanel.add(new JScrollPane(table), "width 400, height 450, grow");
     }
 
     @Override
