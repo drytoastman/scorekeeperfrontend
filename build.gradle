@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.3'
     compile 'com.github.jnr:jnr-unixsocket:0.18'
     compile 'com.miglayout:miglayout-swing:5.2'
     compile 'com.neuronrobotics:nrjavaserial:3.12.1'
