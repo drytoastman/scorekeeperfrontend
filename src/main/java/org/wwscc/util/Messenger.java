@@ -62,7 +62,8 @@ public class Messenger
 
     public static void sendEvent(final MT type, final Object data)
     {
-
+        if (!listPtrs.containsKey(type))
+            return;
         switch (mode)
         {
             case SWING_THREAD:
