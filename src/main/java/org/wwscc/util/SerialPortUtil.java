@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
 
@@ -15,6 +15,7 @@ import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.wwscc.dialogs.PortDialog;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -135,6 +136,7 @@ public class SerialPortUtil
             try {
                 int data = port.getInputStream().read();
                 if (data < 0) return;
+                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA,  new byte[] { (byte)data });
                 charlistener.processChar((char)data);
             } catch (Exception ioe) {
                 log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
@@ -210,8 +212,11 @@ public class SerialPortUtil
                 buf = newbuffer;
                 log.log(Level.INFO, "Increased byte buffer size to: {0}", buf.length);
             }
-            in.read(buf, count, size);
-            count += size;
+            int ret = in.read(buf, count, size);
+            if (ret > 0) {
+                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, ArrayUtils.subarray(buf, count, count+ret));
+                count += ret;
+            }
         }
 
         public byte[] getNextLine()

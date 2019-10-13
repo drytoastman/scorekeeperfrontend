@@ -39,6 +39,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
@@ -61,6 +62,7 @@ import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.NF;
+import org.wwscc.util.SerialDebugPane;
 import org.wwscc.util.SerialPortUtil;
 import org.wwscc.util.SerialPortUtil.LineBasedSerialPort;
 import org.wwscc.util.TimeStorage;
@@ -272,6 +274,11 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
                 case PROTIMER_NETWORK: bm.setText("ProTimer Network"); break;
             }
         }
+
+        timerMenu.addSeparator();
+        JMenuItem debug = new JMenuItem("Serial Debug Window");
+        debug.addActionListener(l -> { SerialDebugPane.display(); });
+        timerMenu.add(debug);
 
         modeGroup.setSelected(Mode.OFF);
 

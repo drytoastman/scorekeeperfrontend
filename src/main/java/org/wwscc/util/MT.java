@@ -81,6 +81,7 @@ public enum MT {
     SERIAL_GENERIC_DATA,
     SERIAL_PORT_OPEN,
     SERIAL_PORT_CLOSED,
+    SERIAL_DEBUG_DATA,
 
     // Challenge GUI
     NEW_CHALLENGE,
