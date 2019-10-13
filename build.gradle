@@ -45,7 +45,6 @@ dependencies {
     compile 'org.apache.httpcomponents:fluent-hc:4.5.5'
     compile 'org.kamranzafar:jtar:2.3'
     compile 'org.mindrot:jbcrypt:0.4'
-    compile 'org.openjfx:javafx-controls:11'
     compile 'org.postgresql:postgresql:42.2.5'
 
     testCompile 'junit:junit:4.12'
