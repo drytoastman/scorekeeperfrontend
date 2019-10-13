@@ -8,29 +8,25 @@
 
 package org.wwscc.components;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.net.InetAddress;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
-import javax.swing.Timer;
-
 import org.wwscc.util.Network;
 
-public class MyIpLabel extends JLabel implements ActionListener
+public class MyIpLabel extends JLabel
 {
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
     public MyIpLabel()
     {
         super("");
         setHorizontalAlignment(CENTER);
-        actionPerformed(null);
-        new Timer(3000, this).start();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        InetAddress a = Network.getPrimaryAddress();
-        setText("My IP: " + ((a != null) ? a.getHostAddress() : "network down"));
+        scheduler.scheduleWithFixedDelay(() -> {
+            InetAddress a = Network.getPrimaryAddress();
+            setText("My IP: " + ((a != null) ? a.getHostAddress() : "network down"));
+         }, 0, 10, TimeUnit.SECONDS);
     }
 }
