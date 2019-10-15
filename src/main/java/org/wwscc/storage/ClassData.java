@@ -22,8 +22,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-
 public class ClassData
 {
     private static Logger log = Logger.getLogger(ClassData.class.getCanonicalName());
@@ -88,8 +86,13 @@ public class ClassData
         return result;
     }
 
+    public static class EffectiveIndex
+    {
+        public double val;
+        public String str;
+    }
 
-    public ImmutablePair<Double, String> getEffectiveIndex(String classcode, String indexcode, boolean carflagset)
+    public EffectiveIndex getEffectiveIndex(String classcode, String indexcode, boolean carflagset)
     {
         double indexVal = 1.0;
         String indexStr = "";
@@ -131,7 +134,10 @@ public class ClassData
             log.log(Level.WARNING, "getEffectiveIndex failed: " + ioe, ioe);
         }
 
-        return new ImmutablePair<>(indexVal, !indexStr.isEmpty() ? '('+indexStr+')' : "");
+        EffectiveIndex ret = new EffectiveIndex();
+        ret.val = indexVal;
+        ret.str = !indexStr.isEmpty() ? '('+indexStr+')' : "";
+        return ret;
     }
 
 

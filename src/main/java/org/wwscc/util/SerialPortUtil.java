@@ -11,11 +11,11 @@ package org.wwscc.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.wwscc.dialogs.PortDialog;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -214,7 +214,7 @@ public class SerialPortUtil
             }
             int ret = in.read(buf, count, size);
             if (ret > 0) {
-                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, ArrayUtils.subarray(buf, count, count+ret));
+                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, Arrays.copyOfRange(buf, count, count+ret));
                 count += ret;
             }
         }
