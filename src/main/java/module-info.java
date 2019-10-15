@@ -1,11 +1,12 @@
 module scorekeeper {
     // auto generated, should these be one?
+    /*
     exports org.wwscc.system;
     exports org.wwscc.storage;
     exports org.wwscc.system.docker;
     exports org.wwscc.system.docker.models;
     opens org.wwscc.system.docker.models;
-    /*
+    /
     exports org.wwscc.protimer;
     exports org.wwscc.util;
     exports org.wwscc.dataentry.tables;
@@ -38,15 +39,15 @@ module scorekeeper {
     requires com.fasterxml.jackson.annotation;
     requires transitive com.fasterxml.jackson.databind;
 
-    //requires transitive httpcore;
+    requires transitive httpcore;
     requires miglayout.swing;
     requires swagger.annotations;
+    requires com.fazecast.jSerialComm;
 
 
     /*
     requires com.fasterxml.jackson.core;
     //requires httpclient;
-    //requires transitive httpcore;
     //requires java.annotation;
     requires java.datatransfer;
     requires java.logging;

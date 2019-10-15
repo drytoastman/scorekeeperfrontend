@@ -9,19 +9,14 @@
 package org.wwscc.util;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.wwscc.dialogs.PortDialog;
-/*
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener; */
+import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortEvent;
 
 public class SerialPortUtil
 {
@@ -34,6 +29,16 @@ public class SerialPortUtil
         a = new ArrayList<String>();
         u = new ArrayList<String>();
 
+        for (SerialPort port : SerialPort.getCommPorts())
+        {
+            log.log(Level.FINE, "RXTX found {0}", port.getSystemPortName());
+            if (port.openPort()) {
+                port.closePort();
+                a.add(port.getSystemPortName());
+            } else {
+                u.add(port.getSystemPortName());
+            }
+        }
 
         PortDialog d = new PortDialog("", a, u);
         d.doDialog("Select COM Port", null);
@@ -46,11 +51,55 @@ public class SerialPortUtil
     /**
      * Base class for common serial port wrapping features
      */
-
-    static class SerialBasic
+    static abstract class SerialBasic implements SerialPortDataListener
     {
-        public void close() { }
-        public void write(String s) {}
+        SerialPort port;
+
+        protected void openPort(String name, SerialPortDataListener listener) throws Exception
+        {
+            openPort(name, listener, 9600, 3000, 30);
+        }
+
+        protected void openPort(String name, SerialPortDataListener listener, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
+        {
+            log.info("Opening port " + name);
+            port = SerialPort.getCommPort(name);
+            port.openPort(ctimeoutms);
+            port.setBaudRate(baud);
+            port.setNumDataBits(8);
+            port.setNumStopBits(1);
+            port.setParity(SerialPort.NO_PARITY);
+            port.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
+            port.addDataListener(listener);
+            if (rtimeoutsec > 0)
+                port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, rtimeoutsec, 0);
+            Messenger.sendEvent(MT.SERIAL_PORT_OPEN, name);
+        }
+
+        public void close()
+        {
+            if (port != null) {
+                Messenger.sendEvent(MT.SERIAL_PORT_CLOSED, port.getSystemPortName());
+                port.removeDataListener();
+                port.closePort();
+                port = null;
+            }
+        }
+
+        public void write(String s)
+        {
+            try {
+                port.getOutputStream().write(s.getBytes());
+            } catch (Exception ioe) {
+                log.log(Level.WARNING, "serial port write error: " + ioe, ioe);
+                close();
+            }
+        }
+
+        @Override
+        public int getListeningEvents() {
+            return  SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+        }
     }
 
     /*
@@ -73,7 +122,25 @@ public class SerialPortUtil
         public CharacterBasedSerialPort(String name, SerialCharacterListener lis, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
         {
             charlistener = lis;
+            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
         }
+
+        @Override
+        public void serialEvent(SerialPortEvent ev)
+        {
+            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
+            try {
+                byte[] data = ev.getReceivedData();
+                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, data);
+                for (byte b : data) {
+                    charlistener.processChar((char)b);
+                }
+            } catch (Exception ioe) {
+                log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
+                close();
+            }
+        }
+
     }
 
 
@@ -86,7 +153,7 @@ public class SerialPortUtil
         public void processLine(byte[] data);
     }
 
-    public static class LineBasedSerialPort extends SerialBasic
+    public static class LineBasedSerialPort extends SerialBasic implements SerialPortDataListener
     {
         LineBasedSerialBuffer buffer;
         SerialLineListener linelistener;
@@ -100,6 +167,22 @@ public class SerialPortUtil
         {
             buffer = new LineBasedSerialBuffer();
             linelistener = lis;
+            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
+        }
+
+        @Override
+        public void serialEvent(SerialPortEvent ev)
+        {
+            byte[] line;
+            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
+            try {
+                buffer.appendData(ev.getReceivedData());
+                while ((line = buffer.getNextLine()) != null)
+                    linelistener.processLine(line);
+            } catch (Exception ex) {
+                log.log(Level.WARNING, "serial port read error: " + ex, ex);
+                close();
+            }
         }
     }
 
@@ -117,9 +200,9 @@ public class SerialPortUtil
             search = 0;
         }
 
-        public void readData(InputStream in) throws IOException
+        public void appendData(byte inbuf[]) throws IOException
         {
-            int size = in.available();
+            int size = inbuf.length;
             if (size + count > buf.length) // increase buffer size at runtime if needed
             {
                 byte[] newbuffer = new byte[buf.length*2];
@@ -127,11 +210,10 @@ public class SerialPortUtil
                 buf = newbuffer;
                 log.log(Level.INFO, "Increased byte buffer size to: {0}", buf.length);
             }
-            int ret = in.read(buf, count, size);
-            if (ret > 0) {
-                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, Arrays.copyOfRange(buf, count, count+ret));
-                count += ret;
+            for (int ii = 0; ii < inbuf.length; ii++, count++) {
+                buf[count] = inbuf[ii];
             }
+            Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, inbuf);
         }
 
         public byte[] getNextLine()
