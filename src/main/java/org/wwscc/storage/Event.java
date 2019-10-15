@@ -15,6 +15,8 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.UUID;
 
+import org.wwscc.util.EventInfo;
+
 /**
  * Represents a single event from the database.
  */
@@ -77,5 +79,24 @@ public class Event extends AttrBase implements Serializable
     public double getGatePenalty() { return gatepen; }
 
     public void setRuns(int r) { runs = r; }
+
+    /**
+     * Create the util based EventInfo structure (non-storage dependent)
+     * @return EventInfo object based on this Event
+     */
+    public EventInfo toEventInfo() {
+        EventInfo ret = new EventInfo();
+        ret.setEventId(eventid);
+        ret.setName(name);
+        ret.setDate(date);
+        ret.setCourses(courses);
+        ret.setRuns(runs);
+        ret.setCountedRuns(countedruns);
+        ret.setConePenalty(conepen);
+        ret.setGatePenalty(gatepen);
+        ret.setPro(ispro);
+        ret.setPractice(ispractice);
+        return ret;
+    }
 }
 

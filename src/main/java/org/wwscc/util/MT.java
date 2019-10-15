@@ -27,6 +27,7 @@ public enum MT {
     QUICKID_SEARCH,
     NETWORK_CHANGED,
     DATABASE_NOTIFICATION,
+    SELECT_NEW_DATABASE,
 
     // ScorekeeperSystem
     // Machine

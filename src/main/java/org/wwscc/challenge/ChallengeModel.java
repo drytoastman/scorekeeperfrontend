@@ -29,6 +29,7 @@ import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.TimerClient;
 import org.wwscc.util.Discovery;
+import org.wwscc.util.EventInfo;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -453,7 +454,7 @@ public class ChallengeModel implements MessageListener
         }
         if (!r.isOK())
             return 999.999;
-        Event e = ChallengeGUI.state.getCurrentEvent();
+        EventInfo e = ChallengeGUI.state.getCurrentEvent();
         return r.getRaw() + (e.getConePenalty() * r.getCones()) + (e.getGatePenalty() * r.getGates());
     }
 

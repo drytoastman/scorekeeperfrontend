@@ -6,16 +6,13 @@
  * All rights reserved.
  */
 
-package org.wwscc.actions;
+package org.wwscc.util;
 
 import java.awt.event.ActionEvent;
 import java.util.function.Supplier;
 
 import javax.swing.AbstractAction;
 import javax.swing.KeyStroke;
-
-import org.wwscc.util.MT;
-import org.wwscc.util.Messenger;
 
 public class EventSendAction<T> extends AbstractAction
 {

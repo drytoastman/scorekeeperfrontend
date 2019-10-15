@@ -26,21 +26,22 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import org.wwscc.actions.OpenSeriesAction;
-import org.wwscc.actions.EventSendAction;
-import org.wwscc.actions.QuitAction;
 import org.wwscc.dataentry.actions.ReorderByNetAction;
 import org.wwscc.dataentry.actions.RunOrderFromGridAction;
 import org.wwscc.dataentry.actions.ScratchWindowAction;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.GroupDialog;
+import org.wwscc.dialogs.OpenSeriesAction;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
 import org.wwscc.util.BrowserControl;
+import org.wwscc.util.EventInfo;
+import org.wwscc.util.EventSendAction;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.QuitAction;
 
 
 public class Menus extends JMenuBar implements ActionListener, MessageListener
@@ -173,7 +174,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
             int runs = Integer.parseInt(cmd.split(" ")[0]);
             if ((runs > 1) && (runs < 100))
             {
-                Event event = DataEntry.state.getCurrentEvent();
+                EventInfo event = DataEntry.state.getCurrentEvent();
                 int save = event.getRuns();
                 event.setRuns(runs);
                 if (Database.d.updateEventRuns(event.getEventId(), runs))

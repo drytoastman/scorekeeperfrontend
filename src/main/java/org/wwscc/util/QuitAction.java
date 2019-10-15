@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.actions;
+package org.wwscc.util;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;

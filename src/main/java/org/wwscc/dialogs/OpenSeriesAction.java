@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.actions;
+package org.wwscc.dialogs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;

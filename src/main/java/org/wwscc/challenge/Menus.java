@@ -27,7 +27,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 
-import org.wwscc.actions.OpenSeriesAction;
+import org.wwscc.dialogs.OpenSeriesAction;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
 import org.wwscc.util.MT;

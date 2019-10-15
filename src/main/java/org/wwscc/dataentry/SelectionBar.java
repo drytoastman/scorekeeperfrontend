@@ -207,7 +207,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
             if (cmd.startsWith("event"))
             {
-                DataEntry.state.setCurrentEvent((Event)o);
+                DataEntry.state.setCurrentEvent(((Event)o).toEventInfo());
                 Messenger.sendEvent(MT.EVENT_CHANGED, null);
                 Prefs.setEventIndex(eventSelect.getSelectedIndex());
                 setCourseList(DataEntry.state.getCurrentEvent().getCourses());

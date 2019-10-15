@@ -39,11 +39,10 @@ module scorekeeper {
     requires com.fasterxml.jackson.annotation;
     requires transitive com.fasterxml.jackson.databind;
 
-    requires transitive httpcore;
+    //requires transitive httpcore;
     requires miglayout.swing;
     requires swagger.annotations;
     requires com.fazecast.jSerialComm;
-
 
     /*
     requires com.fasterxml.jackson.core;

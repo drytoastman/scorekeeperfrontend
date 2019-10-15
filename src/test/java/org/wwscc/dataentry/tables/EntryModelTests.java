@@ -23,7 +23,7 @@ public class EntryModelTests
     public void setUp() throws Exception
     {
         model = new EntryModel();
-        DataEntry.state.setCurrentEvent(Database.d.getEvents().get(0));
+        DataEntry.state.setCurrentEvent(Database.d.getEvents().get(0).toEventInfo());
         DataEntry.state.setCurrentCourse(1);
         DataEntry.state.setCurrentRunGroup(1);
         model.event(MT.EVENT_CHANGED, null);

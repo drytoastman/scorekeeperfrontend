@@ -10,24 +10,22 @@ package org.wwscc.util;
 
 import java.util.UUID;
 
-import org.wwscc.storage.Event;
-
 public class ApplicationState {
 
        private String currentSeries;
-       private Event currentEvent;
+       private EventInfo currentEvent;
        private int currentCourse;
        private int currentRunGroup;
        private UUID currentChallengeId;
 
        public void setCurrentSeries(String s) { currentSeries = s; }
-       public void setCurrentEvent(Event e) { currentEvent = e; }
+       public void setCurrentEvent(EventInfo e) { currentEvent = e; }
        public void setCurrentCourse(int course) { currentCourse = course; }
        public void setCurrentRunGroup(int rungroup) { currentRunGroup = rungroup; }
        public void setCurrentChallengeId(UUID challengeid) { currentChallengeId = challengeid; }
 
        public String getCurrentSeries() { return currentSeries; }
-       public Event getCurrentEvent() { return currentEvent; }
+       public EventInfo getCurrentEvent() { return currentEvent; }
        public UUID getCurrentEventId() { if (currentEvent != null) { return currentEvent.getEventId(); } else { return null; } }
        public int getCurrentCourse() { return currentCourse; }
        public int getCurrentRunGroup() { return currentRunGroup; }

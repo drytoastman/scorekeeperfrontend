@@ -149,7 +149,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
 
             if (cmd.startsWith("event"))
             {
-                ChallengeGUI.state.setCurrentEvent((Event)o);
+                ChallengeGUI.state.setCurrentEvent(((Event)o).toEventInfo());
                 Messenger.sendEvent(MT.EVENT_CHANGED, null);
                 Prefs.setEventIndex(eventSelect.getSelectedIndex());
                 challengeSelect.setModel(new DefaultComboBoxModel<Challenge>(Database.d.getChallengesForEvent(ChallengeGUI.state.getCurrentEventId()).toArray(new Challenge[0])));

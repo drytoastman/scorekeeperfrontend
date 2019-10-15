@@ -17,11 +17,12 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTabbedPane;
-import org.wwscc.actions.EventSendAction;
+
 import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
+import org.wwscc.util.EventSendAction;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;

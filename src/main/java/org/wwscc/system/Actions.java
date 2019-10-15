@@ -32,7 +32,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.wwscc.actions.EventSendAction;
 import org.wwscc.dialogs.SeriesSelectionDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.dialogs.ListDialog;
@@ -40,6 +39,7 @@ import org.wwscc.dialogs.MergeServerConfigDialog;
 import org.wwscc.dialogs.SeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
+import org.wwscc.util.EventSendAction;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;

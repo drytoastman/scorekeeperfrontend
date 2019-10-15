@@ -13,6 +13,8 @@ import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.UUID;
 
+import org.wwscc.util.EventInfo;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -67,8 +69,8 @@ public class Run extends AttrBase implements Cloneable
 
     public static class NetOrder implements Comparator<Run>
     {
-        Event e;
-        public NetOrder(Event e)
+        EventInfo e;
+        public NetOrder(EventInfo e)
         {
             this.e = e;
         }
@@ -78,8 +80,8 @@ public class Run extends AttrBase implements Cloneable
             if (!o1.isOK() && !o2.isOK()) return 0;
             if (!o2.isOK()) return -1;
             if (!o1.isOK()) return  1;
-            return (int)((o1.raw+(e.conepen*o1.cones)+(e.gatepen*o1.gates))*1000
-                        - (o2.raw+(e.conepen*o2.cones)+(e.gatepen*o2.gates))*1000);
+            return (int)((o1.raw+(e.getConePenalty()*o1.cones)+(e.getGatePenalty()*o1.gates))*1000
+                        - (o2.raw+(e.getConePenalty()*o2.cones)+(e.getGatePenalty()*o2.gates))*1000);
         }
     }
 

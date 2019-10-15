@@ -23,6 +23,7 @@ import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Event;
 import org.wwscc.storage.FakeDatabase;
 import org.wwscc.util.AppSetup;
+import org.wwscc.util.EventInfo;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -103,8 +104,7 @@ public class ScannedBarcodesTest
     {
         shim = new DatabaseShim();
         Database.d = shim;
-        Event e = new Event();
-        DataEntry.state.setCurrentEvent(e);
+        DataEntry.state.setCurrentEvent(new EventInfo());
 
         Assume.assumeFalse(GraphicsEnvironment.isHeadless());
         totest = new DoubleTableContainer();

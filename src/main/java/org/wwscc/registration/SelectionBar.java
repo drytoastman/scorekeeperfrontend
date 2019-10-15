@@ -133,7 +133,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         if (e.getActionCommand().equals("eventChange"))
         {
             JComboBox<?> cb = (JComboBox<?>)e.getSource();
-            Registration.state.setCurrentEvent((Event)cb.getSelectedItem());
+            Registration.state.setCurrentEvent(((Event)cb.getSelectedItem()).toEventInfo());
             Registration.state.setCurrentCourse(1);
             Messenger.sendEvent(MT.EVENT_CHANGED, null);
             Prefs.setEventIndex(eventSelect.getSelectedIndex());

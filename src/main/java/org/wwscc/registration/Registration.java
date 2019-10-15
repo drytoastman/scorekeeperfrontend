@@ -23,9 +23,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import org.wwscc.actions.OpenSeriesAction;
-import org.wwscc.actions.QuitAction;
+
 import org.wwscc.barcodes.BarcodeController;
+import org.wwscc.dialogs.OpenSeriesAction;
 import org.wwscc.storage.Database;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.BrowserControl;
@@ -34,6 +34,7 @@ import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
+import org.wwscc.util.QuitAction;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
