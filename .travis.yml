@@ -3,7 +3,7 @@ services: [docker]
 
 language: java
 jdk:
-  - oraclejdk11
+  - openjdk12
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock

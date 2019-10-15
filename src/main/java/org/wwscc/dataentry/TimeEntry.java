@@ -674,7 +674,7 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
         @Override
         public void keyTyped(KeyEvent e)
         {
-            int increment = ((e.getModifiers() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
+            int increment = ((e.getModifiersEx() & ActionEvent.SHIFT_MASK) == ActionEvent.SHIFT_MASK) ? -1 : 1;
             switch(e.getKeyChar())
             {
                 case 'c':

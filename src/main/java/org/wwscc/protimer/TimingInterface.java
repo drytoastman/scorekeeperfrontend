@@ -195,7 +195,7 @@ public class TimingInterface implements MessageListener
         {
             left = get_side(args, 1);
             ColorTime c = new ColorTime(get_value(args, 2), get_color(args, 4));
-            Double d = new Double(get_value(args, 3));
+            Double d = get_value(args, 3);
             Object [] result = { c, d };
 
             Messenger.sendEvent(left?MT.FINISH_LEFT:MT.FINISH_RIGHT, result);

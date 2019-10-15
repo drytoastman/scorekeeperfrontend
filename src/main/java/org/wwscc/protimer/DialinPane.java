@@ -144,7 +144,7 @@ public class DialinPane extends JPanel implements ActionListener, MessageListene
     {
         try
         {
-            LeftRightDialin d = new LeftRightDialin(new Double(leftField.getText()), new Double(rightField.getText()));
+            LeftRightDialin d = new LeftRightDialin(Double.parseDouble(leftField.getText()), Double.parseDouble(rightField.getText()));
             Messenger.sendEvent(MT.INPUT_SET_DIALIN, d);
             leftField.setText("");
             rightField.setText("");

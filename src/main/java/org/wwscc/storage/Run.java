@@ -200,6 +200,6 @@ public class Run extends AttrBase implements Cloneable
     @Override
     public int hashCode()
     {
-        return course ^ run ^ new Double(raw).hashCode();
+        return course ^ run ^ Double.valueOf(raw).hashCode();
     }
 }
