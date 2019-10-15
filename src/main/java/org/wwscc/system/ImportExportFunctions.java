@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -13,7 +14,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.wwscc.storage.Database;
 
 public class ImportExportFunctions
@@ -25,19 +25,19 @@ public class ImportExportFunctions
     public static Path extractSql(Path importfile) throws IOException
     {
         if (importfile.toString().toLowerCase().endsWith(".zip")) {
-            File temp;
+            Path temp;
     fileok: try (ZipFile zip = new ZipFile(importfile.toFile())) {
                 Enumeration<? extends ZipEntry> entries = zip.entries();
                 while (entries.hasMoreElements()) {
                     ZipEntry entry = entries.nextElement();
-                    temp = File.createTempFile("open-zip", ".sql");
-                    FileUtils.copyInputStreamToFile(zip.getInputStream(entry), temp);
+                    temp = Files.createTempFile("open-zip", ".sql");
+                    Files.copy(zip.getInputStream(entry), temp);
                     break fileok;
                 }
                 throw new IOException("No sql file found in zip file");
             }
 
-            importfile = temp.toPath();
+            importfile = temp;
         }
 
         if (!importfile.toString().toLowerCase().endsWith(".sql")) {
@@ -83,7 +83,7 @@ fileok: try (Scanner scan = new Scanner(importfile)) {
     }
 
 
-    public static void processBackup(File dumpfile, Path destfile, boolean compress) throws IOException
+    public static void processBackup(Path dumpfile, Path destfile, boolean compress) throws IOException
     {
         OutputStream out;
         if (compress) {
@@ -96,13 +96,11 @@ fileok: try (Scanner scan = new Scanner(importfile)) {
 
         out.write("UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'scorekeeper';\n".getBytes());
         out.write("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'scorekeeper';\n".getBytes());
-        FileUtils.copyFile(dumpfile, out);
+        Files.copy(dumpfile, out);
         out.write("UPDATE pg_database SET datallowconn = 'true' WHERE datname = 'scorekeeper';\n".getBytes());
 
         if (compress)
             ((ZipOutputStream)out).closeEntry();
         out.close();
-
-        dumpfile.delete();
     }
 }

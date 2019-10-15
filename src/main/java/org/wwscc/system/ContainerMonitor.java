@@ -8,8 +8,8 @@
 
 package org.wwscc.system;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
@@ -247,7 +246,7 @@ public class ContainerMonitor extends MonitorBase
         String name = "db";
         boolean success = false;
         try {
-            docker.uploadFile(name, importfile.toFile(), "/tmp");
+            docker.uploadFile(name, importfile, "/tmp");
             if (docker.exec(name, "ash", "-c", "psql -U postgres -f /tmp/"+importfile.getFileName()+" &> /tmp/import.log") == 0) {
                 success = docker.exec(name, "ash", "-c", "/dbconversion-scripts/upgrade.sh /dbconversion-scripts >> /tmp/import.log 2>&1") == 0;
             }
@@ -278,10 +277,12 @@ public class ContainerMonitor extends MonitorBase
             if (docker.exec("db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
                 throw new IOException("pg_dump failed");
 
-            File tempdir = FileUtils.getTempDirectory();
-            docker.downloadTo("db", "/tmp/dump", tempdir.toPath());
+            Path dumpfile = Files.createTempDirectory("backupwork").resolve("dump");
+            docker.downloadTo("db", "/tmp/dump", dumpfile);
 
-            ImportExportFunctions.processBackup(new File(tempdir, "dump"), finalpath, request.compress);
+            ImportExportFunctions.processBackup(dumpfile, finalpath, request.compress);
+            Files.delete(dumpfile);
+
             if (request.usedialog)
                 dialog.setStatus("Backup Complete", 100);
 

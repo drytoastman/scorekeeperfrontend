@@ -5,29 +5,12 @@ plugins {
     id 'eclipse'
 }
 
-boolean isLibrary(entry) { return entry.properties.kind.equals('lib') }
-boolean isTestScope(entry) { return entry.entryAttributes.get('gradle_used_by_scope').equals('test'); }
-boolean isModule(entry) { isLibrary(entry) && !isTestScope(entry); }
-boolean isSource(entry) { return entry.properties.kind.equals('src'); }
-
 eclipse {
-    project {
-        natures 'org.eclipse.buildship.core.gradleprojectnature'
-    }
-
     classpath {
         file {
             whenMerged {
-                entries.findAll { isModule(it) }.each {
+                entries.findAll { it.kind == 'lib' || it.kind == 'con' }.each {
                     it.entryAttributes['module'] = 'true'
-                }
-
-                entries.findAll { isSource(it) && isTestScope(it) }.each {
-                    it.entryAttributes['test'] = 'true'
-                }
-
-                entries.findAll { isLibrary(it) && isTestScope(it) }.each {
-                    it.entryAttributes['test'] = 'true'
                 }
             }
         }
@@ -51,7 +34,7 @@ def getVersionName = { ->
 }
 
 version = getVersionName()
-mainClassName = 'org.wwscc.system.ScorekeeperSystem'
+mainClassName = 'scorekeeper/org.wwscc.system.ScorekeeperSystem'
 shadowJar.classifier = ""
 shadowJar.baseName = "scorekeeper"
 defaultTasks 'shadowJar'
@@ -68,11 +51,10 @@ repositories {
 
 dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-    compile 'com.github.jnr:jnr-unixsocket:0.18'
+    compile 'com.github.jnr:jnr-unixsocket:0.23'
     compile 'com.miglayout:miglayout-swing:5.2'
-    compile 'com.neuronrobotics:nrjavaserial:3.12.1'
+    //compile 'com.neuronrobotics:nrjavaserial:3.12.1'
     compile 'com.jcraft:jsch:0.1.54'
-    compile 'commons-io:commons-io:2.6'
     compile 'io.swagger:swagger-annotations:1.5.18'
     compile 'javax.annotation:javax.annotation-api:1.3.2'
     compile 'org.apache.httpcomponents:httpclient:4.5.5'

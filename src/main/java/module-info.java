@@ -1,8 +1,10 @@
-module ScorekeeperFrontend {
+module scorekeeper {
     // auto generated, should these be one?
     exports org.wwscc.system;
     exports org.wwscc.storage;
     exports org.wwscc.system.docker;
+    exports org.wwscc.system.docker.models;
+    opens org.wwscc.system.docker.models;
     /*
     exports org.wwscc.protimer;
     exports org.wwscc.util;
@@ -21,32 +23,42 @@ module ScorekeeperFrontend {
     exports org.wwscc.system.docker.models;
     */
 
-    requires com.fasterxml.jackson.annotation;
-    requires com.fasterxml.jackson.core;
-    requires transitive com.fasterxml.jackson.databind;
-    requires httpclient;
-    requires transitive httpcore;
     requires java.annotation;
-    requires java.datatransfer;
     requires transitive java.desktop;
-    requires java.logging;
-    requires java.prefs;
     requires transitive java.sql;
-    requires java.xml;
+    requires java.prefs;
+    requires jdk.jsobject;
+
     requires javafx.base;
-    requires transitive javafx.controls;
     requires javafx.fxml;
     requires transitive javafx.graphics;
     requires javafx.swing;
     requires javafx.web;
-    requires jbcrypt;
-    requires jdk.jsobject;
-    requires jnr.unixsocket;
-    requires jsch;
-    requires jtar;
+
+    requires com.fasterxml.jackson.annotation;
+    requires transitive com.fasterxml.jackson.databind;
+
+    //requires transitive httpcore;
     requires miglayout.swing;
-    requires nrjavaserial;
-    requires org.apache.commons.io;
-    requires postgresql;
     requires swagger.annotations;
+
+
+    /*
+    requires com.fasterxml.jackson.core;
+    //requires httpclient;
+    //requires transitive httpcore;
+    //requires java.annotation;
+    requires java.datatransfer;
+    requires java.logging;
+    requires java.xml;
+
+
+    //requires jbcrypt;
+    //requires jnr.unixsocket;
+    //requires jsch;
+    //requires jtar;
+    requires nrjavaserial;
+    //requires org.apache.commons.io;
+    requires postgresql;
+    */
 }

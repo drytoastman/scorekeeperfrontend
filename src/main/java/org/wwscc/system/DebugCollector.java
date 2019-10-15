@@ -31,7 +31,6 @@ import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
-import org.apache.commons.io.FileUtils;
 import org.wwscc.system.docker.DockerMachine;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
@@ -135,7 +134,7 @@ public class DebugCollector extends Thread
             if (temp.getNameCount() >= 2)
             {
                 monitor.setNote("deleting temporary directory");
-                FileUtils.deleteDirectory(temp.toFile());
+                Files.delete(temp);
             }
         }
         catch (Exception ioe)

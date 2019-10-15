@@ -8,15 +8,15 @@
 
 package org.wwscc.system.docker;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,8 +30,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
@@ -332,31 +330,28 @@ public class DockerAPI
     }
 
 
-    public void downloadTo(String name, String containerpath, Path hostdir) throws IOException
+    public void downloadTo(String name, String containerpath, Path dest) throws IOException
     {
         try (TarInputStream in = new TarInputStream(request(new Requests.Download(name, containerpath)))) {
             TarEntry entry;
             while ((entry = in.getNextEntry()) != null) {
                 if (entry.isDirectory())
                     continue;
-                File dest = hostdir.resolve(Paths.get(entry.getName()).getFileName()).toFile();
-                try (FileOutputStream dout = new FileOutputStream(dest)) {
-                    IOUtils.copy(in, dout);
-                }
-                dest.setLastModified(entry.getModTime().getTime());
+                Files.copy(in, dest);
+                Files.setLastModifiedTime(dest, FileTime.fromMillis(entry.getModTime().getTime()));
             }
         }
     }
 
 
-    public void uploadFile(String name, File file, String containerpath) throws IOException
+    public void uploadFile(String name, Path file, String containerpath) throws IOException
     {
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {
                 TarOutputStream tar = new TarOutputStream(outstream);
-                TarEntry entry = new TarEntry(file, file.getName());
+                TarEntry entry = new TarEntry(file.toFile(), file.getFileName().toString());
                 tar.putNextEntry(entry);
-                FileUtils.copyFile(file, tar);
+                Files.copy(file, tar);
                 tar.close();
             }
         };

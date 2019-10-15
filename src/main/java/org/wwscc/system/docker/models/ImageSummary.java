@@ -42,13 +42,13 @@ public class ImageSummary {
   private Integer created = null;
 
   @JsonProperty("Size")
-  private Integer size = null;
+  private Long size = null;
 
   @JsonProperty("SharedSize")
-  private Integer sharedSize = null;
+  private Long sharedSize = null;
 
   @JsonProperty("VirtualSize")
-  private Integer virtualSize = null;
+  private Long virtualSize = null;
 
   @JsonProperty("Labels")
   private Map<String, String> labels = new HashMap<>();
@@ -156,7 +156,7 @@ public class ImageSummary {
     this.created = created;
   }
 
-  public ImageSummary size(Integer size) {
+  public ImageSummary size(Long size) {
     this.size = size;
     return this;
   }
@@ -166,15 +166,15 @@ public class ImageSummary {
    * @return size
   **/
   @ApiModelProperty(required = true, value = "")
-  public Integer getSize() {
+  public Long getSize() {
     return size;
   }
 
-  public void setSize(Integer size) {
+  public void setSize(Long size) {
     this.size = size;
   }
 
-  public ImageSummary sharedSize(Integer sharedSize) {
+  public ImageSummary sharedSize(Long sharedSize) {
     this.sharedSize = sharedSize;
     return this;
   }
@@ -184,15 +184,15 @@ public class ImageSummary {
    * @return sharedSize
   **/
   @ApiModelProperty(required = true, value = "")
-  public Integer getSharedSize() {
+  public Long getSharedSize() {
     return sharedSize;
   }
 
-  public void setSharedSize(Integer sharedSize) {
+  public void setSharedSize(Long sharedSize) {
     this.sharedSize = sharedSize;
   }
 
-  public ImageSummary virtualSize(Integer virtualSize) {
+  public ImageSummary virtualSize(Long virtualSize) {
     this.virtualSize = virtualSize;
     return this;
   }
@@ -202,11 +202,11 @@ public class ImageSummary {
    * @return virtualSize
   **/
   @ApiModelProperty(required = true, value = "")
-  public Integer getVirtualSize() {
+  public Long getVirtualSize() {
     return virtualSize;
   }
 
-  public void setVirtualSize(Integer virtualSize) {
+  public void setVirtualSize(Long virtualSize) {
     this.virtualSize = virtualSize;
   }
 
