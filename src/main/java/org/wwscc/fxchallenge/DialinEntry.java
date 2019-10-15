@@ -9,7 +9,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-final class DialinEntry
+public final class DialinEntry
 {
     Entrant entrant;
     IntegerProperty position;

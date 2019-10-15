@@ -29,7 +29,7 @@ import javafx.beans.property.SimpleObjectProperty;
 public class RoundWinnerLogic
 {
     //private static final Logger log = Logger.getLogger(RoundWinnerLogic.class.getCanonicalName());
-    private enum RoundState { NONE, PARTIAL1, HALFNORMAL, HALFINVERSE, PARTIAL2, DONE, INVALID };
+    public enum RoundState { NONE, PARTIAL1, HALFNORMAL, HALFINVERSE, PARTIAL2, DONE, INVALID };
 
 
     private ObjectProperty<Event> currentEvent;

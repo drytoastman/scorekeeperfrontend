@@ -35,7 +35,7 @@ public class AttrBase
         attr = new ObjectNode(JsonNodeFactory.instance);
     }
 
-    public AttrBase(ObjectNode o)
+    protected AttrBase(ObjectNode o)
     {
         attr = o.deepCopy();
     }

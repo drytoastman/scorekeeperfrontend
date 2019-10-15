@@ -62,7 +62,7 @@ public class StagingController implements MessageListener
     private StringProperty activeLeftDial, activeRightDial;
     private IntegerProperty highlightRound;
 
-    static class Store
+    public static class Store
     {
         UUID challengeid;
         ObservableList<ChallengePair> pairs = FXCollections.observableArrayList();
