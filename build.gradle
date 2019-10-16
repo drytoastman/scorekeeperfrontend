@@ -5,21 +5,6 @@ plugins {
     id 'eclipse'
 }
 
-eclipse {
-    classpath {
-        file {
-            whenMerged {
-                entries.findAll { it.kind == 'lib' || it.kind == 'con' }.each {
-                    it.entryAttributes['module'] = 'true'
-                }
-            }
-        }
-    }
-}
-
-
-
-
 def getVersionName = { ->
     try {
         def stdout = new ByteArrayOutputStream()

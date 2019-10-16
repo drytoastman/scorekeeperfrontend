@@ -33,7 +33,6 @@ import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.dialogs.GroupDialog;
 import org.wwscc.dialogs.OpenSeriesAction;
 import org.wwscc.storage.Database;
-import org.wwscc.storage.Event;
 import org.wwscc.util.BrowserControl;
 import org.wwscc.util.EventInfo;
 import org.wwscc.util.EventSendAction;

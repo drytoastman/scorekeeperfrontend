@@ -20,7 +20,6 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
-import org.wwscc.storage.Event;
 import org.wwscc.storage.FakeDatabase;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.EventInfo;

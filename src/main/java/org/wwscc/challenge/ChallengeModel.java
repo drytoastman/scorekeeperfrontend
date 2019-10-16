@@ -24,7 +24,6 @@ import org.wwscc.storage.ChallengeRound.RoundEntrant;
 import org.wwscc.storage.ChallengeRun;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Entrant;
-import org.wwscc.storage.Event;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.TimerClient;
