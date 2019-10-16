@@ -113,6 +113,8 @@ public class SerialDebugPane extends JFrame implements MessageListener
                 if (o instanceof byte[])
                     newData((byte[])o);
                 break;
+            default:
+                break;
         }
     }
 }

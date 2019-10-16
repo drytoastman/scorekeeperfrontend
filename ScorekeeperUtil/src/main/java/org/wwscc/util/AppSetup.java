@@ -143,7 +143,7 @@ public class AppSetup
      * still log warning and severe messages but only use a dialog when requested and with
      * a very easy indicator that works inside the java logging framework.
      */
-    public static class AlertHandler extends Handler
+    protected static class AlertHandler extends Handler
     {
         Mode mode;
         public AlertHandler(Mode mode)
@@ -205,7 +205,7 @@ public class AppSetup
         public void close() {}
     }
 
-    public static class SingleLineFormatter extends Formatter
+    protected static class SingleLineFormatter extends Formatter
     {
         SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();

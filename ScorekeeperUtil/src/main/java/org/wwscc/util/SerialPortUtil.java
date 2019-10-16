@@ -8,12 +8,9 @@
 
 package org.wwscc.util;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.wwscc.dialogs.PortDialog;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
@@ -22,6 +19,8 @@ public class SerialPortUtil
 {
     private static Logger log = Logger.getLogger(SerialPortUtil.class.getCanonicalName());
 
+    /*
+    import org.wwscc.dialogs.PortDialog;
     public static String userPortSelection()
     {
         ArrayList<String> a, u;
@@ -47,20 +46,21 @@ public class SerialPortUtil
             return null;
         return s;
     }
+    */
 
     /**
      * Base class for common serial port wrapping features
      */
-    static abstract class SerialBasic implements SerialPortDataListener
+    static abstract class SerialBasic
     {
         SerialPort port;
 
-        protected void openPort(String name, SerialPortDataListener listener) throws Exception
+        protected void openPort(String name) throws Exception
         {
-            openPort(name, listener, 9600, 3000, 30);
+            openPort(name, 9600, 3000, 30);
         }
 
-        protected void openPort(String name, SerialPortDataListener listener, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
+        protected void openPort(String name, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
         {
             log.info("Opening port " + name);
             port = SerialPort.getCommPort(name);
@@ -70,7 +70,7 @@ public class SerialPortUtil
             port.setNumStopBits(1);
             port.setParity(SerialPort.NO_PARITY);
             port.setFlowControl(SerialPort.FLOW_CONTROL_DISABLED);
-            port.addDataListener(listener);
+            port.addDataListener(new DataRedirect(this));
             if (rtimeoutsec > 0)
                 port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, rtimeoutsec, 0);
             Messenger.sendEvent(MT.SERIAL_PORT_OPEN, name);
@@ -96,9 +96,31 @@ public class SerialPortUtil
             }
         }
 
+        public abstract void serialData(byte[] data);
+    }
+
+    /**
+     * Hides interface from outside
+     */
+    static class DataRedirect implements SerialPortDataListener
+    {
+        SerialBasic dest;
+        public DataRedirect(SerialBasic dest)
+        {
+            this.dest = dest;
+        }
+
         @Override
         public int getListeningEvents() {
             return  SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+        }
+
+        @Override
+        public void serialEvent(SerialPortEvent event) {
+            if (event.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
+            byte data[] = event.getReceivedData();
+            Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, data);
+            dest.serialData(data);
         }
     }
 
@@ -122,25 +144,16 @@ public class SerialPortUtil
         public CharacterBasedSerialPort(String name, SerialCharacterListener lis, int baud, int ctimeoutms, int rtimeoutsec) throws Exception
         {
             charlistener = lis;
-            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
+            openPort(name, baud, ctimeoutms, rtimeoutsec);
         }
 
         @Override
-        public void serialEvent(SerialPortEvent ev)
+        public void serialData(byte data[])
         {
-            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
-            try {
-                byte[] data = ev.getReceivedData();
-                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, data);
-                for (byte b : data) {
-                    charlistener.processChar((char)b);
-                }
-            } catch (Exception ioe) {
-                log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
-                close();
+            for (byte b : data) {
+                charlistener.processChar((char)b);
             }
         }
-
     }
 
 
@@ -153,7 +166,7 @@ public class SerialPortUtil
         public void processLine(byte[] data);
     }
 
-    public static class LineBasedSerialPort extends SerialBasic implements SerialPortDataListener
+    public static class LineBasedSerialPort extends SerialBasic
     {
         LineBasedSerialBuffer buffer;
         SerialLineListener linelistener;
@@ -167,22 +180,16 @@ public class SerialPortUtil
         {
             buffer = new LineBasedSerialBuffer();
             linelistener = lis;
-            openPort(name, this, baud, ctimeoutms, rtimeoutsec);
+            openPort(name, baud, ctimeoutms, rtimeoutsec);
         }
 
         @Override
-        public void serialEvent(SerialPortEvent ev)
+        public void serialData(byte data[])
         {
             byte[] line;
-            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
-            try {
-                buffer.appendData(ev.getReceivedData());
-                while ((line = buffer.getNextLine()) != null)
-                    linelistener.processLine(line);
-            } catch (Exception ex) {
-                log.log(Level.WARNING, "serial port read error: " + ex, ex);
-                close();
-            }
+            buffer.appendData(data);
+            while ((line = buffer.getNextLine()) != null)
+                linelistener.processLine(line);
         }
     }
 
@@ -200,7 +207,7 @@ public class SerialPortUtil
             search = 0;
         }
 
-        public void appendData(byte inbuf[]) throws IOException
+        public void appendData(byte inbuf[])
         {
             int size = inbuf.length;
             if (size + count > buf.length) // increase buffer size at runtime if needed
@@ -213,7 +220,6 @@ public class SerialPortUtil
             for (int ii = 0; ii < inbuf.length; ii++, count++) {
                 buf[count] = inbuf[ii];
             }
-            Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, inbuf);
         }
 
         public byte[] getNextLine()
@@ -243,10 +249,5 @@ public class SerialPortUtil
 
             return null;
         }
-    }
-
-    public static void main(String args[])
-    {
-        System.out.println(userPortSelection());
     }
 }
