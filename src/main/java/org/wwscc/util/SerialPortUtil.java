@@ -8,7 +8,6 @@
 
 package org.wwscc.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -96,9 +95,25 @@ public class SerialPortUtil
             }
         }
 
+        abstract void newData(byte data[]);
+
+        @Override
+        public void serialEvent(SerialPortEvent ev)
+        {
+            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_RECEIVED) return;
+            try {
+                byte data[] = ev.getReceivedData();
+                Messenger.sendEvent(MT.SERIAL_PORT_DEBUG_DATA, data);
+                newData(data);
+            } catch (Exception ioe) {
+                log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
+                close();
+            }
+        }
+
         @Override
         public int getListeningEvents() {
-            return  SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+            return  SerialPort.LISTENING_EVENT_DATA_RECEIVED;
         }
     }
 
@@ -126,21 +141,12 @@ public class SerialPortUtil
         }
 
         @Override
-        public void serialEvent(SerialPortEvent ev)
+        public void newData(byte data[])
         {
-            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
-            try {
-                byte[] data = ev.getReceivedData();
-                Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, data);
-                for (byte b : data) {
-                    charlistener.processChar((char)b);
-                }
-            } catch (Exception ioe) {
-                log.log(Level.WARNING, "serial port read error: " + ioe, ioe);
-                close();
+            for (byte b : data) {
+                charlistener.processChar((char)b);
             }
         }
-
     }
 
 
@@ -171,18 +177,12 @@ public class SerialPortUtil
         }
 
         @Override
-        public void serialEvent(SerialPortEvent ev)
+        public void newData(byte data[])
         {
-            byte[] line;
-            if (ev.getEventType() != SerialPort.LISTENING_EVENT_DATA_AVAILABLE) return;
-            try {
-                buffer.appendData(ev.getReceivedData());
-                while ((line = buffer.getNextLine()) != null)
-                    linelistener.processLine(line);
-            } catch (Exception ex) {
-                log.log(Level.WARNING, "serial port read error: " + ex, ex);
-                close();
-            }
+            byte line[];
+            buffer.appendData(data);
+            while ((line = buffer.getNextLine()) != null)
+                linelistener.processLine(line);
         }
     }
 
@@ -200,7 +200,7 @@ public class SerialPortUtil
             search = 0;
         }
 
-        public void appendData(byte inbuf[]) throws IOException
+        public void appendData(byte inbuf[])
         {
             int size = inbuf.length;
             if (size + count > buf.length) // increase buffer size at runtime if needed
@@ -213,7 +213,6 @@ public class SerialPortUtil
             for (int ii = 0; ii < inbuf.length; ii++, count++) {
                 buf[count] = inbuf[ii];
             }
-            Messenger.sendEvent(MT.SERIAL_DEBUG_DATA, inbuf);
         }
 
         public byte[] getNextLine()
@@ -243,10 +242,5 @@ public class SerialPortUtil
 
             return null;
         }
-    }
-
-    public static void main(String args[])
-    {
-        System.out.println(userPortSelection());
     }
 }

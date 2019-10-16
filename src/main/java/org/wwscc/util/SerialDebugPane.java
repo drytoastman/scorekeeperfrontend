@@ -78,7 +78,7 @@ public class SerialDebugPane extends JFrame implements MessageListener
         StyleConstants.setBold(eol, false);
 
 
-        Messenger.register(MT.SERIAL_DEBUG_DATA, this);
+        Messenger.register(MT.SERIAL_PORT_DEBUG_DATA, this);
     }
 
     private void newData(byte[] data)
@@ -109,7 +109,7 @@ public class SerialDebugPane extends JFrame implements MessageListener
     {
         switch (type)
         {
-            case SERIAL_DEBUG_DATA:
+            case SERIAL_PORT_DEBUG_DATA:
                 if (o instanceof byte[])
                     newData((byte[])o);
                 break;
