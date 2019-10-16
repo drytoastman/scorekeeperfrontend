@@ -1,0 +1,6 @@
+rootProject.name = 'ScorekeeperSystem'
+rootProject.buildFileName = 'build.system'
+include ':ScorekeeperData'
+project(':ScorekeeperData').projectDir = new File('../ScorekeeperData')
+include ':ScorekeeperUtil'
+project(':ScorekeeperUtil').projectDir = new File('../ScorekeeperUtil')

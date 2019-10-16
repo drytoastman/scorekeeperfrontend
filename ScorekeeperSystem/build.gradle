@@ -1,0 +1,17 @@
+plugins {
+    id 'application'
+    id 'org.javamodularity.moduleplugin' version '1.6.0'
+    id 'eclipse'
+}
+
+apply from: '../common.gradle'
+
+dependencies {
+    /*
+    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'org.postgresql:postgresql:42.2.5'
+    */
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+
+    implementation project(':ScorekeeperData')
+}

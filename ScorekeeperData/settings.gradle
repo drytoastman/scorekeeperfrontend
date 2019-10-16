@@ -1,3 +1,4 @@
 rootProject.name = 'ScorekeeperData'
+rootProject.buildFileName = 'build.data'
 include ':ScorekeeperUtil'
 project(':ScorekeeperUtil').projectDir = new File('../ScorekeeperUtil')
