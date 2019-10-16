@@ -13,6 +13,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandler;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.net.http.HttpResponse.BodySubscribers;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,28 +34,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.entity.ContentProducer;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.util.EntityUtils;
 import org.kamranzafar.jtar.TarEntry;
 import org.kamranzafar.jtar.TarInputStream;
 import org.kamranzafar.jtar.TarOutputStream;
@@ -80,8 +71,8 @@ public class DockerAPI
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(Include.NON_NULL);
 
-    HttpClientBuilder builder;
-    CloseableHttpClient client;
+    HttpClient.Builder builder;
+    HttpClient client;
     HttpHost host;
     ExecutorService executor;
     Map<String, String> lastenv;
@@ -346,6 +337,14 @@ public class DockerAPI
 
     public void uploadFile(String name, Path file, String containerpath) throws IOException
     {
+        Supplier<InputStream> supplier = new Supplier<InputStream>() {
+            @Override
+            public InputStream get() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+        }
         ContentProducer producer = new ContentProducer() {
             @Override public void writeTo(OutputStream outstream) throws IOException {
                 TarOutputStream tar = new TarOutputStream(outstream);
@@ -454,18 +453,19 @@ public class DockerAPI
             throw new DockerDownException();
         }
 
-        wrap.request.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType());
+        wrap.request.setHeader(Requests.CONTENT_TYPE, Requests.APPLICATION_JSON);
 
         log.log(Level.FINE, "{0}", wrap.request);
-        if (log.isLoggable(Level.FINER) && wrap.request instanceof HttpEntityEnclosingRequestBase) {
-            HttpEntity he = ((HttpEntityEnclosingRequestBase)wrap.request).getEntity();
-            if (he instanceof StringEntity)
-                log.log(Level.FINER, EntityUtils.toString(he));
+        if (log.isLoggable(Level.FINER)) {
+            wrap.request.build().bodyPublisher().ifPresent(bp -> {
+                log.log(Level.FINER, bp.toString());
+            });
         }
 
-        HttpResponse resp = client.execute(host, wrap.request);
-        if (resp.getStatusLine().getStatusCode() >= 400) {
-            String error = EntityUtils.toString(resp.getEntity());
+        HttpResponse<InputStream> resp = client.send(wrap.request.build(), BodyHandlers.ofInputStream());
+
+        if (resp.statusCode() >= 400) {
+            String error = itos(resp.body());
             try { // response Content-type is not always set properly, try json error first, if not, just use raw string
                 error = mapper.readValue(error, ErrorResponse.class).getMessage();
             } catch (Exception e) {}
@@ -473,17 +473,18 @@ public class DockerAPI
         }
 
         if (wrap.rettype == null) {
-            EntityUtils.consumeQuietly(resp.getEntity());
             return null;
         }
 
         if (wrap.rettype == String.class)
-            return (T) EntityUtils.toString(resp.getEntity());
+            return (T) itos(resp.body());
         if (InputStream.class.isAssignableFrom(wrap.rettype))
-            return (T) resp.getEntity().getContent();
+            return (T) resp.body();
 
-        return mapper.readValue(resp.getEntity().getContent(), wrap.rettype);
+        return mapper.readValue(resp.body(), wrap.rettype);
     }
+
+    String itos(InputStream i) { return ""; }
 
     /**
      * Perform a request and ignore all body, returns or exceptions
