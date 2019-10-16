@@ -57,7 +57,7 @@ public class Driver extends AttrBase
         driverid = id;
     }
 
-    public Driver(ResultSet rs) throws SQLException
+    protected Driver(ResultSet rs) throws SQLException
     {
         super(rs);
         driverid   = (UUID)rs.getObject("driverid");

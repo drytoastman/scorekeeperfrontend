@@ -125,7 +125,7 @@ public class Run extends AttrBase implements Cloneable
      * @param rs the result set pointed at the row in question
      * @throws SQLException if an error occurs extracting run data
      */
-    public Run(ResultSet rs) throws SQLException
+    protected Run(ResultSet rs) throws SQLException
     {
         super(rs);
         eventid = (UUID)rs.getObject("eventid");

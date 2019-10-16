@@ -12,7 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
-import org.wwscc.challenge.Id;
 import org.wwscc.util.IdGenerator;
 
 /**
@@ -68,7 +67,7 @@ public class ChallengeRun
         status   = r.status;
     }
 
-    public ChallengeRun(ResultSet rs) throws SQLException
+    protected ChallengeRun(ResultSet rs) throws SQLException
     {
         challengeid  = (UUID)rs.getObject("challengeid");
         carid        = (UUID)rs.getObject("carid");
@@ -82,13 +81,14 @@ public class ChallengeRun
         status       = rs.getString("status");
     }
 
+    /*
     @Deprecated // This goes away when the old challenge GUI does
     public void setChallengeRound(Id.Run id)
     {
         challengeid = id.challengeid;
         round = id.round;
         course = id.isLeft() ? Run.LEFT : Run.RIGHT;
-    }
+    } */
 
     public void setChallengeRound(UUID challengeid, int round, int course)
     {

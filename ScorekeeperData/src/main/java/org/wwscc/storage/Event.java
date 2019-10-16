@@ -51,7 +51,7 @@ public class Event extends AttrBase implements Serializable
         super();
     }
 
-    public Event(ResultSet rs) throws SQLException
+    protected Event(ResultSet rs) throws SQLException
     {
         super(rs);
         eventid     = (UUID)rs.getObject("eventid");

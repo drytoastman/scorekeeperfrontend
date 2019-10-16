@@ -27,7 +27,7 @@ public class ChallengeRound
     protected RoundEntrant car1;
     protected RoundEntrant car2;
 
-    public ChallengeRound(ResultSet rs) throws SQLException
+    protected ChallengeRound(ResultSet rs) throws SQLException
     {
         challengeid  = (UUID)rs.getObject("challengeid");
         round        = rs.getInt("round");

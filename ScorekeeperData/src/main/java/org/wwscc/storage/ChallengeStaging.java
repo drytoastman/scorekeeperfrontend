@@ -45,7 +45,7 @@ public class ChallengeStaging
         this.entries = new ArrayList<>();
     }
 
-    public ChallengeStaging(ResultSet rs) throws SQLException
+    protected ChallengeStaging(ResultSet rs) throws SQLException
     {
         challengeid  = (UUID)rs.getObject("challengeid");
         entries = new ArrayList<>();

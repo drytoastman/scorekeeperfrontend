@@ -45,7 +45,7 @@ public abstract class SQLDataInterface implements DataInterface
     public abstract void rollback();
     public abstract void executeUpdate(String sql, List<Object> args) throws SQLException;
     public abstract void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException;
-    public abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
+    protected abstract ResultSet executeSelect(String sql, List<Object> args) throws SQLException;
     public abstract void closeLeftOvers();
     public abstract <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException;
 

@@ -1,0 +1,18 @@
+boolean isTestScope(entry) { return entry.entryAttributes.get('gradle_used_by_scope').equals('test'); }
+
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                entries.findAll { (it.kind == 'lib' || it.kind == 'con' || it.kind == 'src') && !isTestScope(it) }.each {
+                    it.entryAttributes['module'] = 'true'
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    google()
+    jcenter()
+}

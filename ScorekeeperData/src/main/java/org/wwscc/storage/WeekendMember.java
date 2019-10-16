@@ -40,7 +40,7 @@ public class WeekendMember extends AttrBase
         this.area      = "";
     }
 
-    public WeekendMember(ResultSet rs) throws SQLException
+    protected WeekendMember(ResultSet rs) throws SQLException
     {
         uniqueid   = (UUID)rs.getObject("uniqueid");
         membership = rs.getInt("membership");

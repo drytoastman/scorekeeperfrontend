@@ -29,7 +29,7 @@ public class Payment
     {
     }
 
-    public Payment(ResultSet rs) throws SQLException
+    protected Payment(ResultSet rs) throws SQLException
     {
         payid    = (UUID)rs.getObject("payid");
         eventid  = (UUID)rs.getObject("eventid");

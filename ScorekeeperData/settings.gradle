@@ -1,0 +1,3 @@
+rootProject.name = 'ScorekeeperData'
+include ':ScorekeeperUtil'
+project(':ScorekeeperUtil').projectDir = new File('../ScorekeeperUtil')

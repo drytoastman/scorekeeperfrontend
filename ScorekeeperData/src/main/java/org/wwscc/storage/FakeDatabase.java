@@ -45,7 +45,7 @@ public class FakeDatabase extends SQLDataInterface
     public void rollback() {}
     public void executeUpdate(String sql, List<Object> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
     public void executeGroupUpdate(String sql, List<List<Object>> args) throws SQLException { throw new SQLException("Writing to FakeDatabase"); }
-    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException { return new EmptySet(); }
+    protected ResultSet executeSelect(String sql, List<Object> args) throws SQLException { return new EmptySet(); }
     public void closeLeftOvers() {}
     public <T> List<T> executeSelect(String key, List<Object> args, Constructor<T> objc) throws SQLException { return new ArrayList<T>(); }
 

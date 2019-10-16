@@ -4,30 +4,14 @@ plugins {
     id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
-eclipse {
-    classpath {
-        file {
-            whenMerged {
-                entries.findAll { it.kind == 'lib' || it.kind == 'con' }.each {
-                    it.entryAttributes['module'] = 'true'
-                }
-            }
-        }
-    }
-}
+apply from: '../common.gradle'
 
 javafx {
     version = "13"
     modules = [ 'javafx.controls', 'javafx.web' ]
 }
 
-repositories {
-    jcenter()
-}
-
 dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
     implementation 'com.fazecast:jSerialComm:2.5.2'
-
-    testImplementation 'junit:junit:4.12'
 }

@@ -52,7 +52,7 @@ public class Car extends AttrBase
         effectiveIndexString = Database.d.getEffectiveIndexStr(this);
     }
 
-    public Car(ResultSet rs) throws SQLException
+    protected Car(ResultSet rs) throws SQLException
     {
         super(rs);
         carid      = (UUID)rs.getObject("carid");

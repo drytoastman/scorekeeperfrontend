@@ -170,7 +170,7 @@ public class ClassData
             this.secondruns = secondruns;
         }
 
-        public Class(ResultSet rs) throws SQLException
+        protected Class(ResultSet rs) throws SQLException
         {
             classcode       = rs.getString("classcode");
             descrip         = rs.getString("descrip");
@@ -297,7 +297,7 @@ public class ClassData
         {
         }
 
-        public Index(ResultSet rs) throws SQLException
+        protected Index(ResultSet rs) throws SQLException
         {
             indexcode = rs.getString("indexcode");
             descrip   = rs.getString("descrip");

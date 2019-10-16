@@ -28,7 +28,7 @@ public class Challenge
     {
     }
 
-    public Challenge(ResultSet rs) throws SQLException
+    protected Challenge(ResultSet rs) throws SQLException
     {
         challengeid = (UUID)rs.getObject("challengeid");
         eventid     = (UUID)rs.getObject("eventid");

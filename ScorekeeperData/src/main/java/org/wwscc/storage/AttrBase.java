@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class AttrBase
+class AttrBase
 {
     private static Logger log = Logger.getLogger(AttrBase.class.getCanonicalName());
     private static ObjectMapper objectMapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);

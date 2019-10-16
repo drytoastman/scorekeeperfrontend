@@ -30,7 +30,7 @@ public class Entrant
         runs = new HashMap<Integer,Run>();
     }
 
-    public Entrant(ResultSet rs) throws SQLException
+    protected Entrant(ResultSet rs) throws SQLException
     {
         this();
         car       = new Car(rs);

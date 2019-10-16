@@ -398,7 +398,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
 
 
     @Override
-    public ResultSet executeSelect(String sql, List<Object> args) throws SQLException
+    protected ResultSet executeSelect(String sql, List<Object> args) throws SQLException
     {
         PreparedStatement p = getConnection().prepareStatement(sql);
         if (args != null)
