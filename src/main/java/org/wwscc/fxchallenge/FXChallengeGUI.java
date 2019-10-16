@@ -8,7 +8,6 @@
 
 package org.wwscc.fxchallenge;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
@@ -19,13 +18,10 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import org.wwscc.util.Prefs;
-import org.wwscc.util.AppSetup;
-import org.wwscc.util.AppSetup.Mode;
-import org.wwscc.util.Messenger;
 
 public class FXChallengeGUI extends Application
 {
-    private static Logger log = Logger.getLogger(FXChallengeGUI.class.getCanonicalName());
+    static Logger log = Logger.getLogger(FXChallengeGUI.class.getCanonicalName());
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -47,24 +43,6 @@ public class FXChallengeGUI extends Application
         } catch (Exception e) {
             System.out.println(e);
             throw e;
-        }
-    }
-
-    /**
-     * Entry point for Challenge GUI.
-     * @param args unused
-     */
-    public static void main(String args[])
-    {
-        try
-        {
-            Messenger.setFXMode();
-            AppSetup.appSetup("challengegui", Mode.FX_MODE);
-            launch(args);
-        }
-        catch (Throwable e)
-        {
-            log.log(Level.SEVERE, "\bFailed to start Challenge GUI: " + e, e);
         }
     }
 }
