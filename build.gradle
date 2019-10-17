@@ -23,6 +23,15 @@ def getVersionName = { ->
     }
 }
 
+def getOSName = { ->
+    def os = OperatingSystem.current();
+    if (os.isWindows()) return "Windows10";
+    if (os.isLinux()) return "Linux";
+    if (os.isMacOsX()) return "OSX";
+    return "Unknown";
+}
+
+def osname = getOSName()
 version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
 
@@ -83,9 +92,16 @@ runtime {
         'jdk.unsupported.desktop',
         'jdk.xml.dom'
     ]
-    def os = OperatingSystem.current().getName().replace(" ", "")
     imageDir = file("$buildDir/scorekeeper-${version}")
-    imageZip = file("$buildDir/scorekeeper-${version}-${os}.zip")
+    imageZip = file("$buildDir/scorekeeper-${version}-${osname}.zip")
+}
+
+task ver {
+    doLast() { print "${version}" }
+}
+
+task os {
+    doLast() { print "${osname}" }
 }
 
 task createUbuntuSetup (type: Copy) {

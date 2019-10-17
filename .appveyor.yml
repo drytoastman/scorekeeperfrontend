@@ -3,13 +3,13 @@ environment:
 
 install:
     - set PATH=%PATH%;"C:\Program Files (x86)\Inno Setup 5"
-    - cmd: FOR /F "tokens=*" %%F IN ('"git describe --tags --abbrev=0"') DO SET suffix=%%F
+    - cmd: FOR /F "tokens=*" %%F IN ('"gradlew.bat ver"') DO SET myversion=%%F
 
 build_script:
     - gradlew.bat runtimeZip --info --no-daemon
 
 after_build:
-    - iscc.exe /DVersion=%suffix% installers\windows.iss
+    - iscc.exe /DVersion=%myversion% installers\windows.iss
 
 artifacts:
     - path: installers\*.exe
