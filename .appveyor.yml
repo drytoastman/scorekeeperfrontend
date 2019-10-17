@@ -6,7 +6,7 @@ install:
     - cmd: FOR /F "tokens=*" %%F IN ('"git describe --tags --abbrev=0"') DO SET suffix=%%F
 
 build_script:
-    - gradlew.bat shadowJar --info --no-daemon
+    - gradlew.bat runtimeZip --info --no-daemon
 
 after_build:
     - iscc.exe /DVersion=%suffix% installers\windows.iss
@@ -14,6 +14,8 @@ after_build:
 artifacts:
     - path: installers\*.exe
       name: Windows Installer
+    - path: build\scorekeeper*.zip
+      name: Frontend Zip
 
 deploy:
     provider: GitHub
