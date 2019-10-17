@@ -14,7 +14,7 @@ cache:
   - "$HOME/.gradle/wrapper/"
 script:
   - ./gradlew check
-  - ./gradlew shadowJar
+  - ./gradlew runtime
   - ./gradlew createUbuntuSetup
 deploy:
   provider: releases

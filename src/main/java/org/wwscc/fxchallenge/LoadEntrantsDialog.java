@@ -38,7 +38,7 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
     {
         try {
             Controller controller = new Controller(challenge, getDialogPane());  // fxloader can't find inner static classes
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/wwscc/fxchallenge/loadentrantsdialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/loadentrantsdialog.fxml"));
             loader.setController(controller);
             Parent root = (Parent)loader.load();
 

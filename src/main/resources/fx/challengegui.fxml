@@ -34,13 +34,13 @@
                      </accelerator></MenuItem>
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Challenge">
+          <Menu fx:id="challengeMenu" disable="true" mnemonicParsing="false" text="Challenge">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#newChallenge" text="New Challenge" />
-                  <MenuItem mnemonicParsing="false" onAction="#editChallenge" text="Edit Challenge" />
-                  <MenuItem mnemonicParsing="false" onAction="#deleteChallenge" text="Delete Challenge" />
-                  <MenuItem mnemonicParsing="false" onAction="#loadEntrants" text="Load Entrants" />
-                  <MenuItem mnemonicParsing="false" onAction="#viewInBrowser" text="View In Browser" />
+                  <MenuItem fx:id="newChallengeMenu"    disable="true" mnemonicParsing="false" onAction="#newChallenge" text="New Challenge" />
+                  <MenuItem fx:id="editChallengeMenu"   disable="true" mnemonicParsing="false" onAction="#editChallenge" text="Edit Challenge" />
+                  <MenuItem fx:id="deleteChallengeMenu" disable="true" mnemonicParsing="false" onAction="#deleteChallenge" text="Delete Challenge" />
+                  <MenuItem fx:id="loadEntrantsMenu"    disable="true" mnemonicParsing="false" onAction="#loadEntrants" text="Load Entrants" />
+                  <MenuItem fx:id="viewInBrowserMenu"   disable="true" mnemonicParsing="false" onAction="#viewInBrowser" text="View In Browser" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Timer">

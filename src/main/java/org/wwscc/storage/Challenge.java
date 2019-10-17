@@ -63,4 +63,10 @@ public class Challenge
     {
         return name;
     }
+
+    @Override
+    public boolean equals(Object other)
+    {
+        return (other instanceof Challenge) && ((Challenge)other).getChallengeId().equals(challengeid);
+    }
 }

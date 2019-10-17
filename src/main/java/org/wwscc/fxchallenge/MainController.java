@@ -69,6 +69,8 @@ public class MainController
     @FXML private ComboBox<Challenge> challengeSelect;
     @FXML private WebView bracketView;
     @FXML private TableView<ChallengePair> stageTable;
+    @FXML private MenuItem newChallengeMenu, editChallengeMenu, deleteChallengeMenu, loadEntrantsMenu, viewInBrowserMenu;
+    @FXML private Menu challengeMenu;
 
     private StringProperty currentSeries;
     private SimpleObjectProperty<Event> currentEvent;
@@ -131,7 +133,10 @@ public class MainController
         currentEvent.bind(eventSelect.valueProperty());
         currentEvent.addListener((ob, old, newevent) -> {
             reloadChallengeSelect();
-            Prefs.setEventIndex(eventSelect.getSelectionModel().getSelectedIndex());
+            int index = eventSelect.getSelectionModel().getSelectedIndex();
+            Prefs.setEventIndex(index);
+            challengeMenu.setDisable(index < 0);
+            newChallengeMenu.setDisable(index < 0);
         });
 
         currentChallenge.bind(challengeSelect.valueProperty());
@@ -139,6 +144,10 @@ public class MainController
             int index = challengeSelect.getSelectionModel().getSelectedIndex();
             if (index >= 0)
                 Prefs.setChallengeIndex(index);
+            editChallengeMenu.setDisable(index < 0);
+            deleteChallengeMenu.setDisable(index < 0);
+            loadEntrantsMenu.setDisable(index < 0);
+            viewInBrowserMenu.setDisable(index < 0);
             loadBracket();
         });
 
@@ -193,6 +202,11 @@ public class MainController
     public void loadEntrants(ActionEvent event)
     {
         Challenge c = currentChallenge.get();
+        if (c == null) {
+            FXDialogs.warning("No Challenge", null, "Please select a challenge before trying to load entrants").showAndWait();
+            return;
+        }
+
         Optional<List<DialinEntry>> ret = new LoadEntrantsDialog(c).showAndWait();
         if (!ret.isPresent())
             return;

@@ -26,9 +26,9 @@ public class FXChallengeGUI extends Application
     @Override
     public void start(Stage stage) throws Exception {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/wwscc/fxchallenge/challengegui.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fx/challengegui.fxml"));
             Parent root = loader.load();
-            root.getStylesheets().add(getClass().getResource("/org/wwscc/fxchallenge/challengestyle.css").toString());
+            root.getStylesheets().add(getClass().getResource("/fx/challengestyle.css").toString());
             Scene scene = new Scene(root, 1366, 768);
             stage.setTitle("Challenge");
             stage.setScene(scene);
