@@ -4,12 +4,8 @@ AppVersion={#Version}
 OutputDir=.
 AppPublisher=Brett Wilson
 UsePreviousAppDir=yes
-#ifdef Offline
-OutputBaseFilename=ScorekeeperSetup-{#Version}-Offline
-#else
 OutputBaseFilename=ScorekeeperSetup-{#Version}
-#endif
-DefaultDirName={pf}\Scorekeeper
+DefaultDirName={pf}\Scorekeeper\{#Version}
 DefaultGroupName=Scorekeeper
 AllowNoIcons=yes
 Compression=lzma
@@ -20,18 +16,11 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl";
 
 [Files]
-Source: "..\build\scorekeeper-{#Version}\*"; DestDir: "{app}\Scorekeeper-{#Version}"; Flags: recursesubdirs
-#ifdef Offline
-#define ImageArchive "images-"+Version+".tar"
-Source: "{#ImageArchive}"; DestDir: "{tmp}"; Flags: dontcopy; 
-#endif 
-
-[InstallDelete]
-Type: files; Name: "{group}\Scorekeeper*"
+Source: "..\build\scorekeeper-{#Version}\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
-Name:       "{group}\Scorekeeper {#Version}"; WorkingDir: "{app}\Scorekeeper-{#Version}\bin"; Filename: "javaw.exe"; Parameters: "-classpath ""{app}\Scorekeeper-{#Version}\lib\*"" org.wwscc.system.ScorekeeperSystem"
-Name: "{userdesktop}\Scorekeeper {#Version}"; WorkingDir: "{app}\Scorekeeper-{#Version}\bin"; Filename: "javaw.exe"; Parameters: "-classpath ""{app}\Scorekeeper-{#Version}\lib\*"" org.wwscc.system.ScorekeeperSystem"
+Name:       "{group}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
+Name: "{userdesktop}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
@@ -47,93 +36,23 @@ const
 
 function InitializeSetup(): Boolean;
 var
- WinVersion: TWindowsVersion;
- Version: String;
  ResultCode: Integer;
- DockerOk: Boolean;
- Msg: String;
 begin
-   DockerOk := False;
    Result := True;
-
-   GetWindowsVersionEx(WinVersion);
-   if WinVersion.SuiteMask and VER_SUITE_PERSONAL = 0 then
+   if ExecAsOriginalUser('docker.exe', 'version', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
    begin
-     SuppressibleMsgBox('This installer is intended for Windows Home and Docker Toolbox.'#13#10#13#10 + 
-     'On a Windows Pro machine you must make sure Hyper-V is disabled before installing Docker Toolbox.  ' +
-     'Docker for Windows, based on Hyper-V, is not reliable enough after the computer comes out of hibernate or sleep at this time.'
-     , mbError, MB_OK, IDOK);
-   end;
-
-   if ExecAsOriginalUser('docker-machine.exe', '--version', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
-     DockerOk := True;
-   end;
-   
-   if not DockerOk then begin
-      Result := False;
-      Msg := 'The necessary installl requirements are not met.'#13#10#13#10;
-      if not DockerOk then begin
-        Msg := Msg + ' - Docker-Toolbox for Windows is required.'#13#10;
-      end;
-      
-      Msg := Msg + #13#10'Once the indicated software is installed, you can rerun this script.  Do you wish to open the downlad pages now?';
-      
-      if MsgBox(Msg, mbConfirmation, MB_YESNO) = IDYES then begin
-        if not DockerOk then begin
-          ShellExec('open', 'https://docs.docker.com/toolbox/toolbox_install_windows/', '', '', SW_SHOW, ewNoWait, ResultCode);
-        end;
-      end;
-   end;
+       if ResultCode <> 0 then
+       begin
+           SuppressibleMsgBox('"docker.exe" was found but the docker daemon may not be running right now.  A working docker install is required to run Scorekeeper.', mbInformation, MB_OK, 0);
+       end;
+   end else begin
+       MsgBox('"docker.exe" was not found.  A working Docker installation is required to run Scorekeeper.'+ #13#10#13#10 +
+                'Windows 10 Home'+ #13#10 + '  https://docs.docker.com/toolbox/toolbox_install_windows/'+ #13#10 +
+                'Windows 10 Pro' + #13#10 + '  https://docs.docker.com/docker-for-windows/',
+                 mbInformation, MB_OK);
+       Result := False;
+   end;   
 end;
-
-
-function ImagePullBatch(ignored: String): String;
-var
- ResultCode: Integer;
-begin
-   Result := ExpandConstant('{tmp}\pullimages.bat')
-   if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
-       SaveStringToFile(Result, 'docker pull drytoastman/scdb:{#Version}'#10, True);
-       SaveStringToFile(Result, 'docker pull drytoastman/scpython:{#Version}'#10, True);
-   end;
-end;
-
-
-#ifdef Offline
-function ImageLoadBatch(ignored: String): String;
-var
- ResultCode: Integer;
-begin
-   Result := ExpandConstant('{tmp}\loadimages.bat')
-   if ExecAsOriginalUser(ExpandConstant('{cmd}'), ExpandConstant('/C docker-machine.exe env --shell cmd > '+Result), '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
-       SaveStringToFile(Result, ExpandConstant('docker load --input {tmp}\{#ImageArchive}'#10), True);
-       ExtractTemporaryFile('{#ImageArchive}');
-   end;
-end;
-#endif
-
-
-function PrepareToInstall(var NeedsRestart: Boolean): String;
-var
- ResultCode: Integer;
- BatFile: String;
-begin
-    { machine error is always 1 even if its just an existing machine so we ignore and depend on pull to error }
-    ExecAsOriginalUser('docker-machine.exe', 'create default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-    ExecAsOriginalUser('docker-machine.exe', 'start default', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-
-#ifdef Offline
-    BatFile := ImageLoadBatch('');
-#else
-    BatFile := ImagePullBatch('');
-#endif
-
-    ExecAsOriginalUser(BatFile, '', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
-    if ResultCode <> 0 then begin
-        Result := 'Failed to load the docker images';
-    end;
-end;
-
 
 procedure AddFirewallPort(AppName: string; Protocol, Port: integer);
 var
