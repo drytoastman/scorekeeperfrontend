@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id 'application'
     id 'eclipse'
@@ -81,6 +83,9 @@ runtime {
         'jdk.unsupported.desktop',
         'jdk.xml.dom'
     ]
+    def os = OperatingSystem.current().getName().replace(" ", "")
+    imageDir = file("$buildDir/scorekeeper-${version}")
+    imageZip = file("$buildDir/scorekeeper-${version}-${os}.zip")
 }
 
 task createUbuntuSetup (type: Copy) {
