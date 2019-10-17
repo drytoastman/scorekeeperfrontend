@@ -9,10 +9,13 @@ def getVersionName = { ->
     try {
         def stdout = new ByteArrayOutputStream()
         exec {
-            commandLine 'git', 'describe', '--tags', '--abbrev=0'
+            commandLine 'git', 'describe'
             standardOutput = stdout
         }
-        return stdout.toString().trim()
+        def ret = stdout.toString().trim()
+        if (ret.contains('-'))
+            throw new Exception("not on tag")
+        return ret
     } catch (Exception e) {
         return "latest"
     }
