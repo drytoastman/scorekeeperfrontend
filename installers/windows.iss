@@ -20,7 +20,7 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl";
 
 [Files]
-Source: "..\build\libs\scorekeeper-{#Version}.jar"; DestDir: "{app}";
+Source: "..\build\scorekeeper-{#Version}\*"; DestDir: "{app}\Scorekeeper-{#Version}"; Flags: recursesubdirs
 #ifdef Offline
 #define ImageArchive "images-"+Version+".tar"
 Source: "{#ImageArchive}"; DestDir: "{tmp}"; Flags: dontcopy; 
@@ -30,8 +30,8 @@ Source: "{#ImageArchive}"; DestDir: "{tmp}"; Flags: dontcopy;
 Type: files; Name: "{group}\Scorekeeper*"
 
 [Icons]
-Name:       "{group}\Scorekeeper {#Version}"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
-Name: "{userdesktop}\Scorekeeper {#Version}"; WorkingDir: "{app}"; Filename: "javaw.exe"; Parameters: "-jar scorekeeper-{#Version}.jar";
+Name:       "{group}\Scorekeeper {#Version}"; WorkingDir: "{app}\Scorekeeper-{#Version}\bin"; Filename: "javaw.exe"; Parameters: "-classpath ""{app}\Scorekeeper-{#Version}\lib\*"" org.wwscc.system.ScorekeeperSystem"
+Name: "{userdesktop}\Scorekeeper {#Version}"; WorkingDir: "{app}\Scorekeeper-{#Version}\bin"; Filename: "javaw.exe"; Parameters: "-classpath ""{app}\Scorekeeper-{#Version}\lib\*"" org.wwscc.system.ScorekeeperSystem"
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
@@ -50,11 +50,9 @@ var
  WinVersion: TWindowsVersion;
  Version: String;
  ResultCode: Integer;
- JavaOk: Boolean;
  DockerOk: Boolean;
  Msg: String;
 begin
-   JavaOk := false;
    DockerOk := False;
    Result := True;
 
@@ -67,22 +65,13 @@ begin
      , mbError, MB_OK, IDOK);
    end;
 
-   if RegQueryStringValue(HKLM, 'SOFTWARE\JavaSoft\Java Runtime Environment', 'CurrentVersion', Version) then begin
-     if (StrToInt(Version[3]) >= 8) then begin
-        JavaOk := True;
-     end;
-   end;
-
    if ExecAsOriginalUser('docker-machine.exe', '--version', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then begin
      DockerOk := True;
    end;
    
-   if not JavaOk or not DockerOk then begin
+   if not DockerOk then begin
       Result := False;
       Msg := 'The necessary installl requirements are not met.'#13#10#13#10;
-      if not JavaOk then begin
-        Msg := Msg + ' - Java version 1.8 or newer is required.'#13#10;
-      end;
       if not DockerOk then begin
         Msg := Msg + ' - Docker-Toolbox for Windows is required.'#13#10;
       end;
@@ -90,9 +79,6 @@ begin
       Msg := Msg + #13#10'Once the indicated software is installed, you can rerun this script.  Do you wish to open the downlad pages now?';
       
       if MsgBox(Msg, mbConfirmation, MB_YESNO) = IDYES then begin
-        if not JavaOk then begin
-          ShellExec('open', 'http://java.com/en/download/windows-64bit.jsp', '', '', SW_SHOW, ewNoWait, ResultCode);
-        end;
         if not DockerOk then begin
           ShellExec('open', 'https://docs.docker.com/toolbox/toolbox_install_windows/', '', '', SW_SHOW, ewNoWait, ResultCode);
         end;
