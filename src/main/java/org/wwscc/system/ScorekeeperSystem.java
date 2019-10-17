@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 
+import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.AppSetup;
@@ -181,7 +182,33 @@ public class ScorekeeperSystem
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
         } catch (InterruptedException ie) {
-            log.warning("\bTrayApplication exiting due to interuption: " + ie);
+            log.warning("\bScorekeeperSystem exiting due to interuption: " + ie);
+        }
+    }
+
+    /**
+     * Just run the things necessary to get docker up and running, images loaded and database created.
+     */
+    private boolean prepared = false;
+    public void prepareOnly()
+    {
+        Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
+        new BaseDialog.MessageOnly(
+            "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
+            .doDialog("Preparing System", e -> {}, window);
+
+        cmonitor = new ContainerMonitor();
+        cmonitor.start();
+        mmonitor = new MachineMonitor();
+        mmonitor.start();
+
+        try {
+            while (!prepared) Thread.sleep(300);
+            mmonitor.shutdown();
+            cmonitor.shutdown();
+            while (mmonitor.isAlive() || cmonitor.isAlive()) Thread.sleep(300);
+        } catch (InterruptedException ie) {
+            log.warning("\bDockerPrepare exiting due to interuption: " + ie);
         }
     }
 
@@ -202,8 +229,11 @@ public class ScorekeeperSystem
         }
 
         ScorekeeperSystem system = new ScorekeeperSystem();
-
-        system.startAndWaitForThreads();
+        if (args.length > 0 && args[0].equals("dockerprepare")) {
+            system.prepareOnly();
+        } else {
+            system.startAndWaitForThreads();
+        }
         System.exit(0);
     }
 }

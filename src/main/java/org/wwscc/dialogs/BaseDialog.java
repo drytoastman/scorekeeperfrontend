@@ -9,6 +9,7 @@
 package org.wwscc.dialogs;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Font;
 import java.awt.KeyboardFocusManager;
@@ -32,6 +33,8 @@ import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import org.wwscc.util.AutoTextField;
 import org.wwscc.util.NumberField;
+
+import net.miginfocom.swing.MigLayout;
 
 /**
  * Core functions for all dialogs.
@@ -64,6 +67,19 @@ public class BaseDialog<E> extends JPanel implements ActionListener
     public interface DialogFinisher<T>
     {
         public void dialogFinished(T object);
+    }
+
+    public static class MessageOnly extends BaseDialog<Void>
+    {
+        public MessageOnly(String msg) {
+            super(new MigLayout("fill", "fill", "fill"), true);
+            JLabel status = new JLabel(msg);
+            mainPanel.add(status, BorderLayout.CENTER);
+            buttonPanel.remove(cancel);
+        }
+        public boolean verifyData() {
+            return true;
+        }
     }
 
     /**
@@ -304,6 +320,11 @@ public class BaseDialog<E> extends JPanel implements ActionListener
 
     public boolean doDialog(String title, DialogFinisher<E> finish)
     {
+        return doDialog(title, finish, KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
+    }
+
+    public boolean doDialog(String title, DialogFinisher<E> finish, Component relative)
+    {
         if (currentDialog != null)
             return false;
 
@@ -324,7 +345,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
             currentDialog.getRootPane().setDefaultButton(defaultButton);
         currentDialog.pack();
         currentDialog.setTitle(title);
-        currentDialog.setLocationRelativeTo(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow());
+        currentDialog.setLocationRelativeTo(relative);
         currentDialog.setResizable(false);
         currentDialog.setVisible(true);
         return isValid();

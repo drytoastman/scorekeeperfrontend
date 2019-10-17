@@ -25,6 +25,7 @@ Name: "{userdesktop}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; P
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
+Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem dockerprepare";
 
 [Code]
 const
