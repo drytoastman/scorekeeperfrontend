@@ -193,8 +193,8 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(new JLabel(""), "");
             content.add(buttons.get("minimaxi"), "al right, wrap");
 
-            pack();
             setResizable(false);
+            pack();
         } else {
             content.setLayout(new MigLayout("fill, ins 5, gap 5", "", "[grow 0][fill]"));
 
@@ -219,10 +219,10 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(buttons.get("clearold"), "gapleft 10, wrap");
             content.add(new JScrollPane(inactivetable), "grow");
 
+            setResizable(true);
             setBounds(Prefs.getWindowBounds("statuswindow"));
             validate();
             repaint();
-            setResizable(true);
         }
     }
 
