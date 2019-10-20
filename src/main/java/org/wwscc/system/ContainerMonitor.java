@@ -20,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
@@ -127,15 +126,14 @@ public class ContainerMonitor extends MonitorBase
             status.set( "Establishing Network");
             long starttime = System.currentTimeMillis();
             boolean warned = false;
-            BaseDialog.MessageOnly mdiag = new BaseDialog.MessageOnly("Initial connection is taking a while, is Docker installed and running properly?");
             while (!done && !docker.networkUp(NET_NAME)) {
                 if (!warned && System.currentTimeMillis() > starttime + 5000) {
-                    mdiag.doDialog("Docker Check", e -> {});
+                    Messenger.sendEvent(MT.DOCKER_NOT_OK, null);
                     warned = true;
                 }
                 donefornow();
             }
-            mdiag.close();
+            Messenger.sendEvent(MT.DOCKER_OK, null);
 
             status.set( "Creating containers");
             while (!done && !docker.containersUp(all, (c, t) -> { status.set(String.format("Creation Step %s of %s", c, t)); }))

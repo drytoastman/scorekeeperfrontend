@@ -53,13 +53,17 @@ public class ScorekeeperSystem
         window = new ScorekeeperStatusWindow(actions, model);
         window.setVisible(true);
 
+        BaseDialog.MessageOnly mdiag = new BaseDialog.MessageOnly("Initial connection is taking a while, is Docker installed and running properly?");
+
         Messenger.register(MT.USING_MACHINE,         (t,d) -> usingmachine = (boolean)d);
         Messenger.register(MT.DEBUG_REQUEST,         (t,d) -> new DebugCollector(cmonitor).start());
         Messenger.register(MT.BACKUP_REQUEST,        (t,d) -> cmonitor.backupRequest());
         Messenger.register(MT.IMPORT_REQUEST,        (t,d) -> importRequest((File)d));
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
-        Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest());
+        Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest(false));
         Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((Set<String>)d));
+        Messenger.register(MT.DOCKER_NOT_OK,         (t,d) -> mdiag.doDialog("Docker Check", e -> {}, window));
+        Messenger.register(MT.DOCKER_OK,             (t,d) -> mdiag.close());
     }
 
     public void dataUpdate(Set<String> tables)
@@ -114,7 +118,7 @@ public class ScorekeeperSystem
         new Thread(launch, "LaunchedApp").start();
     }
 
-    public void shutdownRequest()
+    public void shutdownRequest(boolean prepareonly)
     {
         if (shutdownstarted)
         {   // Quit called a second time while shutting down, just quit now
@@ -122,28 +126,31 @@ public class ScorekeeperSystem
             System.exit(-1);
         }
 
-        if (usingmachine)
+        if (!prepareonly)
         {
-            Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
-            int result = JOptionPane.showOptionDialog(window, "<html>" +
-                    "This will stop all applications including the database and web server.<br/>" +
-                    "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;",
-                    "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-            if (result == 2)
-                return;
-            mmonitor.stopMachine(result == 1);
-        }
-        else
-        {
-            Object[] options = { "Shutdown Scorekeeper", "Cancel" };
-            int result = JOptionPane.showOptionDialog(window, "<html>" +
-                    "This will stop all applications including the database and web server.",
-                    "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-            if (result == 1)
-                return;
-        }
+            if (usingmachine)
+            {
+                Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
+                int result = JOptionPane.showOptionDialog(window, "<html>" +
+                        "This will stop all applications including the database and web server.<br/>" +
+                        "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;",
+                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                if (result == 2)
+                    return;
+                mmonitor.stopMachine(result == 1);
+            }
+            else
+            {
+                Object[] options = { "Shutdown Scorekeeper", "Cancel" };
+                int result = JOptionPane.showOptionDialog(window, "<html>" +
+                        "This will stop all applications including the database and web server.",
+                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                if (result == 1)
+                    return;
+            }
 
-        Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
+            Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
+        }
 
         Runnable shutdown = () -> {
             // first shutdown all the things with database connections
@@ -169,8 +176,16 @@ public class ScorekeeperSystem
      * them to finish.  We can't used thread.join as it breaks thread.notify
      * behavior during regular runtime.
      */
-    public void startAndWaitForThreads()
+    private boolean prepared = false;
+    public void startAndWaitForThreads(boolean prepareonly)
     {
+        if (prepareonly) {
+            Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
+            new BaseDialog.MessageOnly(
+                "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
+                .doDialog("Preparing System", e -> {}, window);
+        }
+
         cmonitor = new ContainerMonitor();
         cmonitor.start();
         mmonitor = new MachineMonitor();
@@ -179,36 +194,14 @@ public class ScorekeeperSystem
         pmonitor.start();
 
         try {
+            if (prepareonly) {
+                while (!prepared) Thread.sleep(300);
+                shutdownRequest(true);
+            }
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
         } catch (InterruptedException ie) {
             log.warning("\bScorekeeperSystem exiting due to interuption: " + ie);
-        }
-    }
-
-    /**
-     * Just run the things necessary to get docker up and running, images loaded and database created.
-     */
-    private boolean prepared = false;
-    public void prepareOnly()
-    {
-        Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
-        new BaseDialog.MessageOnly(
-            "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
-            .doDialog("Preparing System", e -> {}, window);
-
-        cmonitor = new ContainerMonitor();
-        cmonitor.start();
-        mmonitor = new MachineMonitor();
-        mmonitor.start();
-
-        try {
-            while (!prepared) Thread.sleep(300);
-            mmonitor.shutdown();
-            cmonitor.shutdown();
-            while (mmonitor.isAlive() || cmonitor.isAlive()) Thread.sleep(300);
-        } catch (InterruptedException ie) {
-            log.warning("\bDockerPrepare exiting due to interuption: " + ie);
         }
     }
 
@@ -228,12 +221,7 @@ public class ScorekeeperSystem
             System.exit(-1);
         }
 
-        ScorekeeperSystem system = new ScorekeeperSystem();
-        if (args.length > 0 && args[0].equals("dockerprepare")) {
-            system.prepareOnly();
-        } else {
-            system.startAndWaitForThreads();
-        }
+        new ScorekeeperSystem().startAndWaitForThreads(args.length > 0 && args[0].equals("dockerprepare"));
         System.exit(0);
     }
 }

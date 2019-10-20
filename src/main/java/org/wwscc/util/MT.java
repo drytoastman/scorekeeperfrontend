@@ -47,6 +47,8 @@ public enum MT {
     OPEN_STATUS_REQUEST,
     BACKUP_REQUEST,
     SHUTDOWN_REQUEST,
+    DOCKER_NOT_OK,
+    DOCKER_OK,
 
     // Data Entry
     OBJECT_CLICKED,

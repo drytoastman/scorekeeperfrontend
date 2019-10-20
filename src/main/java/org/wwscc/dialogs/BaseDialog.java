@@ -72,7 +72,7 @@ public class BaseDialog<E> extends JPanel implements ActionListener
     public static class MessageOnly extends BaseDialog<Void>
     {
         public MessageOnly(String msg) {
-            super(new MigLayout("fill", "fill", "fill"), true);
+            super(new MigLayout("fill", "fill", "fill"), false);
             JLabel status = new JLabel(msg);
             mainPanel.add(status, BorderLayout.CENTER);
             buttonPanel.remove(cancel);
