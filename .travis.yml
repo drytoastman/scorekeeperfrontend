@@ -12,21 +12,24 @@ jdk:
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
 cache:
   directories:
   - "$HOME/.gradle/caches/"
   - "$HOME/.gradle/wrapper/"
+
 script:
   - if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then ./gradlew check; fi
   - ./gradlew runtimeZip
   - ./gradlew createUbuntuSetup
+
 deploy:
   - provider: releases
     api_key:
       secure: UFyyXv6OGlHHNc10fq2IAYPirAwf0fzjsaF6z/YsUVDXfZjPidiOqyKpRguvhUSg6cRajiqwv2HSd9J04mJsKfuicNWt5IwQZscA9IL25MAgMTGLQKpFY4AMfIA+ZnLy1naFmzshNDKyKUGWw7iu2OQ4+It+QdmGX8EgzmHgwuI7Db9YVJnge1D2LU7q5XZTmEo7Xt/w9L9qNTB2r0wpK67OxkbYbtJLOyWtnGc87GlprKsuwjiCW3u4cKgf+82y+mjl/Ce+HFJQrjk5Yfy2h89T9GdtqTZvH+ktKg33k/jyLcV5tMuaKmOK9ok5c80r0gVp+kqe9TE6aICBj2KEiRiHzTQl14MQ1uwBwEyZKqIgkrZ1nKDukbYIPUSR0FMVWZaxPFLZuRjp16rKJ3Ae2vuzMFPbqoFA/Ed0xnYDoCto3/a0uaAMWVBjxwkXfuqpeZfeSt9XtuK9CfqrSl+5MoYyLHlYqz2FSBdsb/kiM+KshUGTjVzJI0HHa0of0fO/w7gfFbg+ekq2bcPBkuigywF5Pecshhn/avuJwjwGc+uNrr4WJVxkdpJNUQxD7Ve/UXni9NOiHFjE/2k8INAomA5wnzgkEVLxGBvyyfXdB88EMR5QIEVe+v6RFIPEFeWGxpx/+9IQ9n5NcTLP5SIq2Dr3BCsObpNLEVSnlybsNhY=
     file_glob: true
     file:
-      - "build/scorekeeper-*.zip"
+      - "build/zips/scorekeeper-*.zip"
       - "build/ubuntusetup-*.sh"
     skip_cleanup: true
     on:
@@ -37,8 +40,5 @@ deploy:
     secret_access_key:
       secure: qt1LiXpdFLopEDFj5ptWG05scr0bvXetKIiVRHwrA2t5ah5g6mwy59fsa75rU20HseqQgljW0p9pvzrms5beDWrc9bSXX5dMN9TSCpBV9o6LjtPgocctVXfLyv1OI7j3F7xbnI9VrAjoPRaTV/bZkFlv3SWpKaz9eQwrqUBypL/B8DumDRl82O9+dklAFjD+LEKPNrEhU7TkUhPsonUFiQKix8gK/ArMGxIJey+3hGFBWjWTv8FJzfz++EAEV17tqTSCeLgrflj4jvZPnHWlfQXMljzwVbqRHTaFod+PZOWrfvt2PQnbsEhSwzz24NpH9X2ShWHRkC4LWqCDsE0yrczcgdAlAEvTPi7s2aQfpH/fcDphtCX6S+OVymqfduQREEGOmlm5KfzFgRBsdwaZovfVBD7CKR01CYH2XgD1NSCuR7qks8TwTUyypbwKleR5wdZbU+v4PfZn/BGYpzPBMpCHINz/HmlxRoQnn9GftOAGHaMs/6iahOpl69FVShn1IcwVEjVZ7m2KH29Y/1jUhrYe/4XVObQEAHMDOFL/jCdswBADjFcIuj87FodrFmigJ1UB/qX7wawI2JfkwtimVhQktX9M5/kr+sp4yHQmHeBSaDqgb+WjSn9LVT9qOW8312Vz93WGaTl3KUncoTXz7R0uHXCwYiLYn4xgKQBGfog=
     bucket: scorekeeper-artifacts
-    file_glob: true
-    file:
-      - "build/libs/scorekeeper-*.zip"
-      - "build/ubuntusetup-*.sh"
     skip_cleanup: true
+    local-dir: "build/zips"
