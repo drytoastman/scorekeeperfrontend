@@ -1,10 +1,16 @@
-import org.gradle.internal.os.OperatingSystem
-
 plugins {
     id 'application'
     id 'eclipse'
-    id 'org.openjfx.javafxplugin' version '0.0.8'
     id 'org.beryx.runtime' version '1.3.0'
+}
+
+import org.gradle.internal.os.OperatingSystem
+def getOSName = { ->
+    def os = OperatingSystem.current();
+    if (os.isWindows()) return "win";
+    if (os.isLinux()) return "linux";
+    if (os.isMacOsX()) return "mac";
+    return "Unknown";
 }
 
 def getVersionName = { ->
@@ -23,22 +29,10 @@ def getVersionName = { ->
     }
 }
 
-def getOSName = { ->
-    def os = OperatingSystem.current();
-    if (os.isWindows()) return "Windows10";
-    if (os.isLinux()) return "Linux";
-    if (os.isMacOsX()) return "OSX";
-    return "Unknown";
-}
-
-def osname = getOSName()
+def target = System.getProperty("target", getOSName())
+def fxver = "13"
 version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
-
-javafx {
-    version = "13"
-    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing' ]
-}
 
 repositories {
     jcenter()
@@ -56,6 +50,14 @@ dependencies {
     compile 'org.kamranzafar:jtar:2.3'
     compile 'org.mindrot:jbcrypt:0.4'
     compile 'org.postgresql:postgresql:42.2.5'
+
+    compile "org.openjfx:javafx-base:$fxver:$target"
+    compile "org.openjfx:javafx-controls:$fxver:$target"
+    compile "org.openjfx:javafx-fxml:$fxver:$target"
+    compile "org.openjfx:javafx-media:$fxver:$target"
+    compile "org.openjfx:javafx-graphics:$fxver:$target"
+    compile "org.openjfx:javafx-swing:$fxver:$target"
+    compile "org.openjfx:javafx-web:$fxver:$target"
 
     testCompile 'junit:junit:4.12'
 }
@@ -92,16 +94,12 @@ runtime {
         'jdk.unsupported.desktop',
         'jdk.xml.dom'
     ]
-    imageDir = file("$buildDir/scorekeeper-${version}")
-    imageZip = file("$buildDir/scorekeeper-${version}-${osname}.zip")
+
+    targetPlatform(target,  "$projectDir/jdk-12.0.2+10-$target")
 }
 
 task ver {
     doLast() { print "${version}" }
-}
-
-task os {
-    doLast() { print "${osname}" }
 }
 
 task createUbuntuSetup (type: Copy) {
