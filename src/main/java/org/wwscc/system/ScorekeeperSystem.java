@@ -10,6 +10,7 @@ package org.wwscc.system;
 
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,10 +93,9 @@ public class ScorekeeperSystem
             try
             {
                 ArrayList<String> cmd = new ArrayList<String>();
-                if (System.getProperty("os.name").split("\\s")[0].equals("Windows"))
-                    cmd.add("javaw");
-                else
-                    cmd.add("java");
+                cmd.add(Paths.get(System.getProperty("java.home"), "bin", "java").toString());
+                if (System.getProperty("os.name").contains("Windows")) // make it javaw
+                    cmd.add(cmd.remove(0) + "w");
                 cmd.add("-cp");
                 cmd.add(System.getProperty("java.class.path"));
                 cmd.add(tolaunch);
