@@ -35,26 +35,6 @@ const
   NET_FW_RULE_DIR_IN    = 1;
   NET_FW_ACTION_ALLOW   = 1;
 
-function InitializeSetup(): Boolean;
-var
- ResultCode: Integer;
-begin
-   Result := True;
-   if ExecAsOriginalUser('docker.exe', 'version', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
-   begin
-       if ResultCode <> 0 then
-       begin
-           SuppressibleMsgBox('"docker.exe" was found but the docker daemon may not be running right now.  A working docker install is required to run Scorekeeper.', mbInformation, MB_OK, 0);
-       end;
-   end else begin
-       MsgBox('"docker.exe" was not found.  A working Docker installation is required to run Scorekeeper.'+ #13#10#13#10 +
-                'Windows 10 Home'+ #13#10 + '  https://docs.docker.com/toolbox/toolbox_install_windows/'+ #13#10 +
-                'Windows 10 Pro' + #13#10 + '  https://docs.docker.com/docker-for-windows/',
-                 mbInformation, MB_OK);
-       Result := False;
-   end;   
-end;
-
 procedure AddFirewallPort(AppName: string; Protocol, Port: integer);
 var
   fwPolicy: Variant;
@@ -104,7 +84,7 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if CurStep=ssDone then begin
+  if CurStep=ssPostInstall then begin
     RemoveAllRules();
     AddAllRules();
   end;
