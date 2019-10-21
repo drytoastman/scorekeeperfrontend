@@ -4,4 +4,6 @@ logs
 *.log
 *.exe
 *.obj
+*.swp
 .gradle
+jdk-*
