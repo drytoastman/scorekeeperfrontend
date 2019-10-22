@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
@@ -15,7 +16,6 @@ import org.wwscc.storage.Entrant;
 import org.wwscc.util.NF;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener.Change;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,10 +25,10 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.CheckBoxTableCell;
 
 public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
 {
@@ -42,12 +42,12 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
             loader.setController(controller);
             Parent root = (Parent)loader.load();
 
-            setTitle("New Challenge");
+            setTitle("Load Entrants");
             setResizable(true);
             getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
             getDialogPane().setContent(root);
             getDialogPane().lookupButton(ButtonType.OK).setDisable(true);
-            getDialogPane().setPrefSize(400, 650);
+            getDialogPane().setPrefSize(500, 650);
 
             setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
@@ -84,6 +84,7 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
         @FXML CheckBox bonusCheck;
 
         @FXML TableView<DialinEntry> table;
+        @FXML TableColumn<DialinEntry, Boolean> selectColumn;
         @FXML TableColumn<DialinEntry, Integer> positionColumn;
         @FXML TableColumn<DialinEntry, String> firstNameColumn;
         @FXML TableColumn<DialinEntry, String> lastNameColumn;
@@ -103,19 +104,13 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
 
         public List<DialinEntry> getResults()
         {
-            return table.getSelectionModel().getSelectedItems();
+            return table.getItems().stream().filter(de -> de.selected.get()).collect(Collectors.toList());
         }
 
         @FXML
         public void initialize()
         {
-            table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            table.getSelectionModel().getSelectedItems().addListener((Change<? extends DialinEntry> chg) -> {
-                int cnt = table.getSelectionModel().getSelectedIndices().size();
-                selectedCount.setText(""+cnt);
-                pane.lookupButton(ButtonType.OK).setDisable(cnt < target.getMinEntrantCount() || cnt > target.getMaxEntrantCount());
-            });
-
+               selectColumn.setCellValueFactory(cellData -> { return cellData.getValue().selected; });
              positionColumn.setCellValueFactory(cellData -> { return cellData.getValue().position.asObject(); });
             firstNameColumn.setCellValueFactory(cellData -> { return cellData.getValue().first; });
              lastNameColumn.setCellValueFactory(cellData -> { return cellData.getValue().last; });
@@ -123,6 +118,7 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
                   netColumn.setCellValueFactory(cellData -> { return cellData.getValue().net.asObject(); });
                dialinColumn.setCellValueFactory(cellData -> { return cellData.getValue().dialin.asObject(); });
 
+               selectColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
                   netColumn.setCellFactory(tc -> new DoubleCell());
                dialinColumn.setCellFactory(tc -> new DoubleCell());
 
@@ -130,6 +126,13 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
                openCheck.setSelected(true);
                ladiesCheck.setSelected(true);
                controlChange(null);
+        }
+
+        public void selectChange()
+        {
+            long cnt = table.getItems().stream().filter(de -> de.selected.get()).count();
+            selectedCount.setText(""+cnt);
+            pane.lookupButton(ButtonType.OK).setDisable(cnt < target.getMinEntrantCount() || cnt > target.getMaxEntrantCount());
         }
 
         public void controlChange(ActionEvent ae)
@@ -149,12 +152,13 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
             {
                 if (!entrants.containsKey(id))
                     continue;
-                data.add(new DialinEntry(entrants.get(id), pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected())));
+                DialinEntry de = new DialinEntry(entrants.get(id), pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected()));
+                data.add(de);
+                de.selected.addListener(e -> selectChange());
                 pos++;
             }
 
             table.setItems(FXCollections.observableArrayList(data));
         }
     }
-
 }

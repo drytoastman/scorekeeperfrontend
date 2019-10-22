@@ -2,8 +2,10 @@ package org.wwscc.fxchallenge;
 
 import org.wwscc.storage.Entrant;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -15,6 +17,7 @@ public final class DialinEntry
     IntegerProperty position;
     DoubleProperty net, dialin;
     StringProperty first, last, classCode;
+    BooleanProperty selected;
 
     public DialinEntry()
     {
@@ -29,5 +32,6 @@ public final class DialinEntry
         this.position  = new SimpleIntegerProperty(position);
         this.net       = new SimpleDoubleProperty(net);
         this.dialin    = new SimpleDoubleProperty(dialin);
+        this.selected  = new SimpleBooleanProperty(false);
     }
 }
