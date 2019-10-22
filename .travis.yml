@@ -3,8 +3,7 @@ services: [docker]
 language: java
 
 before_install:
-  - wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz
-  - tar xf OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz; mv jdk-12.0.2+10 jdk-12.0.2+10-linux
+  - ./gradle linuxJDK
   - export JAVA_HOME=$PWD/jdk-12.0.2+10-linux
   - export PATH=$JAVA_HOME/bin:$PATH
 
@@ -19,16 +18,12 @@ cache:
 
 script:
   - ./gradlew check
-
   - ./gradlew -D target=linux runtimeZip
 
-  - wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10.3/OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz
-  - tar xf OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz; mv jdk-12.0.2+10/Contents/Home jdk-12.0.2+10-mac; rm -rf jdk-12.0.2+10
+  - ./gradlew macJDK winJDK
   - ./gradlew -D target=mac runtimeZip
-
-  - wget https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip
-  - unzip -q OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip; mv jdk-12.0.2+10 jdk-12.0.2+10-win
   - ./gradlew -D target=win runtimeZip
+  - ./gradlew wininstaller
 
 
 deploy:
@@ -49,4 +44,4 @@ deploy:
       secure: qt1LiXpdFLopEDFj5ptWG05scr0bvXetKIiVRHwrA2t5ah5g6mwy59fsa75rU20HseqQgljW0p9pvzrms5beDWrc9bSXX5dMN9TSCpBV9o6LjtPgocctVXfLyv1OI7j3F7xbnI9VrAjoPRaTV/bZkFlv3SWpKaz9eQwrqUBypL/B8DumDRl82O9+dklAFjD+LEKPNrEhU7TkUhPsonUFiQKix8gK/ArMGxIJey+3hGFBWjWTv8FJzfz++EAEV17tqTSCeLgrflj4jvZPnHWlfQXMljzwVbqRHTaFod+PZOWrfvt2PQnbsEhSwzz24NpH9X2ShWHRkC4LWqCDsE0yrczcgdAlAEvTPi7s2aQfpH/fcDphtCX6S+OVymqfduQREEGOmlm5KfzFgRBsdwaZovfVBD7CKR01CYH2XgD1NSCuR7qks8TwTUyypbwKleR5wdZbU+v4PfZn/BGYpzPBMpCHINz/HmlxRoQnn9GftOAGHaMs/6iahOpl69FVShn1IcwVEjVZ7m2KH29Y/1jUhrYe/4XVObQEAHMDOFL/jCdswBADjFcIuj87FodrFmigJ1UB/qX7wawI2JfkwtimVhQktX9M5/kr+sp4yHQmHeBSaDqgb+WjSn9LVT9qOW8312Vz93WGaTl3KUncoTXz7R0uHXCwYiLYn4xgKQBGfog=
     bucket: scorekeeper-artifacts
     skip_cleanup: true
-    local-dir: "build"
+    local-dir: "build/final"

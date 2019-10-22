@@ -1,7 +1,7 @@
 [Setup]
 AppName=Scorekeeper
 AppVersion={#Version}
-OutputDir=.
+OutputDir=..\build\final
 AppPublisher=Brett Wilson
 UsePreviousAppDir=yes
 OutputBaseFilename=ScorekeeperSetup-{#Version}
@@ -16,7 +16,7 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl";
 
 [Files]
-Source: "..\build\scorekeeper-{#Version}\*"; DestDir: "{app}"; Flags: recursesubdirs
+Source: "..\build\image\ScorekeeperFrontend-win-{#Version}\*"; DestDir: "{app}"; Flags: recursesubdirs
 
 [Icons]
 Name:       "{group}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"

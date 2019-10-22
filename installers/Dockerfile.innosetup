@@ -1,0 +1,12 @@
+FROM i386/debian:bullseye-slim
+RUN    apt-get update \
+    && apt-get install -y --no-install-recommends wget wine wine32 procps xvfb \
+    && rm -rf /var/lib/apt/lists/*
+ENV DISPLAY=:0.0
+RUN bash -c "Xvfb &" \
+            && wget -q -O is.exe http://www.jrsoftware.org/download.php/is.exe?site=1 \
+            && wine is.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /LOG \
+            && rm is.exe
+
+RUN echo "wine \"/root/.wine/drive_c/users/root/Local Settings/Application Data/Programs/Inno Setup 6/ISCC.exe\" \$@" > /usr/local/bin/iscc
+RUN chmod +x /usr/local/bin/iscc

@@ -29,10 +29,14 @@ def getVersionName = { ->
     }
 }
 
-def target = System.getProperty("target", getOSName())
-def fxver = "13"
 version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
+def target = System.getProperty("target", getOSName())
+def fxver = "13"
+def basejdk  = file("jdk-12.0.2+10")
+def macjdk   = file("jdk-12.0.2+10-mac")
+def winjdk   = file("jdk-12.0.2+10-win")
+def linuxjdk = file("jdk-12.0.2+10-linux")
 
 repositories {
     jcenter()
@@ -68,6 +72,40 @@ jar {
     }
 }
 
+task macJDK() {
+    doLast {
+        if (!macjdk.exists()) {
+            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10.3/OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz',
+                    dest: 'mac.tar.gz')
+            copy { from tarTree(resources.gzip('mac.tar.gz')) into projectDir }
+            file(basejdk.toString()+'/Contents/Home').renameTo(macjdk)
+            basejdk.deleteDir()
+        }
+    }
+}
+
+task linuxJDK() {
+    doLast {
+        if (!linuxjdk.exists()) {
+            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz',
+                    dest: 'linux.tar.gz')
+            copy { from tarTree(resources.gzip('linux.tar.gz')) into projectDir }
+            basejdk.renameTo(linuxjdk)
+        }
+    }
+}
+
+task winJDK() {
+    doLast {
+        if (!winjdk.exists()) {
+            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
+                    dest: 'win.zip')
+            copy { from zipTree('win.zip') into projectDir }
+            basejdk.renameTo(winjdk)
+        }
+    }
+}
+
 runtime {
     options = [
         '--strip-debug',
@@ -95,7 +133,8 @@ runtime {
         'jdk.xml.dom'
     ]
 
-    targetPlatform(target,  "$projectDir/jdk-12.0.2+10-$target")
+    imageZip = file("build/final/Scorekeeper")
+    targetPlatform("$target-$version",  "$projectDir/jdk-12.0.2+10-$target")
 }
 
 task ver {
@@ -127,6 +166,7 @@ task depsize {
     }
 }
 
-task installer (type: Exec) {
-    commandLine 'c:\\Program Files (x86)\\Inno Setup 5\\ISCC.exe', '/DVersion='+version, 'installers\\windows.iss'
+task wininstaller (type: Exec) {
+    commandLine 'docker', 'run', '--rm', '-v', "$projectDir:/code", 'drytoastman/innosetup:latest',
+                'bash', '-c', "cd /code && iscc /DVersion=latest installers/windows.iss"
 }
