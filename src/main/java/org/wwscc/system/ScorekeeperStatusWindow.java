@@ -60,7 +60,7 @@ public class ScorekeeperStatusWindow extends JFrame
 
     public ScorekeeperStatusWindow(Actions actions, MergeServerModel serverModel)
     {
-        super("Scorekeeper Status");
+        super("Scorekeeper Status (" + Prefs.getVersionBase() + ")");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
