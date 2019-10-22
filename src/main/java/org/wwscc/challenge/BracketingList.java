@@ -2,13 +2,15 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2010 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
 
 package org.wwscc.challenge;
 
 import java.awt.Component;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -36,8 +39,7 @@ import org.wwscc.storage.Entrant;
 import org.wwscc.util.NF;
 
 
-
-public class BracketingList extends BaseDialog<List<BracketEntry>> implements ChangeListener
+public class BracketingList extends BaseDialog<List<BracketEntry>> implements ChangeListener, ItemListener
 {
     BracketingListModel model;
     JSpinner spinner;
@@ -59,23 +61,24 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
         spinner.addChangeListener(this);
 
         ladiesCheck = new JCheckBox("Ladies Classes", true);
-        ladiesCheck.addChangeListener(this);
+        ladiesCheck.addItemListener(this);
 
         openCheck = new JCheckBox("Open Classes", true);
-        openCheck.addChangeListener(this);
+        openCheck.addItemListener(this);
 
         bonusCheck = new JCheckBox("Bonus Style Dialins", true);
-        bonusCheck.addChangeListener(this);
+        bonusCheck.addItemListener(this);
 
         table = new JTable(model);
         table.setAutoCreateRowSorter(true);
         table.setDefaultRenderer(Double.class, new D3Renderer());
-        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.getColumnModel().getColumn(0).setMaxWidth(50);
-        table.getColumnModel().getColumn(1).setMaxWidth(200);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getColumnModel().getColumn(0).setMaxWidth(30);
+        table.getColumnModel().getColumn(1).setMaxWidth(40);
         table.getColumnModel().getColumn(2).setMaxWidth(200);
-        table.getColumnModel().getColumn(3).setMaxWidth(75);
+        table.getColumnModel().getColumn(3).setMaxWidth(200);
         table.getColumnModel().getColumn(4).setMaxWidth(75);
+        table.getColumnModel().getColumn(5).setMaxWidth(75);
 
         mainPanel.add(new JLabel("Number of Drivers"), "split");
         mainPanel.add(spinner, "gapbottom 4, wrap");
@@ -85,13 +88,13 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
         mainPanel.add(bonusCheck, "gapbottom 4, wrap");
 
         mainPanel.add(new JLabel("Click on column header to sort"), "center, wrap");
-        mainPanel.add(new JScrollPane(table), "width 400, height 450, grow");
+        mainPanel.add(new JScrollPane(table), "width 500, height 450, grow");
     }
 
     @Override
     public boolean verifyData()
     {
-        int size = table.getSelectedRows().length;
+        long size = model.getSelectedCount();
         if (required != size)
         {
             errorMessage = "Must select " + required + " drivers, you've selected " + size;
@@ -106,12 +109,8 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
         if (!valid)
             return null;
 
-        List<BracketEntry> ret = new ArrayList<BracketEntry>();
-        for (int index : table.getSelectedRows())
-            ret.add(model.getBracketEntry(table.convertRowIndexToModel(index)));
-
+        List<BracketEntry> ret = model.getSelectedValues();
         // sort by their net times
-        //final Dialins dial = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
         Collections.sort(ret, new Comparator<BracketEntry>() {
             public int compare(BracketEntry o1, BracketEntry o2) {
                 return Double.compare(model.dialins.getNet(o1.entrant.getCarId()), model.dialins.getNet(o2.entrant.getCarId()));
@@ -124,12 +123,15 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
     @Override
     public void stateChanged(ChangeEvent e)
     {
-        if (e.getSource() == spinner)
-            required = ((Number)spinner.getModel().getValue()).intValue();
-        else
-            model.reload(openCheck.isSelected(), ladiesCheck.isSelected(), bonusCheck.isSelected());
+        required = ((Number)spinner.getModel().getValue()).intValue();
+    }
+
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        model.reload(openCheck.isSelected(), ladiesCheck.isSelected(), bonusCheck.isSelected());
     }
 }
+
 class D3Renderer extends DefaultTableCellRenderer
 {
     @Override
@@ -153,6 +155,7 @@ class BracketingListModel extends AbstractTableModel
 
     final static class Store
     {
+        boolean selected;
         Entrant entrant;
         int netposition;
         double nettime;
@@ -161,12 +164,18 @@ class BracketingListModel extends AbstractTableModel
 
     public BracketingListModel()
     {
+        data = new ArrayList<Store>();
         reload(true, true, true);
     }
 
     public void reload(boolean useOpen, boolean useLadies, boolean bonusStyle)
     {
+        Map<UUID, Boolean> currentSelections = new HashMap<UUID, Boolean>();
+        for (Store s : data)
+            currentSelections.put(s.entrant.getCarId(), s.selected);
+
         Map<UUID, Entrant> entrants = new HashMap<UUID, Entrant>();
+
         for (Entrant e : Database.d.getEntrantsByEvent(ChallengeGUI.state.getCurrentEventId()))
         {
             if ((useLadies && (e.getClassCode().startsWith("L"))) ||
@@ -182,6 +191,7 @@ class BracketingListModel extends AbstractTableModel
             Store s = new Store();
             if (!entrants.containsKey(id))
                 continue;
+            s.selected = currentSelections.containsKey(id) ? currentSelections.get(id) : false;
             s.entrant = entrants.get(id);
             s.netposition = pos;
             s.nettime = dialins.getNet(id);
@@ -193,6 +203,17 @@ class BracketingListModel extends AbstractTableModel
         fireTableDataChanged();
     }
 
+    public long getSelectedCount()
+    {
+        return data.stream().filter(s -> s.selected).count();
+    }
+
+    public List<BracketEntry> getSelectedValues()
+    {
+        return data.stream().filter(s -> s.selected).map(s -> new BracketEntry(null, s.entrant, s.dialin)).collect(Collectors.toList());
+    }
+
+
     @Override
     public int getRowCount()
     {
@@ -202,25 +223,27 @@ class BracketingListModel extends AbstractTableModel
     @Override
     public int getColumnCount()
     {
-        return 6;
-    }
-
-    public BracketEntry getBracketEntry(int rowIndex)
-    {
-        Store s = data.get(rowIndex);
-        return new BracketEntry(null, s.entrant, s.dialin);
+        return 7;
     }
 
     @Override
-    public Class<?> getColumnClass(int col)
+    public boolean isCellEditable(int rowIndex, int columnIndex)
     {
-        switch (col)
+        return (columnIndex == 0);
+    }
+
+    @Override
+    public Class<?> getColumnClass(int columnIndex)
+    {
+        switch (columnIndex)
         {
-            case 0: return Integer.class;
-            case 1: return String.class;
+            case 0: return Boolean.class;
+            case 1: return Integer.class;
             case 2: return String.class;
             case 3: return String.class;
-            case 4: return Double.class;
+            case 4: return String.class;
+            case 5: return Double.class;
+            case 6: return Double.class;
         }
         return Object.class;
     }
@@ -231,14 +254,23 @@ class BracketingListModel extends AbstractTableModel
         Store s = data.get(rowIndex);
         switch (columnIndex)
         {
-            case 0: return s.netposition;
-            case 1: return s.entrant.getFirstName();
-            case 2: return s.entrant.getLastName();
-            case 3: return s.entrant.getClassCode();
-            case 4: return s.nettime;
-            case 5: return s.dialin;
+            case 0: return s.selected;
+            case 1: return s.netposition;
+            case 2: return s.entrant.getFirstName();
+            case 3: return s.entrant.getLastName();
+            case 4: return s.entrant.getClassCode();
+            case 5: return s.nettime;
+            case 6: return s.dialin;
         }
         return null;
+    }
+
+    @Override
+    public void setValueAt(Object aValue, int rowIndex, int columnIndex)
+    {
+        if (columnIndex != 0) return;
+        data.get(rowIndex).selected = (boolean)aValue;
+        fireTableCellUpdated(rowIndex, columnIndex);
     }
 
     @Override
@@ -246,12 +278,13 @@ class BracketingListModel extends AbstractTableModel
     {
         switch (col)
         {
-            case 0: return "Pos";
-            case 1: return "First";
-            case 2: return "Last";
-            case 3: return "Class";
-            case 4: return "Net";
-            case 5: return "Dialin";
+            case 0: return "";
+            case 1: return "Pos";
+            case 2: return "First";
+            case 3: return "Last";
+            case 4: return "Class";
+            case 5: return "Net";
+            case 6: return "Dialin";
             default: return "ERROR";
         }
     }
