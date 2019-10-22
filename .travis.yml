@@ -3,7 +3,7 @@ services: [docker]
 language: java
 
 before_install:
-  - ./gradle linuxJDK
+  - ./gradlew linuxJDK
   - export JAVA_HOME=$PWD/jdk-12.0.2+10-linux
   - export PATH=$JAVA_HOME/bin:$PATH
 
