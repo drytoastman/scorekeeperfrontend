@@ -303,7 +303,11 @@ class RunsTransferHandler extends TransferHandler
                 StringBuilder b = new StringBuilder();
                 for (Run[] ro : data) {
                     for (Run r : ro) {
-                        b.append(String.format("%.3f (%d,%d) ", r.getRaw(), r.getCones(), r.getGates()));
+                        if (r != null) {
+                            b.append(String.format("%.3f (%d,%d) ", r.getRaw(), r.getCones(), r.getGates()));
+                        } else {
+                            b.append("<blank> ");
+                        }
                     }
                     b.append("\n");
                 }
@@ -365,7 +369,8 @@ class RunsTransferHandler extends TransferHandler
 
                 for (int ii = 0; ii < newdata.length; ii++)
                     for (int jj = 0; jj < newdata[0].length; jj++)
-                        target.setValueAt((newdata[ii][jj]).clone(), dr+ii, dc+jj);
+                        if (newdata[ii][jj] != null)
+                            target.setValueAt((newdata[ii][jj]).clone(), dr+ii, dc+jj);
             }
 
             return true;
