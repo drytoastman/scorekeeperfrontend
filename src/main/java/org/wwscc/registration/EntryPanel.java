@@ -368,6 +368,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
+                if (selectedCar.notInDatabase())
+                    Database.d.newCar(selectedCar);
                 Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
                 reloadCars(selectedCar);
             } catch (Exception sqle) {
@@ -576,10 +578,11 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     protected void driverSelectionChanged()
     {
         editnotes.setIcon(null);
+        boolean specialClasses = state.usingSpecialClasses();
 
         if (selectedDriver != null)
         {
-            newcar.setEnabled(true);
+            newcar.setEnabled(!specialClasses);
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
             weekmember.setEnabled(true);
@@ -639,6 +642,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     protected void carSelectionChanged()
     {
         List<DecoratedCar> selectedCars = cars.getSelectedValuesList();
+        boolean specialClasses = state.usingSpecialClasses();
+
         if (selectedCars.size() > 1)
         {
             singleCarPanel.setVisible(false);
@@ -669,9 +674,9 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
 
         if (selectedCar != null)
         {
-            newcarfrom.setEnabled(true);
-            editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
-            deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
+            newcarfrom.setEnabled(!specialClasses);
+            editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !specialClasses);
+            deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered() && !specialClasses);
             registerandpay.setEnabled(!selectedCar.isInRunOrder());
             movepayment.setEnabled(   !selectedCar.isInRunOrder() && selectedCar.hasPaid());
             deletepayment.setEnabled( !selectedCar.isInRunOrder() && selectedCar.hasPaid());

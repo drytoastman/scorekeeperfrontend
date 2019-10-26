@@ -58,9 +58,22 @@ public class RegCarRenderer implements ListCellRenderer<Object>
 
         p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
         p.payment.setForeground(c.getPaymentTotal() > 0 ? greenish : Color.gray);
-        p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
-        p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
-        p.quickid.setText(c.getQuickEntryId());
+        if (c.getClassCode().startsWith("_")) {
+            p.carinfo.setText(c.getClassDescription());
+            p.cardesc.setText("");
+        } else {
+            p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
+            p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
+        }
+
+        if (c.notInDatabase()) {
+            p.quicklbl.setVisible(false);
+            p.quickid.setText("");
+        } else {
+            p.quicklbl.setVisible(true);
+            String q = c.getQuickEntryId();
+            p.quickid.setText(String.format("%s %s %s", q.substring(0, 3), q.substring(3, 6), q.substring(6,10)));
+        }
 
         p.inevent = c.isInRunOrder();
         p.runs.setIcon(c.hasOtherActivity() ? star : nostar);

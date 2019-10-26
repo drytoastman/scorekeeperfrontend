@@ -418,6 +418,8 @@ public abstract class SQLDataInterface implements DataInterface
             }
 
             closeLeftOvers();
+
+            dcar.classDescrip = getClassData().getClass(c.getClassCode()).getDescrip();
             return dcar;
         }
         catch (Exception ioe)
@@ -657,6 +659,7 @@ public abstract class SQLDataInterface implements DataInterface
     public void newCar(Car c) throws Exception
     {
         executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
+        c.notindatabase = false;
     }
 
     @Override
@@ -675,6 +678,7 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("delete from registered where carid=?", newList(c.carid));
             executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
+            c.notindatabase = true;
         } catch (Exception sqle) {
             rollback();
             throw sqle;
@@ -690,6 +694,8 @@ public abstract class SQLDataInterface implements DataInterface
             for (Car c : list)
                 executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
+            for (Car c : list)
+                c.notindatabase = true;
         }
         catch (Exception ioe)
         {

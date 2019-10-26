@@ -26,7 +26,8 @@ public class ApplicationState {
 
        public String getCurrentSeries() { return currentSeries; }
        public EventInfo getCurrentEvent() { return currentEvent; }
-       public UUID getCurrentEventId() { if (currentEvent != null) { return currentEvent.getEventId(); } else { return null; } }
+       public boolean usingSpecialClasses() { return (currentEvent != null) ? currentEvent.getSpecialClasses().size() > 0 : false; }
+       public UUID getCurrentEventId() { return (currentEvent != null) ? currentEvent.getEventId() : null; }
        public int getCurrentCourse() { return currentCourse; }
        public int getCurrentRunGroup() { return currentRunGroup; }
        public UUID getCurrentChallengeId() { return currentChallengeId; }

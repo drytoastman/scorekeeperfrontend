@@ -168,8 +168,13 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
              switch (column)
             {
                 case 0:
-                    topLine = e.getClassCode();
-                    bottomLine = ""+e.getNumber();
+                    if (e.getClassCode().startsWith("_")) {
+                        topLine = e.getClassCode().substring(1);
+                        bottomLine = "";
+                    } else {
+                        topLine = e.getClassCode();
+                        bottomLine = ""+e.getNumber();
+                    }
                     break;
 
                 case 1:

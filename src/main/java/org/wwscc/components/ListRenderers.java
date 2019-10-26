@@ -122,8 +122,13 @@ public class ListRenderers extends DefaultListCellRenderer
             } else {
                 p.setItalic(false);
             }
-            p.codes.setText(getCodesStr(c));
-            p.desc.setText(String.join(" ", c.getYear(), c.getModel(), c.getColor()));
+            if (c.getClassCode().startsWith("_")) {
+                p.codes.setText(c.getClassDescription());
+                p.desc.setText("");
+            } else {
+                p.codes.setText(getCodesStr(c));
+                p.desc.setText(String.join(" ", c.getYear(), c.getModel(), c.getColor()));
+            }
             return p;
         }
 

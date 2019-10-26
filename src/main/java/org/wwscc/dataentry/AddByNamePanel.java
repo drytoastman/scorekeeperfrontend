@@ -32,7 +32,7 @@ import net.miginfocom.swing.MigLayout;
 
 public class AddByNamePanel extends DriverCarPanelBase implements MessageListener
 {
-    JButton addit, changeit;
+    JButton addit, changeit, newcar, newcarfrom;
     boolean carAlreadyInOrder = true;
     boolean entrantIsSelected = false;
 
@@ -57,6 +57,9 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
         changeit = new JButton(new EventSendAction<UUID>("Swap Entrant", MT.CAR_CHANGE, () -> (selectedCar != null) ? selectedCar.getCarId() : null));
         changeit.setEnabled(false);
 
+        newcar = smallButton(new NewCarAction(false));
+        newcarfrom = smallButton(new NewCarAction(true));
+
         add(createTitle("1. Search"), "wrap");
         add(new JLabel("First Name"), "split, grow 0");
         add(firstSearch, "wrap");
@@ -71,8 +74,8 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
 
         add(createTitle("3. Car"), "wrap");
         add(cscroll, "pushy 100, grow, wrap");
-        add(smallButton(new NewCarAction(false)), "split");
-        add(smallButton(new NewCarAction(true)), "wrap");
+        add(newcar, "split");
+        add(newcarfrom, "wrap");
 
         add(createTitle("4. Do it"), "wrap");
         add(addit, "split");
@@ -101,6 +104,9 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
     @Override
     protected void carSelectionChanged()
     {
+        boolean specialClasses = state.usingSpecialClasses();
+        newcar.setEnabled(!specialClasses);
+        newcarfrom.setEnabled(!specialClasses);
         carAlreadyInOrder = ((selectedCar == null) || (selectedCar.isInRunOrder()));
         addit.setEnabled(!carAlreadyInOrder);
         changeit.setEnabled(!carAlreadyInOrder && entrantIsSelected);

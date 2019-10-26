@@ -9,6 +9,7 @@
 package org.wwscc.util;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +27,7 @@ public class EventInfo
     protected double    gatePenalty;
     protected boolean   isPro;
     protected boolean   isPractice;
+    protected List<String> specialClasses;
 
     @Override
     public String toString()
@@ -73,6 +75,11 @@ public class EventInfo
         return isPractice;
     }
 
+    public List<String> getSpecialClasses() {
+        return specialClasses;
+    }
+
+
     public void setEventId(UUID eventId) {
         this.eventId = eventId;
     }
@@ -111,6 +118,10 @@ public class EventInfo
 
     public void setPractice(boolean isPractice) {
         this.isPractice = isPractice;
+    }
+
+    public void setSpecialClasses(List<String> specialClasses) {
+        this.specialClasses = specialClasses;
     }
 }
 

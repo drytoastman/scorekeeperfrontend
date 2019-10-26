@@ -12,11 +12,15 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -231,11 +235,21 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         if (d == null) // nothing to do
             return;
 
-        carVector.clear();
-        for (Car c : Database.d.getCarsForDriver(d.getDriverId())) {
-            carVector.add(Database.d.decorateCar(c, state.getCurrentEventId(), state.getCurrentCourse()));
+        List<Car> drivercars = Database.d.getCarsForDriver(d.getDriverId());
+        Set<String> special = new HashSet<String>(state.getCurrentEvent().getSpecialClasses());
+        Stream<Car> newcars;
+
+        if (special.size() > 0) {
+            special.removeAll(drivercars.stream().map(c -> c.getClassCode()).collect(Collectors.toList()));
+            newcars = Stream.concat(drivercars.stream().filter(c -> c.getClassCode().charAt(0) == '_'),
+                                    special.stream().map(s -> new Car(d.getDriverId(), s)));
+            newcars = newcars.sorted((c1,c2)-> c1.getClassCode().compareTo(c2.getClassCode()));
+        } else {
+            newcars = drivercars.stream().filter(c -> c.getClassCode().charAt(0) != '_');
         }
 
+        carVector.clear();
+        carVector.addAll(newcars.map(c -> Database.d.decorateCar(c, state.getCurrentEventId(), state.getCurrentCourse())).collect(Collectors.toList()));
         cars.setListData(carVector);
         if (select != null)
             focusOnCar(select.getCarId());
@@ -352,17 +366,6 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
             ret.append("\n" + d.getAttrS("phone"));
         return ret.toString();
     }
-
-
-    public static String carDisplay(Car c)
-    {
-        StringBuilder ret = new StringBuilder();
-        ret.append(c.getCarId()).append("\n");
-        ret.append(c.getClassCode()).append(" ").append(c.getEffectiveIndexStr()).append(" #").append(c.getNumber()).append("\n");
-        ret.append(c.getYear() + " " + c.getMake() + " " + c.getModel() + " " + c.getColor());
-        return ret.toString();
-    }
-
 
     class SearchDrivers extends TextChangeTrigger
     {
