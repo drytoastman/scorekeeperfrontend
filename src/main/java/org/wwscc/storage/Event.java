@@ -13,12 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.wwscc.util.EventInfo;
 
 /**
@@ -43,7 +40,7 @@ public class Event extends AttrBase implements Serializable
     protected double    gatepen;
     protected boolean   ispro;
     protected boolean   ispractice;
-    protected List<String> spclasses;
+    protected List<String> sessions;
 
     @Override
     public String toString()
@@ -74,13 +71,7 @@ public class Event extends AttrBase implements Serializable
         gatepen 	= rs.getDouble("gatepen");
         ispro       = rs.getBoolean("ispro");
         ispractice  = rs.getBoolean("ispractice");
-
-        String[] special = (String[])rs.getArray("spclasses").getArray();
-        if (Arrays.stream(special).anyMatch(e -> e.equals("turnedon"))) {
-            spclasses = Arrays.stream(special).filter(e -> !e.equals("turnedon")).collect(Collectors.toList());
-        } else {
-            spclasses = new ArrayList<String>();
-        }
+        sessions    = Arrays.asList((String[])rs.getArray("sessions").getArray());
     }
 
     public UUID getEventId() { return eventid; }
@@ -108,7 +99,7 @@ public class Event extends AttrBase implements Serializable
         ret.setGatePenalty(gatepen);
         ret.setPro(ispro);
         ret.setPractice(ispractice);
-        ret.setSpecialClasses(spclasses);
+        ret.setSessions(sessions);
         return ret;
     }
 }

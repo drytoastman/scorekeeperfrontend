@@ -11,7 +11,6 @@ package org.wwscc.registration;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -138,14 +137,6 @@ public class Registration extends JFrame
         {
             AppSetup.appSetup("registration");
             new Registration();
-            Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) ->  {
-                @SuppressWarnings("unchecked")
-                Set<String> tables = (Set<String>)o;
-                if (tables.contains("drivers") || tables.contains("cars") || tables.contains("registered") || tables.contains("runorder") || tables.contains("runs") || tables.contains("payments")) {
-                    log.fine("directing db notification into event changed");
-                    Messenger.sendEvent(MT.EVENT_CHANGED, null); // simple reload all event for registration, event didn't really change
-                }
-            });
         }
         catch (Throwable e)
         {

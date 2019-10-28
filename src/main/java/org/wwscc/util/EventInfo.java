@@ -27,7 +27,7 @@ public class EventInfo
     protected double    gatePenalty;
     protected boolean   isPro;
     protected boolean   isPractice;
-    protected List<String> specialClasses;
+    protected List<String> sessions;
 
     @Override
     public String toString()
@@ -75,8 +75,8 @@ public class EventInfo
         return isPractice;
     }
 
-    public List<String> getSpecialClasses() {
-        return specialClasses;
+    public List<String> getSessions() {
+        return sessions;
     }
 
 
@@ -120,8 +120,8 @@ public class EventInfo
         this.isPractice = isPractice;
     }
 
-    public void setSpecialClasses(List<String> specialClasses) {
-        this.specialClasses = specialClasses;
+    public void setSessions(List<String> sessions) {
+        this.sessions = sessions;
     }
 }
 

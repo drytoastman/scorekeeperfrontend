@@ -305,7 +305,7 @@ public class CarDialog extends BaseDialog<Car>
                 }
             }
 
-            if (getEntryText("number").equals(""))
+            if (getEntryText("number").equals("") && !c.getCode().startsWith("_"))
             {
                 errorMessage = "Please enter a car number";
                 return false;
@@ -356,7 +356,11 @@ public class CarDialog extends BaseDialog<Car>
             else
                 result.setUseClsMult(false);
 
-            result.setNumber(Integer.parseInt(getEntryText("number")));
+            String numtext = getEntryText("number");
+            if (numtext.equals(""))
+                result.setNumber(0);
+            else
+                result.setNumber(Integer.parseInt(numtext));
             return result;
         }
         catch (Exception e)

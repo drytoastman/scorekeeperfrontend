@@ -12,9 +12,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
 import java.util.logging.Level;
@@ -235,19 +233,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         if (d == null) // nothing to do
             return;
 
-        List<Car> drivercars = Database.d.getCarsForDriver(d.getDriverId());
-        Set<String> special = new HashSet<String>(state.getCurrentEvent().getSpecialClasses());
-        Stream<Car> newcars;
-
-        if (special.size() > 0) {
-            special.removeAll(drivercars.stream().map(c -> c.getClassCode()).collect(Collectors.toList()));
-            newcars = Stream.concat(drivercars.stream().filter(c -> c.getClassCode().charAt(0) == '_'),
-                                    special.stream().map(s -> new Car(d.getDriverId(), s)));
-            newcars = newcars.sorted((c1,c2)-> c1.getClassCode().compareTo(c2.getClassCode()));
-        } else {
-            newcars = drivercars.stream().filter(c -> c.getClassCode().charAt(0) != '_');
-        }
-
+        Stream<Car> newcars = Database.d.getCarsForDriver(d.getDriverId()).stream();
         carVector.clear();
         carVector.addAll(newcars.map(c -> Database.d.decorateCar(c, state.getCurrentEventId(), state.getCurrentCourse())).collect(Collectors.toList()));
         cars.setListData(carVector);

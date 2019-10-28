@@ -8,6 +8,8 @@
 
 package org.wwscc.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class ApplicationState {
@@ -26,9 +28,11 @@ public class ApplicationState {
 
        public String getCurrentSeries() { return currentSeries; }
        public EventInfo getCurrentEvent() { return currentEvent; }
-       public boolean usingSpecialClasses() { return (currentEvent != null) ? currentEvent.getSpecialClasses().size() > 0 : false; }
-       public UUID getCurrentEventId() { return (currentEvent != null) ? currentEvent.getEventId() : null; }
        public int getCurrentCourse() { return currentCourse; }
        public int getCurrentRunGroup() { return currentRunGroup; }
        public UUID getCurrentChallengeId() { return currentChallengeId; }
+
+       public boolean usingSessions() { return (currentEvent != null) ? currentEvent.getSessions().size() > 0 : false; }
+       public List<String> getSessions() { return (currentEvent != null) ? currentEvent.getSessions() : new ArrayList<String>(); }
+       public UUID getCurrentEventId() { return (currentEvent != null) ? currentEvent.getEventId() : null; }
 }

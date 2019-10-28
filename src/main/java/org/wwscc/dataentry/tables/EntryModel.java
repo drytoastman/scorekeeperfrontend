@@ -84,7 +84,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         tableData.add(e);
 
         try {
-            Database.d.registerCar(DataEntry.state.getCurrentEventId(), e.getCarId());
+            Database.d.ensureRegistration(DataEntry.state.getCurrentEventId(), e.getCarId());
         } catch (Exception ioe) {
             log.log(Level.WARNING, "\bRegistration during car add failed: {0}" + ioe.getMessage(), ioe);
         }
@@ -123,7 +123,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
         tableData.set(row, newe);
         try { // once successful, make sure this new car is registered for later scans
-            Database.d.registerCar(DataEntry.state.getCurrentEventId(), carid);
+            Database.d.ensureRegistration(DataEntry.state.getCurrentEventId(), carid);
         } catch (Exception e) {
             log.log(Level.WARNING, "Unable to register new car when swapping: " + e, e);
         }

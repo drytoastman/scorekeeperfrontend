@@ -15,6 +15,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,6 +88,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     JComboBox<PrintService> printers;
 
     LayeredBarcode barcode;
+    boolean dbtickled = false;
 
     @SuppressWarnings("deprecation")
     public EntryPanel()
@@ -95,6 +99,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.BARCODE_SCANNED, this);
         Messenger.register(MT.OBJECT_SCANNED, this);
+        Messenger.register(MT.DATABASE_NOTIFICATION, this);
 
         printers = new JComboBox<PrintService>();
         printers.setRenderer(new DefaultListCellRenderer() {
@@ -115,16 +120,16 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         });
 
         // special renderer for registration
-        cars.setCellRenderer(new RegCarRenderer());
+        cars.setCellRenderer(new RegCarRenderer(state.usingSessions()));
 
         /* Buttons */
         registerandpay = new JButton(new RegisterAndPayAction());
         registerandpay.setEnabled(false);
 
-        registerit = new JButton(new RegisterAction());
+        registerit = new JButton();
         registerit.setEnabled(false);
 
-        unregisterit = new JButton(new UnregisterAction());
+        unregisterit = new JButton();
         unregisterit.setEnabled(false);
 
         movepayment = new JButton(new MovePaymentMenuAction());
@@ -359,18 +364,74 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     }
 
 
-    class RegisterAction extends AbstractAction
+    class SessionMenuAction extends AbstractAction
     {
-        public RegisterAction() {
-            super("Register Only");
+        Class<? extends BaseRegAction> template;
+        List<String> sessions;
+        Predicate<String> filter;
+
+        public SessionMenuAction(String title, List<String> sessions, Predicate<String> filter, Class<? extends BaseRegAction> template)
+        {
+            super();
+            this.sessions = sessions;
+            if (sessions.size() > 0)
+                putValue(NAME, title + " \u2BC6"); // u2bc6 = down arrow
+            else
+                putValue(NAME, title);
+            this.filter = filter;
+            this.template = template;
+        }
+
+        private Optional<BaseRegAction> instance(String session)
+        {
+            try {
+                return Optional.of((BaseRegAction)template
+                                            .getConstructor(EntryPanel.class, DecoratedCar.class, String.class)
+                                            .newInstance(EntryPanel.this, selectedCar, session));
+            } catch (Exception e1) {
+                log.log(Level.WARNING, "\baction failure: " + e1, e1);
+                return null;
+            }
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            if (sessions.size() == 0) {
+                instance("").ifPresent(a -> a.actionPerformed(null));
+                return;
+            }
+
+            JPopupMenu menu = new JPopupMenu();
+            state.getCurrentEvent().getSessions().stream().filter(filter).forEach(m -> {
+                instance(m).ifPresent(a -> menu.add(a));
+            });
+            Component c = (Component)e.getSource();
+            menu.show(c, 5, c.getHeight()-5);
+        }
+    }
+
+    static abstract class BaseRegAction extends AbstractAction
+    {
+        String session;
+        public BaseRegAction(DecoratedCar car, String session)
+        {
+            super(session);
+            this.session = session;
+        }
+    }
+
+    class RegisterAction extends BaseRegAction
+    {
+        public RegisterAction(DecoratedCar car, String session)
+        {
+            super(car, session);
+            setEnabled(!car.getSessions().contains(session));
         }
 
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                if (selectedCar.notInDatabase())
-                    Database.d.newCar(selectedCar);
-                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
+                Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
+                dbtickled = true;
                 reloadCars(selectedCar);
             } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to register car: " + sqle, sqle);
@@ -378,19 +439,20 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         }
     }
 
-
-    class UnregisterAction extends AbstractAction
+    class UnregisterAction extends BaseRegAction
     {
-        public UnregisterAction()
+        public UnregisterAction(DecoratedCar car, String session)
         {
-            super("Unregister");
+            super(car, session);
+            setEnabled(car.getSessions().contains(session));
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
             try {
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
+                dbtickled = true;
                 reloadCars(selectedCar);
             } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to unregister car: " + sqle, sqle);
@@ -412,8 +474,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             try {
                 CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
                 if (d.doDialog("Payment", null)) {
+                    Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), "");
                     Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), ONSITE_PAYMENT, d.getResult());
-                    reloadCars(selectedCar);
                 }
             } catch (Exception sqle) {
                 log.log(Level.WARNING, "\bFailed to register car and payment: " + sqle, sqle);
@@ -423,6 +485,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
 
 
     class MovePaymentAction extends AbstractAction
+
     {
         DecoratedCar dest;
         public MovePaymentAction(DecoratedCar d)
@@ -439,8 +502,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         {
             try {
                 Database.d.movePayments(Registration.state.getCurrentEventId(), selectedCar.getCarId(), dest.getCarId());
-                Database.d.registerCar(Registration.state.getCurrentEventId(), dest.getCarId());
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId());
+                Database.d.registerCar(Registration.state.getCurrentEventId(), dest.getCarId(), "");
+                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), "");
             } catch (Exception e) {
                 log.log(Level.WARNING, "\bFailed to move payments: " + e, e);
             }
@@ -578,11 +641,10 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     protected void driverSelectionChanged()
     {
         editnotes.setIcon(null);
-        boolean specialClasses = state.usingSpecialClasses();
 
         if (selectedDriver != null)
         {
-            newcar.setEnabled(!specialClasses);
+            newcar.setEnabled(true);
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
             weekmember.setEnabled(true);
@@ -642,7 +704,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     protected void carSelectionChanged()
     {
         List<DecoratedCar> selectedCars = cars.getSelectedValuesList();
-        boolean specialClasses = state.usingSpecialClasses();
+        List<String> esessions = state.getSessions();
 
         if (selectedCars.size() > 1)
         {
@@ -674,13 +736,13 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
 
         if (selectedCar != null)
         {
-            newcarfrom.setEnabled(!specialClasses);
-            editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !specialClasses);
-            deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered() && !specialClasses);
+            newcarfrom.setEnabled(true);
+            editcar.setEnabled(       !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity());
+            deletecar.setEnabled(     !selectedCar.isInRunOrder() && !selectedCar.hasOtherActivity() && !selectedCar.isRegistered());
             registerandpay.setEnabled(!selectedCar.isInRunOrder());
             movepayment.setEnabled(   !selectedCar.isInRunOrder() && selectedCar.hasPaid());
             deletepayment.setEnabled( !selectedCar.isInRunOrder() && selectedCar.hasPaid());
-            registerit.setEnabled(    !selectedCar.isInRunOrder() && !selectedCar.isRegistered());
+            registerit.setEnabled(    !selectedCar.isInRunOrder() && !(selectedCar.isRegistered() && selectedCar.allSessions(esessions)));
             unregisterit.setEnabled(  !selectedCar.isInRunOrder() && selectedCar.isRegistered() && !selectedCar.hasPaid());
         }
         else
@@ -718,8 +780,22 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 break;
 
             case EVENT_CHANGED:
+                cars.setCellRenderer(new RegCarRenderer(state.usingSessions()));
+                registerit.setAction(new SessionMenuAction("Register", state.getCurrentEvent().getSessions(),  s -> true, RegisterAction.class));
+                unregisterit.setAction(new SessionMenuAction("Unregister", state.getCurrentEvent().getSessions(), s -> true, UnregisterAction.class));
                 reloadDrivers();
                 reloadCars(selectedCar);
+                break;
+
+            case DATABASE_NOTIFICATION:
+                Set<String> tables = (Set<String>)o;
+                if (tables.contains("drivers")) {
+                    reloadDrivers();
+                } else if (tables.contains("cars") || tables.contains("registered") || tables.contains("runorder") || tables.contains("runs") || tables.contains("payments")) {
+                    if (!dbtickled)
+                        reloadCars(selectedCar);
+                    dbtickled = false;
+                }
                 break;
 
             case OBJECT_SCANNED:

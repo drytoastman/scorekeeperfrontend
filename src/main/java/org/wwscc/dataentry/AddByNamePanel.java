@@ -104,9 +104,9 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
     @Override
     protected void carSelectionChanged()
     {
-        boolean specialClasses = state.usingSpecialClasses();
-        newcar.setEnabled(!specialClasses);
-        newcarfrom.setEnabled(!specialClasses);
+        boolean sessions = state.usingSessions();
+        newcar.setEnabled(!sessions);
+        newcarfrom.setEnabled(!sessions);
         carAlreadyInOrder = ((selectedCar == null) || (selectedCar.isInRunOrder()));
         addit.setEnabled(!carAlreadyInOrder);
         changeit.setEnabled(!carAlreadyInOrder && entrantIsSelected);

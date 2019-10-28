@@ -30,14 +30,20 @@ import org.wwscc.util.Resources;
 public class RegCarRenderer implements ListCellRenderer<Object>
 {
     private static Color greenish   = new Color(10, 150, 10);
-    private static ImageIcon reg    = new ImageIcon(Resources.loadImage("reg.png"));
-    private static ImageIcon noreg  = new ImageIcon(Resources.loadImage("noreg.png"));
     private static ImageIcon star   = new ImageIcon(Resources.loadImage("star.png"));
     private static ImageIcon nostar = new ImageIcon(Resources.loadImage("nostar.png"));
     private static Color washout    = new Color(240, 240, 240, 200);
     private static Font infont      = new Font(Font.SANS_SERIF, Font.BOLD, 20);
 
-    private CarPanel p = new CarPanel();
+    private CarPanel p;
+    private boolean sessions;
+
+    public RegCarRenderer(boolean usingSessions)
+    {
+        super();
+        sessions = usingSessions;
+        p = new CarPanel(sessions);
+    }
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
@@ -58,34 +64,46 @@ public class RegCarRenderer implements ListCellRenderer<Object>
 
         p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
         p.payment.setForeground(c.getPaymentTotal() > 0 ? greenish : Color.gray);
-        if (c.getClassCode().startsWith("_")) {
-            p.carinfo.setText(c.getClassDescription());
-            p.cardesc.setText("");
-        } else {
-            p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
-            p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
-        }
+        p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
+        p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
 
-        if (c.notInDatabase()) {
-            p.quicklbl.setVisible(false);
-            p.quickid.setText("");
-        } else {
-            p.quicklbl.setVisible(true);
-            String q = c.getQuickEntryId();
-            p.quickid.setText(String.format("%s %s %s", q.substring(0, 3), q.substring(3, 6), q.substring(6,10)));
-        }
+        p.quicklbl.setVisible(true);
+        String q = c.getQuickEntryId();
+        p.quickid.setText(String.format("%s %s %s", q.substring(0, 3), q.substring(3, 6), q.substring(6,10)));
 
         p.inevent = c.isInRunOrder();
         p.runs.setIcon(c.hasOtherActivity() ? star : nostar);
-        p.icon.setIcon(c.isRegistered() ? reg : noreg);
+
+        p.reg.removeAll();
+        for (String session : c.getSessions()) {
+            if (session.length() > 0)
+                p.reg.add(session, 14);
+            else
+                p.reg.add("\u2714", 18);
+        }
         p.setOpaque(true);
         return p;
     }
 
 
+    class RegPanel extends JPanel
+    {
+        public RegPanel()
+        {
+            setLayout(new MigLayout("flowy, ins 0, gapx 0, gapy 0", "[30!]"));
+        }
+
+        public void add(String label, int size)
+        {
+            JLabel lbl = new JLabel(label);
+            lbl.setFont(new Font(Font.SANS_SERIF, Font.BOLD, size));
+            add(lbl);
+        }
+    }
+
     class CarPanel extends JPanel
     {
-        JLabel icon;
+        RegPanel reg;
         JLabel payment;
         JLabel runs;
         JLabel carinfo;
@@ -93,14 +111,16 @@ public class RegCarRenderer implements ListCellRenderer<Object>
         JLabel quicklbl;
         JLabel quickid;
         boolean inevent;
+        boolean sessions;
 
-        public CarPanel()
+        public CarPanel(boolean usingSessions)
         {
             setLayout(new MigLayout("ins 5, gapx 0, gapy 1", "[]10[40!]7[]5[100:500:10000]", ""));
+            sessions = usingSessions;
 
-            icon = new JLabel();
-            icon.setOpaque(false);
-            add(icon, "ay center, spany 3");
+            reg = new RegPanel();
+            reg.setOpaque(false);
+            add(reg, "ay center, spany 3");
 
             payment = new JLabel();
             payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
@@ -111,7 +131,7 @@ public class RegCarRenderer implements ListCellRenderer<Object>
             add(runs, "ay top, ax right, gap 0, spany 3");
 
             carinfo = new JLabel();
-            carinfo.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
+            carinfo.setFont(new Font(Font.SANS_SERIF, sessions ? Font.PLAIN : Font.BOLD, 12));
             add(carinfo, "gap 0, wrap");
 
             cardesc = new JLabel();
@@ -146,7 +166,7 @@ public class RegCarRenderer implements ListCellRenderer<Object>
         public void setForeground(Color f)
         {
             super.setForeground(f);
-            if (icon != null)    icon.setForeground(f);
+            if (reg != null)    reg.setForeground(f);
             if (carinfo != null) carinfo.setForeground(f);
             if (cardesc != null) cardesc.setForeground(f);
             if (quickid != null) quickid.setForeground(f);
@@ -156,7 +176,7 @@ public class RegCarRenderer implements ListCellRenderer<Object>
         public void setBackground(Color f)
         {
             super.setBackground(f);
-            if (icon != null)    icon.setBackground(f);
+            if (reg != null)    reg.setBackground(f);
             if (carinfo != null) carinfo.setBackground(f);
             if (cardesc != null) cardesc.setBackground(f);
             if (quickid != null) quickid.setBackground(f);

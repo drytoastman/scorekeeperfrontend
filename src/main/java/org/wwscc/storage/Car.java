@@ -25,7 +25,6 @@ public class Car extends AttrBase
     protected boolean useclsmult;
 
     private String effectiveIndexString;
-    protected boolean notindatabase;
 
     /*
      * Create a blank car object.
@@ -39,7 +38,6 @@ public class Car extends AttrBase
         classcode = "";
         indexcode = "";
         effectiveIndexString = "";
-        notindatabase = true;
     }
 
     public Car(Car other)
@@ -52,7 +50,6 @@ public class Car extends AttrBase
         number     = other.number;
         useclsmult = other.useclsmult;
         effectiveIndexString = Database.d.getEffectiveIndexStr(this);
-        notindatabase = other.notindatabase;
     }
 
     public Car(ResultSet rs) throws SQLException
@@ -65,7 +62,6 @@ public class Car extends AttrBase
         number     = rs.getInt("number");
         useclsmult = rs.getBoolean("useclsmult");
         effectiveIndexString = Database.d.getEffectiveIndexStr(this);
-        notindatabase = false;
     }
 
     public Car(UUID driverid, String classcode)
@@ -101,7 +97,6 @@ public class Car extends AttrBase
     public String getModel()       { return getAttrS("model"); }
     public String getColor()       { return getAttrS("color"); }
     public String getEffectiveIndexStr() { return effectiveIndexString; }
-    public boolean notInDatabase() { return notindatabase; }
 
     public String getQuickEntryId() { return String.format("%010d", carid.getMostSignificantBits() >>> 32); }
 

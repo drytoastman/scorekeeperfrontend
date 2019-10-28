@@ -68,7 +68,7 @@ public class ScannedBarcodesTest
         public DatabaseShim() { classdata.add(new ClassData.Class("i1", false)); }
         @Override public void newDriver(Driver d) throws Exception { newdriver++; }
         @Override public void newCar(Car c) throws Exception { newcar++; }
-        @Override public void registerCar(UUID eventid, UUID carid) throws Exception { registered++; }
+        @Override public void registerCar(UUID eventid, UUID carid, String session) throws Exception { registered++; }
         @Override public List<Driver> findDriverByBarcode(String barcode) { return drivers; }
         @Override public List<Car> getRegisteredCars(UUID driverid, UUID eventid) { return new ArrayList<Car>(cars.values()); }
         @Override public String getEffectiveIndexStr(Car c) { return "i1"; }

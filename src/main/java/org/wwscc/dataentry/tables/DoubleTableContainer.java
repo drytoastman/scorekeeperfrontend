@@ -236,7 +236,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
 
         try {
             Database.d.newCar(c);
-            Database.d.registerCar(DataEntry.state.getCurrentEventId(), c.getCarId());
+            Database.d.registerCar(DataEntry.state.getCurrentEventId(), c.getCarId(), "");
         } catch (Exception sqle) {
             log.log(Level.WARNING, "\bUnable to create a placeholder car entry: " + sqle, sqle);
         }

@@ -390,8 +390,12 @@ public abstract class SQLDataInterface implements DataInterface
             DecoratedCar dcar = new DecoratedCar(c);
 
             // check if registered for this event
-            ResultSet cr = executeSelect("select 1 from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
-            dcar.registered = cr.next();
+            ResultSet cr = executeSelect("select session from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            dcar.registered = false;
+            while (cr.next()) {
+                dcar.registered = true;
+                dcar.sessions.add(cr.getString(1));
+            }
 
             // load any payments made
             ResultSet cp = executeSelect("select * from payments where carid=? and eventid=?", newList(c.getCarId(), eventid));
@@ -418,8 +422,6 @@ public abstract class SQLDataInterface implements DataInterface
             }
 
             closeLeftOvers();
-
-            dcar.classDescrip = getClassData().getClass(c.getClassCode()).getDescrip();
             return dcar;
         }
         catch (Exception ioe)
@@ -624,21 +626,29 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public void registerCar(UUID eventid, UUID carid) throws Exception
+    public void registerCar(UUID eventid, UUID carid, String session) throws Exception
     {
-        executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?) ON CONFLICT (eventid, carid) DO NOTHING", newList(eventid, carid));
+        executeUpdate("INSERT INTO registered (eventid, carid, session) VALUES (?, ?, ?) ON CONFLICT (eventid, carid, session) DO NOTHING", newList(eventid, carid, session));
     }
 
     @Override
-    public void unregisterCar(UUID eventid, UUID carid) throws Exception
+    public void ensureRegistration(UUID eventid, UUID carid) throws Exception
     {
-        executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=?", newList(eventid, carid));
+        // We don't want to create a superfluous "" session car if there are already AM,PM,etc so we check first
+        ResultSet rs = executeSelect("SELECT carid FROM registered WHERE eventid=? AND carid=?", newList(eventid, carid));
+        if (!rs.next())
+            registerCar(eventid, carid, "");
+    }
+
+    @Override
+    public void unregisterCar(UUID eventid, UUID carid, String session) throws Exception
+    {
+        executeUpdate("DELETE FROM registered WHERE eventid=? AND carid=? AND session=?", newList(eventid, carid, session));
     }
 
     @Override
     public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception
     {
-        registerCar(eventid, carid);
         executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
                 newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
     }
@@ -659,7 +669,6 @@ public abstract class SQLDataInterface implements DataInterface
     public void newCar(Car c) throws Exception
     {
         executeUpdate("insert into cars values (?,?,?,?,?,?,?)", c.getValues());
-        c.notindatabase = false;
     }
 
     @Override
@@ -678,7 +687,6 @@ public abstract class SQLDataInterface implements DataInterface
             executeUpdate("delete from registered where carid=?", newList(c.carid));
             executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
-            c.notindatabase = true;
         } catch (Exception sqle) {
             rollback();
             throw sqle;
@@ -694,8 +702,6 @@ public abstract class SQLDataInterface implements DataInterface
             for (Car c : list)
                 executeUpdate("delete from cars where carid=?", newList(c.carid));
             commit();
-            for (Car c : list)
-                c.notindatabase = true;
         }
         catch (Exception ioe)
         {

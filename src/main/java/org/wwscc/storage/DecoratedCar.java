@@ -22,7 +22,7 @@ public class DecoratedCar extends Car
     protected boolean registered;
     protected boolean inRunOrder;
     protected boolean otherActivity;
-    protected String classDescrip;
+    protected List<String> sessions;
     protected List<Payment> payments;
 
     public DecoratedCar(Car c)
@@ -31,7 +31,7 @@ public class DecoratedCar extends Car
         registered = false;
         inRunOrder = false;
         otherActivity = false;
-        classDescrip = null;
+        sessions = new ArrayList<String>();
         payments = new ArrayList<Payment>();
     }
 
@@ -43,7 +43,10 @@ public class DecoratedCar extends Car
     public boolean isRegistered()      { return registered; }
     public boolean isInRunOrder()      { return inRunOrder; }
     public boolean hasOtherActivity()  { return otherActivity; }
-    public String getClassDescription() { return classDescrip; }
+    public List<String> getSessions()  { return sessions; }
+    public boolean allSessions(List<String> compare) {
+        return sessions.containsAll(compare);
+    }
 
     public static class PaidOrder implements Comparator<DecoratedCar>
     {
