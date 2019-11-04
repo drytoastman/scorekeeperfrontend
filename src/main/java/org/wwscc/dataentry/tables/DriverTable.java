@@ -188,7 +188,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
             } else if (column == namecol) {
                 if (sessions) {
                     topLine    = String.format("%s %s", e.getFirstName(), e.getLastName());
-                    bottomLine = String.format(" #%d - %s", e.getNumber(), e.getCarDesc());
+                    bottomLine = String.format(" #%d - %s (%s)", e.getNumber(), e.getCarDesc(), e.getClassCode());
                 } else {
                     topLine    = String.format("%s %s", e.getFirstName(), e.getLastName());
                     bottomLine = String.format("%s %s", e.getCarDesc(), e.getCar().getEffectiveIndexStr());

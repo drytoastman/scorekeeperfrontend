@@ -121,11 +121,16 @@ public class CarTree extends JTree
                 continue;
             }
 
-            Vector<Entrant> v = classes.get(e.getClassCode());
+            String key = e.getSession();
+            if (key.equals("")) {
+                key = e.getClassCode();
+            }
+
+            Vector<Entrant> v = classes.get(key);
             if (v == null)
             {
                 v = new Vector<Entrant>();
-                classes.put(e.getClassCode(), v);
+                classes.put(key, v);
             }
 
             v.add(e);

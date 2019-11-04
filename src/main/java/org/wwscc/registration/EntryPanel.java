@@ -17,7 +17,6 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -368,9 +367,9 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     {
         Class<? extends BaseRegAction> template;
         List<String> sessions;
-        Predicate<String> filter;
+        boolean allaction;
 
-        public SessionMenuAction(String title, List<String> sessions, Predicate<String> filter, Class<? extends BaseRegAction> template)
+        public SessionMenuAction(String title, List<String> sessions, Class<? extends BaseRegAction> template, boolean allaction)
         {
             super();
             this.sessions = sessions;
@@ -378,8 +377,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 putValue(NAME, title + " \u2BC6"); // u2bc6 = down arrow
             else
                 putValue(NAME, title);
-            this.filter = filter;
             this.template = template;
+            this.allaction = allaction;
         }
 
         private Optional<BaseRegAction> instance(String session)
@@ -401,9 +400,11 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             }
 
             JPopupMenu menu = new JPopupMenu();
-            state.getCurrentEvent().getSessions().stream().filter(filter).forEach(m -> {
+            sessions.stream().forEach(m -> {
                 instance(m).ifPresent(a -> menu.add(a));
             });
+            if (allaction)
+                instance("All").ifPresent(a -> menu.add(a));
             Component c = (Component)e.getSource();
             menu.show(c, 5, c.getHeight()-5);
         }
@@ -414,7 +415,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         String session;
         public BaseRegAction(DecoratedCar car, String session)
         {
-            super(session);
+            super(session.equals("") ? "All" : session);
             this.session = session;
         }
     }
@@ -444,14 +445,20 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         public UnregisterAction(DecoratedCar car, String session)
         {
             super(car, session);
-            setEnabled(car.getSessions().contains(session));
+            setEnabled(session.equals("All") || car.getSessions().contains(session));
         }
 
         @Override
         public void actionPerformed(ActionEvent e)
         {
             try {
-                Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
+                if (session.equals("All")) {
+                    for (String s : selectedCar.getSessions()) {
+                        Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), s);
+                    }
+                } else {
+                    Database.d.unregisterCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
+                }
                 dbtickled = true;
                 reloadCars(selectedCar);
             } catch (Exception sqle) {
@@ -627,15 +634,15 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     {
         boolean save;
         save = registerandpay.isEnabled();
-        registerandpay.setAction(new SessionMenuAction("Register/Pay", state.getCurrentEvent().getSessions(),  s -> true, RegisterAndPayAction.class));
+        registerandpay.setAction(new SessionMenuAction("Register/Pay", state.getCurrentEvent().getSessions(), RegisterAndPayAction.class, false));
         registerandpay.setEnabled(save);
 
         save = registerit.isEnabled();
-        registerit.setAction(new SessionMenuAction("Register", state.getCurrentEvent().getSessions(),  s -> true, RegisterAction.class));
+        registerit.setAction(new SessionMenuAction("Register", state.getCurrentEvent().getSessions(), RegisterAction.class, false));
         registerit.setEnabled(save);
 
         save = unregisterit.isEnabled();
-        unregisterit.setAction(new SessionMenuAction("Unregister", state.getCurrentEvent().getSessions(), s -> true, UnregisterAction.class));
+        unregisterit.setAction(new SessionMenuAction("Unregister", state.getCurrentEvent().getSessions(), UnregisterAction.class, true));
         unregisterit.setEnabled(save);
     }
 

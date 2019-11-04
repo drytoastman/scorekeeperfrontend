@@ -47,15 +47,8 @@ public class CarTreeRenderer extends DefaultTreeCellRenderer
         if (o instanceof Entrant)
         {
             Entrant e = (Entrant)o;
-            StringBuilder b = new StringBuilder();
-
-            if (e.getNumber() > 0)
-                b.append(e.getNumber() + " - ");
-            b.append(e.getName());
-            if (!e.getClassCode().startsWith("_"))
-                b.append(" - " + e.getCarModel() + " " + e.getCar().getEffectiveIndexStr());
-
-            setText(b.toString());
+            setText(String.format("%d - %s - %s %s", e.getNumber(), e.getName(), e.getCarModel(),
+                    e.getSession().equals("") ? e.getCar().getEffectiveIndexStr() : "("+e.getClassCode()+")"));
         }
 
         return this;

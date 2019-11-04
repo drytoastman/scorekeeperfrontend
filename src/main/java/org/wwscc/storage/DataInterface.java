@@ -120,7 +120,7 @@ public interface DataInterface
      * @throws Exception if an error occurs into the SQL execution
      */
     public void registerCar(UUID eventid, UUID carid, String session) throws Exception;
-    public void ensureRegistration(UUID eventid, UUID carid) throws Exception;
+    public void ensureRegistration(UUID eventid, UUID carid, String session) throws Exception;
     public void unregisterCar(UUID eventid, UUID carid, String session) throws Exception; // remove this car from the current event registration
     public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception;
     public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws Exception;

@@ -203,9 +203,9 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return loadEntrants(executeSelect("SELECT DISTINCT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
+            return loadEntrants(executeSelect("SELECT DISTINCT d.firstname, d.lastname, c.*, r.session, SUM(p.amount) AS paid " +
                         "FROM registered r LEFT JOIN payments p ON r.carid=p.carid AND r.eventid=p.eventid JOIN cars c ON r.carid=c.carid JOIN drivers d ON c.driverid=d.driverid " +
-                        "WHERE r.eventid=? GROUP BY d.firstname,d.lastname,c.carid ORDER BY d.firstname,d.lastname", newList(eventid)), null);
+                        "WHERE r.eventid=? GROUP BY d.firstname,d.lastname,c.carid,r.session ORDER BY d.firstname,d.lastname", newList(eventid)), null);
         }
         catch (Exception ioe)
         {
@@ -244,7 +244,7 @@ public abstract class SQLDataInterface implements DataInterface
         try
         {
             ResultSet d = executeSelect("WITH r AS (SELECT x.cid,x.row from runorder, unnest(runorder.cars) WITH ORDINALITY x(cid,row) WHERE eventid=? and course=? and rungroup=?) " +
-                        "SELECT d.firstname, d.lastname, c.*, SUM(p.amount) AS paid " +
+                        "SELECT d.firstname, d.lastname, c.*, MAX(reg.session) as session, SUM(p.amount) AS paid " +
                         "FROM drivers d JOIN cars c ON c.driverid=d.driverid JOIN r ON c.carid=r.cid " +
                         "LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=? LEFT JOIN payments p ON reg.carid=p.carid AND reg.eventid=p.eventid  " +
                         "GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup, eventid));
@@ -269,7 +269,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select d.firstname, d.lastname, c.*, SUM(p.amount) as paid " +
+            ResultSet d = executeSelect("select d.firstname, d.lastname, c.*, MAX(r.session) as session, SUM(p.amount) as paid " +
                         "FROM drivers d JOIN cars c ON c.driverid=d.driverid LEFT JOIN registered r ON r.carid=c.carid AND r.eventid=? LEFT JOIN payments p ON p.carid=r.carid AND p.eventid=r.eventid " +
                         "WHERE c.carid=? GROUP BY d.firstname, d.lastname, c.carid ORDER BY d.firstname, d.lastname", newList(eventid, carid));
             ResultSet runs = null;
@@ -635,12 +635,12 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void ensureRegistration(UUID eventid, UUID carid) throws Exception
+    public void ensureRegistration(UUID eventid, UUID carid, String session) throws Exception
     {
         // We don't want to create a superfluous "" session car if there are already AM,PM,etc so we check first
         ResultSet rs = executeSelect("SELECT carid FROM registered WHERE eventid=? AND carid=?", newList(eventid, carid));
         if (!rs.next())
-            registerCar(eventid, carid, "");
+            registerCar(eventid, carid, session);
     }
 
     @Override

@@ -24,6 +24,7 @@ public class Entrant
     protected Car car;
     protected Map<Integer, Run> runs;
     protected double paid = 0.0;
+    protected String session = "";
 
     public Entrant()
     {
@@ -39,8 +40,10 @@ public class Entrant
         lastname  = rs.getString("lastname");
         try {
             paid  = rs.getDouble("paid");
-        } catch (SQLException pse) {
-        }
+        } catch (SQLException pse) {}
+        try {
+            session = rs.getString("session");
+        } catch (SQLException sse) {}
     }
 
     static public Entrant testEntrant(UUID carid, String classcode)
@@ -71,6 +74,7 @@ public class Entrant
     public int getNumber() { return car.number; }
     public boolean isPaid() { return paid > 0; }
     public String getQuickEntryId() { return car.getQuickEntryId(); }
+    public String getSession() { return session; }
 
 
     /*
