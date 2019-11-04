@@ -37,12 +37,16 @@ import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
+import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Entrant;
+import org.wwscc.util.MT;
+import org.wwscc.util.Messenger;
 import org.wwscc.util.Prefs;
 
 
@@ -63,6 +67,11 @@ public class DriverTable extends TableBase
 
         addMouseListener(new DriverContextMenu(this));
         getTableHeader().addMouseListener( new RowHeaderTableResizer() );
+
+        Messenger.register(MT.EVENT_CHANGED, (e,o) -> {
+            startModelColumn = DataEntry.state.usingSessions() ? 1 : 0;
+            tableChanged(new TableModelEvent(getModel(), TableModelEvent.HEADER_ROW));
+        });
     }
 
     @Override
@@ -141,6 +150,9 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
     private String bottomLine;
     private Font topFont;
     private Font bottomFont;
+    private boolean sessions;
+    private int numcol;
+    private int namecol;
 
     public EntrantRenderer()
     {
@@ -154,38 +166,36 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
 
         topFont = new Font(Font.DIALOG, Font.BOLD, 11);
         bottomFont = new Font(Font.DIALOG, Font.PLAIN, 11);
+
+        Messenger.register(MT.EVENT_CHANGED, (e,o) -> {
+            sessions = DataEntry.state.usingSessions();
+            numcol   = sessions ? -1 : 0;
+            namecol  = sessions ? 0 : 1;
+        });
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                        boolean isSelected, boolean hasFocus, int row, int column)
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column)
     {
         setBackground((isSelected) ?  backgroundSelect : background);
 
         if (value instanceof Entrant)
         {
             Entrant e = (Entrant)value;
-             switch (column)
-            {
-                case 0:
-                    if (e.getClassCode().startsWith("_")) {
-                        topLine = e.getClassCode().substring(1);
-                        bottomLine = "";
-                    } else {
-                        topLine = e.getClassCode();
-                        bottomLine = ""+e.getNumber();
-                    }
-                    break;
-
-                case 1:
-                    topLine = e.getFirstName() + " " + e.getLastName();
-                    bottomLine = e.getCarDesc() + " " +  e.getCar().getEffectiveIndexStr();
-                    break;
-
-                default:
-                    topLine = "What?";
-                    bottomLine = null;
-                    break;
+            if (column == numcol) {
+                topLine    = e.getClassCode();
+                bottomLine = ""+e.getNumber();
+            } else if (column == namecol) {
+                if (sessions) {
+                    topLine    = String.format("%s %s", e.getFirstName(), e.getLastName());
+                    bottomLine = String.format(" #%d - %s", e.getNumber(), e.getCarDesc());
+                } else {
+                    topLine    = String.format("%s %s", e.getFirstName(), e.getLastName());
+                    bottomLine = String.format("%s %s", e.getCarDesc(), e.getCar().getEffectiveIndexStr());
+                }
+            } else {
+                topLine    = "What?";
+                bottomLine = null;
             }
 
             if (Prefs.usePaidFlag() && !e.isPaid())
