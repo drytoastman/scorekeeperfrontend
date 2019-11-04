@@ -82,10 +82,10 @@ public class TestDatabaseContainer extends ExternalResource
         pgdb.executeUpdate("INSERT INTO events   (eventid, name, date, regclosed, attr)  VALUES (?, 'name', now(), now(), '{}')", newList(eventid));
         pgdb.executeUpdate("INSERT INTO runorder (eventid, course, rungroup, cars) VALUES (?, 1, 1, ?)", newList(eventid, new UUID[] {carid1, carid3}));
         pgdb.executeUpdate("INSERT INTO registered (eventid, carid) VALUES (?, ?)", newList(eventid, carid1));
-        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 1, 1.0, 'OK', '{}')", newList(eventid, carid1));
-        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 2, 2.0, 'OK', '{}')", newList(eventid, carid1));
-        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 3, 3.0, 'OK', '{}')", newList(eventid, carid1));
-        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, run, raw, status, attr) VALUES (?, ?, 1, 4, 4.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, raw, status, attr) VALUES (?, ?, 1, 1, 1, 1.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, raw, status, attr) VALUES (?, ?, 1, 1, 2, 2.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, raw, status, attr) VALUES (?, ?, 1, 1, 3, 3.0, 'OK', '{}')", newList(eventid, carid1));
+        pgdb.executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, raw, status, attr) VALUES (?, ?, 1, 1, 4, 4.0, 'OK', '{}')", newList(eventid, carid1));
         pgdb.commit();
     }
 

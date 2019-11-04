@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.JMenuItem;
@@ -27,8 +28,8 @@ import javax.swing.JTable;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dataentry.DataEntry;
 import org.wwscc.dialogs.TextRunsDialog;
-import org.wwscc.storage.Car;
 import org.wwscc.storage.Database;
+import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
@@ -78,21 +79,22 @@ class DriverContextMenu extends MouseAdapter
         if (target.getSelectedColumn() != col) return;
 
         Entrant selectedE = (Entrant)target.getValueAt(row, col);
-        List<Car> registered = Database.d.getRegisteredCars(selectedE.getDriverId(), DataEntry.state.getCurrentEventId());
-        List<Car> allcars = Database.d.getCarsForDriver(selectedE.getDriverId());
+        List<DecoratedCar> registered =
+                Database.d.getRegisteredCars(selectedE.getDriverId(), DataEntry.state.getCurrentEventId()).stream().map(c -> Database.d.decorateCar(c, DataEntry.state)).collect(Collectors.toList());
+        List<DecoratedCar> allcars =
+                Database.d.getCarsForDriver(selectedE.getDriverId()).stream().filter(c -> !registered.contains(c)).map(c -> Database.d.decorateCar(c, DataEntry.state)).collect(Collectors.toList());
 
         menu = new JPopupMenu("");
         addTitle("Swap to Registered Car");
-        for (Car c : registered)
+        for (DecoratedCar c : registered) {
             addCarAction(c);
+        }
 
         addTitle("Swap to Unregistered Car");
         boolean removelast = true;
-        for (Car c : allcars) {
-            if (!registered.contains(c) && !Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse())) {
-                addCarAction(c);
-                removelast = false;
-            }
+        for (DecoratedCar c : allcars) {
+            addCarAction(c);
+            removelast = false;
         }
         if (removelast)
             menu.remove(menu.getComponentCount()-1);
@@ -122,7 +124,7 @@ class DriverContextMenu extends MouseAdapter
         menu.add(lbl);
     }
 
-    private void addCarAction(final Car c)
+    private void addCarAction(final DecoratedCar c)
     {
         JMenuItem lbl = new JMenuItem(String.format("%s %s #%s %s %s", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber(), c.getMake(), c.getModel()));
         lbl.setFont(itemFont);
@@ -131,7 +133,7 @@ class DriverContextMenu extends MouseAdapter
                 Messenger.sendEvent(MT.CAR_CHANGE, c.getCarId());
         }});
 
-        if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
+        if (!c.canAdd())
         {
             lbl.setEnabled(false);
             lbl.setForeground(superLightGray);
@@ -225,7 +227,7 @@ class TextRunAction extends AbstractAction
 
         try {
             for (Run r : trd.getResult()) {
-                r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.run());
+                r.updateTo(DataEntry.state.getCurrentEventId(), entrant.getCarId(), r.course(), r.rungroup(), r.run());
                 Database.d.setRun(r, null);
             }
         } catch (Exception sqle) {

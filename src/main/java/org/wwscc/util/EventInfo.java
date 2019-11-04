@@ -9,6 +9,7 @@
 package org.wwscc.util;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ public class EventInfo
     protected UUID      eventId;
     protected String    name;
     protected LocalDate date;
+    protected int       regtype;
     protected int       courses;
     protected int       runs;
     protected int       countedRuns;
@@ -27,7 +29,6 @@ public class EventInfo
     protected double    gatePenalty;
     protected boolean   isPro;
     protected boolean   isPractice;
-    protected List<String> sessions;
 
     @Override
     public String toString()
@@ -75,8 +76,16 @@ public class EventInfo
         return isPractice;
     }
 
+    private static final List<String> AMPM    = Arrays.asList(new String[] {"AM", "PM"});
+    private static final List<String> DAY     = Arrays.asList(new String[] {"Day"});
+    private static final List<String> CLASSES = Arrays.asList(new String[] {});
+
     public List<String> getSessions() {
-        return sessions;
+        switch (regtype) {
+            case 1: return AMPM;
+            case 2: return DAY;
+            default: return CLASSES;
+        }
     }
 
 
@@ -90,6 +99,10 @@ public class EventInfo
 
     public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public void setRegType(int regtype) {
+        this.regtype = regtype;
     }
 
     public void setCourses(int courses) {
@@ -118,10 +131,6 @@ public class EventInfo
 
     public void setPractice(boolean isPractice) {
         this.isPractice = isPractice;
-    }
-
-    public void setSessions(List<String> sessions) {
-        this.sessions = sessions;
     }
 }
 

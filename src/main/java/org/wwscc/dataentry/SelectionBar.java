@@ -56,6 +56,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         super(new MigLayout("fill, ins 3, hidemode 3", "fill"));
 
         Messenger.register(MT.SERIES_CHANGED, this);
+        Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.DRIVER_SCAN_ACCEPTED, this);
@@ -79,7 +80,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             List<UUID> carids = Database.d.getOrphanedCars(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
             List<Entrant> entrants = new ArrayList<Entrant>();
             for (UUID carid : carids) {
-                entrants.add(Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true));
+                entrants.add(Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), true));
             }
             PlaceOrphansDialog pd = new PlaceOrphansDialog(entrants);
             if (pd.doDialog("Place Orphans", null)) {
@@ -99,9 +100,9 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
         scannedLabel.setFont(fn.deriveFont(Font.BOLD));
         scannedLabel.setForeground(new Color(200, 130, 0));
 
+        eventSelect = createCombo("eventChange");
         courseSelect = createCombo("courseChange");
         groupSelect  = createCombo("groupChange");
-        eventSelect = createCombo("eventChange");
 
         groupSelect.setModel(new DefaultComboBoxModel<Integer>(new Integer[] { 1, 2, 3, 4, 5, 6 }));
 

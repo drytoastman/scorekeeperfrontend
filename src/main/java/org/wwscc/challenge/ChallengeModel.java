@@ -321,7 +321,7 @@ public class ChallengeModel implements MessageListener
         UUID carid = re.getCarId();
         if ((e == null) && !(carid == null))
         {
-            e = Database.d.loadEntrant(ChallengeGUI.state.getCurrentEventId(), re.getCarId(), 1, false);
+            e = Database.d.loadEntrant(ChallengeGUI.state.getCurrentEventId(), re.getCarId(), 0, 0, false);
             entrantcache.put(re.getCarId(), e);
         }
         return e;

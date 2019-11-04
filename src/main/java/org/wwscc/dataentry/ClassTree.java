@@ -14,7 +14,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -36,6 +35,7 @@ public class ClassTree extends CarTree implements MessageListener, ActionListene
         addMouseListener(new DClickWatch());
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.COURSE_CHANGED, this);
+        Messenger.register(MT.RUNGROUP_CHANGED, this);
 
         registerKeyboardAction(
             this,
@@ -78,10 +78,15 @@ public class ClassTree extends CarTree implements MessageListener, ActionListene
         switch (type)
         {
             case COURSE_CHANGED:
+            case RUNGROUP_CHANGED:
             case ENTRANTS_CHANGED:
                 List<Entrant> reg = Database.d.getRegisteredEntrants(DataEntry.state.getCurrentEventId());
-                Set<UUID> runorder = Database.d.getCarIdsForCourse(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
-                makeTree(reg, runorder);
+                List<UUID> exclude;
+                if (DataEntry.state.usingSessions())
+                    exclude = Database.d.getCarIdsForRunGroup(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                else
+                    exclude = Database.d.getCarIdsForCourse(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
+                makeTree(reg, exclude);
                 break;
         }
     }

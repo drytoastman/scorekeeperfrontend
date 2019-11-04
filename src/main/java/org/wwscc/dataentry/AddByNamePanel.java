@@ -33,7 +33,6 @@ import net.miginfocom.swing.MigLayout;
 public class AddByNamePanel extends DriverCarPanelBase implements MessageListener
 {
     JButton addit, changeit, newcar, newcarfrom;
-    boolean carAlreadyInOrder = true;
     boolean entrantIsSelected = false;
 
     public AddByNamePanel()
@@ -47,6 +46,7 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
         Messenger.register(MT.ENTRANTS_CHANGED, this);
         Messenger.register(MT.SHOW_ADD_PANE, this);
         Messenger.register(MT.COURSE_CHANGED, this);
+        Messenger.register(MT.RUNGROUP_CHANGED, this);
         Messenger.register(MT.ADD_BY_NAME, this);
 
 
@@ -104,12 +104,9 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
     @Override
     protected void carSelectionChanged()
     {
-        boolean sessions = state.usingSessions();
-        newcar.setEnabled(!sessions);
-        newcarfrom.setEnabled(!sessions);
-        carAlreadyInOrder = ((selectedCar == null) || (selectedCar.isInRunOrder()));
-        addit.setEnabled(!carAlreadyInOrder);
-        changeit.setEnabled(!carAlreadyInOrder && entrantIsSelected);
+        boolean canadd = (selectedCar != null) && selectedCar.canAdd();
+        addit.setEnabled(canadd);
+        changeit.setEnabled(canadd && entrantIsSelected);
     }
 
     @Override
@@ -119,7 +116,7 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
         {
             case OBJECT_CLICKED:
                 entrantIsSelected = (o instanceof Entrant);
-                changeit.setEnabled(!carAlreadyInOrder && entrantIsSelected);
+                changeit.setEnabled(entrantIsSelected &&  (selectedCar != null) && selectedCar.canAdd());
                 break;
 
             case OBJECT_DCLICKED:
@@ -133,6 +130,7 @@ public class AddByNamePanel extends DriverCarPanelBase implements MessageListene
 
             case ENTRANTS_CHANGED: // resync loaded cars to check status
             case COURSE_CHANGED:
+            case RUNGROUP_CHANGED:
                 reloadDrivers();
                 reloadCars(selectedCar);
                 break;

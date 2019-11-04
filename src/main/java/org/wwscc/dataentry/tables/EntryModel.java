@@ -55,11 +55,12 @@ public class EntryModel extends AbstractTableModel implements MessageListener
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
     }
 
+
     public void addCar(UUID carid)
     {
         if (tableData == null) return;
 
-        Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
+        Entrant e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), true);
         if (e == null)
         {
             log.warning("\bFailed to fetch entrant data from database");
@@ -75,9 +76,9 @@ public class EntryModel extends AbstractTableModel implements MessageListener
             }
             tableData.remove(e); // remove it from position and following will readd at the end
         }
-        else if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse()))
+        else if (!Database.d.decorateCar(Database.d.getCar(carid), DataEntry.state).canAdd())
         {
-            log.log(Level.SEVERE, "\bCarid {0} already in use in another rungroup in this event", carid);
+            log.log(Level.SEVERE, "\bCarid {0} already in use in another rungroup in this event/session", carid);
             return;
         }
 
@@ -102,7 +103,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     {
         /* We are being asked to swap an entrant */
         Entrant old = tableData.get(row);
-        Entrant newe = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), true);
+        Entrant newe = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), true);
         if (newe == null)
         {
             log.warning("\bFailed to fetch data for the replacement car from the database");
@@ -288,11 +289,11 @@ public class EntryModel extends AbstractTableModel implements MessageListener
                 String quicksync = DataEntry.state.getCurrentEvent().isPro() ? DataEntry.state.getCurrentSeries() : null;
                 if (aValue instanceof Run) {
                     Run r = (Run)aValue;
-                    r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset);
+                    r.updateTo(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), col-runoffset);
                     Database.d.setRun(r, quicksync);
                     e.setRun(r);
                 } else if (aValue == null){
-                    Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), col-runoffset, quicksync);
+                    Database.d.deleteRun(DataEntry.state.getCurrentEvent().getEventId(), e.getCarId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), col-runoffset, quicksync);
                     e.deleteRun(col-runoffset);
                 }
                 DataEntry.poker.poke();

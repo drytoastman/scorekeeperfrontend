@@ -71,7 +71,7 @@ public class RegCarRenderer implements ListCellRenderer<Object>
         String q = c.getQuickEntryId();
         p.quickid.setText(String.format("%s %s %s", q.substring(0, 3), q.substring(3, 6), q.substring(6,10)));
 
-        p.inevent = c.isInRunOrder();
+        p.inevent = c.isInAnyRunOrder();
         p.runs.setIcon(c.hasOtherActivity() ? star : nostar);
 
         p.reg.removeAll();

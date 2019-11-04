@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.wwscc.util.ApplicationState;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** */
@@ -83,11 +85,11 @@ public interface DataInterface
 
     /* Entrants w/ runs */
     public List<Entrant> getEntrantsByRunOrder(UUID eventid, int course, int rungroup); // get all entrants in a particular event/course/rungroup and loads their runs
-    public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns); // load an entrant by carid and all of the associated runs if desired
+    public Entrant loadEntrant(UUID eventid, UUID carid, int course, int rungroup, boolean loadruns); // load an entrant by carid and all of the associated runs if desired
 
+    public List<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
     public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup); // get the carids based on the current run group
     public Set<UUID> activeRunOrderForEvent(UUID eventid);
-    public Set<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
     public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append) throws SQLException;
     public List<UUID> getOrphanedCars(UUID eventid, int course); // get all car ids that have runs but are not in any rungroup
 
@@ -129,11 +131,11 @@ public interface DataInterface
     public void deleteCar(Car d) throws Exception;
     public void deleteCars(Collection<Car> d) throws Exception;
     public void mergeCar(Car from, Car into) throws Exception;
-    public DecoratedCar decorateCar(Car c, UUID eventid, int course);
+    public DecoratedCar decorateCar(Car c, ApplicationState state);
 
     public void setRun(Run r, String quicksync) throws Exception;
     public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception;
-    public void deleteRun(UUID eventid, UUID carid, int course, int run, String quicksync) throws Exception;
+    public void deleteRun(UUID eventid, UUID carid, int course, int rungroup, int run, String quicksync) throws Exception;
     public void addTimerTime(Run r);
 
 
@@ -156,24 +158,10 @@ public interface DataInterface
     public void setChallengeStaging(ChallengeStaging s) throws SQLException;
 
 
-    /**
-     * Uses currentEvent, currentCourse
-     * @param eventid the eventid to check
-     * @param carid the carid to check for
-     * @param course the course to check
-     * @return true if the carid is present in any rungroup for the event/course
-     */
-    public boolean isInOrder(UUID eventid, UUID carid, int course);
-
-    /**
-     * Uses currentEvent, currentCourse, currentRunGroup
-     * @param eventid the event id to check
-     * @param carid the carid to check for
-     * @param course the course to check
-     * @param rungroup the rungroupo to check
-     * @return true if the carid is present in the event/course/rungroup
-     */
+    public boolean isInAnyOrder(UUID eventid, UUID carid, int course);
     public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup);
+    public boolean isInOtherOrder(UUID eventid, UUID carid, int course, int rungroup);
+
 
     public ClassData getClassData();
     public String getEffectiveIndexStr(Car c);

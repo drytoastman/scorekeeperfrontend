@@ -22,6 +22,7 @@ import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
 import org.wwscc.storage.FakeDatabase;
 import org.wwscc.util.AppSetup;
+import org.wwscc.util.ApplicationState;
 import org.wwscc.util.EventInfo;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -73,8 +74,8 @@ public class ScannedBarcodesTest
         @Override public List<Car> getRegisteredCars(UUID driverid, UUID eventid) { return new ArrayList<Car>(cars.values()); }
         @Override public String getEffectiveIndexStr(Car c) { return "i1"; }
         @Override public ClassData getClassData() { return classdata; }
-        @Override public DecoratedCar decorateCar(Car c, UUID eventid, int course) { return (TestDecoratedCar)c; }
-        @Override public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns) {
+        @Override public DecoratedCar decorateCar(Car c, ApplicationState state) { return (TestDecoratedCar)c; }
+        @Override public Entrant loadEntrant(UUID eventid, UUID carid, int course, int rungroup, boolean loadruns) {
             for (Car c : cars.values()) {
                 if (c.getCarId().equals(carid)) {
                     TestEntrant e = new TestEntrant();

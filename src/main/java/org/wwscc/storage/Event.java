@@ -13,8 +13,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 import org.wwscc.util.EventInfo;
 
@@ -28,6 +26,7 @@ public class Event extends AttrBase implements Serializable
     protected UUID      eventid;
     protected String    name;
     protected LocalDate date;
+    protected int       regtype;
     protected Timestamp regopened;
     protected Timestamp regclosed;
     protected int       courses;
@@ -40,7 +39,6 @@ public class Event extends AttrBase implements Serializable
     protected double    gatepen;
     protected boolean   ispro;
     protected boolean   ispractice;
-    protected List<String> sessions;
 
     @Override
     public String toString()
@@ -59,6 +57,7 @@ public class Event extends AttrBase implements Serializable
         eventid     = (UUID)rs.getObject("eventid");
         name        = rs.getString("name");
         date        = rs.getObject("date", LocalDate.class);
+        regtype     = rs.getInt("regtype");
         regopened   = rs.getTimestamp("regopened", Database.utc);
         regclosed   = rs.getTimestamp("regclosed", Database.utc);
         courses     = rs.getInt("courses");
@@ -71,7 +70,6 @@ public class Event extends AttrBase implements Serializable
         gatepen 	= rs.getDouble("gatepen");
         ispro       = rs.getBoolean("ispro");
         ispractice  = rs.getBoolean("ispractice");
-        sessions    = Arrays.asList((String[])rs.getArray("sessions").getArray());
     }
 
     public UUID getEventId() { return eventid; }
@@ -92,6 +90,7 @@ public class Event extends AttrBase implements Serializable
         ret.setEventId(eventid);
         ret.setName(name);
         ret.setDate(date);
+        ret.setRegType(regtype);
         ret.setCourses(courses);
         ret.setRuns(runs);
         ret.setCountedRuns(countedruns);
@@ -99,7 +98,6 @@ public class Event extends AttrBase implements Serializable
         ret.setGatePenalty(gatepen);
         ret.setPro(ispro);
         ret.setPractice(ispractice);
-        ret.setSessions(sessions);
         return ret;
     }
 }

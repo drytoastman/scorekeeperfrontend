@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.postgresql.util.PSQLException;
+import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,9 +63,10 @@ public abstract class SQLDataInterface implements DataInterface
         return l;
     }
 
-    static void logError(String f, Exception e)
+    static boolean logError(String f, Exception e)
     {
         log.log(Level.SEVERE, "\b" + f + " failed: " + e.getMessage(), e);
+        return false;
     }
 
 
@@ -218,8 +220,8 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return executeSelect("select c.* from registered as x, cars as c, drivers as d " +
-                        "where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=?",
+            return executeSelect("select distinct c.* from registered as x, cars as c, drivers as d " +
+                        "where x.carid=c.carid AND c.driverid=d.driverid and x.eventid=? and d.driverid=? order by c.classcode, c.indexcode, c.number",
                         newList(eventid, driverid), Car.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)
@@ -248,8 +250,8 @@ public abstract class SQLDataInterface implements DataInterface
                         "GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup, eventid));
             if (d == null)
                 return new ArrayList<Entrant>();
-            ResultSet runs = executeSelect("select * from runs where eventid=? and course=? and carid in " +
-                        "(select unnest(cars) from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, eventid, course, rungroup));
+            ResultSet runs = executeSelect("SELECT * FROM runs WHERE eventid=? AND course=? AND rungroup=? AND carid in " +
+                        "(select unnest(cars) from runorder where eventid=? AND course=? AND rungroup=?)", newList(eventid, course, rungroup, eventid, course, rungroup));
             List<Entrant> ret = loadEntrants(d, runs);
             closeLeftOvers();
             return ret;
@@ -263,7 +265,7 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public Entrant loadEntrant(UUID eventid, UUID carid, int course, boolean loadruns)
+    public Entrant loadEntrant(UUID eventid, UUID carid, int course, int rungroup, boolean loadruns)
     {
         try
         {
@@ -272,7 +274,7 @@ public abstract class SQLDataInterface implements DataInterface
                         "WHERE c.carid=? GROUP BY d.firstname, d.lastname, c.carid ORDER BY d.firstname, d.lastname", newList(eventid, carid));
             ResultSet runs = null;
             if (loadruns)
-                runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=?", newList(carid, eventid, course));
+                runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=? AND rungroup=?", newList(carid, eventid, course, rungroup));
             List<Entrant> e = loadEntrants(d, runs);
             closeLeftOvers();
             if (e.size() > 0)
@@ -288,11 +290,11 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public Set<UUID> getCarIdsForCourse(UUID eventid, int course)
+    public List<UUID> getCarIdsForCourse(UUID eventid, int course)
     {
         try
         {
-            HashSet<UUID> ret = new HashSet<UUID>();
+            List<UUID> ret = new ArrayList<UUID>();
             ResultSet d = executeSelect("select unnest(cars) as carid from runorder where eventid=? AND course=?", newList(eventid, course));
             while (d.next())
                 ret.add((UUID)d.getObject("carid"));
@@ -383,14 +385,14 @@ public abstract class SQLDataInterface implements DataInterface
     //****************************************************/
 
     @Override
-    public DecoratedCar decorateCar(Car c, UUID eventid, int course)
+    public DecoratedCar decorateCar(Car c, ApplicationState state)
     {
         try
         {
             DecoratedCar dcar = new DecoratedCar(c);
 
             // check if registered for this event
-            ResultSet cr = executeSelect("select session from registered where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            ResultSet cr = executeSelect("select session from registered where carid=? and eventid=?", newList(c.getCarId(), state.getCurrentEventId()));
             dcar.registered = false;
             while (cr.next()) {
                 dcar.registered = true;
@@ -398,21 +400,22 @@ public abstract class SQLDataInterface implements DataInterface
             }
 
             // load any payments made
-            ResultSet cp = executeSelect("select * from payments where carid=? and eventid=?", newList(c.getCarId(), eventid));
+            ResultSet cp = executeSelect("select * from payments where carid=? and eventid=?", newList(c.getCarId(), state.getCurrentEventId()));
             while (cp.next()) {
                 dcar.addPayment(new Payment(cp));
             }
 
-            // check if in runorder for the given course
-            ResultSet rr = executeSelect("select 1 from runorder where eventid=? and course=? and ?=ANY(cars) limit 1", newList(eventid, course, c.getCarId()));
-            dcar.inRunOrder = rr.next();
+            boolean sessions = state.usingSessions();
+            dcar.inAnyRunOrder = isInAnyOrder(state.getCurrentEventId(), c.getCarId(), state.getCurrentCourse());
+            dcar.isInCurrentOrder = isInCurrentOrder(state.getCurrentEventId(), c.getCarId(), state.getCurrentCourse(), state.getCurrentRunGroup());
+            dcar.canAdd = (sessions && !dcar.isInCurrentOrder) || (!sessions && !dcar.inAnyRunOrder);
 
             // check for activity outside this event
-            ResultSet c1 = executeSelect("select carid from registered where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+            ResultSet c1 = executeSelect("select carid from registered where carid=? and eventid!=? limit 1", newList(c.getCarId(), state.getCurrentEventId()));
             if (!c1.next()) {
-                ResultSet c2 = executeSelect("select carid from runs where carid=? and eventid!=? limit 1", newList(c.getCarId(), eventid));
+                ResultSet c2 = executeSelect("select carid from runs where carid=? and eventid!=? limit 1", newList(c.getCarId(), state.getCurrentEventId()));
                 if (!c2.next()) {
-                    ResultSet c3 = executeSelect("select 1 from runorder where ?=ANY(cars) and eventid!=? limit 1", newList(c.getCarId(), eventid));
+                    ResultSet c3 = executeSelect("select 1 from runorder where ?=ANY(cars) and eventid!=? limit 1", newList(c.getCarId(), state.getCurrentEventId()));
                     dcar.otherActivity = c3.next();
                 } else {
                     dcar.otherActivity = true;
@@ -551,7 +554,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            return executeSelect("select * from cars where driverid = ? order by classcode, number",
+            return executeSelect("select * from cars where driverid = ? order by classcode, indexcode, number",
                             newList(driverid), Car.class.getConstructor(ResultSet.class));
         }
         catch (Exception ioe)
@@ -720,8 +723,8 @@ public abstract class SQLDataInterface implements DataInterface
             List<Object> da = newList(from.getCarId());
 
             // can't swap carids on some tables as they are part of the primary key and that messes with our syncing process
-            executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr) " +
-                                    "(SELECT eventid,	 ?, course, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
+            executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, cones, gates, raw, status, attr) " +
+                                    "(SELECT eventid,	 ?, course, rungroup, run, cones, gates, raw, status, attr FROM runs WHERE carid=?)", sa);
             executeUpdate("DELETE FROM runs WHERE carid=?", da);
 
             executeUpdate("INSERT INTO registered (eventid, carid) " +
@@ -752,11 +755,11 @@ public abstract class SQLDataInterface implements DataInterface
     public void setRun(Run r, String quicksync) throws Exception
     {
         try {
-            executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) " +
-                          "VALUES (?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, run) DO UPDATE " +
+            executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, cones, gates, raw, status, attr, modified) " +
+                          "VALUES (?,?,?,?,?,?,?,?,?,?,now()) ON CONFLICT (eventid, carid, course, rungroup, run) DO UPDATE " +
                           "SET cones=?,gates=?,raw=?,status=?,attr=?,modified=now()",
-                          newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
-                                                                       r.cones, r.gates, r.raw, r.status, r.attr));
+                          newList(r.eventid, r.carid, r.course, r.rungroup, r.run, r.cones, r.gates, r.raw, r.status, r.attr,
+                                                                            r.cones, r.gates, r.raw, r.status, r.attr));
             if (quicksync != null)
                 mergeServerSetQuickRuns(quicksync);
         } catch (Exception sqle) {
@@ -772,10 +775,10 @@ public abstract class SQLDataInterface implements DataInterface
             // do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
             start();
             for (Run r : runs) {
-                executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(r.eventid, r.carid, r.course, r.run));
+                executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND rungroup=? AND run=?", newList(r.eventid, r.carid, r.course, r.rungroup, r.run));
                 r.setCarId(newcarid);
-                executeUpdate("INSERT INTO runs (eventid, carid, course, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,now())",
-                        newList(r.eventid, r.carid, r.course, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
+                executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,?,now())",
+                                  newList(r.eventid, r.carid, r.course, r.rungroup, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
             }
             commit();
         } catch (Exception sqle) {
@@ -785,10 +788,10 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void deleteRun(UUID eventid, UUID carid, int course, int run, String quicksync) throws Exception
+    public void deleteRun(UUID eventid, UUID carid, int course, int rungroup, int run, String quicksync) throws Exception
     {
         try {
-            executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND run=?", newList(eventid, carid, course, run));
+            executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND rungroup=? AND run=?", newList(eventid, carid, course, rungroup, run));
             if (quicksync != null)
                 mergeServerSetQuickRuns(quicksync);
         } catch (Exception sqle){
@@ -1223,34 +1226,35 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
-    public boolean isInOrder(UUID eventid, UUID carid, int course)
+    public boolean isInAnyOrder(UUID eventid, UUID carid, int course)
     {
-        try
-        {
-            ResultSet rs = executeSelect("select 1 from runorder where eventid=? AND course=? AND ?=ANY(cars)", newList(eventid, course, carid));
-            return rs.next();
-        }
-        catch (Exception ioe)
-        {
-            logError("isInOrder", ioe);
-            return false;
+        try {
+            return executeSelect("select 1 from runorder where eventid=? AND course=? AND ?=ANY(cars)", newList(eventid, course, carid)).next();
+        } catch (Exception ioe) {
+            return logError("isInAnyOrder", ioe);
         }
     }
 
     @Override
     public boolean isInCurrentOrder(UUID eventid, UUID carid, int course, int rungroup)
     {
-        try
-        {
-            ResultSet rs = executeSelect("select 1 from runorder where eventid=? AND course=? AND rungroup=? AND ?=ANY(cars)", newList(eventid, course, rungroup, carid));
-            return rs.next();
-        }
-        catch (Exception ioe)
-        {
-            logError("isInCurrentOrder", ioe);
-            return false;
+        try {
+            return executeSelect("select 1 from runorder where eventid=? AND course=? AND rungroup=? AND ?=ANY(cars)", newList(eventid, course, rungroup, carid)).next();
+        } catch (Exception ioe) {
+            return logError("isInCurrentOrder", ioe);
         }
     }
+
+    @Override
+    public boolean isInOtherOrder(UUID eventid, UUID carid, int course, int rungroup)
+    {
+        try {
+            return executeSelect("select 1 from runorder where eventid=? AND course=? AND rungroup!=? AND ?=ANY(cars)", newList(eventid, course, rungroup, carid)).next();
+        } catch (Exception ioe) {
+            return logError("isInOtherOrder", ioe);
+        }
+    }
+
 
     @Override
     public ClassData getClassData()

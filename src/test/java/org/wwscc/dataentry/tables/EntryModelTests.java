@@ -45,8 +45,8 @@ public class EntryModelTests
         model.replaceCar(testdb.carid2, 0);
 
         // old runs should be gone, new runs should be present, new car should be registered
-        Assert.assertEquals(0, Database.d.loadEntrant(eventid, testdb.carid1, 1, true).getRuns().size());
-        Assert.assertEquals(4, Database.d.loadEntrant(eventid, testdb.carid2, 1, true).getRuns().size());
+        Assert.assertEquals(0, Database.d.loadEntrant(eventid, testdb.carid1, 1, 1, true).getRuns().size());
+        Assert.assertEquals(4, Database.d.loadEntrant(eventid, testdb.carid2, 1, 1, true).getRuns().size());
         Assert.assertArrayEquals(new Object[] { testdb.carid1, testdb.carid2 }, Database.d.getRegisteredCars(testdb.driverid, testdb.eventid).stream().map(c -> c.getCarId()).toArray());
     }
 

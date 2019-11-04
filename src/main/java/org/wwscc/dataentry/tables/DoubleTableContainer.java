@@ -45,7 +45,6 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Entrant;
-import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
@@ -203,8 +202,8 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                 event(MT.CAR_ADD, c.getCarId()); // if there is something in this run order, just go with it and return
                 return;
             }
-            if (Database.d.isInOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse()))
-                iter.remove(); // otherwise, remove those active in another run order (same course/event)
+            if (!DataEntry.state.usingSessions() && Database.d.isInOtherOrder(DataEntry.state.getCurrentEventId(), c.getCarId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup()))
+                iter.remove(); // otherwise, remove those active in another run order (same session/course/event)
         }
 
         if (available.size() == 1) { // pick only one available
@@ -213,10 +212,9 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         }
 
         ClassData cd = Database.d.getClassData();
-        UUID eid = IdGenerator.generateId();
         Optional<DecoratedCar> car = available.stream()
                           .filter(c -> !cd.getClass(c.getClassCode()).isSecondRuns()) // not second runs
-                          .map(c -> Database.d.decorateCar(c, eid, 1))  // get decorated cars
+                          .map(c -> Database.d.decorateCar(c, DataEntry.state))  // get decorated cars
                           .sorted(new DecoratedCar.PaidOrder())
                           .findFirst();
 

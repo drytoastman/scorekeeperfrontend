@@ -57,7 +57,7 @@ public class TimerClientTests
     @Test
     public void encodeRun() throws Exception
     {
-        String fields[] = new String[] { "course", "run", "cones", "gates", "status", "raw", "attr", "rowid" };
+        String fields[] = new String[] { "course", "rungroup", "run", "cones", "gates", "status", "raw", "attr", "rowid" };
 
         ObjectNode encoded = objectMapper.valueToTree(run);
         int index = 0;

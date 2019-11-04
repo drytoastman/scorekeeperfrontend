@@ -20,7 +20,9 @@ import java.util.List;
 public class DecoratedCar extends Car
 {
     protected boolean registered;
-    protected boolean inRunOrder;
+    protected boolean inAnyRunOrder;
+    protected boolean isInCurrentOrder;
+    protected boolean canAdd;
     protected boolean otherActivity;
     protected List<String> sessions;
     protected List<Payment> payments;
@@ -29,7 +31,9 @@ public class DecoratedCar extends Car
     {
         super(c);
         registered = false;
-        inRunOrder = false;
+        inAnyRunOrder = false;
+        isInCurrentOrder = false;
+        canAdd = false;
         otherActivity = false;
         sessions = new ArrayList<String>();
         payments = new ArrayList<Payment>();
@@ -41,7 +45,8 @@ public class DecoratedCar extends Car
     public List<Payment> getPayments() { return payments;}
     public boolean hasPaid()           { return payments.size() > 0; }
     public boolean isRegistered()      { return registered; }
-    public boolean isInRunOrder()      { return inRunOrder; }
+    public boolean isInAnyRunOrder()   { return inAnyRunOrder; }
+    public boolean canAdd()            { return canAdd; }
     public boolean hasOtherActivity()  { return otherActivity; }
     public List<String> getSessions()  { return sessions; }
     public boolean allSessions(List<String> compare) {

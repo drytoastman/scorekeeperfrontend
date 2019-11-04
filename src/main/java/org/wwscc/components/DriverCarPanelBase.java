@@ -235,7 +235,7 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
 
         Stream<Car> newcars = Database.d.getCarsForDriver(d.getDriverId()).stream();
         carVector.clear();
-        carVector.addAll(newcars.map(c -> Database.d.decorateCar(c, state.getCurrentEventId(), state.getCurrentCourse())).collect(Collectors.toList()));
+        carVector.addAll(newcars.map(c -> Database.d.decorateCar(c, state)).collect(Collectors.toList()));
         cars.setListData(carVector);
         if (select != null)
             focusOnCar(select.getCarId());

@@ -40,6 +40,8 @@ public class Run extends AttrBase implements Cloneable
     @JsonProperty
     protected int course;
     @JsonProperty
+    protected int rungroup;
+    @JsonProperty
     protected int run;
     @JsonProperty
     protected int cones;
@@ -108,6 +110,7 @@ public class Run extends AttrBase implements Cloneable
         this.carid   = null;
         this.eventid = null;
         this.course  = -1;
+        this.rungroup = -1;
         this.run     = -1;
     }
 
@@ -131,6 +134,7 @@ public class Run extends AttrBase implements Cloneable
         eventid = (UUID)rs.getObject("eventid");
         carid   = (UUID)rs.getObject("carid");
         course  = rs.getInt("course");
+        rungroup = rs.getInt("rungroup");
         run     = rs.getInt("run");
         cones   = rs.getInt("cones");
         gates   = rs.getInt("gates");
@@ -146,6 +150,7 @@ public class Run extends AttrBase implements Cloneable
 
     public int run() { return run; }
     public int course() { return course; }
+    public int rungroup() { return rungroup; }
     public UUID getEventId() { return eventid; }
     public UUID getCarId() { return carid; }
     public int getCones() { return cones; }
@@ -159,6 +164,7 @@ public class Run extends AttrBase implements Cloneable
 
     public void setRunNumber(int r)         { run = r; }
     public void setCourse(int c)            { course = c; }
+    public void setRunGroup(int r)          { rungroup = r; }
     public void setReaction(Double d)       { setAttrD("reaction", d); }
     public void setSixty(Double d)          { setAttrD("sixty", d); }
     public void setSegment(int s, Double d) { setAttrD("seg"+s, d); }
@@ -168,12 +174,13 @@ public class Run extends AttrBase implements Cloneable
     public void setStatus(String s)         { status = s; }
     public void setCarId(UUID cid)          { carid = cid; }
 
-    public void updateTo(UUID inEventid, UUID inCarid, int inCourse, int inRun)
+    public void updateTo(UUID eventid, UUID carid, int course, int rungroup, int run)
     {
-        this.eventid = inEventid;
-        this.carid = inCarid;
-        this.course = inCourse;
-        this.run = inRun;
+        this.eventid  = eventid;
+        this.carid    = carid;
+        this.course   = course;
+        this.rungroup = rungroup;
+        this.run      = run;
         attrCleanup();
     }
 
@@ -186,7 +193,7 @@ public class Run extends AttrBase implements Cloneable
     @Override
     public String toString()
     {
-        return "<"+carid+","+eventid+","+course+","+run+","+raw+","+status+" ("+cones+","+gates+")>";
+        return "<"+carid+","+eventid+","+course+","+rungroup+","+run+","+raw+","+status+" ("+cones+","+gates+")>";
     }
 
     @Override
@@ -195,13 +202,13 @@ public class Run extends AttrBase implements Cloneable
         if (!(o instanceof Run)) return false;
         Run r = (Run)o;
 
-        return ((r.course == course) && (r.run == run) && (r.status.equals(status)) &&
+        return ((r.course == course) && (r.rungroup == rungroup) && (r.run == run) && (r.status.equals(status)) &&
                 (r.raw == raw) && (r.cones == cones) && (r.gates == gates) && (r.attr.equals(attr)));
     }
 
     @Override
     public int hashCode()
     {
-        return course ^ run ^ Double.valueOf(raw).hashCode();
+        return Double.valueOf(raw).hashCode();
     }
 }

@@ -116,7 +116,7 @@ public class ListRenderers extends DefaultListCellRenderer
 
             DecoratedCar c = (DecoratedCar)value;
             setupPanel(list, p, isSelected, cellHasFocus);
-            if (c.isInRunOrder()) {
+            if (!c.canAdd()) {
                 p.setForeground(inUseColor);
                 p.setItalic(true);
             } else {

@@ -66,13 +66,14 @@ public class TextRunsDialog extends BaseDialog<List<Run>>
             result = new ArrayList<Run>();
             String lines[] = area.getText().split("\n");
             int course = 1;
+            int rungroup = 1;
             for (String line : lines)
             {
                 int run = 1;
                 for (String rdata : line.split("\\s+"))
                 {
                     Run r = txtToRun(rdata);
-                    r.updateTo(null, null, course, run);
+                    r.updateTo(null, null, course, rungroup, run);
                     result.add(r);
                     run++;
                 }
