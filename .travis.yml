@@ -18,13 +18,15 @@ cache:
 
 script:
   - ./gradlew check
-  - ./gradlew -D target=linux runtimeZip
 
-  - ./gradlew macJDK winJDK
-  - ./gradlew -D target=mac runtimeZip
-  - ./gradlew -D target=win runtimeZip
-  - ./gradlew wininstaller
-
+after_success:
+    if [ ! -z "$TRAVIS_TAG" ]; then
+      ./gradlew macJDK winJDK;
+      ./gradlew -D target=linux runtimeZip
+      ./gradlew -D target=mac runtimeZip;
+      ./gradlew -D target=win runtimeZip;
+      ./gradlew wininstaller;
+    fi
 
 deploy:
   - provider: releases
