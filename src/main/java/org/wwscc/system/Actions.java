@@ -32,11 +32,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.wwscc.dialogs.SeriesSelectionDialog;
-import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.dialogs.ListDialog;
 import org.wwscc.dialogs.MergeServerConfigDialog;
-import org.wwscc.dialogs.SeriesSelectionDialog.HSResult;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.EventSendAction;
@@ -157,18 +154,7 @@ public class Actions
     {
         public DownloadFromHostAction(MergeServer s) { super(s); }
         public void actionPerformed(ActionEvent e) {
-            SeriesSelectionDialog hd = new SeriesSelectionDialog(server);
-            if (!hd.doDialog("Select Host and Series", null))
-                return;
-            HSResult ret = hd.getResult();
-            new Thread() { @Override public void run()  {
-                HoverMessage msg = new HoverMessage("Initializing local database for new series download");
-                msg.doDialog("Series Init", e -> {});
-                Database.d.verifyUserAndSeries(ret.series, ret.password);
-                Database.d.mergeServerUpdateNow(server.getServerId());
-                msg.close();
-                Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
-            }}.start();
+            Messenger.sendEventNow(MT.DOWNLOAD_NEW_REQUEST, server);
         }
     }
 

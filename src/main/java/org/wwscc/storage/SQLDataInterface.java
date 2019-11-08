@@ -1423,9 +1423,7 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet a = executeSelect("select verify_user(?, ?)", newList(seriesname, password));
-            if (a.next() && a.getBoolean(1))
-            {
+            if (changePassword(seriesname, password)) {
                 ResultSet b = executeSelect("select verify_series(?)", newList(seriesname));
                 if (b.next() && b.getBoolean(1))
                     return true;

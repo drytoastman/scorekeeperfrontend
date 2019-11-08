@@ -38,12 +38,9 @@ public class ContainerMonitor extends MonitorBase
 {
     private static final Logger log = Logger.getLogger(ContainerMonitor.class.getName());
 
-    public static final String NET_NAME        = "scnet";
-    public static final String DB_IMAGE_NAME   = "drytoastman/scdb:"+Prefs.getFullVersion();
-    public static final String PY_IMAGE_NAME   = "drytoastman/scpython:"+Prefs.getFullVersion();
-    public static final String SOCK_VOL_NAME   = "scsocket";
-    public static final String DB_VOL_NAME     = "scdatabase-"+Prefs.getVersionBase();
-    public static final String LOG_VOL_NAME    = "sclogs-"+Prefs.getVersionBase();
+    public static final String NET_NAME = volname("net1");
+    public static final String DB_IMAGE = "drytoastman/scdb:"+Prefs.getFullVersion();
+    public static final String PY_IMAGE = "drytoastman/scpython:"+Prefs.getFullVersion();
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
@@ -52,6 +49,7 @@ public class ContainerMonitor extends MonitorBase
     private BroadcastState<Boolean> ready;
     private Path importRequestFile;
     private BackupRequest backupRequest;
+    private String syncCommandRequest[], syncCommandResponse;
     private boolean machineready, lastcheck, restartsync;
 
     /** flag for debug environment where we are running the backend separately */
@@ -63,6 +61,9 @@ public class ContainerMonitor extends MonitorBase
         boolean compress;
         boolean usedialog;
     }
+
+    public static String volname(String name) { return String.format("%s_%s", Prefs.getVersionBase(), name); }
+    public static String conname(String name) { return String.format("%s_%s_1", Prefs.getVersionBase(), name); }
 
     @SuppressWarnings("unchecked")
     public ContainerMonitor()
@@ -77,27 +78,31 @@ public class ContainerMonitor extends MonitorBase
         lastcheck    = false;
         backupRequest = null;
         importRequestFile = null;
+        syncCommandRequest = null;
 
-        db = new DockerContainer("db", DB_IMAGE_NAME, NET_NAME);
-        db.addVolume(DB_VOL_NAME,   "/var/lib/postgresql/data");
-        db.addVolume(LOG_VOL_NAME,  "/var/log");
-        db.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
+        db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME);
+        db.addVolume(volname("database"),  "/var/lib/postgresql/data");
+        db.addVolume(volname("logs"),      "/var/log");
+        db.addVolume(volname("socket"),    "/var/run/postgresql");
+        db.addVolume(volname("certs"),     "/certs");
         db.addPort("127.0.0.1", 6432, 6432);
         db.addPort("0.0.0.0",  54329, 5432);
         all.add(db);
 
-        web = new DockerContainer("web", PY_IMAGE_NAME, NET_NAME);
+        web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME);
         web.addCmdItem("webserver.py");
-        web.addVolume(LOG_VOL_NAME,  "/var/log");
-        web.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
+        web.addVolume(volname("logs"),  "/var/log");
+        web.addVolume(volname("socket"), "/var/run/postgresql");
         web.addPort("0.0.0.0", 80, 80);
+        web.addEnvItem("FLASK_SECRET='"+Prefs.getCookieSecret()+"'");
         all.add(web);
         nondb.add(web);
 
-        sync = new DockerContainer("sync", PY_IMAGE_NAME, NET_NAME);
+        sync = new DockerContainer(conname("sync"), PY_IMAGE, NET_NAME);
         sync.addCmdItem("syncserver");
-        sync.addVolume(LOG_VOL_NAME,  "/var/log");
-        sync.addVolume(SOCK_VOL_NAME, "/var/run/postgresql");
+        sync.addVolume(volname("logs"),  "/var/log");
+        sync.addVolume(volname("socket"), "/var/run/postgresql");
+        sync.addVolume(volname("certs"), "/certs");
         all.add(sync);
         nondb.add(sync);
 
@@ -154,7 +159,7 @@ public class ContainerMonitor extends MonitorBase
             return;
         }
 
-        // interrupt our regular schedule to shutdown and import data
+        // interrupt our regular schedule to shutdown and import data or backup
         if (importRequestFile != null) {
             ready.set(false);
             doImport(importRequestFile);
@@ -202,6 +207,11 @@ public class ContainerMonitor extends MonitorBase
             }
             status.set("Running");
             ready.set(true);
+
+            if (syncCommandRequest != null) {
+                syncCommandResponse = runSyncCommand(syncCommandRequest);
+                syncCommandRequest = null;
+            }
         }
 
         lastcheck = ok;
@@ -252,7 +262,7 @@ public class ContainerMonitor extends MonitorBase
         status.set("Importing ...");
         log.info("importing "  + importfile);
 
-        String name = "db";
+        String name = db.getName();
         boolean success = false;
         try {
             docker.uploadFile(name, importfile, "/tmp");
@@ -283,11 +293,11 @@ public class ContainerMonitor extends MonitorBase
         status.set("Backing up database");
         try {
             Path finalpath = ImportExportFunctions.backupName(request.directory);
-            if (docker.exec("db", "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
+            if (docker.exec(db.getName(), "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
                 throw new IOException("pg_dump failed");
 
             Path dumpfile = Files.createTempDirectory("backupwork").resolve("dump");
-            docker.downloadTo("db", "/tmp/dump", dumpfile);
+            docker.downloadTo(db.getName(), "/tmp/dump", dumpfile);
 
             ImportExportFunctions.processBackup(dumpfile, finalpath, request.compress);
             Files.delete(dumpfile);
@@ -305,10 +315,21 @@ public class ContainerMonitor extends MonitorBase
         }
     }
 
+    private String runSyncCommand(String ... cmd)
+    {
+        try {
+            return docker.run(sync.getName(), cmd);
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Unabled run sync command: " + e, e);
+        }
+        return null;
+    }
+
+
     public boolean copyLogs(Path dir)
     {
         try {
-            docker.downloadTo("db", "/var/log/", dir);
+            docker.downloadTo(db.getName(), "/var/log/", dir);
             return true;
         } catch (IOException ioe) {
             log.warning("Failed to copy log files from container: " + ioe);
@@ -329,15 +350,7 @@ public class ContainerMonitor extends MonitorBase
         request.usedialog = usedialog;
         backupRequest = request;
         poke();
-        if (wait) {
-            while (backupRequest != null) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        }
+        if (wait) { while (backupRequest != null) { try { Thread.sleep(200); } catch (InterruptedException e) { break;}}}
     }
 
     public void importRequest(Path importfile)
@@ -345,5 +358,13 @@ public class ContainerMonitor extends MonitorBase
         importRequestFile = importfile;
         poke();
     }
-}
 
+    public String syncCommand(String ... request)
+    {
+        syncCommandRequest = request;
+        poke();
+        while (syncCommandRequest != null) { try { Thread.sleep(200); } catch (InterruptedException e) { break;}}
+        log.finer("syncCommand response is '"+syncCommandResponse+"'");
+        return syncCommandResponse.trim();
+    }
+}

@@ -8,6 +8,8 @@
 
 package org.wwscc.system.docker;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -101,6 +103,28 @@ public class DockerAPI
 
     public interface DockerStatusListener {
         public void status(int tasks, int completed);
+    }
+
+    public static class StreamDemuxer {
+        StringBuilder stdout;
+        StringBuilder stderr;
+        public StreamDemuxer(String in) throws IOException {
+            DataInputStream decoder = new DataInputStream(new ByteArrayInputStream(in.getBytes()));
+            stdout = new StringBuilder();
+            stderr = new StringBuilder();
+            while (decoder.available() > 0) {
+                int type = decoder.readByte();
+                           decoder.readNBytes(3);
+                int size = decoder.readInt();
+                if (type == 1) {
+                    stdout.append(new String(decoder.readNBytes(size)));
+                } else if (type == 2) {
+                    stderr.append(new String(decoder.readNBytes(size)));
+                }
+            }
+        }
+        public String getStdout() { return stdout.toString(); }
+        public String getStderr() { return stderr.toString(); }
     }
 
     /**
@@ -360,12 +384,12 @@ public class DockerAPI
     }
 
 
-    @SuppressWarnings("rawtypes")
-    public int exec(String name, String ... cmd) throws Exception
+    public int exec(String name, String ... cmd) throws IOException
     {
         ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(false).attachStderr(false);
-        Map ret   = request(new Requests.CreateExec(name, config));
-        String id = (String)ret.get("Id");
+        @SuppressWarnings("rawtypes")
+        Map result = request(new Requests.CreateExec(name, config));
+        String id  = (String)result.get("Id");
 
         if (id != null) {
             request(new Requests.StartExec(id));
@@ -375,13 +399,28 @@ public class DockerAPI
                 ExecStatus status = request(new Requests.GetExecStatus(id));
                 if ((status != null) && (status.getExitCode() != null))
                     return status.getExitCode();
-                Thread.sleep(500);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {}
                 if (System.currentTimeMillis() > deadline)
                     throw new IOException("Unable to retrieve exec response");
             }
         }
 
         throw new IOException("Got to the end of exec, how?");
+    }
+
+
+    public String run(String name, String ... cmd) throws IOException
+    {
+        ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(true).attachStderr(false);
+        @SuppressWarnings("rawtypes")
+        Map result = request(new Requests.CreateExec(name, config));
+        String id  = (String)result.get("Id");
+        if (id != null) {
+            return new StreamDemuxer(request(new Requests.RunExec(id))).getStdout();
+        }
+        return "";
     }
 
 

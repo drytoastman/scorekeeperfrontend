@@ -21,8 +21,10 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 import org.wwscc.dialogs.BaseDialog;
+import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
+import org.wwscc.system.SeriesSelectionDialog.HSResult;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
@@ -62,6 +64,7 @@ public class ScorekeeperSystem
         Messenger.register(MT.IMPORT_REQUEST,        (t,d) -> importRequest((File)d));
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
         Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest(false));
+        Messenger.register(MT.DOWNLOAD_NEW_REQUEST,  (t,d) -> downloadNewRequest((MergeServer)d));
         Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((Set<String>)d));
         Messenger.register(MT.DOCKER_NOT_OK,         (t,d) -> mdiag.doDialog("Docker Check", e -> {}, window));
         Messenger.register(MT.DOCKER_OK,             (t,d) -> mdiag.close());
@@ -168,6 +171,22 @@ public class ScorekeeperSystem
             pmonitor.shutdown();
         };
         new Thread(shutdown, "ShutdownThread").start();
+    }
+
+    public void downloadNewRequest(MergeServer server)
+    {
+        SeriesSelectionDialog hd = new SeriesSelectionDialog(cmonitor, server.getConnectEndpoint());
+        if (!hd.doDialog("Select Host and Series", null))
+            return;
+        HSResult ret = hd.getResult();
+        new Thread() { @Override public void run()  {
+            HoverMessage msg = new HoverMessage("Initializing local database for new series download");
+            msg.doDialog("Series Init", e -> {});
+            Database.d.verifyUserAndSeries(ret.series, ret.password);
+            Database.d.mergeServerUpdateNow(server.getServerId());
+            msg.close();
+            Messenger.sendEvent(MT.POKE_SYNC_SERVER, true);
+        }}.start();
     }
 
 

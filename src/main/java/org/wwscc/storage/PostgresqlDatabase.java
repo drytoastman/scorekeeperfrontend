@@ -54,33 +54,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     private PostgresConnectionWatcher watcher;
 
     class ConnectParam {
-        String host, user, password, series;
+        String user, series;
         int statementtimeout;
-    }
-
-    /**
-     * Attempt a connection to a remote host to see if the password is valid
-     * @param host the host to connect to
-     * @param user the username
-     * @param password the password
-     * @return true if the connection was successful with the username/password
-     */
-    static public boolean checkPassword(String host, String user, String password)
-    {
-        try {
-            PostgresqlDatabase db = new PostgresqlDatabase(host, user, password, 0);
-            db.close();
-            return true;
-        } catch (SQLException sqle) {
-            if (sqle.getSQLState().equals("28P01")) {
-                log.warning("Incorrect Password");
-            } else {
-                log.warning(sqle.getMessage());
-            }
-        } catch (Exception e) {
-            log.log(Level.WARNING, "General exception checking password: " + e, e);
-        }
-        return false;
     }
 
     /**
@@ -90,9 +65,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
      */
     public PostgresqlDatabase(String user) throws SQLException
     {
-        this(null, user, null, 0);
+        this(user, 0);
     }
-
 
     /**
      * Connect to the localhost with the given user and statement timeout
@@ -102,36 +76,17 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
      */
     public PostgresqlDatabase(String user, int statementtimeout) throws SQLException
     {
-        this(null, user, null, statementtimeout);
-    }
-
-
-    /**
-     * Connect to a local or remote host
-     * @param host if null use localhost, otherwise the remote host to connect to
-     * @param user the username to connect with
-     * @param password if not null, the password to use
-     * @param statementtimeout if > 0, a statement timeout in ms
-     * @throws SQLException
-     */
-    public PostgresqlDatabase(String host, String user, String password, int statementtimeout) throws SQLException
-    {
         leftovers = new HashMap<ResultSet, PreparedStatement>();
         connectParam = new ConnectParam();
-        connectParam.host = host;
         connectParam.user = user;
-        connectParam.password = password;
         connectParam.statementtimeout = statementtimeout;
         connectParam.series = null;
         conn = internalConnect();
 
-        if (password == null) {
-            // only start watcher for local connections, remotes are only used to check series and password
-            watcher = new PostgresConnectionWatcher();
-            watcher.setName("PostgresConnectionWatcher-"+watcher.getId());
-            watcher.setDaemon(true);
-            watcher.start();
-        }
+        watcher = new PostgresConnectionWatcher();
+        watcher.setName("PostgresConnectionWatcher-"+watcher.getId());
+        watcher.setDaemon(true);
+        watcher.start();
     }
 
 
@@ -146,23 +101,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         Properties props = new Properties();
         props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
         props.setProperty("user", connectParam.user);
-
-        if ((connectParam.host == null) || connectParam.host.equals("127.0.0.1") || connectParam.host.equals("localhost"))
-        {
-            props.setProperty("loginTimeout", "1");
-            host = "127.0.0.1";
-            port = 6432;
-        }
-        else
-        {
-            if (connectParam.password != null)
-                props.setProperty("password", connectParam.password);
-            props.setProperty("ssl", "true");
-            props.setProperty("sslmode", "require");
-            props.setProperty("loginTimeout", "20");
-            host = connectParam.host;
-            port = 54329;
-        }
+        props.setProperty("loginTimeout", "1");
+        host = "127.0.0.1";
+        port = 6432;
 
         String url = String.format("jdbc:postgresql://%s:%d/scorekeeper", host, port);
         log.log(Level.INFO, "Connecting to postgres @ {0} with param {1}", new Object[] { url, props });

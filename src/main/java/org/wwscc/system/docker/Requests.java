@@ -86,6 +86,13 @@ public class Requests
     static class Start extends ContainerPost   { public Start(String name)   { super(name, "start"); }}
     static class Stop extends ContainerPost    { public Stop(String name)    { super(name, "stop"); }}
     static class Restart extends ContainerPost { public Restart(String name) { super(name, "restart"); }}
+    static class Wait extends ContainerPost    { public Wait(String name)    { super(name, "wait"); }}
+
+    static class Logs extends Wrapper<String> {
+        public Logs(String name) {
+            super(new HttpGet(String.format("%s/containers/%s/logs", API_VER)));
+        }
+    }
 
     static class Rm extends Wrapper<Void> {
         public Rm(String name) {
@@ -176,6 +183,14 @@ public class Requests
     static class StartExec extends MapRequest {
         public StartExec(String id) throws IOException {
             super(new HttpPost(API_VER+"/exec/"+id+"/start"), "Detach", true);
+    }}
+
+    static class RunExec extends Wrapper<String> {
+        public RunExec(String id) throws IOException {
+            super(new HttpPost(API_VER+"/exec/"+id+"/start"), String.class);
+            Map<String, Object> body = new HashMap<String, Object>();
+            body.put("Detach", false);
+            ((HttpPost)request).setEntity(new StringEntity(mapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
     }}
 
     static class GetExecStatus extends Wrapper<ExecStatus> {
