@@ -8,6 +8,7 @@
 
 package org.wwscc.system.docker;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -19,9 +20,8 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.ContentProducer;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.EntityTemplate;
+import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.wwscc.system.docker.models.ContainerSummary;
 import org.wwscc.system.docker.models.ExecConfig;
@@ -168,9 +168,9 @@ public class Requests
     }}
 
     static class Upload extends Wrapper<Void> {
-        public Upload(String container, String path, ContentProducer content) {
+        public Upload(String container, String path, File content) {
             super(new HttpPut(String.format("%s/containers/%s/archive?path=%s", API_VER, container, path)));
-            ((HttpPut)request).setEntity(new EntityTemplate(content));
+            ((HttpPut)request).setEntity(new FileEntity(content));
     }}
 
     @SuppressWarnings("rawtypes")

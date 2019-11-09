@@ -29,6 +29,11 @@ public class DockerContainer extends CreateContainerConfig
     private String name;
     private boolean created, up;
 
+    public DockerContainer(String name, String image)
+    {
+        this(name, image, null);
+    }
+
     public DockerContainer(String name, String image, String netname)
     {
         this.name    = name;
@@ -41,7 +46,8 @@ public class DockerContainer extends CreateContainerConfig
         setHostConfig(new HostConfig().autoRemove(false).portBindings(new PortMap()).binds(new ArrayList<>()));
         setExposedPorts(new HashMap<String, Object>());
 
-        setNetwork(netname);
+        if (netname != null)
+            setNetwork(netname);
         setImage(image);
         setAttachStderr(false);
         setAttachStdout(false);

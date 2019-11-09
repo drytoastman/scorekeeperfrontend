@@ -10,9 +10,10 @@ package org.wwscc.system.docker;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
@@ -42,7 +43,6 @@ import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.entity.ContentProducer;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -102,7 +102,7 @@ public class DockerAPI
     }
 
     public interface DockerStatusListener {
-        public void status(int tasks, int completed);
+        public void status(int completed, int tasks);
     }
 
     public static class StreamDemuxer {
@@ -367,20 +367,46 @@ public class DockerAPI
         }
     }
 
-
     public void uploadFile(String name, Path file, String containerpath) throws IOException
     {
-        ContentProducer producer = new ContentProducer() {
-            @Override public void writeTo(OutputStream outstream) throws IOException {
-                TarOutputStream tar = new TarOutputStream(outstream);
-                TarEntry entry = new TarEntry(file.toFile(), file.getFileName().toString());
-                tar.putNextEntry(entry);
-                Files.copy(file, tar);
-                tar.close();
-            }
-        };
+        File temp = File.createTempFile("upload", "tar");
+        TarOutputStream tar = new TarOutputStream(new FileOutputStream(temp));
+        TarEntry entry = new TarEntry(file.toFile(), file.getFileName().toString());
+        tar.putNextEntry(entry);
+        Files.copy(file, tar);
+        tar.close();
 
-        request(new Requests.Upload(name, containerpath, producer));
+        request(new Requests.Upload(name, containerpath, temp));
+        temp.delete();
+    }
+
+    public void loadVolume(String volname, Path tarfile, DockerStatusListener listener) throws IOException
+    {
+        String image = "alpine:latest";
+        DockerContainer c = new DockerContainer("volload", image);
+        c.addVolume(volname, "/vol");
+        c.setCmd(Arrays.asList(new String[] { "ash", "-c", "while sleep 3600; do :; done" }));
+
+        listener.status(0, 7);
+        ImageSummary[] islist = request(new Requests.GetImages());
+        VolumesResponse volumes = request(new Requests.GetVolumes());
+
+        listener.status(1, 7); // ensure image is available
+        if ((islist == null) || !Arrays.asList(islist).stream().anyMatch(is -> is.getRepoTags().contains(image))) {
+            request(new Requests.PullImage(image));
+        }
+
+        listener.status(2, 7); // ensure volume is created
+        if (volumes.getVolumes().stream().anyMatch(v -> v.getName().equals(volname))) {
+            request(new Requests.CreateVolume(volname));
+        }
+
+        // start container, do the upload and tear down
+        listener.status(3, 7); request(new Requests.CreateContainer(c));
+        listener.status(4, 7); request(new Requests.Start(c.getName()));
+        listener.status(5, 7); request(new Requests.Upload("volload", "/vol", tarfile.toFile()));
+        listener.status(6, 7); request(new Requests.Kill(c.getName()));
+        listener.status(7, 7); request(new Requests.Rm(c.getName()));
     }
 
 

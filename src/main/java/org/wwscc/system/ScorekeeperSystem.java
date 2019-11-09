@@ -10,6 +10,7 @@ package org.wwscc.system;
 
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -18,8 +19,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.FocusManager;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-
+import javax.swing.filechooser.FileFilter;
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.storage.Database;
@@ -190,6 +193,21 @@ public class ScorekeeperSystem
     }
 
 
+    class CertsFileFilter extends FileFilter {
+        public boolean accept(File f) {
+            if (f.isDirectory()) {
+                return true;
+            }
+            for (String ext : new String[] { ".tgz", ".tar.gz", ".tar" }) {
+                if (f.getName().endsWith(ext)) return true;
+            }
+            return false;
+        }
+        public String getDescription() {
+            return "Certs Archive File (.tar, .tar.gz, .tgz)";
+        }
+    }
+
     /**
      * This actually starts the threads in the program and then waits for
      * them to finish.  We can't used thread.join as it breaks thread.notify
@@ -198,14 +216,24 @@ public class ScorekeeperSystem
     private boolean prepared = false;
     public void startAndWaitForThreads(boolean prepareonly)
     {
+        Path certsfile = null;
+
         if (prepareonly) {
             Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
+
+            JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
+            fc.setDialogTitle("Select the new certificates archive file (Optional)");
+            fc.setFileFilter(new CertsFileFilter());
+            if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
+                certsfile = fc.getSelectedFile().toPath();
+            }
+
             new BaseDialog.MessageOnly(
-                "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
-                .doDialog("Preparing System", e -> {}, window);
+                    "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
+                    .doDialog("Preparing System", e -> {}, window);
         }
 
-        cmonitor = new ContainerMonitor();
+        cmonitor = new ContainerMonitor(certsfile);
         cmonitor.start();
         mmonitor = new MachineMonitor();
         mmonitor.start();

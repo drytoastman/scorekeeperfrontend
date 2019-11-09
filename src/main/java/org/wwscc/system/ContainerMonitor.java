@@ -38,18 +38,18 @@ public class ContainerMonitor extends MonitorBase
 {
     private static final Logger log = Logger.getLogger(ContainerMonitor.class.getName());
 
-    public static final String NET_NAME = volname("net1");
-    public static final String DB_IMAGE = "drytoastman/scdb:"+Prefs.getFullVersion();
-    public static final String PY_IMAGE = "drytoastman/scpython:"+Prefs.getFullVersion();
+    public static final String NET_NAME  = volname("net1");
+    public static final String CERTS_VOL = "certs";
+    public static final String DB_IMAGE  = "drytoastman/scdb:"+Prefs.getFullVersion();
+    public static final String PY_IMAGE  = "drytoastman/scpython:"+Prefs.getFullVersion();
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
     private DockerContainer db, web, sync;
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
-    private Path importRequestFile;
+    private Path importRequestFile, certsFile;
     private BackupRequest backupRequest;
-    private String syncCommandRequest[], syncCommandResponse;
     private boolean machineready, lastcheck, restartsync;
 
     /** flag for debug environment where we are running the backend separately */
@@ -66,7 +66,7 @@ public class ContainerMonitor extends MonitorBase
     public static String conname(String name) { return String.format("%s_%s_1", Prefs.getVersionBase(), name); }
 
     @SuppressWarnings("unchecked")
-    public ContainerMonitor()
+    public ContainerMonitor(Path certsfile)
     {
         super("ContainerMonitor", 5000);
         docker       = new DockerAPI();
@@ -78,13 +78,13 @@ public class ContainerMonitor extends MonitorBase
         lastcheck    = false;
         backupRequest = null;
         importRequestFile = null;
-        syncCommandRequest = null;
+        certsFile     = certsfile;
 
         db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME);
         db.addVolume(volname("database"),  "/var/lib/postgresql/data");
         db.addVolume(volname("logs"),      "/var/log");
         db.addVolume(volname("socket"),    "/var/run/postgresql");
-        db.addVolume(volname("certs"),     "/certs");
+        db.addVolume(CERTS_VOL, "/certs");
         db.addPort("127.0.0.1", 6432, 6432);
         db.addPort("0.0.0.0",  54329, 5432);
         all.add(db);
@@ -102,7 +102,7 @@ public class ContainerMonitor extends MonitorBase
         sync.addCmdItem("syncserver");
         sync.addVolume(volname("logs"),  "/var/log");
         sync.addVolume(volname("socket"), "/var/run/postgresql");
-        sync.addVolume(volname("certs"), "/certs");
+        sync.addVolume(CERTS_VOL, "/certs");
         all.add(sync);
         nondb.add(sync);
 
@@ -123,6 +123,15 @@ public class ContainerMonitor extends MonitorBase
         status.set("Waiting for Docker API");
         while (!done && !docker.isReady())
             donefornow();
+
+        if (certsFile != null) {
+            try {
+                docker.loadVolume(CERTS_VOL, certsFile, (c, t) -> { status.set(String.format("Certs Step %s of %s", c, t)); });
+            } catch (IOException ioe) {
+                log.log(Level.SEVERE, "Failed to load certs file: " + ioe, ioe);
+                return false;
+            }
+        }
 
         if (!external_backend) {
             status.set( "Clearing old containers");
@@ -199,19 +208,18 @@ public class ContainerMonitor extends MonitorBase
             if (ok != lastcheck)
             {
                 status.set("Waiting for Database");
-                while (!done && !Database.testUp())
+                while (!done && !Database.testUp()) {
                     donefornow(1000);
+                    docker.loadState(all);
+                    if (!db.isUp())  // database container is down, restart the loop and try again
+                        return;
+                }
                 if (done) return;
                 Database.openPublic(true, 5000);
                 Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
             }
             status.set("Running");
             ready.set(true);
-
-            if (syncCommandRequest != null) {
-                syncCommandResponse = runSyncCommand(syncCommandRequest);
-                syncCommandRequest = null;
-            }
         }
 
         lastcheck = ok;
@@ -315,17 +323,6 @@ public class ContainerMonitor extends MonitorBase
         }
     }
 
-    private String runSyncCommand(String ... cmd)
-    {
-        try {
-            return docker.run(sync.getName(), cmd);
-        } catch (Exception e) {
-            log.log(Level.WARNING, "Unabled run sync command: " + e, e);
-        }
-        return null;
-    }
-
-
     public boolean copyLogs(Path dir)
     {
         try {
@@ -359,12 +356,15 @@ public class ContainerMonitor extends MonitorBase
         poke();
     }
 
-    public String syncCommand(String ... request)
+    public String syncCommand(String ... cmd)
     {
-        syncCommandRequest = request;
-        poke();
-        while (syncCommandRequest != null) { try { Thread.sleep(200); } catch (InterruptedException e) { break;}}
-        log.finer("syncCommand response is '"+syncCommandResponse+"'");
-        return syncCommandResponse.trim();
+        String response = null;
+        try {
+            response = docker.run(sync.getName(), cmd).strip();
+            log.log(Level.FINER, "syncCommand response is %s", response);
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Unabled run sync command: " + e, e);
+        }
+        return response;
     }
 }
