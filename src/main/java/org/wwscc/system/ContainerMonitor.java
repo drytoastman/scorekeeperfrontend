@@ -356,15 +356,12 @@ public class ContainerMonitor extends MonitorBase
         poke();
     }
 
-    public String syncCommand(String ... cmd)
+    public String syncCommand(String ... cmd) throws IOException
     {
-        String response = null;
-        try {
-            response = docker.run(sync.getName(), cmd).strip();
-            log.log(Level.FINER, "syncCommand response is %s", response);
-        } catch (Exception e) {
-            log.log(Level.WARNING, "Unabled run sync command: " + e, e);
-        }
+        // a single wait to see if it comes up, otherwise just fail
+        if (!sync.isUp()) { try { Thread.sleep(1000); } catch (InterruptedException e) {}}
+        String response = docker.run(sync.getName(), cmd).strip();
+        log.log(Level.FINER, "syncCommand response is %s", response);
         return response;
     }
 }

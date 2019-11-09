@@ -137,7 +137,7 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
                 if (currentDialog != null)
                     currentDialog.pack();
             } catch (Exception e) {
-                log.log(Level.WARNING, "\bError getting series list: " + e, e);
+                log.log(Level.WARNING, "\bError getting series list: " + e.getMessage(), e);
                 close();
             }
         }
@@ -171,7 +171,7 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
                     errornote.setText("Incorrect Password");
                 }
             } catch (Exception e) {
-                log.log(Level.INFO, "Get series execution error " + e, e);
+                log.log(Level.INFO, "Check password error: " + e, e);
                 errornote.setText(e.getMessage());
             }
         }
