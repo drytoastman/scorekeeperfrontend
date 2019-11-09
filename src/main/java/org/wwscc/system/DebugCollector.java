@@ -134,7 +134,7 @@ public class DebugCollector extends Thread
             if (temp.getNameCount() >= 2)
             {
                 monitor.setNote("deleting temporary directory");
-                Files.delete(temp);
+                Files.walk(temp).map(Path::toFile).sorted((o1, o2) -> -o1.compareTo(o2)).forEach(File::delete);
             }
         }
         catch (Exception ioe)

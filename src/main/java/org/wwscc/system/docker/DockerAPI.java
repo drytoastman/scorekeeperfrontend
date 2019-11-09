@@ -354,15 +354,17 @@ public class DockerAPI
     }
 
 
-    public void downloadTo(String name, String containerpath, Path dest) throws IOException
+    public void downloadTo(String name, String containerpath, Path destdir) throws IOException
     {
         try (TarInputStream in = new TarInputStream(request(new Requests.Download(name, containerpath)))) {
             TarEntry entry;
             while ((entry = in.getNextEntry()) != null) {
                 if (entry.isDirectory())
                     continue;
-                Files.copy(in, dest);
-                Files.setLastModifiedTime(dest, FileTime.fromMillis(entry.getModTime().getTime()));
+                Path p = destdir.resolve(entry.getName());
+                p.getParent().toFile().mkdirs();
+                Files.copy(in, p);
+                Files.setLastModifiedTime(p, FileTime.fromMillis(entry.getModTime().getTime()));
             }
         }
     }

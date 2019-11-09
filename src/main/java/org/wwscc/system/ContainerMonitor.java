@@ -304,11 +304,13 @@ public class ContainerMonitor extends MonitorBase
             if (docker.exec(db.getName(), "pg_dumpall", "-U", "postgres", "-c", "-f", "/tmp/dump") != 0)
                 throw new IOException("pg_dump failed");
 
-            Path dumpfile = Files.createTempDirectory("backupwork").resolve("dump");
-            docker.downloadTo(db.getName(), "/tmp/dump", dumpfile);
+            Path dumpdir = Files.createTempDirectory("backupwork");
+            Path dumpfile = dumpdir.resolve("dump");
+            docker.downloadTo(db.getName(), "/tmp/dump", dumpdir);
 
             ImportExportFunctions.processBackup(dumpfile, finalpath, request.compress);
             Files.delete(dumpfile);
+            Files.delete(dumpdir);
 
             if (request.usedialog)
                 dialog.setStatus("Backup Complete", 100);
