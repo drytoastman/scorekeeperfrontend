@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.wwscc.dialogs.StatusDialog;
 import org.wwscc.storage.Database;
 import org.wwscc.system.docker.DockerAPI;
+import org.wwscc.system.docker.DockerAPI.DemuxedStreams;
 import org.wwscc.system.docker.DockerContainer;
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.MT;
@@ -362,8 +363,11 @@ public class ContainerMonitor extends MonitorBase
     {
         // a single wait to see if it comes up, otherwise just fail
         if (!sync.isUp()) { try { Thread.sleep(1000); } catch (InterruptedException e) {}}
-        String response = docker.run(sync.getName(), cmd).strip();
-        log.log(Level.FINER, "syncCommand response is %s", response);
-        return response;
+
+        DemuxedStreams ret = docker.run(sync.getName(), cmd);
+        if (ret.stderr.length() > 0)
+            log.log(Level.WARNING, "syncCommand stderr is {0}", ret.stderr);
+        log.log(Level.FINER, "syncCommand stdout is {0}", ret.stdout);
+        return ret.stdout;
     }
 }

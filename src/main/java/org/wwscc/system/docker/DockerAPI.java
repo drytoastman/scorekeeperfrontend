@@ -105,13 +105,13 @@ public class DockerAPI
         public void status(int completed, int tasks);
     }
 
-    public static class StreamDemuxer {
-        StringBuilder stdout;
-        StringBuilder stderr;
-        public StreamDemuxer(String in) throws IOException {
+    public static class DemuxedStreams {
+        public final String stdout;
+        public final String stderr;
+        public DemuxedStreams(String in) throws IOException {
             DataInputStream decoder = new DataInputStream(new ByteArrayInputStream(in.getBytes()));
-            stdout = new StringBuilder();
-            stderr = new StringBuilder();
+            StringBuilder stdout = new StringBuilder();
+            StringBuilder stderr = new StringBuilder();
             while (decoder.available() > 0) {
                 int type = decoder.readByte();
                            decoder.readNBytes(3);
@@ -122,9 +122,9 @@ public class DockerAPI
                     stderr.append(new String(decoder.readNBytes(size)));
                 }
             }
+            this.stdout = stdout.toString().strip();
+            this.stderr = stderr.toString().strip();
         }
-        public String getStdout() { return stdout.toString(); }
-        public String getStderr() { return stderr.toString(); }
     }
 
     /**
@@ -439,16 +439,21 @@ public class DockerAPI
     }
 
 
-    public String run(String name, String ... cmd) throws IOException
+    private static final String OCIError = "OCI runtime exec failed:";
+    @SuppressWarnings("rawtypes")
+    public DemuxedStreams run(String name, String ... cmd) throws IOException
     {
-        ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(true).attachStderr(false);
-        @SuppressWarnings("rawtypes")
+        ExecConfig config = new ExecConfig().cmd(Arrays.asList(cmd)).attachStdin(false).attachStdout(true).attachStderr(true);
         Map result = request(new Requests.CreateExec(name, config));
         String id  = (String)result.get("Id");
+
         if (id != null) {
-            return new StreamDemuxer(request(new Requests.RunExec(id))).getStdout();
+            DemuxedStreams ret = new DemuxedStreams(request(new Requests.RunExec(id)));
+            if (ret.stdout.contains(OCIError))
+                throw new IOException(ret.stdout.substring(OCIError.length()));
+            return ret;
         }
-        return "";
+        throw new IOException("CreateExec failed: " + result);
     }
 
 
