@@ -5,7 +5,7 @@ OutputDir=..\build\final
 AppPublisher=Brett Wilson
 UsePreviousAppDir=yes
 OutputBaseFilename=ScorekeeperSetup-{#Version}
-DefaultDirName={pf}\Scorekeeper\{#Version}
+DefaultDirName={autopf}\Scorekeeper\{#Version}
 DefaultGroupName=Scorekeeper
 AllowNoIcons=yes
 Compression=lzma
@@ -17,10 +17,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl";
 
 [Files]
 Source: "..\build\image\ScorekeeperFrontend-win-{#Version}\*"; DestDir: "{app}"; Flags: recursesubdirs
+Source: "cone.ico";  DestDir: "{app}"
+Source: "conep.ico"; DestDir: "{app}"
 
 [Icons]
-Name:       "{group}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
-Name: "{userdesktop}\Scorekeeper {#Version}"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
+Name:       "{group}\Scorekeeper Prepare ({#Version})"; IconFilename: "{app}\conep.ico"; Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem dockerprepare"
+Name:       "{group}\Scorekeeper ({#Version})";         IconFilename: "{app}\cone.ico";  Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
+Name: "{userdesktop}\Scorekeeper ({#Version})";         IconFilename: "{app}\cone.ico";  Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem"
 
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
