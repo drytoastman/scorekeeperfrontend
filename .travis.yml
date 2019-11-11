@@ -20,6 +20,7 @@ script:
   - ./gradlew check
 
 after_success:
+  - |
     if [ ! -z "$TRAVIS_TAG" ]; then
       ./gradlew macJDK winJDK;
       ./gradlew -D target=linux runtimeZip
