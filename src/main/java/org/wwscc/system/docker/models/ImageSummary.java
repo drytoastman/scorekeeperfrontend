@@ -112,7 +112,10 @@ public class ImageSummary {
   }
 
   public void setRepoTags(List<String> repoTags) {
-    this.repoTags = repoTags;
+    if (repoTags != null)
+        this.repoTags = repoTags;
+    else
+        this.repoTags = new ArrayList<>();
   }
 
   public ImageSummary repoDigests(List<String> repoDigests) {
