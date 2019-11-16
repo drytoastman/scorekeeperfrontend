@@ -26,7 +26,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
-import org.wwscc.dataentry.actions.ReorderByNetAction;
 import org.wwscc.dataentry.actions.RunOrderFromGridAction;
 import org.wwscc.dataentry.actions.ScratchWindowAction;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
@@ -104,7 +103,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 
         prosolo = new JMenu("ProSolo");
         prosolo.add(new RunOrderFromGridAction());
-        prosolo.add(new ReorderByNetAction());
+        //prosolo.add(new ReorderByNetAction());
 
         /* Results Menu */
         reports = new JMenu("Reports");

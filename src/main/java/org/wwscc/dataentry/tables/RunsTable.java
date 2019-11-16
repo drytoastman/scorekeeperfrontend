@@ -35,6 +35,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import org.wwscc.dataentry.DataEntry;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
@@ -91,6 +92,7 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
 
     public void setSelectedRun(Run r) throws IndexOutOfBoundsException
     {
+        boolean isPro = DataEntry.state.getCurrentEvent().isPro();
         int row = getSelectedRow();
         int col = getSelectedColumn();
 
@@ -102,21 +104,52 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
         setValueAt(r, row, col);
 
         /* Advanced the selection point, to next driver with an open cell, select that cell */
-        int startrow = ++row;
         int rowcount = getRowCount();
+        int colcount = getColumnCount();
 
-        for (int jj = 0; jj < rowcount; jj++)
+        if (isPro)
         {
-            int selectedrow = (startrow + jj) % rowcount;
+            // for pro follow row order, looking for this run or earlier first
+            // then look for next open run, don't just go back to top of table
+            int srow = row + 1;
+            int scol = col;
 
-            for (int ii = 0; ii < getColumnCount(); ii++)
+            while (true)
             {
-                if (getValueAt(selectedrow, ii) == null)
+                if (srow >= rowcount) {
+                    scol++;
+                    if (scol >= colcount) break;
+                    srow = 0;
+                }
+
+                for (int ii = 0; ii <= scol; ii++) {
+                    if (getValueAt(srow, ii) == null) {
+                        getSelectionModel().setSelectionInterval(srow, srow);
+                        getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
+                        scrollTable(srow, ii);
+                        return;
+                    }
+                }
+
+                srow++;
+            }
+        }
+        else
+        {
+            int startrow = ++row;
+            for (int jj = 0; jj < rowcount; jj++)
+            {
+                int selectedrow = (startrow + jj) % rowcount;
+
+                for (int ii = 0; ii < getColumnCount(); ii++)
                 {
-                    getSelectionModel().setSelectionInterval(selectedrow, selectedrow);
-                    getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
-                    scrollTable(selectedrow, ii);
-                    return;
+                    if (getValueAt(selectedrow, ii) == null)
+                    {
+                        getSelectionModel().setSelectionInterval(selectedrow, selectedrow);
+                        getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
+                        scrollTable(selectedrow, ii);
+                        return;
+                    }
                 }
             }
         }

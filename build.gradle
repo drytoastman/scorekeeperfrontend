@@ -168,5 +168,5 @@ task depsize {
 
 task wininstaller (type: Exec) {
     commandLine 'docker', 'run', '--rm', '-v', "$projectDir:/code", 'drytoastman/innosetup:latest',
-                'bash', '-c', "cd /code && iscc /DVersion=latest installers/windows.iss"
+                'bash', '-c', "cd /code && iscc /DVersion=${version} installers/windows.iss"
 }
