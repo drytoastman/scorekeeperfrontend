@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2010 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
 
@@ -22,6 +22,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.InputMap;
@@ -94,7 +95,6 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
 
     public void setSelectedRun(Run r) throws IndexOutOfBoundsException
     {
-        boolean isPro = DataEntry.state.isPro();
         int row = getSelectedRow();
         int col = getSelectedColumn();
 
@@ -106,60 +106,51 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
         setValueAt(r, row, col);
 
         /* Advanced the selection point, to next driver with an open cell, select that cell */
-        int rowcount = getRowCount();
-        int colcount = getColumnCount();
 
-        if (isPro)
+        if (DataEntry.state.isPro() && (col%2) == 0)  // even old is odd # run
         {
-            // for pro follow row order, looking for this run or earlier first
-            // then look for next open run, don't just go back to top of table
-            int srow = row + 1;
-            int scol = col;
-
-            while (true)
-            {
-                if (srow >= rowcount) {
-                    scol++;
-                    if (scol >= colcount) break;
-                    srow = 0;
-                }
-
-                for (int ii = 0; ii <= scol; ii++) {
-                    if (getValueAt(srow, ii) == null) {
-                        getSelectionModel().setSelectionInterval(srow, srow);
-                        getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
-                        scrollTable(srow, ii);
+            List<Integer> starts = ((EntryModel)getModel()).groupings;  // return to top of subgroup if we can
+            for (int ii = 0; ii < starts.size(); ii++) {
+                if (row < starts.get(ii)) {
+                    int start = starts.get(ii-1);
+                    int end   = starts.get(ii);
+                    if (selecteNextInRange(start, end, row))
                         return;
-                    }
-                }
-
-                srow++;
-            }
-        }
-        else
-        {
-            int startrow = ++row;
-            for (int jj = 0; jj < rowcount; jj++)
-            {
-                int selectedrow = (startrow + jj) % rowcount;
-
-                for (int ii = 0; ii < getColumnCount(); ii++)
-                {
-                    if (getValueAt(selectedrow, ii) == null)
-                    {
-                        getSelectionModel().setSelectionInterval(selectedrow, selectedrow);
-                        getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
-                        scrollTable(selectedrow, ii);
-                        return;
-                    }
+                    break;
                 }
             }
         }
 
-        /* Nowhere to go, clear selection */
-        getSelectionModel().clearSelection();
-        getColumnModel().getSelectionModel().clearSelection();
+        if (!selecteNextInRange(0, getRowCount(), row))
+        {   /* Nowhere to go, just clear selection */
+            getSelectionModel().clearSelection();
+            getColumnModel().getSelectionModel().clearSelection();
+        }
     }
+
+
+    private boolean selecteNextInRange(int start, int end, int row)
+    {
+        for (int jj = 1; jj < end-start+1; jj++)
+        {
+            int selectedrow = (row + jj);
+            if (selectedrow >= end)
+                selectedrow -= (end - start);
+
+            for (int ii = 0; ii < getColumnCount(); ii++)
+            {
+                if (getValueAt(selectedrow, ii) == null)
+                {
+                    getSelectionModel().setSelectionInterval(selectedrow, selectedrow);
+                    getColumnModel().getSelectionModel().setSelectionInterval(ii, ii);
+                    scrollTable(selectedrow, ii);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
 
     @Override

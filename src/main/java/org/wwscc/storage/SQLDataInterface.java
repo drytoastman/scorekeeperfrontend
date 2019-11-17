@@ -418,6 +418,7 @@ public abstract class SQLDataInterface implements DataInterface
                     cap = off;
                 }
             }
+            ret.add(order.size());
 
             closeLeftOvers();
         }

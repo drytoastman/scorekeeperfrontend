@@ -48,7 +48,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     {
         super();
         tableData = null;
-        groupings = null;
+        groupings = new ArrayList<>();
         runoffset = 1; /* based on number of non run columns before runs - 1 */
         colCount = 0;
 
