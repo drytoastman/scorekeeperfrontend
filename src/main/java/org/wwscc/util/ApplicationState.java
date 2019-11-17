@@ -32,6 +32,7 @@ public class ApplicationState {
        public int getCurrentRunGroup() { return currentRunGroup; }
        public UUID getCurrentChallengeId() { return currentChallengeId; }
 
+       public boolean isPro()         { return (currentEvent != null) ? currentEvent.isPro() : false; }
        public boolean usingSessions() { return (currentEvent != null) ? currentEvent.getSessions().size() > 0 : false; }
        public List<String> getSessions() { return (currentEvent != null) ? currentEvent.getSessions() : new ArrayList<String>(); }
        public UUID getCurrentEventId() { return (currentEvent != null) ? currentEvent.getEventId() : null; }

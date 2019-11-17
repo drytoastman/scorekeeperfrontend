@@ -8,6 +8,7 @@
 
 package org.wwscc.dataentry.tables;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -146,6 +147,7 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
     private Color backgroundSelect;
     private Color backgroundError;
     private Color backgroundErrorSelect;
+    private boolean groupBorder;
     private String topLine;
     private String bottomLine;
     private Font topFont;
@@ -198,6 +200,8 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
                 bottomLine = null;
             }
 
+            groupBorder = ((EntryModel)table.getModel()).isGroupingStart(row);
+
             if (Prefs.usePaidFlag() && !e.isPaid())
                  setBackground((isSelected) ?  backgroundErrorSelect : backgroundError);
         }
@@ -238,6 +242,12 @@ class EntrantRenderer extends JComponent implements TableCellRenderer
         {
             g.setFont(bottomFont);
             g.drawString(bottomLine, 5, size.height/2 + bm.getHeight() - 2);
+        }
+        if (groupBorder)
+        {
+            g.setColor(Color.GREEN);
+            g.setStroke(new BasicStroke(3));
+            g.drawLine(0, 0, size.width, 0);
         }
     }
 

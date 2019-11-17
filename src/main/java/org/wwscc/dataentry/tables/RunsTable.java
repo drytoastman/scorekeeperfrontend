@@ -29,6 +29,8 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
+import javax.swing.border.Border;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -92,7 +94,7 @@ public class RunsTable extends TableBase implements MessageListener, ActionListe
 
     public void setSelectedRun(Run r) throws IndexOutOfBoundsException
     {
-        boolean isPro = DataEntry.state.getCurrentEvent().isPro();
+        boolean isPro = DataEntry.state.isPro();
         int row = getSelectedRow();
         int col = getSelectedColumn();
 
@@ -200,6 +202,7 @@ class TimeRenderer extends DefaultTableCellRenderer
     private Color backgroundSelectNoFocus;
     private Color backgroundDone;
     private Color backgroundBest;
+    private Border groupBorder;
     boolean focusDifference;
 
     public TimeRenderer(boolean showSelectOutsideFocus)
@@ -209,6 +212,7 @@ class TimeRenderer extends DefaultTableCellRenderer
         backgroundSelectNoFocus = new Color(190,190,255);
         backgroundDone = new Color(200, 200, 200);
         backgroundBest = new Color(255, 190, 80);
+        groupBorder = new MatteBorder(2,0,0,0,Color.GREEN);
         focusDifference = showSelectOutsideFocus;
 
         setHorizontalAlignment(CENTER);
@@ -232,6 +236,8 @@ class TimeRenderer extends DefaultTableCellRenderer
         {
             setBackground(Color.WHITE);
         }
+
+        setBorder((((EntryModel)t.getModel()).isGroupingStart(row)) ? groupBorder : null);
 
         if (o instanceof Run)
         {

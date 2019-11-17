@@ -40,6 +40,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     private static Logger log = Logger.getLogger(EntryModel.class.getCanonicalName());
 
     List<Entrant> tableData;
+    List<Integer> groupings;
     int runoffset;
     int colCount;
 
@@ -47,6 +48,7 @@ public class EntryModel extends AbstractTableModel implements MessageListener
     {
         super();
         tableData = null;
+        groupings = null;
         runoffset = 1; /* based on number of non run columns before runs - 1 */
         colCount = 0;
 
@@ -427,9 +429,16 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
             case RUNGROUP_CHANGED:
                 tableData = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+
                 fireTableDataChanged();
                 break;
         }
+    }
+
+    public boolean isGroupingStart(int row)
+    {
+        return (groupings != null) && groupings.indexOf(row) > 0;
     }
 
     public void writeNewRunOrder()

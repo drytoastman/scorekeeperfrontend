@@ -92,6 +92,7 @@ public interface DataInterface
     public Set<UUID> activeRunOrderForEvent(UUID eventid);
     public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append) throws SQLException;
     public List<UUID> getOrphanedCars(UUID eventid, int course); // get all car ids that have runs but are not in any rungroup
+    public List<Integer> getProGroupings(UUID eventid, int course, int rungroup);
 
     public void newDriver(Driver d) throws Exception; // create a new driver from data in d and set the id variable
     public void updateDriver(Driver d) throws Exception; // update the driver values in the database

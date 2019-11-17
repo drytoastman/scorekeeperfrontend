@@ -381,6 +381,53 @@ public abstract class SQLDataInterface implements DataInterface
         return ret;
     }
 
+    /**
+     * Returns the list of indexes in the rungroup where a new subgrouping of pro cars starts
+     * NOTE: depends on having correct opposite course runorder as well
+     */
+    @Override
+    public List<Integer> getProGroupings(UUID eventid, int course, int rungroup)
+    {
+        List<Integer> ret = new ArrayList<>();
+        try
+        {
+            List<Object> args = newList(eventid, course, rungroup);
+            List<UUID> order = new ArrayList<>();
+            List<UUID> opp   = new ArrayList<>();
+            ResultSet rs;
+
+            rs = executeSelect("SELECT UNNEST(cars) cid FROM runorder WHERE eventid=? and course=? and rungroup=?", args);
+            while (rs.next())
+                order.add((UUID)rs.getObject("cid"));
+
+            args.set(1, course==1 ? 2 : 1);
+            rs = executeSelect("SELECT UNNEST(cars) cid FROM runorder WHERE eventid=? and course=? and rungroup=?", args);
+            while (rs.next())
+                opp.add((UUID)rs.getObject("cid"));
+
+            int cap = 0;
+            for (int ii = 0; ii < order.size(); ii++)
+            {
+                UUID x = order.get(ii);
+                int oppidx = opp.indexOf(x);
+                if (oppidx >= 0)
+                {
+                    int off = oppidx - ii;
+                    if (off > 0 && cap <= 0) // transition to being ahead in opposite course tells all, start of group
+                        ret.add(ii);
+                    cap = off;
+                }
+            }
+
+            closeLeftOvers();
+        }
+        catch (SQLException sqle)
+        {
+            logError("getProGroupings", sqle);
+        }
+
+        return ret;
+    }
 
     //****************************************************/
 
