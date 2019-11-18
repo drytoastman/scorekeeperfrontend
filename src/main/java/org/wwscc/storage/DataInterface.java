@@ -89,7 +89,7 @@ public interface DataInterface
 
     public List<UUID> getCarIdsForCourse(UUID eventid, int course); // get the participating cardids based on the course
     public List<UUID> getCarIdsForRunGroup(UUID eventid, int course, int rungroup); // get the carids based on the current run group
-    public Set<UUID> activeRunOrderForEvent(UUID eventid);
+    public Map<Integer, Set<UUID>> activeRunOrderForEvent(UUID eventid);
     public void setRunOrder(UUID eventid, int course, int rungroup, List<UUID> carids, boolean append) throws SQLException;
     public List<UUID> getOrphanedCars(UUID eventid, int course); // get all car ids that have runs but are not in any rungroup
     public List<Integer> getProGroupings(UUID eventid, int course, int rungroup);

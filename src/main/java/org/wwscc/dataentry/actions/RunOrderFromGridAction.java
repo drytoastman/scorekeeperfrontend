@@ -31,8 +31,8 @@ public class RunOrderFromGridAction extends AbstractAction
     public void actionPerformed(ActionEvent e)
     {
         try {
-            Set<UUID> order = Database.d.activeRunOrderForEvent(DataEntry.state.getCurrentEventId());
-            GridImportDialog gi = new GridImportDialog(BackendDataLoader.fetchGrid(), order);
+            Map<Integer, Set<UUID>> order = Database.d.activeRunOrderForEvent(DataEntry.state.getCurrentEventId());
+            GridImportDialog gi = new GridImportDialog(BackendDataLoader.fetchGrid(), order, DataEntry.state.getCurrentCourse());
             if (gi.doDialog("Grid Import", null)) {
                 Map<Integer, List<UUID>> toadd = gi.getResult();
                 for (int course : toadd.keySet()) {

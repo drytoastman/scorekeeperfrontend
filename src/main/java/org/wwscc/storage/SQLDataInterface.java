@@ -327,14 +327,22 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public Set<UUID> activeRunOrderForEvent(UUID eventid)
+    public Map<Integer, Set<UUID>> activeRunOrderForEvent(UUID eventid)
     {
         try
         {
-            ResultSet d = executeSelect("select distinct unnest(cars) as carid from runorder where eventid=? ", newList(eventid));
-            Set<UUID> ret = new HashSet<UUID>();
-            while (d.next())
-                ret.add((UUID)d.getObject("carid"));
+            Map<Integer,Set<UUID>> ret = new HashMap<>();
+            ret.put(0, new HashSet<>());
+
+            ResultSet d = executeSelect("select distinct unnest(cars) as carid, course from runorder where eventid=? ", newList(eventid));
+            while (d.next()) {
+                UUID carid = (UUID)d.getObject("carid");
+                int course = d.getInt("course");
+                if (!ret.containsKey(course))
+                    ret.put(course, new HashSet<>());
+                ret.get(course).add(carid);
+                ret.get(0).add(carid);
+            }
             return ret;
         }
         catch (Exception ioe)

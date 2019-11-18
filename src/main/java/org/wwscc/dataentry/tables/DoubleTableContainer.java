@@ -325,8 +325,16 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                         SavedSelection saved = new SavedSelection();
                         // figure out selection and restore after change
                         dataModel.tableData = dbData;
+                        dataModel.groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                         dataModel.fireTableDataChanged();
                         saved.restore();
+                    } else if (tables.contains("runorder") && DataEntry.state.isPro()) {
+                        List<Integer> groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
+                        if (!groupings.equals(dataModel.groupings)) {
+                            dataModel.groupings = groupings;
+                            driverTable.repaint();
+                            runsTable.repaint();
+                        }
                     }
                 }
                 break;

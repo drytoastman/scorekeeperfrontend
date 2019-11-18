@@ -36,24 +36,32 @@ import net.miginfocom.swing.MigLayout;
 public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
 {
     private static int saveGrouping = 1;
-    private static String saveOrder = "Number";
+    private static int saveSort     = 0;
+    private static int saveLoadTo   = 0;
+
+    private static String[] sortTypes = new String[] { "Number", "Position" };
+    private static String[] loadTypes = new String[] { "This Course", "Both Courses" };
 
     Map<String, Map<Integer, EntrantRowModel>> models;
     JTable first, second;
-    Set<UUID> order;
+    Map<Integer,Set<UUID>> order;
+    int viewedCourse;
+    int loadToCourse;
 
     /**
      * Create the dialog.
      * @param d the driver data to source initially
      */
-    public GridImportDialog(Map<String, List<GridEntry>> entries, Set<UUID> currentorder)
+    public GridImportDialog(Map<String, List<GridEntry>> entries, Map<Integer,Set<UUID>> currentorder, int currentcourse)
     {
-        super(new MigLayout("fill, w 500, h 600, gap 2, ins 0", "", "[grow 0][grow 0]10[grow 100]"), true);
+        super(new MigLayout("fill, w 500, h 600, gap 2, ins 0", "[grow 100][grow 0][grow 0]10[grow 0][grow 0][grow 100]", "[grow 0][grow 0]10[grow 100]"), true);
 
         models = new HashMap<String, Map<Integer, EntrantRowModel>>();
         first  = table();
         second = table();
         order  = currentorder;
+        viewedCourse = currentcourse;
+        loadToCourse = (saveLoadTo == 0) ? viewedCourse : 0;
 
         for (String key : entries.keySet()) {
             Map<Integer, EntrantRowModel> outer = new HashMap<>();
@@ -67,23 +75,28 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             }
         }
 
-        mainPanel.add(label("Grouping", true), "al right");
+        mainPanel.add(label("Grouping", true), "skip 1, al right");
         mainPanel.add(select("grouping",
                              saveGrouping,
                              models.get("Number").keySet().stream().filter(i -> i < 100).sorted().collect(Collectors.toList()),
                              e -> { reload(); saveGrouping = (int)getSelect("grouping"); }),
-                      "growx");
+                             "growx");
 
-        mainPanel.add(label("Overwrite Current Order", true), "al right");
+        mainPanel.add(label("Clear Order First", true), "al right");
         mainPanel.add(checkbox("overwrite", false), "wrap");
         checks.get("overwrite").addActionListener(e -> { first.repaint(); second.repaint(); });
 
-        mainPanel.add(label("Order", true), "al right");
-        mainPanel.add(select("order",
-                             saveOrder,
-                             new String[] { "Number", "Position" },
-                             e -> { reload(); saveOrder = (String)getSelect("order");} ),
-                      "growx, wrap");
+        mainPanel.add(label("Sort",    true), "skip 1, al right");
+        mainPanel.add(select("sort",   sortTypes[saveSort],   sortTypes, e -> { reload(); saveSort = selects.get("sort").getSelectedIndex(); }), "growx");
+
+        mainPanel.add(label("Load To", true), "al right");
+        mainPanel.add(select("loadto", loadTypes[saveLoadTo], loadTypes, e -> {
+                saveLoadTo = selects.get("loadto").getSelectedIndex();
+                loadToCourse = (saveLoadTo == 0) ? viewedCourse : 0;
+                first.repaint(); second.repaint();
+             }),
+            "growx, wrap");
+
 
         JPanel toscroll = new JPanel(new MigLayout("fill, gap 2, ins 0", "", "5[grow 0][grow 0]10[grow 0][grow 0][grow 100]"));
         toscroll.add(label("First Drivers", true), "wrap");
@@ -96,23 +109,23 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             scroll.setBorder(scroll.getVerticalScrollBar().isVisible() ?  save : null);
         });
 
-        mainPanel.add(scroll, "spanx 4, grow 100");
+        mainPanel.add(scroll, "spanx 6, grow 100");
         reload();
     }
 
     private void reload()
     {
         int grouping = (int) getSelect("grouping");
-        String order = (String) getSelect("order");
-        first.setModel(models.get(order).get(grouping));
-        second.setModel(models.get(order).get(grouping+100));
+        String sort = (String) getSelect("sort");
+        first.setModel(models.get(sort).get(grouping));
+        second.setModel(models.get(sort).get(grouping+100));
         for (JTable t : new JTable[] { first, second }) {
             TableColumnModel tcm = t.getColumnModel();
             for (int col : new int[] { 0, EntrantRowModel.SECOND } ) {
                 tcm.getColumn(col).setMaxWidth(40);
                 tcm.getColumn(col+1).setMaxWidth(35);
-                tcm.getColumn(col+2).setMinWidth(order.equals("Position") ? 50 : 0);
-                tcm.getColumn(col+2).setMaxWidth(order.equals("Position") ? 50 : 0);
+                tcm.getColumn(col+2).setMinWidth(sort.equals("Position") ? 50 : 0);
+                tcm.getColumn(col+2).setMaxWidth(sort.equals("Position") ? 50 : 0);
             }
         }
         this.getLayout().layoutContainer(this);
@@ -128,9 +141,6 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
         return ret;
     }
 
-    /**
-     * Called after OK to verify data before closing.
-     */
     @Override
     public boolean verifyData()
     {
@@ -138,9 +148,6 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
     }
 
 
-    /**
-     * Called after OK is pressed and data is verified and before the dialog is closed.
-     */
     @Override
     public Map<Integer, List<UUID>> getResult()
     {
@@ -148,7 +155,15 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             return null;
 
         Map<Integer, List<UUID>> ret = new HashMap<>();
-        for (int c : new int[] { 1, 2 }) {
+        int courses[];
+
+        if (loadToCourse == 0) {
+            courses = new int[] { 1, 2 };
+        } else {
+            courses = new int[] { loadToCourse };
+        }
+
+        for (int c : courses) {
             ArrayList<UUID> ids = new ArrayList<>();
             ret.put(c, ids);
             int i1 = (c == 1) ? 0 : EntrantRowModel.SECOND;
@@ -162,19 +177,24 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
         return ret;
     }
 
+    public boolean doOverwrite()
+    {
+        return isChecked("overwrite");
+    }
+
+    private boolean canAdd(GridEntry e)
+    {
+        return (e != null) && (e.carid != null) && (isChecked("overwrite") || !order.get(loadToCourse).contains(e.carid));
+    }
+
     private void extractIds(JTable tbl, int col, ArrayList<UUID> ids)
     {
         for (int ii :  tbl.getSelectedRows()) {
             GridEntry ge = ((EntrantRowModel)tbl.getModel()).getEntryAt(ii, col);
-            if ((ge != null) && (isChecked("overwrite") || !order.contains(ge.carid))) {
+            if (canAdd(ge)) {
                 ids.add(ge.carid);
             }
         }
-    }
-
-    public boolean doOverwrite()
-    {
-        return isChecked("overwrite");
     }
 
 
@@ -185,7 +205,7 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
 
             GridEntry e = ((EntrantRowModel)table.getModel()).getEntryAt(row, col);
-            if (e != null && !isChecked("overwrite") && order.contains(e.carid)) {
+            if (!canAdd(e)) {
                 super.setForeground(Color.LIGHT_GRAY);
             } else if (isSelected) {
                 super.setForeground(table.getSelectionForeground());
@@ -194,6 +214,9 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
             }
             if (value instanceof Double) {
                 setValue(NF.format((Double)value));
+            }
+            if ((value instanceof Number) && (((Number)value).intValue() == 0)) {
+                setValue("");
             }
             return this;
         }
@@ -258,4 +281,3 @@ public class GridImportDialog extends BaseDialog<Map<Integer, List<UUID>>>
         }
     }
 }
-

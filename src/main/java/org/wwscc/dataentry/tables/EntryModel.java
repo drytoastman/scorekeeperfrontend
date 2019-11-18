@@ -54,7 +54,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
 
         Messenger.register(MT.EVENT_CHANGED, this);
         Messenger.register(MT.RUNGROUP_CHANGED, this);
-        Messenger.register(MT.DATABASE_NOTIFICATION, this);
     }
 
 
@@ -430,7 +429,6 @@ public class EntryModel extends AbstractTableModel implements MessageListener
             case RUNGROUP_CHANGED:
                 tableData = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                 groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
-
                 fireTableDataChanged();
                 break;
         }
