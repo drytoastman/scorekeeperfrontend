@@ -221,13 +221,16 @@ public class ScorekeeperSystem
         if (prepareonly) {
             Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
 
-            JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
-            fc.setDialogTitle("Select the new certificates archive file (Optional)");
-            fc.setFileFilter(new CertsFileFilter());
-            if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                certsfile = fc.getSelectedFile().toPath();
+            if (JOptionPane.showConfirmDialog(window, "Do you want to load an initial or new set of certificates?", "Certificate Load", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
+                fc.setDialogTitle("Select the new certificates archive file");
+                fc.setFileFilter(new CertsFileFilter());
+                if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
+                    certsfile = fc.getSelectedFile().toPath();
+                }
             }
 
+            // this stays on top while while the rest continues, user can dismiss if they want
             new BaseDialog.MessageOnly(
                     "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
                     .doDialog("Preparing System", e -> {}, window);
