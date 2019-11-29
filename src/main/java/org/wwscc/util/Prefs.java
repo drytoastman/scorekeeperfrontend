@@ -188,6 +188,7 @@ public class Prefs
     public static String getDefaultPrinter()   { return prefs.get("defaultprinter", ""); }
     public static boolean usePaidFlag()        { return prefs.getBoolean("paidflag", false); }
     public static boolean getAllowDiscovery()  { return prefs.getBoolean("allowdiscovery", true); }
+    public static boolean getUseDnsMasq()      { return prefs.getBoolean("dnsmasq", false); }
     public static boolean getPrintDirectly()   { return prefs.getBoolean("printdirectly", true); }
     public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
     public static String getIssuer()           { return prefs.get("issuer", ""); }
@@ -214,6 +215,7 @@ public class Prefs
     public static void setDefaultPrinter(String s)   { prefs.put("defaultprinter", s); }
     public static void setUsePaidFlag(boolean b)     { prefs.putBoolean("paidflag", b); }
     public static void setAllowDiscovery(boolean b)  { prefs.putBoolean("allowdiscovery", b); }
+    public static void setUseDnsMasq(boolean b)      { prefs.putBoolean("dnsmasq", b); }
     public static void setPrintDirectly(boolean b)   { prefs.putBoolean("printdirectly", b); }
     public static void setLogLevel(AppLogLevel l)    { prefs.put("loglevel", l.getName()); }
     public static void setIssuer(String s)           { prefs.put("issuer", s); }

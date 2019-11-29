@@ -1474,6 +1474,16 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
+    public void recordCache(String name, String data)
+    {
+        try {
+            executeUpdate("INSERT INTO localcache (name, data) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET data=?", newList(name, data, data));
+        } catch (Exception ioe) {
+            log.log(Level.WARNING, "recordNeighbors: " + ioe, ioe);
+        }
+    }
+
+
     @Override
     public boolean verifyUserAndSeries(String seriesname, String password)
     {

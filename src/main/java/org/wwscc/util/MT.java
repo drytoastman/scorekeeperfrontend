@@ -41,6 +41,7 @@ public enum MT {
     // Other
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,
+    DNSMASQ_CHANGE,
     IMPORT_REQUEST,
     DEBUG_REQUEST,
     LAUNCH_REQUEST,

@@ -10,6 +10,10 @@ package org.wwscc.system;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +27,10 @@ import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -34,11 +42,13 @@ import org.wwscc.util.Discovery.DiscoveryListener;
  */
 public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
 {
+    private static ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger log = Logger.getLogger(FrontEndMonitor.class.getName());
 
     boolean paused;
     boolean backendready;
     BroadcastState<InetAddress> address;
+    ObjectNode neighbors;
 
     public FrontEndMonitor()
     {
@@ -46,8 +56,10 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         paused = true; // we start in the 'paused' state
         backendready = false;
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
+        neighbors = objectMapper.createObjectNode();
 
-        Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
+        Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting());
+        Messenger.register(MT.DNSMASQ_CHANGE,   (type, data) -> updateDiscoverySetting());
         Messenger.register(MT.BACKEND_READY,    (type, data) -> { backendready = (boolean)data; setPause(!backendready); poke(); });
     }
 
@@ -62,7 +74,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         Actions.InitServersAction.doinit();
 
         // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
-        updateDiscoverySetting(Prefs.getAllowDiscovery());
+        updateDiscoverySetting();
 
         return true;
     }
@@ -88,11 +100,14 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         paused = b;
     }
 
-    private void updateDiscoverySetting(boolean up)
+    private void updateDiscoverySetting()
     {
+        boolean discovery = Prefs.getAllowDiscovery();
+        boolean dnsmasq   = Prefs.getUseDnsMasq();
+
         try
         {
-            if (up)
+            if (discovery || dnsmasq)
             {
                 ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
                 data.put("serverid", Prefs.getServerId().toString());
@@ -115,8 +130,28 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
     @Override
     public void serviceChange(UUID serverid, String service, InetAddress src, ObjectNode data, boolean up)
     {
+        ArrayNode a = neighbors.withArray(src.getHostAddress());
+        if (up)  {
+            if (a.findValue(service) == null)
+                a.add(service);
+        } else {
+            for (int ii = 0; ii < a.size(); ii++) {
+                if (a.get(ii).asText().equals(service)) {
+                    a.remove(ii);
+                    break;
+                }
+            }
+        }
+
+        try {
+            Database.d.recordCache("neighbors", objectMapper.writeValueAsString(neighbors));
+        } catch (JsonProcessingException e) {
+            log.warning("Failed to write neighbors cache: " + e);
+        }
+
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;
+
         if (serverid.equals(Prefs.getServerId()) || serverid.equals(MergeServer.LOCALHOST))
             return;
         if (up) {

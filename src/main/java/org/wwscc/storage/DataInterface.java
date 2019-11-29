@@ -182,6 +182,7 @@ public interface DataInterface
 
     /* Local event stream */
     public void recordEvent(String type, ObjectNode attr);
+    public void recordCache(String name, String data);
 
     /* things requiring superuser privileges, only obtained by merge tool */
     public boolean verifyUserAndSeries(String seriesname, String password);

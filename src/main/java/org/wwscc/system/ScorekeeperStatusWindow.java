@@ -105,6 +105,7 @@ public class ScorekeeperStatusWindow extends JFrame
         servers.add(actions.serverConfig);
         servers.add(new JSeparator());
         servers.add(new JCheckBoxMenuItem(actions.discovery));
+        servers.add(new JCheckBoxMenuItem(actions.dnsmasq));
 
         JMenu debug = new JMenu("Debug");
         debug.add(actions.debugRequest);
