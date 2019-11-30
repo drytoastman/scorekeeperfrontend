@@ -85,9 +85,9 @@ public class DockerContainer extends CreateContainerConfig
         return name;
     }
 
-    public void addPort(String hostip, int hostport, int containerport)
+    public void addPort(String hostip, int hostport, int containerport, String proto)
     {
-        String to = containerport+"/tcp";
+        String to = containerport+"/"+proto;
         HashMap<String, String> h = new HashMap<String, String>();
         h.put("HostIP", hostip);
         h.put("HostPort", ""+hostport);

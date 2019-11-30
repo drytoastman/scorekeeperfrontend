@@ -51,8 +51,8 @@ public class TestDatabaseContainer extends ExternalResource
         BroadcastState<Map<String,String>> env = new BroadcastState<Map<String,String>>(null, null);
 
         container = new DockerContainer(TestContainerName, TestContainerImage, TestNetName);
-        container.addPort("127.0.0.1", 6432, 6432);
-        container.addPort("0.0.0.0", 54329, 5432);
+        container.addPort("127.0.0.1", 6432, 6432, "tcp");
+        container.addPort("0.0.0.0", 54329, 5432, "tcp");
 
         docker = new DockerAPI();
         if (DockerMachine.machinepresent()) {

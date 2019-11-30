@@ -46,7 +46,7 @@ public class ContainerMonitor extends MonitorBase
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
-    private DockerContainer db, web, sync;
+    private DockerContainer db, web, sync, dns;
     private BroadcastState<String> status;
     private BroadcastState<Boolean> ready;
     private Path importRequestFile, certsFile;
@@ -86,15 +86,15 @@ public class ContainerMonitor extends MonitorBase
         db.addVolume(volname("logs"),      "/var/log");
         db.addVolume(volname("socket"),    "/var/run/postgresql");
         db.addVolume(CERTS_VOL, "/certs");
-        db.addPort("127.0.0.1", 6432, 6432);
-        db.addPort("0.0.0.0",  54329, 5432);
+        db.addPort("127.0.0.1", 6432, 6432, "tcp");
+        db.addPort("0.0.0.0",  54329, 5432, "tcp");
         all.add(db);
 
         web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME);
         web.addCmdItem("webserver.py");
         web.addVolume(volname("logs"),  "/var/log");
         web.addVolume(volname("socket"), "/var/run/postgresql");
-        web.addPort("0.0.0.0", 80, 80);
+        web.addPort("0.0.0.0", 80, 80, "tcp");
         web.addEnvItem("FLASK_SECRET='"+Prefs.getCookieSecret()+"'");
         all.add(web);
         nondb.add(web);
@@ -106,6 +106,14 @@ public class ContainerMonitor extends MonitorBase
         sync.addVolume(CERTS_VOL, "/certs");
         all.add(sync);
         nondb.add(sync);
+
+        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME);
+        dns.addCmdItem("dnsserver");
+        dns.addVolume(volname("logs"),  "/var/log");
+        dns.addVolume(volname("socket"), "/var/run/postgresql");
+        dns.addPort("0.0.0.0", 53, 53, "udp");
+        all.add(dns);
+        nondb.add(dns);
 
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(sync) );
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
