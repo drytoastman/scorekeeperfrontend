@@ -50,7 +50,7 @@ public class Actions
     List<Action> apps;
     List<Action> actions;
     Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
-    Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, dnsmasq, resetHash, quit, openStatus;
+    Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, resetHash, quit, openStatus;
 
     public Actions()
     {
@@ -82,7 +82,6 @@ public class Actions
         deleteSeries   = addAction(new DeleteLocalSeriesAction());
         changeSeriesPassword = addAction(new ChangeSeriesPasswordAction());
         discovery      = addAction(new LocalDiscoveryAction());
-        dnsmasq        = addAction(new DnsMasqAction(discovery));
         resetHash      = addAction(new ResetHashAction());
 
         backendReady(false);
@@ -187,43 +186,17 @@ public class Actions
     static class LocalDiscoveryAction extends AbstractAction
     {
         public LocalDiscoveryAction() {
-            change(Prefs.getAllowDiscovery());
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            boolean on = ((AbstractButton)e.getSource()).getModel().isSelected();
-            change(on);
-            Prefs.setAllowDiscovery(on);
-            Messenger.sendEvent(MT.DISCOVERY_CHANGE, on);
-        }
-
-        private void change(boolean on) {
+            boolean on = Prefs.getAllowDiscovery();
             putValue(Action.SELECTED_KEY, on);
             putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
         }
-    }
-
-
-    static class DnsMasqAction extends AbstractAction
-    {
-        Action partner;
-
-        public DnsMasqAction(Action discovery) {
-            this.partner = discovery;
-            change(Prefs.getUseDnsMasq());
-        }
 
         public void actionPerformed(ActionEvent e) {
             boolean on = ((AbstractButton)e.getSource()).getModel().isSelected();
-            change(on);
-            Prefs.setUseDnsMasq(on);
-            Messenger.sendEvent(MT.DNSMASQ_CHANGE, on);
-        }
-
-        private void change(boolean on) {
             putValue(Action.SELECTED_KEY, on);
-            putValue(Action.NAME, "DHCP/DNS Server " + (on ? "On":"Off"));
-            partner.setEnabled(!on);
+            putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
+            Prefs.setAllowDiscovery(on);
+            Messenger.sendEvent(MT.DISCOVERY_CHANGE, on);
         }
     }
 

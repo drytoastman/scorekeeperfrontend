@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
 
@@ -10,10 +10,6 @@ package org.wwscc.system;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,19 +18,17 @@ import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.Discovery;
+import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import org.wwscc.util.Discovery.DiscoveryListener;
 
 /**
  * Thread to keep checking pinging the database to cause notifications
@@ -58,8 +52,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
         neighbors = objectMapper.createObjectNode();
 
-        Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting());
-        Messenger.register(MT.DNSMASQ_CHANGE,   (type, data) -> updateDiscoverySetting());
+        Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
         Messenger.register(MT.BACKEND_READY,    (type, data) -> { backendready = (boolean)data; setPause(!backendready); poke(); });
     }
 
@@ -74,7 +67,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         Actions.InitServersAction.doinit();
 
         // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce
-        updateDiscoverySetting();
+        updateDiscoverySetting(Prefs.getAllowDiscovery());
 
         return true;
     }
@@ -100,14 +93,11 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         paused = b;
     }
 
-    private void updateDiscoverySetting()
+    private void updateDiscoverySetting(boolean up)
     {
-        boolean discovery = Prefs.getAllowDiscovery();
-        boolean dnsmasq   = Prefs.getUseDnsMasq();
-
         try
         {
-            if (discovery || dnsmasq)
+            if (up)
             {
                 ObjectNode data = new ObjectNode(JsonNodeFactory.instance);
                 data.put("serverid", Prefs.getServerId().toString());
@@ -151,7 +141,6 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
 
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;
-
         if (serverid.equals(Prefs.getServerId()) || serverid.equals(MergeServer.LOCALHOST))
             return;
         if (up) {
