@@ -373,8 +373,16 @@ public class ContainerMonitor extends MonitorBase
         if (!sync.isUp()) { try { Thread.sleep(1000); } catch (InterruptedException e) {}}
 
         DemuxedStreams ret = docker.run(sync.getName(), cmd);
-        if (ret.stderr.length() > 0)
+        if (ret.stderr.length() > 0) {
             log.log(Level.WARNING, "syncCommand stderr is {0}", ret.stderr);
+            if (ret.stdout.length() == 0) {
+                if (ret.stderr.contains("Traceback")) {
+                    String err[] = ret.stderr.split("\n");
+                    throw new IOException(err[err.length-1]);
+                }
+                throw new IOException(ret.stderr);
+            }
+        }
         log.log(Level.FINER, "syncCommand stdout is {0}", ret.stdout);
         return ret.stdout;
     }
