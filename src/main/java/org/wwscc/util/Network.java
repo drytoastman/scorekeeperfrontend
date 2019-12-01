@@ -39,12 +39,19 @@ public class Network
             Enumeration<NetworkInterface> nie = NetworkInterface.getNetworkInterfaces();
             while (nie.hasMoreElements())
             {
+                boolean classc = false;
                 try
                 {
                     NetworkInterface ni = nie.nextElement();
                     try {
                         if (ni.getHardwareAddress() == null)
                             continue; // this filters most of the junk
+
+                        for (InterfaceAddress a : ni.getInterfaceAddresses()) {
+                            InetAddress ia = a.getAddress();
+                            if ((ia instanceof Inet4Address) && ((Inet4Address)ia).getAddress()[0] == -64) // 192.***
+                                classc = true;
+                        }
                     } catch (Throwable e) { // sometimes fails on windows
                         continue;
                     }
@@ -54,7 +61,7 @@ public class Network
                         if (dname.contains("VMware")) continue;
                         if (dname.contains("Tunneling")) continue;
                         if (dname.contains("Microsoft")) continue;
-                        if (dname.contains("Hyper-V")) continue;
+                        if (dname.contains("Hyper-V") && !classc) continue;
                     } else if (Prefs.isLinux()) {
                         if (dname.startsWith("veth")) continue;
                         if (dname.startsWith("docker")) continue;
