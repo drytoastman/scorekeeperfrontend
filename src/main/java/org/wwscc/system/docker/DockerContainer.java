@@ -15,6 +15,8 @@ import java.util.TimeZone;
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.HostConfig;
 import org.wwscc.system.docker.models.PortMap;
+import org.wwscc.util.BroadcastState;
+import org.wwscc.util.MT;
 import org.wwscc.util.Prefs;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -27,18 +29,19 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DockerContainer extends CreateContainerConfig
 {
     private String name;
-    private boolean created, up;
+    private boolean created;
+    private BroadcastState<Boolean> up;
 
-    public DockerContainer(String name, String image)
+    public DockerContainer(String name, String image, MT event)
     {
-        this(name, image, null);
+        this(name, image, null, event);
     }
 
-    public DockerContainer(String name, String image, String netname)
+    public DockerContainer(String name, String image, String netname, MT event)
     {
         this.name    = name;
-        this.created = true;
-        this.up      = true;
+        this.created = false;
+        this.up      = new BroadcastState<Boolean>(event, false);
 
         addEnvItem("UI_TIME_ZONE="+TimeZone.getDefault().getID());
         addEnvItem("LOG_LEVEL="+Prefs.getLogLevel().getPythonLevel());
@@ -61,23 +64,26 @@ public class DockerContainer extends CreateContainerConfig
 
     public boolean isUp()
     {
-        return up;
+        return up.get();
     }
 
     public void setState(String state)
     {
         created = false;
-        up = false;
+        boolean isup = false;
+
         if (state == null)
             return;
         switch (state) {
             case "running":
             case "restarting":
             case "removing":
-                up = true;
+                isup = true;
             default:
                created = true;
         }
+
+        up.set(isup);
     }
 
     public String getName()

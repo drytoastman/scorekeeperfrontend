@@ -9,8 +9,11 @@
 package org.wwscc.system;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +30,7 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ButtonGroup;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -74,8 +78,11 @@ public class ScorekeeperStatusWindow extends JFrame
         buttons = new HashMap<String, JButton>();
         minimaxi = new MiniMaxiAction();
 
+        StatusLabel bs = new StatusLabel(MT.BACKEND_STATUS);
+        bs.setIcon(new FourSquareIcon(bs, new MT[] { MT.DB_READY, MT.WEB_READY, MT.SYNC_READY, MT.DNS_READY }));
+        bs.setVerticalTextPosition(SwingConstants.CENTER);
+        labels.put("backendstatus", bs);
         labels.put("machinestatus", new StatusLabel(MT.MACHINE_STATUS));
-        labels.put("backendstatus", new StatusLabel(MT.BACKEND_STATUS));
         labels.put("networkstatus", new NetworkStatusLabel(MT.NETWORK_CHANGED));
 
         buttons.put("minimaxi",  button(minimaxi));
@@ -254,14 +261,14 @@ public class ScorekeeperStatusWindow extends JFrame
         }
     }
 
-    class StatusLabel extends JLabel implements MessageListener
+    static class StatusLabel extends JLabel implements MessageListener
     {
-        Color okbg = new Color(200, 255, 200);
-        Color okfg = new Color(  0,  80,   0);
-        Color notokbg = new Color(255, 200, 200);
-        Color notokfg = new Color( 80,   0,   0);
-        Color nnbg = new Color(200, 200, 200);
-        Color nnfg = new Color( 70,  70,  70);
+        static Color okbg = new Color(200, 255, 200);
+        static Color okfg = new Color(  0,  80,   0);
+        static Color notokbg = new Color(255, 200, 200);
+        static Color notokfg = new Color( 80,   0,   0);
+        static Color nnbg = new Color(200, 200, 200);
+        static Color nnfg = new Color( 70,  70,  70);
 
         public StatusLabel(MT e)
         {
@@ -292,6 +299,83 @@ public class ScorekeeperStatusWindow extends JFrame
             }
         }
     }
+
+    static class FourSquareIcon implements Icon, MessageListener
+    {
+        static final Color okbg = new Color(100, 255, 100);
+        static final Color notokbg = new Color(255, 100, 100);
+
+        Component parent;
+        Map<MT, Color> colors;
+        MT events[];
+        public FourSquareIcon(Component inParent, MT inEvents[])
+        {
+            parent = inParent;
+            colors = new HashMap<>();
+            events = inEvents;
+            for (MT e : events) {
+                Messenger.register(e, this);
+                colors.put(e, notokbg);
+            }
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y)
+        {
+            Graphics2D g2 = (Graphics2D)g;
+            int xp = 0, yp = 0;
+            int deltay = (getIconHeight()/2)+1;
+            int deltax = getIconWidth()/2;
+
+            for (MT e : events) {
+                g2.setColor(colors.get(e));
+                g2.fillRect(xp, yp, deltax, deltay);
+                g2.setColor(Color.GRAY);
+                g2.drawRect(xp, yp, deltax, deltay);
+
+                xp += deltax;
+                if (xp > deltax) {
+                    yp += deltay;
+                    xp = 0;
+                }
+            }
+        }
+
+        @Override public int getIconWidth()  { return 15; }
+        @Override public int getIconHeight() { return parent.getHeight()-2; }
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            if (colors.containsKey(type)) {
+                colors.put(type, ((boolean)data) ? okbg : notokbg);
+                parent.repaint();
+            }
+        }
+
+    }
+
+    class BooleanStatusLabel extends StatusLabel
+    {
+        public BooleanStatusLabel(String text, MT e)
+        {
+            super(e);
+            setText(text);
+        }
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            if ((boolean)data) {
+                setBackground(okbg);
+                setForeground(okfg);
+            } else {
+                setBackground(notokbg);
+                setForeground(notokfg);
+            }
+        }
+    }
+
 
     class NetworkStatusLabel extends StatusLabel
     {

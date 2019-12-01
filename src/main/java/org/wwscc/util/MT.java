@@ -38,6 +38,10 @@ public enum MT {
     // Containers
     BACKEND_STATUS,
     BACKEND_READY,
+    DB_READY,
+    WEB_READY,
+    SYNC_READY,
+    DNS_READY,
     // Other
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,

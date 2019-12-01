@@ -50,7 +50,7 @@ public class TestDatabaseContainer extends ExternalResource
         AppSetup.unitLogging();
         BroadcastState<Map<String,String>> env = new BroadcastState<Map<String,String>>(null, null);
 
-        container = new DockerContainer(TestContainerName, TestContainerImage, TestNetName);
+        container = new DockerContainer(TestContainerName, TestContainerImage, TestNetName, null);
         container.addPort("127.0.0.1", 6432, 6432, "tcp");
         container.addPort("0.0.0.0", 54329, 5432, "tcp");
 

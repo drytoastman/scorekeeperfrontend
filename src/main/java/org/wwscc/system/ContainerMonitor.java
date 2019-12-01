@@ -81,7 +81,7 @@ public class ContainerMonitor extends MonitorBase
         importRequestFile = null;
         certsFile     = certsfile;
 
-        db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME);
+        db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME, MT.DB_READY);
         db.addVolume(volname("database"),  "/var/lib/postgresql/data");
         db.addVolume(volname("logs"),      "/var/log");
         db.addVolume(volname("socket"),    "/var/run/postgresql");
@@ -90,7 +90,7 @@ public class ContainerMonitor extends MonitorBase
         db.addPort("0.0.0.0",  54329, 5432, "tcp");
         all.add(db);
 
-        web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME);
+        web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME, MT.WEB_READY);
         web.addCmdItem("webserver.py");
         web.addVolume(volname("logs"),  "/var/log");
         web.addVolume(volname("socket"), "/var/run/postgresql");
@@ -99,7 +99,7 @@ public class ContainerMonitor extends MonitorBase
         all.add(web);
         nondb.add(web);
 
-        sync = new DockerContainer(conname("sync"), PY_IMAGE, NET_NAME);
+        sync = new DockerContainer(conname("sync"), PY_IMAGE, NET_NAME, MT.SYNC_READY);
         sync.addCmdItem("syncserver");
         sync.addVolume(volname("logs"),  "/var/log");
         sync.addVolume(volname("socket"), "/var/run/postgresql");
@@ -107,7 +107,7 @@ public class ContainerMonitor extends MonitorBase
         all.add(sync);
         nondb.add(sync);
 
-        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME);
+        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME, MT.DNS_READY);
         dns.addCmdItem("dnsserver");
         dns.addVolume(volname("logs"),  "/var/log");
         dns.addVolume(volname("socket"), "/var/run/postgresql");
@@ -236,14 +236,17 @@ public class ContainerMonitor extends MonitorBase
 
     public void mshutdown()
     {
-        BackupRequest request = new BackupRequest();
-        request.directory = Prefs.getBackupDirectory();
-        request.compress  = true;
-        request.usedialog = false;
-        doBackup(request);
-        Database.d.close();
+        if (!external_backend) {
+            BackupRequest request = new BackupRequest();
+            request.directory = Prefs.getBackupDirectory();
+            request.compress  = true;
+            request.usedialog = false;
+            doBackup(request);
+        }
 
+        Database.d.close();
         status.set("Shutting down ...");
+
         if (!external_backend) {
             docker.teardown(all, (c, t) -> { status.set(String.format("Shutdown Step %d of %d", c, t)); });
         }

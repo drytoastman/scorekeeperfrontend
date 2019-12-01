@@ -385,7 +385,7 @@ public class DockerAPI
     public void loadVolume(String volname, Path tarfile, DockerStatusListener listener) throws IOException
     {
         String image = "alpine:latest";
-        DockerContainer c = new DockerContainer("volload", image);
+        DockerContainer c = new DockerContainer("volload", image, null);
         c.addVolume(volname, "/vol");
         c.setCmd(Arrays.asList(new String[] { "ash", "-c", "while sleep 3600; do :; done" }));
 
