@@ -109,6 +109,14 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
             {
                 Discovery.get().removeServiceListener(this);
                 Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
+
+                neighbors = objectMapper.createObjectNode();
+                Database.d.recordCache("neighbors", "{}");
+                for (MergeServer m : Database.d.getMergeServers()) {
+                    if (!m.isRemote() && m.isActive()) {
+                        Database.d.mergeServerDeactivate(m.getServerId());
+                    }
+                }
             }
         }
         catch (IOException ioe)
