@@ -52,8 +52,13 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
         neighbors = objectMapper.createObjectNode();
 
-        Messenger.register(MT.DISCOVERY_CHANGE, (type, data) -> updateDiscoverySetting((boolean)data));
-        Messenger.register(MT.BACKEND_READY,    (type, data) -> { backendready = (boolean)data; setPause(!backendready); poke(); });
+        Messenger.register(MT.DISCOVERY_CHANGE,   (type, data) -> updateDiscoverySetting((boolean)data));
+        Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> {
+            String s = (String)data;
+            backendready = s.contains("db") && s.contains("sync");
+            setPause(!backendready);
+            poke();
+        });
     }
 
 

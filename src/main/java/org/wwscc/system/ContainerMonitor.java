@@ -48,10 +48,11 @@ public class ContainerMonitor extends MonitorBase
     private List<DockerContainer> all, nondb;
     private DockerContainer db, web, sync, dns;
     private BroadcastState<String> status;
-    private BroadcastState<Boolean> ready;
+    private BroadcastState<String> containers;
     private Path importRequestFile, certsFile;
     private BackupRequest backupRequest;
-    private boolean machineready, lastcheck, restartsync;
+    private boolean machineready, restartsync;
+    private String lastcheck;
 
     /** flag for debug environment where we are running the backend separately */
     private boolean external_backend;
@@ -74,9 +75,9 @@ public class ContainerMonitor extends MonitorBase
         all          = new ArrayList<DockerContainer>();
         nondb        = new ArrayList<DockerContainer>();
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
-        ready        = new BroadcastState<Boolean>(MT.BACKEND_READY, false);
+        containers   = new BroadcastState<String>(MT.BACKEND_CONTAINERS, "");
         machineready = false;
-        lastcheck    = false;
+        lastcheck    = "";
         backupRequest = null;
         importRequestFile = null;
         certsFile     = certsfile;
@@ -159,8 +160,15 @@ public class ContainerMonitor extends MonitorBase
             Messenger.sendEvent(MT.DOCKER_OK, null);
 
             status.set( "Creating containers");
-            while (!done && !docker.containersUp(all, (c, t) -> { status.set(String.format("Creation Step %s of %s", c, t)); }))
+            while (!done) {
+                docker.containersUp(all, (c, t) -> { status.set(String.format("Creation Step %s of %s", c, t)); });
+                try { docker.loadState(all); } catch (IOException ioe) {}
+
+                if (db.isUp())  // only need db to run applications
+                    break;
+
                 donefornow();
+            }
         }
 
         return true;
@@ -168,21 +176,19 @@ public class ContainerMonitor extends MonitorBase
 
     public void mloop() throws IOException
     {
-        boolean ok = true;
-
         if (!machineready) {
             status.set("Waiting for VM");
-            ready.set(false);
-            lastcheck = false;
+            containers.set("");
+            lastcheck = "";
             return;
         }
 
         // interrupt our regular schedule to shutdown and import data or backup
         if (importRequestFile != null) {
-            ready.set(false);
+            containers.set("");
             doImport(importRequestFile);
             importRequestFile = null;
-            lastcheck = false;
+            lastcheck = "";
         }
 
         if (backupRequest != null) {
@@ -190,20 +196,20 @@ public class ContainerMonitor extends MonitorBase
             backupRequest = null;
         }
 
-        if (restartsync && ready.get()) {
+        if (restartsync && containers.get().contains("sync")) {
             docker.restart(sync);
             restartsync = false;
         }
 
         // If something isn't running, try and start them now
         docker.loadState(all);
+        containers.set(all.stream().filter(c -> c.isUp()).map(c -> c.shortName()).collect(Collectors.joining(",")));
+
         List<DockerContainer> down = all.stream().filter(c -> !c.isUp()).collect(Collectors.toList());
         if (down.size() > 0) {
-            ok = false;
             if (external_backend) {
                 status.set("Down");
             } else {
-                status.set("Restarting " + down.stream().map(e -> e.getName()).collect(Collectors.joining(",")));
                 if (!docker.containersUp(down, null)) {
                     log.severe("Error during call to up."); // don't send to dialog, noisy
                 } else {
@@ -212,26 +218,25 @@ public class ContainerMonitor extends MonitorBase
             }
         }
 
-        if (ok)
-        {
-            if (ok != lastcheck)
-            {
-                status.set("Waiting for Database");
-                while (!done && !Database.testUp()) {
-                    donefornow(1000);
-                    docker.loadState(all);
-                    if (!db.isUp())  // database container is down, restart the loop and try again
-                        return;
-                }
-                if (done) return;
-                Database.openPublic(true, 5000);
-                Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+        if (!lastcheck.contains("db") && containers.get().contains("db")) {
+            status.set("Waiting for Database");
+            while (!done && !Database.testUp()) {
+                donefornow(1000);
+                docker.loadState(all);
+                if (!db.isUp())  // database container is down, restart the loop and try again
+                    return;
             }
-            status.set("Running");
-            ready.set(true);
+            if (done) return;
+            Database.openPublic(true, 5000);
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
 
-        lastcheck = ok;
+        if (down.size() == 0)
+            status.set("Running");
+        else
+            status.set(down.stream().map(e -> e.shortName()).collect(Collectors.joining(",")));
+
+        lastcheck = containers.get();
     }
 
     public void mshutdown()
@@ -250,7 +255,7 @@ public class ContainerMonitor extends MonitorBase
         if (!external_backend) {
             docker.teardown(all, (c, t) -> { status.set(String.format("Shutdown Step %d of %d", c, t)); });
         }
-        ready.set(false);
+        containers.set("");
         status.set("Done");
     }
 

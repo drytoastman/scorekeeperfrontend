@@ -258,6 +258,8 @@ public class ScorekeeperStatusWindow extends JFrame
     {
         Color okbg = new Color(200, 255, 200);
         Color okfg = new Color(  0,  80,   0);
+        Color warnbg = new Color(255, 255, 200);
+        Color warnfg = new Color(  80,  80,   0);
         Color notokbg = new Color(255, 200, 200);
         Color notokfg = new Color( 80,   0,   0);
         Color nnbg = new Color(200, 200, 200);
@@ -286,6 +288,9 @@ public class ScorekeeperStatusWindow extends JFrame
             } else if (txt.equalsIgnoreCase("Not Needed")) {
                 setBackground(nnbg);
                 setForeground(nnfg);
+            } else if (txt.equals("web") || txt.equals("dns") || txt.equals("web,dns")) {
+                setBackground(warnbg);
+                setForeground(warnfg);
             } else {
                 setBackground(notokbg);
                 setForeground(notokfg);

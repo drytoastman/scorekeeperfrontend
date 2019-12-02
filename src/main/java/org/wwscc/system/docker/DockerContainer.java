@@ -85,6 +85,14 @@ public class DockerContainer extends CreateContainerConfig
         return name;
     }
 
+    public String shortName()
+    {
+        String sp[] = name.split("_");
+        if (sp.length > 1)
+            return sp[1];
+        return name;
+    }
+
     public void addPort(String hostip, int hostport, int containerport, String proto)
     {
         String to = containerport+"/"+proto;

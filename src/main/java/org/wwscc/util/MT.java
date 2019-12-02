@@ -37,7 +37,7 @@ public enum MT {
     DOCKER_ENV,
     // Containers
     BACKEND_STATUS,
-    BACKEND_READY,
+    BACKEND_CONTAINERS,
     // Other
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,

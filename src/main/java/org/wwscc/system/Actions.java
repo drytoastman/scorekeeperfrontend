@@ -85,7 +85,7 @@ public class Actions
         resetHash      = addAction(new ResetHashAction());
 
         backendReady(false);
-        Messenger.register(MT.BACKEND_READY, (type, data) -> backendReady((boolean)data));
+        Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> backendReady(((String)data).contains("db")));
     }
 
     public Action addAction(Action a)

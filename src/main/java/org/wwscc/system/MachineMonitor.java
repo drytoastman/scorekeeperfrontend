@@ -43,7 +43,7 @@ public class MachineMonitor extends MonitorBase
     private BroadcastState<Map<String,String>> dockerenv;
     private BroadcastState<Boolean> machineready, usingmachine;
     private BroadcastState<String> status;
-    private boolean shouldStopMachine, backendready;
+    private boolean shouldStopMachine, backendstillrunning;
 
     public MachineMonitor()
     {
@@ -53,10 +53,13 @@ public class MachineMonitor extends MonitorBase
         usingmachine  = new BroadcastState<Boolean>(MT.USING_MACHINE, null);
         status        = new BroadcastState<String>(MT.MACHINE_STATUS, "");
         shouldStopMachine = false;
-        backendready  = false;
+        backendstillrunning  = false;
         ports = null;
 
-        Messenger.register(MT.BACKEND_READY, (m, o) -> { backendready = (boolean)o; poke(); });
+        Messenger.register(MT.BACKEND_CONTAINERS, (m, o) -> {
+            backendstillrunning = !((String)o).equals("");
+            poke();
+        });
     }
 
     public void stopMachine(boolean yes)
@@ -214,7 +217,7 @@ public class MachineMonitor extends MonitorBase
     {
         if (shouldStopMachine) {
             status.set("Waiting for backend shutdown");
-            while (backendready)
+            while (backendstillrunning)
                 donefornow();
 
             status.set("Stopping port-forwarding");
