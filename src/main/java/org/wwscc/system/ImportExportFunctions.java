@@ -25,19 +25,22 @@ public class ImportExportFunctions
     public static Path extractSql(Path importfile) throws IOException
     {
         if (importfile.toString().toLowerCase().endsWith(".zip")) {
-            Path temp;
+            Path tempdir = Files.createTempDirectory("scimport");
+            Path foundsql;
     fileok: try (ZipFile zip = new ZipFile(importfile.toFile())) {
                 Enumeration<? extends ZipEntry> entries = zip.entries();
                 while (entries.hasMoreElements()) {
                     ZipEntry entry = entries.nextElement();
-                    temp = Files.createTempFile("open-zip", ".sql");
-                    Files.copy(zip.getInputStream(entry), temp);
-                    break fileok;
+                    if (entry.getName().endsWith(".sql")) {
+                        foundsql = tempdir.resolve(entry.getName());
+                        Files.copy(zip.getInputStream(entry), foundsql);
+                        break fileok;
+                    }
                 }
                 throw new IOException("No sql file found in zip file");
             }
 
-            importfile = temp;
+            importfile = foundsql;
         }
 
         if (!importfile.toString().toLowerCase().endsWith(".sql")) {
@@ -62,12 +65,12 @@ fileok: try (Scanner scan = new Scanner(importfile)) {
                 if (mark) {
                     scan.next(); // id
                     int schema = scan.nextInt();
-                    if (schema < 20180000)
-                        throw new IOException("Unable to import backups with schema earlier than 2018, selected file is " + schema);
+                    if (schema < 20191023)
+                        throw new IOException("Unable to import backups with schema earlier than 2018-10-23, selected file is " + schema);
                     break fileok;
                 }
                 String line = scan.nextLine();
-                if (line.startsWith("COPY version"))
+                if (line.startsWith("COPY public.version"))
                     mark = true;
             }
             throw new IOException("No schema version found in file.");
