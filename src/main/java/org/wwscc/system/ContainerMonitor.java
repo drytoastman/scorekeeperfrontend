@@ -236,11 +236,14 @@ public class ContainerMonitor extends MonitorBase
 
     public void mshutdown()
     {
-        BackupRequest request = new BackupRequest();
-        request.directory = Prefs.getBackupDirectory();
-        request.compress  = true;
-        request.usedialog = false;
-        doBackup(request);
+        if (!external_backend) {
+            BackupRequest request = new BackupRequest();
+            request.directory = Prefs.getBackupDirectory();
+            request.compress  = true;
+            request.usedialog = false;
+            doBackup(request);
+        }
+
         Database.d.close();
 
         status.set("Shutting down ...");
