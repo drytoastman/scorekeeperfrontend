@@ -40,36 +40,47 @@ public class Network
             while (nie.hasMoreElements())
             {
                 boolean classc = false;
-                try
-                {
-                    NetworkInterface ni = nie.nextElement();
-                    try {
-                        if (ni.getHardwareAddress() == null)
-                            continue; // this filters most of the junk
+                boolean ipv4 = false;
+                NetworkInterface ni = nie.nextElement();
 
-                        for (InterfaceAddress a : ni.getInterfaceAddresses()) {
-                            InetAddress ia = a.getAddress();
-                            if ((ia instanceof Inet4Address) && ((Inet4Address)ia).getAddress()[0] == -64) // 192.***
-                                classc = true;
-                        }
-                    } catch (Throwable e) { // sometimes fails on windows
+                try {
+                    if (!ni.isUp() || ni.isLoopback() || ni.isPointToPoint())
                         continue;
+
+                    if (ni.getHardwareAddress() == null)
+                        continue; // this filters most of the junk
+
+                    for (InterfaceAddress a : ni.getInterfaceAddresses()) {
+                        InetAddress ia = a.getAddress();
+                        if (ia instanceof Inet4Address) {
+                            ipv4 = true;
+                            Inet4Address a1 = (Inet4Address)ia;
+                            if (a1.getAddress()[0] == -64) {
+                                // 192.***
+                                classc = true;
+                            }
+                        }
                     }
-                    String dname = ni.getDisplayName();
-                    if (Prefs.isWindows()) {
-                        if (dname.contains("VirtualBox")) continue;
-                        if (dname.contains("VMware")) continue;
-                        if (dname.contains("Tunneling")) continue;
-                        if (dname.contains("Microsoft")) continue;
-                        if (dname.contains("Hyper-V") && !classc) continue;
-                    } else if (Prefs.isLinux()) {
-                        if (dname.startsWith("veth")) continue;
-                        if (dname.startsWith("docker")) continue;
-                        if (dname.startsWith("br-")) continue;
-                    }
-                    if (!ni.isUp()) continue;
-                    return ni;
-                } catch (SocketException se) {}
+
+                    if (!ipv4)
+                        continue;
+                } catch (Throwable e) { // sometimes fails on windows
+                    continue;
+                }
+
+                String dname = ni.getDisplayName();
+                if (Prefs.isWindows()) {
+                    if (dname.contains("VirtualBox")) continue;
+                    if (dname.contains("VMware")) continue;
+                    if (dname.contains("Tunneling")) continue;
+                    if (dname.contains("Microsoft")) continue;
+                    if (dname.contains("Hyper-V") && !classc) continue;
+                } else if (Prefs.isLinux()) {
+                    if (dname.startsWith("veth")) continue;
+                    if (dname.startsWith("docker")) continue;
+                    if (dname.startsWith("br-")) continue;
+                }
+                return ni;
             }
         } catch (SocketException se) {}
         return null;

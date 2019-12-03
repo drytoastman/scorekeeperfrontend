@@ -65,10 +65,11 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
     @Override
     public boolean minit()
     {
+        address.set(Network.getPrimaryAddress());
+
         while (!backendready)
             donefornow();
 
-        address.set(Network.getPrimaryAddress());
         Actions.InitServersAction.doinit();
 
         // We only start (or not) the discovery thread once we've set our data into the database so there is something to announce

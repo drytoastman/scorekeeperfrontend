@@ -196,15 +196,13 @@ public class ContainerMonitor extends MonitorBase
             backupRequest = null;
         }
 
-        if (restartsync && containers.get().contains("sync")) {
+        if (restartsync && sync.isUp()) {
             docker.restart(sync);
             restartsync = false;
         }
 
         // If something isn't running, try and start them now
         docker.loadState(all);
-        containers.set(all.stream().filter(c -> c.isUp()).map(c -> c.shortName()).collect(Collectors.joining(",")));
-
         List<DockerContainer> down = all.stream().filter(c -> !c.isUp()).collect(Collectors.toList());
         if (down.size() > 0) {
             if (external_backend) {
@@ -218,7 +216,7 @@ public class ContainerMonitor extends MonitorBase
             }
         }
 
-        if (!lastcheck.contains("db") && containers.get().contains("db")) {
+        if (!lastcheck.contains("db") && db.isUp()) {
             status.set("Waiting for Database");
             while (!done && !Database.testUp()) {
                 donefornow(1000);
@@ -231,6 +229,7 @@ public class ContainerMonitor extends MonitorBase
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
         }
 
+        containers.set(all.stream().filter(c -> c.isUp()).map(c -> c.shortName()).collect(Collectors.joining(",")));
         if (down.size() == 0)
             status.set("Running");
         else
