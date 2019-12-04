@@ -46,7 +46,7 @@ public class ContainerMonitor extends MonitorBase
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
-    private DockerContainer db, web, sync, dns;
+    private DockerContainer db, web, sync;
     private BroadcastState<String> status;
     private BroadcastState<String> containers;
     private Path importRequestFile, certsFile;
@@ -107,14 +107,6 @@ public class ContainerMonitor extends MonitorBase
         sync.addVolume(CERTS_VOL, "/certs");
         all.add(sync);
         nondb.add(sync);
-
-        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME);
-        dns.addCmdItem("dnsserver");
-        dns.addVolume(volname("logs"),  "/var/log");
-        dns.addVolume(volname("socket"), "/var/run/postgresql");
-        dns.addPort("0.0.0.0", 53, 53, "udp");
-        all.add(dns);
-        nondb.add(dns);
 
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(sync) );
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });

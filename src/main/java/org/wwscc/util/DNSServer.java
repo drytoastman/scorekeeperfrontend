@@ -16,8 +16,12 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
@@ -39,37 +43,47 @@ public class DNSServer
     private static volatile DNSServer singleton;
 
     public static final String MDNS_GROUP = "224.0.0.251";
-    public static final int    MDNS_PORT  = 5353;
-    public static final int    DNS_PORT   = 53;
-    public static final long   DEFAULT_TIMEOUT = 10000;
+    public static final int     MDNS_PORT = 5353;
+    public static final int MULTICAST_TTL = 4;
+    public static final int       DNS_TTL = 360;
+    public static final int      DNS_PORT = 53;
+    public static final int    COOLOFF_MS = 5000;
 
-    private static final int READ_TIMEOUT_MS = 1000;
-    private static final int COOLOFF_MS      = 3000;
-    private static final int MULTICAST_TTL   = 6;
+    ServerThread unicast;
+    ServerThread multicast;
+    Map<InetAddress,Set<String>> neighbors;
 
     static class NoInternetException extends IOException {}
-    static class DNSException extends IOException
-    {
+    static class PausedException extends IOException {}
+    static class DNSException extends IOException {
         int rcode;
-        public DNSException(int rcode)
-        {
-            this.rcode = rcode;
-        }
+        public DNSException(int rcode) { this.rcode = rcode; }
     }
 
-    public static void start()
+    public static void start(Map<InetAddress,Set<String>> neighbors)
     {
         if (singleton == null) {
             singleton = new DNSServer();
         }
+        singleton.neighbors = neighbors;
+        singleton.unicast.pause = false;
+        singleton.multicast.pause = false;
+    }
+
+    public static void stop()
+    {
+        if (singleton == null)
+            return;
+        singleton.unicast.pause = true;
+        singleton.multicast.pause = true;
     }
 
     protected DNSServer()
     {
-        ServerThread unicast = new ServerThread(new SocketWrapper());
-        ServerThread multicast = new ServerThread(new MCSocketWrapper());
+        unicast   = new ServerThread(new SocketWrapper());
+        multicast = new ServerThread(new MCSocketWrapper());
         Messenger.register(MT.NETWORK_CHANGED, (e,o) -> {
-            unicast.reset = true;
+            unicast.reset   = true;
             multicast.reset = true;
         });
 
@@ -85,7 +99,7 @@ public class DNSServer
     protected byte[] dnsReply(byte[] in)
     {
         Message message = null;
-        Header header = null;
+        Header header   = null;
         try {
             message = new Message(in);
         } catch (IOException ioe) {
@@ -104,14 +118,28 @@ public class DNSServer
             if ((query.getType() != Type.A) || (query.getDClass() != DClass.IN)) throw new DNSException(Rcode.NOTIMP);
 
             String req = query.getName().getLabelString(0);
-            Record res;
+            Record res = null;
 
-            if (req.startsWith("de"))
-                res = new ARecord(query.getName(), DClass.IN, 60, InetAddress.getByName("192.168.15.102"));
-            else if (req.startsWith("reg"))
-                res = new ARecord(query.getName(), DClass.IN, 60, InetAddress.getByName("192.168.15.102"));
-            else
-                throw new UnknownHostException();
+            // get list and sort to keep things more deterministic
+            List<InetAddress> addrs = neighbors.keySet().stream().sorted().collect(Collectors.toList());
+
+            for (InetAddress a : addrs) {
+                Set<String> services = neighbors.get(a);
+                if (services == null) continue;
+                if ((req.startsWith("de")  && services.contains(Discovery.DATAENTRY_TYPE)) ||
+                     req.startsWith("reg") && services.contains(Discovery.REGISTRATION_TYPE)) {
+                    res = new ARecord(query.getName(), DClass.IN, DNS_TTL, a);
+                    break;
+                }
+            }
+
+            if (res == null) {
+                if (neighbors.size() > 0) {  // just pick first machine and see how it goes
+                    res = new ARecord(query.getName(), DClass.IN, DNS_TTL, addrs.get(0));
+                } else {
+                    throw new UnknownHostException();
+                }
+            }
 
             header.setFlag(Flags.QR);
             header.setFlag(Flags.RA);
@@ -132,41 +160,22 @@ public class DNSServer
     static class SocketWrapper
     {
         DatagramSocket sock;
+        public SocketWrapper() { sock = null; }
+        public void receive(DatagramPacket p) throws IOException { sock.receive(p); }
+        public void send(DatagramPacket p)    throws IOException { sock.send(p); }
 
-        public SocketWrapper()
-        {
-            sock = null;
-        }
-
-        public void reset()
-        {
+        public void reset() {
             if (sock != null) {
                 sock.close();
                 sock = null;
             }
         }
 
-        public void checkconnect() throws IOException
-        {
-            if ((sock == null) || (sock.isClosed()))
-            {
-                InetAddress bind = Network.getPrimaryAddress();
-                if (bind == null)
-                    throw new NoInternetException();
+        public void checkconnect() throws IOException {
+            if ((sock == null) || (sock.isClosed())) {
                 sock = new DatagramSocket(DNS_PORT);
                 sock.setReuseAddress(true);
-                sock.setSoTimeout(READ_TIMEOUT_MS);
             }
-        }
-
-        public void receive(DatagramPacket p) throws IOException
-        {
-            sock.receive(p);
-        }
-
-        public void send(DatagramPacket p) throws IOException
-        {
-            sock.send(p);
         }
     }
 
@@ -193,10 +202,9 @@ public class DNSServer
 
     class ServerThread implements Runnable
     {
-        byte[] buf = new byte[512];
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
         SocketWrapper socket;
         boolean reset;
+        boolean pause;
 
         public ServerThread(SocketWrapper wrapper)
         {
@@ -213,46 +221,42 @@ public class DNSServer
         @Override
         public void run()
         {
+            byte[] buf = new byte[512];
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+
             while (true)
             {
                 try
                 {
+                    if (pause)
+                        throw new PausedException();
                     if (reset) {
                         socket.reset();
                         reset = false;
                     }
+
                     socket.checkconnect();
+                    packet.setData(buf);
+                    socket.receive(packet); // blocking call
 
-                    try {
-                        packet.setData(buf);
-                        socket.receive(packet);
+                    if (pause) throw new PausedException();
+                    byte reply[] = dnsReply(buf);
+                    if (reply == null) continue;
 
-                        byte reply[] = dnsReply(buf);
-                        if (reply == null) continue;
+                    packet.setData(reply);
+                    socket.send(packet);
 
-                        packet.setData(reply);
-                        socket.send(packet);
-                    } catch (SocketTimeoutException ste) {}
                 }
-                catch (NoInternetException nie)
-                {
+                catch (NoInternetException|PausedException|SocketTimeoutException ie) {
                     sleep(COOLOFF_MS);
-                }
-                catch (BindException be)
-                {
+                } catch (BindException be) {
                     log.log(Level.WARNING, "Bind Error: " + be);
                     reset = true;
                     sleep(COOLOFF_MS*10);
-                }
-                catch (IOException ioe)
-                {
-                    log.log(Level.WARNING, "IO Error in proxy thread: " + ioe, ioe);
+                } catch (Exception e) {
+                    log.log(Level.WARNING, "Exception in proxy thread: " + e, e);
                     reset = true;
                     sleep(COOLOFF_MS);
-                }
-                catch (Exception e)
-                {
-                    log.log(Level.WARNING, "General exception in proxy thread: " + e, e);
                 }
             }
         }
