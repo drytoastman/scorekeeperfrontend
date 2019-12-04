@@ -50,6 +50,9 @@ public enum MT {
     DOWNLOAD_NEW_REQUEST,
     DOCKER_NOT_OK,
     DOCKER_OK,
+    // Frontend
+    DNS_OK,
+    MDNS_OK,
 
     // Data Entry
     OBJECT_CLICKED,

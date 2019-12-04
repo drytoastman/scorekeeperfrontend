@@ -37,6 +37,9 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
 import org.wwscc.util.AppLogLevel;
@@ -44,7 +47,6 @@ import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
 import org.wwscc.util.MessageListener;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
 import net.miginfocom.swing.MigLayout;
@@ -76,7 +78,7 @@ public class ScorekeeperStatusWindow extends JFrame
 
         labels.put("machinestatus", new StatusLabel(MT.MACHINE_STATUS));
         labels.put("backendstatus", new StatusLabel(MT.BACKEND_STATUS));
-        labels.put("networkstatus", new NetworkStatusLabel(MT.NETWORK_CHANGED));
+        labels.put("networkstatus", new NetworkStatusLabel());
 
         buttons.put("minimaxi",  button(minimaxi));
         buttons.put("mergeall",  button(actions.mergeAll));
@@ -199,11 +201,11 @@ public class ScorekeeperStatusWindow extends JFrame
             content.setLayout(new MigLayout("fill, ins 5, gap 5", "", "[grow 0][fill]"));
 
             content.add(header("VM", 14), "split");
-            content.add(labels.get("machinestatus"), "growy, w 150!");
+            content.add(labels.get("machinestatus"), "growy, wmin 150");
             content.add(header("Backend", 14), "split");
-            content.add(labels.get("backendstatus"), "growy, w 150!");
+            content.add(labels.get("backendstatus"), "growy, wmin 150");
             content.add(header("Network", 14), "split");
-            content.add(labels.get("networkstatus"), "growy, w 150!");
+            content.add(labels.get("networkstatus"), "growy, wmin 150");
             content.add(new JLabel(""), "pushx 100, growx 100");
             content.add(buttons.get("minimaxi"), "wmin 80, wrap");
 
@@ -268,14 +270,19 @@ public class ScorekeeperStatusWindow extends JFrame
         public StatusLabel(MT e)
         {
             super();
-            Messenger.register(e, this);
+            if (e != null)
+                Messenger.register(e, this);
             setHorizontalAlignment(SwingConstants.CENTER);
             setFont(getFont().deriveFont(12.0f));
             setOpaque(true);
             setBackground(notokbg);
             setForeground(notokfg);
-            setBorder(new LineBorder(Color.GRAY, 1));
+
+            Border border = new LineBorder(Color.GRAY, 1);
+            Border margin = new EmptyBorder(0,5,0,5);
+            setBorder(new CompoundBorder(border, margin));
         }
+
 
         @Override
         public void event(MT type, Object data)
@@ -288,7 +295,7 @@ public class ScorekeeperStatusWindow extends JFrame
             } else if (txt.equalsIgnoreCase("Not Needed")) {
                 setBackground(nnbg);
                 setForeground(nnfg);
-            } else if (txt.equals("web") || txt.equals("dns") || txt.equals("web,dns")) {
+            } else if (txt.equals("web")) {
                 setBackground(warnbg);
                 setForeground(warnfg);
             } else {
@@ -300,20 +307,32 @@ public class ScorekeeperStatusWindow extends JFrame
 
     class NetworkStatusLabel extends StatusLabel
     {
-        public NetworkStatusLabel(MT e)
+        boolean unicast = false;
+        boolean multicast = false;
+        InetAddress ip = null;
+
+        public NetworkStatusLabel()
         {
-            super(e);
-            event(e, Network.getPrimaryAddress());
+            super(null);
+            Messenger.register(MT.NETWORK_CHANGED, (t, d) -> { ip    = (InetAddress)d; update(); });
+            Messenger.register(MT.DNS_OK,          (t, d) -> { unicast   = (boolean)d; update(); });
+            Messenger.register(MT.MDNS_OK,         (t, d) -> { multicast = (boolean)d; update(); });
         }
 
-        @Override
-        public void event(MT type, Object data)
+        protected void update()
         {
-            if (data instanceof InetAddress) {
+            if (ip != null && unicast && multicast) {
                 setBackground(okbg);
                 setForeground(okfg);
-                setText(((InetAddress)data).getHostAddress());
-            } else if (data == null) {
+                setText(ip.getHostAddress());
+            } else if (ip != null) {
+                setBackground(warnbg);
+                setForeground(warnfg);
+                String text = ip.getHostAddress();
+                if (!unicast) text += ", No DNS";
+                if (!multicast) text += ", No MDNS";
+                setText(text);
+            } else {
                 setBackground(notokbg);
                 setForeground(notokfg);
                 setText("network down");

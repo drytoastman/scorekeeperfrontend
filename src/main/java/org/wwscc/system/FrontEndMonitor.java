@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
 import org.wwscc.util.BroadcastState;
-import org.wwscc.util.DNSServer;
 import org.wwscc.util.Discovery;
 import org.wwscc.util.Discovery.DiscoveryListener;
 import org.wwscc.util.MT;

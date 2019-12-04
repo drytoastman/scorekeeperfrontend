@@ -6,7 +6,7 @@
  * All rights reserved.
  */
 
-package org.wwscc.util;
+package org.wwscc.system;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -23,6 +23,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.wwscc.util.BroadcastState;
+import org.wwscc.util.Discovery;
+import org.wwscc.util.MT;
+import org.wwscc.util.Messenger;
+import org.wwscc.util.Network;
 import org.xbill.DNS.ARecord;
 import org.xbill.DNS.DClass;
 import org.xbill.DNS.Flags;
@@ -45,8 +50,8 @@ public class DNSServer
     public static final String MDNS_GROUP = "224.0.0.251";
     public static final int     MDNS_PORT = 5353;
     public static final int MULTICAST_TTL = 4;
-    public static final int       DNS_TTL = 360;
     public static final int      DNS_PORT = 53;
+    public static final int       DNS_TTL = 360;
     public static final int    COOLOFF_MS = 5000;
 
     ServerThread unicast;
@@ -80,8 +85,8 @@ public class DNSServer
 
     protected DNSServer()
     {
-        unicast   = new ServerThread(new SocketWrapper());
-        multicast = new ServerThread(new MCSocketWrapper());
+        unicast   = new ServerThread(new SocketWrapper(), MT.DNS_OK);
+        multicast = new ServerThread(new MCSocketWrapper(), MT.MDNS_OK);
         Messenger.register(MT.NETWORK_CHANGED, (e,o) -> {
             unicast.reset   = true;
             multicast.reset = true;
@@ -123,6 +128,7 @@ public class DNSServer
             // get list and sort to keep things more deterministic
             List<InetAddress> addrs = neighbors.keySet().stream().sorted().collect(Collectors.toList());
 
+            if (!(req.startsWith("de") || req.startsWith("reg"))) throw new DNSException(Rcode.NXDOMAIN);
             for (InetAddress a : addrs) {
                 Set<String> services = neighbors.get(a);
                 if (services == null) continue;
@@ -202,13 +208,16 @@ public class DNSServer
 
     class ServerThread implements Runnable
     {
+        BroadcastState<Boolean> isUp;
         SocketWrapper socket;
         boolean reset;
         boolean pause;
 
-        public ServerThread(SocketWrapper wrapper)
+        public ServerThread(SocketWrapper wrapper, MT upevent)
         {
+            isUp = new BroadcastState<Boolean>(upevent, null);
             socket = wrapper;
+            isUp.set(false);
         }
 
         private void sleep(int ms)
@@ -231,11 +240,13 @@ public class DNSServer
                     if (pause)
                         throw new PausedException();
                     if (reset) {
+                        isUp.set(false);
                         socket.reset();
                         reset = false;
                     }
 
                     socket.checkconnect();
+                    isUp.set(true);
                     packet.setData(buf);
                     socket.receive(packet); // blocking call
 
@@ -246,13 +257,14 @@ public class DNSServer
                     packet.setData(reply);
                     socket.send(packet);
 
-                }
-                catch (NoInternetException|PausedException|SocketTimeoutException ie) {
+                } catch (SocketTimeoutException ie) {
+                    // just keep going
+                } catch (NoInternetException|PausedException ie) {
                     sleep(COOLOFF_MS);
                 } catch (BindException be) {
-                    log.log(Level.WARNING, "Bind Error: " + be);
+                    log.log(Level.WARNING, socket.getClass().getName() + ": " + be);
                     reset = true;
-                    sleep(COOLOFF_MS*10);
+                    sleep(COOLOFF_MS*5);
                 } catch (Exception e) {
                     log.log(Level.WARNING, "Exception in proxy thread: " + e, e);
                     reset = true;
