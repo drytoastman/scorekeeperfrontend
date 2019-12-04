@@ -28,6 +28,8 @@ Name: "{userdesktop}\Scorekeeper ({#Version})";         IconFilename: "{app}\con
 [Run]
 Filename: "{sys}\sc.exe"; Parameters: "stop   w3svc";
 Filename: "{sys}\sc.exe"; Parameters: "config w3svc start=disabled";
+Filename: "{sys}\sc.exe"; Parameters: "stop   SharedAccess";
+Filename: "{sys}\sc.exe"; Parameters: "config SharedAccess start=disabled";
 Filename: "{app}\bin\javaw.exe"; Parameters: "-classpath ""{app}\lib\*"" org.wwscc.system.ScorekeeperSystem dockerprepare";
 
 [Code]
@@ -75,6 +77,8 @@ begin
     AddFirewallPort('Scorekeeper Timers',    NET_FW_PROTOCOL_TCP, 54328);
     AddFirewallPort('Scorekeeper Database',  NET_FW_PROTOCOL_TCP, 54329);
     AddFirewallPort('Scorekeeper Discovery', NET_FW_PROTOCOL_UDP, 5454);
+    AddFirewallPort('Scorekeeper DNS',       NET_FW_PROTOCOL_UDP, 53);
+    AddFirewallPort('Scorekeeper MDNS',      NET_FW_PROTOCOL_UDP, 5353);
 end;
 
 procedure RemoveAllRules();
