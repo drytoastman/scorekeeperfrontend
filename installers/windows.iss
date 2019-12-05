@@ -1,4 +1,5 @@
 [Setup]
+AppId=Scorekeeper{#Version}
 AppName=Scorekeeper
 AppVersion={#Version}
 OutputDir=..\build\final
@@ -73,20 +74,22 @@ end;
 
 procedure AddAllRules();
 begin
-    AddFirewallPort('Scorekeeper Web',       NET_FW_PROTOCOL_TCP, 80);
-    AddFirewallPort('Scorekeeper Timers',    NET_FW_PROTOCOL_TCP, 54328);
-    AddFirewallPort('Scorekeeper Database',  NET_FW_PROTOCOL_TCP, 54329);
-    AddFirewallPort('Scorekeeper Discovery', NET_FW_PROTOCOL_UDP, 5454);
-    AddFirewallPort('Scorekeeper DNS',       NET_FW_PROTOCOL_UDP, 53);
-    AddFirewallPort('Scorekeeper MDNS',      NET_FW_PROTOCOL_UDP, 5353);
+    AddFirewallPort('Scorekeeper Web {#Version}',       NET_FW_PROTOCOL_TCP, 80);
+    AddFirewallPort('Scorekeeper Timers {#Version}',    NET_FW_PROTOCOL_TCP, 54328);
+    AddFirewallPort('Scorekeeper Database {#Version}',  NET_FW_PROTOCOL_TCP, 54329);
+    AddFirewallPort('Scorekeeper Discovery {#Version}', NET_FW_PROTOCOL_UDP, 5454);
+    AddFirewallPort('Scorekeeper DNS {#Version}',       NET_FW_PROTOCOL_UDP, 53);
+    AddFirewallPort('Scorekeeper MDNS {#Version}',      NET_FW_PROTOCOL_UDP, 5353);
 end;
 
 procedure RemoveAllRules();
 begin
-    RemFirewallPort('Scorekeeper Web');
-    RemFirewallPort('Scorekeeper Timers');
-    RemFirewallPort('Scorekeeper Database');
-    RemFirewallPort('Scorekeeper Discovery');
+    RemFirewallPort('Scorekeeper Web {#Version}');
+    RemFirewallPort('Scorekeeper Timers {#Version}');
+    RemFirewallPort('Scorekeeper Database {#Version}');
+    RemFirewallPort('Scorekeeper Discovery {#Version}');
+    RemFirewallPort('Scorekeeper DNS {#Version}');
+    RemFirewallPort('Scorekeeper MDNS {#Version}');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
