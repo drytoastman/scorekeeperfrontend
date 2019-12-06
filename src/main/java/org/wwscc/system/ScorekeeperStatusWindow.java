@@ -329,8 +329,8 @@ public class ScorekeeperStatusWindow extends JFrame
                 setBackground(warnbg);
                 setForeground(warnfg);
                 String text = ip.getHostAddress();
-                if (!unicast) text += ", No DNS";
-                if (!multicast) text += ", No MDNS";
+                if (!unicast) text += ", !dns";
+                if (!multicast) text += ", !mdns";
                 setText(text);
             } else {
                 setBackground(notokbg);

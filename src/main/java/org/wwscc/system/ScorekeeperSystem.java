@@ -219,7 +219,7 @@ public class ScorekeeperSystem
         Path certsfile = null;
 
         if (prepareonly) {
-            Messenger.register(MT.DATABASE_NOTIFICATION, (t,o) -> { prepared = true; });
+            Messenger.register(MT.BACKEND_STATUS, (t, o) -> { prepared = o.equals("Running"); });
 
             if (JOptionPane.showConfirmDialog(window, "Do you want to load an initial or new set of certificates?", "Certificate Load", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                 JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
@@ -245,9 +245,15 @@ public class ScorekeeperSystem
 
         try {
             if (prepareonly) {
-                while (!prepared) Thread.sleep(300);
-                shutdownRequest(true);
+                // wait for either prep to finish or a user request to shutdown
+                while (!prepared && !shutdownstarted)
+                    Thread.sleep(300);
+                // if user did not request a shutdown, we do so here
+                if (!shutdownstarted)
+                    shutdownRequest(true);
             }
+
+            // wait for two monitor threads to finish
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
         } catch (InterruptedException ie) {
