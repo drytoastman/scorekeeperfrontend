@@ -128,7 +128,7 @@ public class ContainerMonitor extends MonitorBase
 
         if (certsFile != null) {
             try {
-                docker.loadVolume(CERTS_VOL, certsFile, (c, t) -> { status.set(String.format("Certs Step %s of %s", c, t)); });
+                docker.loadVolume(CERTS_VOL, certsFile, s -> { status.set(s); });
             } catch (IOException ioe) {
                 log.log(Level.SEVERE, "Failed to load certs file: " + ioe, ioe);
                 return false;
@@ -137,7 +137,7 @@ public class ContainerMonitor extends MonitorBase
 
         if (!external_backend) {
             status.set( "Clearing old containers");
-            docker.teardown(all, null);
+            docker.teardown(all, s -> {});
 
             status.set( "Establishing Network");
             long starttime = System.currentTimeMillis();
@@ -153,7 +153,7 @@ public class ContainerMonitor extends MonitorBase
 
             status.set( "Creating containers");
             while (!done) {
-                docker.containersUp(all, (c, t) -> { status.set(String.format("Creation Step %s of %s", c, t)); });
+                docker.containersUp(all, s -> { status.set(s); });
                 try { docker.loadState(all); } catch (IOException ioe) {}
 
                 if (db.isUp())  // only need db to run applications
@@ -200,7 +200,7 @@ public class ContainerMonitor extends MonitorBase
             if (external_backend) {
                 status.set("Down");
             } else {
-                if (!docker.containersUp(down, null)) {
+                if (!docker.containersUp(down, s -> {status.set(s);})) {
                     log.severe("Error during call to up."); // don't send to dialog, noisy
                 } else {
                     quickrecheck = true;
@@ -244,7 +244,7 @@ public class ContainerMonitor extends MonitorBase
 
         status.set("Shutting down ...");
         if (!external_backend) {
-            docker.teardown(all, (c, t) -> { status.set(String.format("Shutdown Step %d of %d", c, t)); });
+            docker.teardown(all, s -> { status.set(s); });
         }
         containers.set("");
         status.set("Done");

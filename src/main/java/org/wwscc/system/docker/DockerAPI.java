@@ -24,8 +24,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -102,7 +105,11 @@ public class DockerAPI
     }
 
     public interface DockerStatusListener {
-        public void status(int completed, int tasks);
+        public void status(String s);
+    }
+
+    public interface DockerParallelStatusListener {
+        public void status(int count, int total);
     }
 
     public static class DemuxedStreams {
@@ -274,13 +281,40 @@ public class DockerAPI
     }
 
 
+    private static Set<String> warned = new ConcurrentSkipListSet<String>();
+    public void imagesDownload(Collection<DockerContainer> containers, DockerStatusListener listener) throws IOException
+    {
+        ImageSummary[] images = request(new Requests.GetImages());
+        Set<String> tags = new HashSet<>();
+        if (images != null) {
+            for (ImageSummary s : images)
+                tags.addAll(s.getRepoTags());
+        }
+
+        for (DockerContainer container : containers)
+        {
+            if (tags.contains(container.getImage()))
+                continue;
+
+            listener.status("Download " + container.getImage());
+            try {
+                request(new Requests.PullImage(container.getImage()));
+            } catch (IOException ioe) {
+                log.severe("Download of " + container.getImage() + " failed: " + ioe);
+                if (warned.add(container.getImage())) {
+                    log.severe("\bUnable to download backend image " + container.getImage() + ", you must be online to do so");
+                }
+            }
+        }
+    }
+
+
     public boolean containersUp(Collection<DockerContainer> containers, DockerStatusListener listener)
     {
         try
         {
-            ImageSummary[] images = request(new Requests.GetImages());
-            if (images == null)
-                images = new ImageSummary[0];
+            imagesDownload(containers, listener);
+
             VolumesResponse volumes = request(new Requests.GetVolumes());
             if (volumes.getVolumes() == null)
                 volumes.setVolumes(new ArrayList<Volume>());
@@ -301,18 +335,6 @@ public class DockerAPI
                     container.addEnvItem("DEBUG=1");
                 else
                     container.getEnv().remove("DEBUG=1");
-
-                // Pull image if necessary
-                boolean needpull = true;
-                for (ImageSummary s :images) {
-                    if (s.getRepoTags() != null && s.getRepoTags().contains(container.getImage())) {
-                        needpull = false;
-                    }
-                }
-                if (needpull) {
-                    log.info("Pulling " + container.getImage());
-                    inner.add(new Requests.PullImage(container.getImage()));
-                }
 
                 // Create any volumes
                 for (String mount : container.getHostConfig().getBinds()) {
@@ -335,7 +357,7 @@ public class DockerAPI
                 inner.add(new Requests.Start(container.getName()));
             }
 
-            List<Exception> ret = parallelChains(chains, listener);
+            List<Exception> ret = parallelChains(chains, (c,t) -> { listener.status(String.format("Starting Step %d of %d", c, t)); });
             if (ret.size() > 0) {
                 log.warning("containerup errors: ");
                 for (Exception e : ret) {
@@ -389,26 +411,26 @@ public class DockerAPI
         c.addVolume(volname, "/vol");
         c.setCmd(Arrays.asList(new String[] { "ash", "-c", "while sleep 3600; do :; done" }));
 
-        listener.status(0, 7);
+        listener.status("Check cert status");
         ImageSummary[] islist = request(new Requests.GetImages());
         VolumesResponse volumes = request(new Requests.GetVolumes());
 
-        listener.status(1, 7); // ensure image is available
+        listener.status("Download alpine"); // ensure image is available
         if ((islist == null) || !Arrays.asList(islist).stream().anyMatch(is -> is.getRepoTags().contains(image))) {
             request(new Requests.PullImage(image));
         }
 
-        listener.status(2, 7); // ensure volume is created
+        listener.status("Create volume"); // ensure volume is created
         if (volumes.getVolumes().stream().anyMatch(v -> v.getName().equals(volname))) {
             request(new Requests.CreateVolume(volname));
         }
 
         // start container, do the upload and tear down
-        listener.status(3, 7); request(new Requests.CreateContainer(c));
-        listener.status(4, 7); request(new Requests.Start(c.getName()));
-        listener.status(5, 7); request(new Requests.Upload("volload", "/vol", tarfile.toFile()));
-        listener.status(6, 7); request(new Requests.Kill(c.getName()));
-        listener.status(7, 7); request(new Requests.Rm(c.getName()));
+        listener.status("Create copier");   request(new Requests.CreateContainer(c));
+        listener.status("Start copier");    request(new Requests.Start(c.getName()));
+        listener.status("Loading certs");   request(new Requests.Upload("volload", "/vol", tarfile.toFile()));
+        listener.status("Killing copier");  request(new Requests.Kill(c.getName()));
+        listener.status("Removing copier"); request(new Requests.Rm(c.getName()));
     }
 
 
@@ -485,7 +507,7 @@ public class DockerAPI
         List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
         for (DockerContainer c : containers)
             outer.add(Arrays.asList(new Requests.Stop(c.getName())));
-        parallelAndReport("stop", outer, listener);
+        parallelAndReport("stop", outer, (c,t) -> { listener.status(String.format("Stopping Step %d of %d", c, t)); });
     }
 
 
@@ -499,7 +521,7 @@ public class DockerAPI
             outer.add(inner);
         }
 
-        parallelAndReport("teardown", outer, listener);
+        parallelAndReport("teardown", outer, (c,t) -> { listener.status(String.format("Shutdown Step %d of %d", c, t)); });
     }
 
 
@@ -578,7 +600,7 @@ public class DockerAPI
      * @throws DockerDownException
      * @throws IOException
      */
-    private List<Exception> parallelChains(List<List<Requests.Wrapper<Void>>> chains, DockerStatusListener listener)
+    private List<Exception> parallelChains(List<List<Requests.Wrapper<Void>>> chains, DockerParallelStatusListener listener)
     {
         List<Exception> ret = new ArrayList<Exception>();
 
@@ -620,7 +642,7 @@ public class DockerAPI
     }
 
 
-    private void parallelAndReport(String function, List<List<Requests.Wrapper<Void>>> chains, DockerStatusListener listener)
+    private void parallelAndReport(String function, List<List<Requests.Wrapper<Void>>> chains, DockerParallelStatusListener listener)
     {
         List<Exception> ret = parallelChains(chains, listener);
         if (ret.size() > 0) {

@@ -61,9 +61,9 @@ public class TestDatabaseContainer extends ExternalResource
         } else {
             docker.setup(new HashMap<>());
         }
-        docker.teardown(Arrays.asList(container), null);
+        docker.teardown(Arrays.asList(container), s -> {});
         docker.networkUp(TestNetName);
-        docker.containersUp(Arrays.asList(container), null);
+        docker.containersUp(Arrays.asList(container), s -> {});
 
         while (!Database.testUp())
             Thread.sleep(500);
