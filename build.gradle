@@ -127,6 +127,7 @@ runtime {
         'java.sql',
         'java.transaction.xa',
         'java.xml',
+        'jdk.crypto.ec',
         'jdk.jfr',
         'jdk.jsobject',
         'jdk.unsupported',
