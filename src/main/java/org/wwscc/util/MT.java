@@ -53,6 +53,7 @@ public enum MT {
     // Frontend
     DNS_OK,
     MDNS_OK,
+    DISCOVERY_OK,
 
     // Data Entry
     OBJECT_CLICKED,

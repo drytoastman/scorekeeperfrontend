@@ -110,11 +110,13 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
                 data.put("hostname", Network.getLocalHostName());
                 Discovery.get().addServiceListener(this);
                 Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
+                Messenger.sendEvent(MT.DISCOVERY_OK, true);
                 DNSServer.start(neighbors);
             }
             else
             {
                 DNSServer.stop();
+                Messenger.sendEvent(MT.DISCOVERY_OK, false);
                 Discovery.get().removeServiceListener(this);
                 Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
 

@@ -309,6 +309,7 @@ public class ScorekeeperStatusWindow extends JFrame
     {
         boolean unicast = false;
         boolean multicast = false;
+        boolean discovery = false;
         InetAddress ip = null;
 
         public NetworkStatusLabel()
@@ -317,11 +318,12 @@ public class ScorekeeperStatusWindow extends JFrame
             Messenger.register(MT.NETWORK_CHANGED, (t, d) -> { ip    = (InetAddress)d; update(); });
             Messenger.register(MT.DNS_OK,          (t, d) -> { unicast   = (boolean)d; update(); });
             Messenger.register(MT.MDNS_OK,         (t, d) -> { multicast = (boolean)d; update(); });
+            Messenger.register(MT.DISCOVERY_OK,    (t, d) -> { discovery = (boolean)d; update(); });
         }
 
         protected void update()
         {
-            if (ip != null && unicast && multicast) {
+            if (ip != null && discovery && unicast && multicast) {
                 setBackground(okbg);
                 setForeground(okfg);
                 setText(ip.getHostAddress());
@@ -329,8 +331,12 @@ public class ScorekeeperStatusWindow extends JFrame
                 setBackground(warnbg);
                 setForeground(warnfg);
                 String text = ip.getHostAddress();
-                if (!unicast) text += ", !dns";
-                if (!multicast) text += ", !mdns";
+                if (!discovery) {
+                    text += ", Discovery Off";
+                } else {
+                    if (!unicast)   text += ", No DNS";
+                    if (!multicast) text += ", No MDNS";
+                }
                 setText(text);
             } else {
                 setBackground(notokbg);
