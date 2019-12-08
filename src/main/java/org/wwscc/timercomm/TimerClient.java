@@ -18,7 +18,6 @@ import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.wwscc.storage.Database;
 import org.wwscc.storage.LeftRightDialin;
 import org.wwscc.storage.Run;
 import org.wwscc.util.MT;
@@ -162,8 +161,8 @@ public final class TimerClient implements RunServiceInterface
     protected void processLine(String line) throws IOException
     {
         ObjectNode msg = (ObjectNode) objectMapper.readTree(line);
+        Messenger.sendEvent(MT.TIMER_SERVICE_DATA, msg);
         String type = msg.get("type").asText();
-        Database.d.recordEvent(type, msg);
         switch (type)
         {
             case TREE_MESSAGE:

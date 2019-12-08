@@ -54,6 +54,7 @@ import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.dialogs.SimpleFinderDialog;
+import org.wwscc.storage.Database;
 import org.wwscc.storage.Run;
 import org.wwscc.timercomm.TimerClient;
 import org.wwscc.util.Discovery;
@@ -65,6 +66,9 @@ import org.wwscc.util.NF;
 import org.wwscc.util.SerialDebugPane;
 import org.wwscc.util.SerialPortUtil;
 import org.wwscc.util.SerialPortUtil.LineBasedSerialPort;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.wwscc.util.TimeStorage;
 import org.wwscc.util.TimeTextField;
 
@@ -141,6 +145,7 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
     {
         super();
         Messenger.register(MT.TIMER_TAKES_FOCUS, this);
+        Messenger.register(MT.TIMER_SERVICE_DATA, this);
         Messenger.register(MT.TIMER_SERVICE_CONNECTION_CLOSED, this);
         Messenger.register(MT.OBJECT_DCLICKED, this);
         Messenger.register(MT.EVENT_CHANGED, this);
@@ -656,6 +661,13 @@ public class TimeEntry extends JPanel implements ListSelectionListener, ListData
             case TIMER_SERVICE_CONNECTION_CLOSED:
                 if ((TimerClient)o == tclient)
                     modeGroup.setSelected(Mode.OFF);
+                break;
+
+            case TIMER_SERVICE_DATA:
+                // We record all incoming timer service data to a local event stream to capture stuff for announcer site
+                ObjectNode msg = (ObjectNode)o;
+                String t = msg.get("type").asText();
+                Database.d.recordEvent(t, msg);
                 break;
 
             case TIME_ENTER_REQUEST:

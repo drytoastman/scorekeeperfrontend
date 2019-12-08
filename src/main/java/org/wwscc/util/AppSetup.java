@@ -24,23 +24,16 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
-
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 /**
  */
 public class AppSetup
 {
-    public static enum Mode { SWING_MODE, FX_MODE };
-
     public static void unitLogging()
     {
         // Start with a fresh root set at warning
@@ -65,10 +58,10 @@ public class AppSetup
      */
     public static void appSetup(String name)
     {
-        appSetup(name, Mode.SWING_MODE);
+        appSetup(name, new AlertHandlerSwing());
     }
 
-    public static void appSetup(String name, Mode mode)
+    public static void appSetup(String name, AlertHandler ahandler)
     {
         // Set our platform wide L&F
         System.setProperty("swing.defaultlaf", "javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -97,7 +90,7 @@ public class AppSetup
         // For our own logs, we can set super fine level or info depending on if debug mode and attach dialogs to those
         Logger applog = Logger.getLogger("org.wwscc");
         applog.setLevel(Prefs.getLogLevel().getJavaLevel());
-        applog.addHandler(new AlertHandler(mode));
+        //applog.addHandler(ahandler);
 
         // Add console handler if running in debug mode
         if (Prefs.isDebug()) {
@@ -135,74 +128,6 @@ public class AppSetup
                 IdGenerator.generateId();
             }
         }.start();
-    }
-
-    /**
-     * Special handler that looks for the unprintable backspace '\b' character in a log record
-     * as an indicator that it should throw up a dialog with the record message.  This lets us
-     * still log warning and severe messages but only use a dialog when requested and with
-     * a very easy indicator that works inside the java logging framework.
-     */
-    public static class AlertHandler extends Handler
-    {
-        Mode mode;
-        public AlertHandler(Mode mode)
-        {
-            this.mode = mode;
-            setLevel(Level.ALL);
-            setFormatter(new SimpleFormatter());
-        }
-
-        public void publish(LogRecord logRecord)
-        {
-            if (isLoggable(logRecord))
-            {
-                AlertType fxtype;
-                int swingtype;
-                String title;
-                if (logRecord.getMessage().charAt(0) != '\b') {
-                    return;
-                }
-
-                int val = logRecord.getLevel().intValue();
-                if (val >= Level.SEVERE.intValue())
-                {
-                    title = "Error";
-                    swingtype = JOptionPane.ERROR_MESSAGE;
-                    fxtype = AlertType.ERROR;
-                }
-                else if (val >= Level.WARNING.intValue())
-                {
-                    title = "Warning";
-                    swingtype = JOptionPane.WARNING_MESSAGE;
-                    fxtype = AlertType.WARNING;
-                }
-                else
-                {
-                    title = "Note";
-                    swingtype = JOptionPane.INFORMATION_MESSAGE;
-                    fxtype = AlertType.INFORMATION;
-                }
-
-                final String record = getFormatter().formatMessage(logRecord).replaceAll("[\b]","");
-
-                if (mode.equals(Mode.FX_MODE)) {
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(fxtype);
-                        alert.setTitle(title);
-                        alert.setHeaderText(null);
-                        alert.setContentText(record);
-                        alert.showAndWait();
-                    });
-                } else {
-                    final String msg = (record.contains("\n")) ? "<HTML>" + record.replace("\n", "<br>") + "</HTML>" : record;
-                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, swingtype));
-                }
-            }
-        }
-
-        public void flush() {}
-        public void close() {}
     }
 
     public static class SingleLineFormatter extends Formatter

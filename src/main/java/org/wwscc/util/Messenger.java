@@ -2,10 +2,9 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2008 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2019 Brett Wilson.
  * All rights reserved.
  */
-
 
 package org.wwscc.util;
 
@@ -17,23 +16,28 @@ import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 
-import javafx.application.Platform;
-
 public class Messenger
 {
-    private static enum Mode { SWING_THREAD, FX_THREAD, SENDER_THREAD };
+    private static enum Mode { SWING_THREAD, CALLBACK, SENDER_THREAD };
     private static final Logger log = Logger.getLogger(Messenger.class.getCanonicalName());
     private static EnumMap<MT, Set<MessageListener>> listPtrs = new EnumMap<MT, Set<MessageListener>>(MT.class);
     private static Mode mode = Mode.SWING_THREAD;
+    private static SendMessageCallback callback = null;
+
+    public static interface SendMessageCallback
+    {
+        public void sendEvent(final MT type, final Object data);
+    }
 
     static public void setTestMode()
     {
         mode = Mode.SENDER_THREAD;
     }
 
-    static public void setFXMode()
+    static public void setCallbackMode(SendMessageCallback intf)
     {
-        mode = Mode.FX_THREAD;
+        mode = Mode.CALLBACK;
+        callback = intf;
     }
 
     static public synchronized void unregisterAll(MessageListener listener)
@@ -70,8 +74,8 @@ public class Messenger
                 SwingUtilities.invokeLater(() -> sendEventNowWrapper(type, data));
                 break;
 
-            case FX_THREAD:
-                Platform.runLater(() -> sendEventNowWrapper(type, data));
+            case CALLBACK:
+                callback.sendEvent(type,  data);
                 break;
 
             case SENDER_THREAD:
@@ -81,7 +85,7 @@ public class Messenger
         }
     }
 
-    private static void sendEventNowWrapper(MT type, Object data)
+    public static void sendEventNowWrapper(MT type, Object data)
     {
         try {
             sendEventNow(type, data);

@@ -9,13 +9,19 @@
 package org.wwscc.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.wwscc.dialogs.PortDialog;
+import javax.swing.JRadioButton;
+
+import org.wwscc.dialogs.BaseDialog;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
+
+import net.miginfocom.swing.MigLayout;
 
 public class SerialPortUtil
 {
@@ -46,6 +52,52 @@ public class SerialPortUtil
             return null;
         return s;
     }
+
+    static class PortDialog extends BaseDialog<String>
+    {
+        public PortDialog(String def, Collection<String> available, Collection<String> unavailable)
+        {
+            super(new MigLayout(""), false);
+
+            ArrayList<String> ports = new ArrayList<String>();
+            ports.addAll(available);
+            ports.addAll(unavailable);
+            Collections.sort(ports);
+
+            for (String p : ports)
+            {
+                JRadioButton rb = radio(p);
+                rb.addActionListener(e -> ok.setEnabled(verifyData()));
+                mainPanel.add(rb, "w 150!, gapleft 20, wrap");
+                if (unavailable.contains(p))
+                    radioEnable(p, false);
+            }
+
+            if (ports.size() == 0) {
+                mainPanel.add(label("No ports found", true), "spanx 2, center");
+            } else if (available.size() == 0){
+                mainPanel.add(label("All ports in use", true), "spanx 2, center");
+            }
+
+            result = null;
+            setSelectedRadio(def);
+            ok.setEnabled(verifyData());
+        }
+
+        @Override
+        public boolean verifyData()
+        {
+            result = getSelectedRadio();
+            return (result != null) && !result.equals("");
+        }
+
+        @Override
+        public String getResult()
+        {
+            return result;
+        }
+    }
+
 
     /**
      * Base class for common serial port wrapping features
