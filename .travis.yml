@@ -34,7 +34,7 @@ deploy:
     skip_cleanup: true
     file_glob: true
     file:
-      - "build/final/*"
+      - "build/runtime/*.zip"
     on:
       tags: true
 
