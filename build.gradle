@@ -32,10 +32,7 @@ version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
 def target = System.getProperty("target", getOSName())
 def fxver = "13"
-def basejdk  = file("jdk-12.0.2+10")
-def macjdk   = file("jdk-12.0.2+10-mac")
-def winjdk   = file("jdk-12.0.2+10-win")
-def linuxjdk = file("jdk-12.0.2+10-linux")
+def targetjdk = file("jdk-12.0.2+10-${target}")
 
 repositories {
     jcenter()
@@ -72,39 +69,40 @@ jar {
     }
 }
 
-task macJDK() {
+task targetJDK() {
     doLast {
-        if (!macjdk.exists()) {
-            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10.3/OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz',
-                    dest: 'mac.tar.gz')
-            copy { from tarTree(resources.gzip('mac.tar.gz')) into projectDir }
-            file(basejdk.toString()+'/Contents/Home').renameTo(macjdk)
-            basejdk.deleteDir()
+        def basejdk = file("jdk-12.0.2+10")
+        if (!targetjdk.exists()) {
+            switch (target) {
+                case 'mac':
+                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10.3/OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz',
+                            dest: 'mac.tar.gz')
+                    copy { from tarTree(resources.gzip('mac.tar.gz')) into projectDir }
+                    file(basejdk.toString()+'/Contents/Home').renameTo(targetjdk)
+                    basejdk.deleteDir()
+                    break
+
+                case 'win':
+                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
+                            dest: 'win.zip')
+                    copy { from zipTree('win.zip') into projectDir }
+                    basejdk.renameTo(targetjdk)
+                    break
+
+                case 'linux':
+                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz',
+                            dest: 'linux.tar.gz')
+                    copy { from tarTree(resources.gzip('linux.tar.gz')) into projectDir }
+                    basejdk.renameTo(targetjdk)
+                    break
+
+                default:
+                    throw new Exception("Unknown target")
+            }
         }
     }
 }
 
-task linuxJDK() {
-    doLast {
-        if (!linuxjdk.exists()) {
-            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz',
-                    dest: 'linux.tar.gz')
-            copy { from tarTree(resources.gzip('linux.tar.gz')) into projectDir }
-            basejdk.renameTo(linuxjdk)
-        }
-    }
-}
-
-task winJDK() {
-    doLast {
-        if (!winjdk.exists()) {
-            ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
-                    dest: 'win.zip')
-            copy { from zipTree('win.zip') into projectDir }
-            basejdk.renameTo(winjdk)
-        }
-    }
-}
 
 def jmodules = [
     'java.base',
@@ -130,13 +128,14 @@ def jmodules = [
 task scruntime (type: Exec) {
     afterEvaluate { project ->
         dependsOn(installDist)
-        dependsOn(target+"JDK")
+        dependsOn(targetJDK)
     }
-    commandLine "echo", "createdist.py",
+    commandLine "python3", "createdist.py",
         "--modules", jmodules.join(","),
-        "--jdk",  "$basejdk-$target",
-        "--dest", "build/runtime/$target",
-        "--app",   installDist.destinationDir
+        "--jdk",     targetjdk,
+        "--target",  target,
+        "--version", version,
+        "--app",     installDist.destinationDir
 }
 
 task ver {

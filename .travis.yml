@@ -3,7 +3,7 @@ services: [docker]
 language: java
 
 before_install:
-  - ./gradlew linuxJDK
+  - ./gradlew -D target=linux targetJDK
   - export JAVA_HOME=$PWD/jdk-12.0.2+10-linux
   - export PATH=$JAVA_HOME/bin:$PATH
 
@@ -22,11 +22,9 @@ script:
 after_success:
   - |
     if [ ! -z "$TRAVIS_TAG" ]; then
-      ./gradlew macJDK winJDK;
-      ./gradlew -D target=linux runtimeZip
-      ./gradlew -D target=mac runtimeZip;
-      ./gradlew -D target=win runtimeZip;
-      ./gradlew wininstaller;
+      ./gradlew -D target=linux scruntime;
+      ./gradlew -D target=mac scruntime;
+      ./gradlew -D target=win scruntime;
     fi
 
 deploy:
