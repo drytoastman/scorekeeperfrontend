@@ -10,7 +10,6 @@ package org.wwscc.system;
 
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -19,10 +18,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.FocusManager;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileFilter;
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.storage.Database;
@@ -66,7 +62,7 @@ public class ScorekeeperSystem
         Messenger.register(MT.BACKUP_REQUEST,        (t,d) -> cmonitor.backupRequest());
         Messenger.register(MT.IMPORT_REQUEST,        (t,d) -> importRequest((File)d));
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
-        Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest(false));
+        Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest());
         Messenger.register(MT.DOWNLOAD_NEW_REQUEST,  (t,d) -> downloadNewRequest((MergeServer)d));
         Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((Set<String>)d));
         Messenger.register(MT.DOCKER_NOT_OK,         (t,d) -> mdiag.doDialog("Docker Check", e -> {}, window));
@@ -124,7 +120,7 @@ public class ScorekeeperSystem
         new Thread(launch, "LaunchedApp").start();
     }
 
-    public void shutdownRequest(boolean prepareonly)
+    public void shutdownRequest()
     {
         if (shutdownstarted)
         {   // Quit called a second time while shutting down, just quit now
@@ -132,31 +128,28 @@ public class ScorekeeperSystem
             System.exit(-1);
         }
 
-        if (!prepareonly)
+        if (usingmachine)
         {
-            if (usingmachine)
-            {
-                Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
-                int result = JOptionPane.showOptionDialog(window, "<html>" +
-                        "This will stop all applications including the database and web server.<br/>" +
-                        "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;",
-                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-                if (result == 2)
-                    return;
-                mmonitor.stopMachine(result == 1);
-            }
-            else
-            {
-                Object[] options = { "Shutdown Scorekeeper", "Cancel" };
-                int result = JOptionPane.showOptionDialog(window, "<html>" +
-                        "This will stop all applications including the database and web server.",
-                        "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
-                if (result == 1)
-                    return;
-            }
-
-            Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
+            Object[] options = { "Shutdown Scorekeeper", "Shutdown Scorekeeper and VM", "Cancel" };
+            int result = JOptionPane.showOptionDialog(window, "<html>" +
+                    "This will stop all applications including the database and web server.<br/>" +
+                    "You can also shutdown the Virtual Machine if you are shutting down/logging off.<br/>&nbsp;",
+                    "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+            if (result == 2)
+                return;
+            mmonitor.stopMachine(result == 1);
         }
+        else
+        {
+            Object[] options = { "Shutdown Scorekeeper", "Cancel" };
+            int result = JOptionPane.showOptionDialog(window, "<html>" +
+                    "This will stop all applications including the database and web server.",
+                    "Shutdown Scorekeeper", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+            if (result == 1)
+                return;
+        }
+
+        Messenger.sendEventNow(MT.OPEN_STATUS_REQUEST, null);
 
         Runnable shutdown = () -> {
             // first shutdown all the things with database connections
@@ -176,6 +169,7 @@ public class ScorekeeperSystem
         new Thread(shutdown, "ShutdownThread").start();
     }
 
+
     public void downloadNewRequest(MergeServer server)
     {
         SeriesSelectionDialog hd = new SeriesSelectionDialog(cmonitor, server.getConnectEndpoint());
@@ -193,50 +187,14 @@ public class ScorekeeperSystem
     }
 
 
-    class CertsFileFilter extends FileFilter {
-        public boolean accept(File f) {
-            if (f.isDirectory()) {
-                return true;
-            }
-            for (String ext : new String[] { ".tgz", ".tar.gz", ".tar" }) {
-                if (f.getName().endsWith(ext)) return true;
-            }
-            return false;
-        }
-        public String getDescription() {
-            return "Certs Archive File (.tar, .tar.gz, .tgz)";
-        }
-    }
-
     /**
      * This actually starts the threads in the program and then waits for
      * them to finish.  We can't used thread.join as it breaks thread.notify
      * behavior during regular runtime.
      */
-    private boolean prepared = false;
-    public void startAndWaitForThreads(boolean prepareonly)
+    public void startAndWaitForThreads()
     {
-        Path certsfile = null;
-
-        if (prepareonly) {
-            Messenger.register(MT.BACKEND_STATUS, (t, o) -> { prepared = o.equals("Running"); });
-
-            if (JOptionPane.showConfirmDialog(window, "Do you want to load an initial or new set of certificates?", "Certificate Load", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
-                fc.setDialogTitle("Select the new certificates archive file");
-                fc.setFileFilter(new CertsFileFilter());
-                if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) == JFileChooser.APPROVE_OPTION) {
-                    certsfile = fc.getSelectedFile().toPath();
-                }
-            }
-
-            // this stays on top while while the rest continues, user can dismiss if they want
-            new BaseDialog.MessageOnly(
-                    "Currently making sure all docker images are downloaded and a database is successfully created.  Will exit when done.")
-                    .doDialog("Preparing System", e -> {}, window);
-        }
-
-        cmonitor = new ContainerMonitor(certsfile);
+        cmonitor = new ContainerMonitor();
         cmonitor.start();
         mmonitor = new MachineMonitor();
         mmonitor.start();
@@ -244,15 +202,6 @@ public class ScorekeeperSystem
         pmonitor.start();
 
         try {
-            if (prepareonly) {
-                // wait for either prep to finish or a user request to shutdown
-                while (!prepared && !shutdownstarted)
-                    Thread.sleep(300);
-                // if user did not request a shutdown, we do so here
-                if (!shutdownstarted)
-                    shutdownRequest(true);
-            }
-
             // wait for two monitor threads to finish
             while (mmonitor.isAlive() || cmonitor.isAlive())
                 Thread.sleep(300);
@@ -277,7 +226,7 @@ public class ScorekeeperSystem
             System.exit(-1);
         }
 
-        new ScorekeeperSystem().startAndWaitForThreads(args.length > 0 && args[0].equals("dockerprepare"));
+        new ScorekeeperSystem().startAndWaitForThreads();
         System.exit(0);
     }
 }

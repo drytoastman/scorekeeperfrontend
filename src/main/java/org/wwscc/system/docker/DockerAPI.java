@@ -420,12 +420,15 @@ public class DockerAPI
             request(new Requests.PullImage(image));
         }
 
+
         listener.status("Create volume"); // ensure volume is created
         if (volumes.getVolumes().stream().anyMatch(v -> v.getName().equals(volname))) {
             request(new Requests.CreateVolume(volname));
         }
 
         // start container, do the upload and tear down
+        try { listener.status("Clear old copier");  request(new Requests.Kill(c.getName())); } catch (IOException ioe) {}
+        try { listener.status("Remove old copier"); request(new Requests.Rm(c.getName()));   } catch (IOException ioe) {}
         listener.status("Create copier");   request(new Requests.CreateContainer(c));
         listener.status("Start copier");    request(new Requests.Start(c.getName()));
         listener.status("Loading certs");   request(new Requests.Upload("volload", "/vol", tarfile.toFile()));

@@ -49,7 +49,7 @@ public class ContainerMonitor extends MonitorBase
     private DockerContainer db, web, sync;
     private BroadcastState<String> status;
     private BroadcastState<String> containers;
-    private Path importRequestFile, certsFile;
+    private Path importRequestFile;
     private BackupRequest backupRequest;
     private boolean machineready, restartsync;
     private String lastcheck;
@@ -68,7 +68,7 @@ public class ContainerMonitor extends MonitorBase
     public static String conname(String name) { return String.format("%s_%s_1", Prefs.getVersionBase(), name); }
 
     @SuppressWarnings("unchecked")
-    public ContainerMonitor(Path certsfile)
+    public ContainerMonitor()
     {
         super("ContainerMonitor", 5000);
         docker       = new DockerAPI();
@@ -80,7 +80,6 @@ public class ContainerMonitor extends MonitorBase
         lastcheck    = "";
         backupRequest = null;
         importRequestFile = null;
-        certsFile     = certsfile;
 
         db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME);
         db.addVolume(volname("database"),  "/var/lib/postgresql/data");
@@ -125,15 +124,6 @@ public class ContainerMonitor extends MonitorBase
         status.set("Waiting for Docker API");
         while (!done && !docker.isReady())
             donefornow();
-
-        if (certsFile != null) {
-            try {
-                docker.loadVolume(CERTS_VOL, certsFile, s -> { status.set(s); });
-            } catch (IOException ioe) {
-                log.log(Level.SEVERE, "Failed to load certs file: " + ioe, ioe);
-                return false;
-            }
-        }
 
         if (!external_backend) {
             status.set( "Clearing old containers");
