@@ -106,6 +106,9 @@ public class Prefs
 
     public static String getFullVersion()
     {
+        String s = System.getenv("OVERRIDE_VERSION");
+        if (s != null) return s;
+
         Package p = Prefs.class.getPackage();
         if (p == null) return "latest";
         String v = p.getImplementationVersion();

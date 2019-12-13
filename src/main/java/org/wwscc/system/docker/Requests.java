@@ -126,9 +126,9 @@ public class Requests
             super(new HttpGet(API_VER+"/networks"), Network[].class);
     }}
 
-    static class PullImage extends Wrapper<Void> {
+    static class PullImage extends Wrapper<InputStream> {
         public PullImage(String name) {
-            super(new HttpPost(API_VER+"/images/create?fromImage="+name));
+            super(new HttpPost(API_VER+"/images/create?fromImage="+name), InputStream.class);
     }}
 
     static class GetNetwork extends Wrapper<Network> {

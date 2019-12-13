@@ -8,12 +8,14 @@
 
 package org.wwscc.system.docker;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
@@ -59,6 +61,7 @@ import org.kamranzafar.jtar.TarOutputStream;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.wwscc.system.docker.SocketFactories.UnixSocketFactory;
@@ -90,6 +93,7 @@ public class DockerAPI
     HttpHost host;
     ExecutorService executor;
     Map<String, String> lastenv;
+    boolean pullCancelFlag = false;
 
     public class DockerDownException extends IOException {
         public DockerDownException() {
@@ -298,13 +302,59 @@ public class DockerAPI
 
             listener.status("Download " + container.getImage());
             try {
-                request(new Requests.PullImage(container.getImage()));
+                pullCancelFlag = false;
+                pullStatusHandler(container.getImage(), request(new Requests.PullImage(container.getImage())));
             } catch (IOException ioe) {
+                if (pullCancelFlag)
+                    return;
                 log.severe("Download of " + container.getImage() + " failed: " + ioe);
                 if (warned.add(container.getImage())) {
                     log.severe("\bUnable to download backend image " + container.getImage() + ", you must be online to do so");
                 }
             }
+        }
+    }
+
+
+    private void pullStatusHandler(String image, InputStream in) throws IOException
+    {
+        BufferedReader buf = new BufferedReader(new InputStreamReader(in));
+        PullStatusDialog d = new PullStatusDialog(image);
+
+        try {
+            d.doDialog("Download Status", o -> {
+                try {
+                    pullCancelFlag = true;
+                    in.close();
+                } catch (Throwable ioe) {
+                    log.warning("User pull cancel failed: " + ioe);
+                }
+            });
+
+            String line;
+            while ((line = buf.readLine()) != null) {
+                line = line.strip();
+                if (line.charAt(0) != '{') continue;
+                JsonNode n = mapper.readTree(line);
+                if (!n.has("progressDetail")) continue;
+
+                String status = n.get("status").asText();  // Waiting/Downloading(P)/Extracting(P)/(Download complete,etc)
+                JsonNode pd = n.get("progressDetail");
+                if (pd != null) {
+                    String id = n.get("id").asText();
+                    if (pd.has("current") && pd.has("total")) {
+                        int current = pd.get("current").asInt();
+                        int total   = pd.get("total").asInt();
+                        d.setStatus(id, current, total, status);
+                    } else {
+                        d.setStatus(id, status);
+                    }
+                }
+            }
+
+
+        } finally {
+            d.close();
         }
     }
 
