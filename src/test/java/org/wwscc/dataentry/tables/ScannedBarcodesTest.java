@@ -56,6 +56,7 @@ public class ScannedBarcodesTest
             paid = p;
         }
         public boolean hasPaid() { return paid; }
+        public boolean canAdd()  { return true; }  // !inAnyRunOrder
     }
 
     class DatabaseShim extends FakeDatabase {
@@ -72,6 +73,7 @@ public class ScannedBarcodesTest
         @Override public void registerCar(UUID eventid, UUID carid, String session) throws Exception { registered++; }
         @Override public List<Driver> findDriverByBarcode(String barcode) { return drivers; }
         @Override public List<Car> getRegisteredCars(UUID driverid, UUID eventid) { return new ArrayList<Car>(cars.values()); }
+        @Override public Car getCar(UUID carid) { return cars.get(carid); }
         @Override public String getEffectiveIndexStr(Car c) { return "i1"; }
         @Override public ClassData getClassData() { return classdata; }
         @Override public DecoratedCar decorateCar(Car c, ApplicationState state) { return (TestDecoratedCar)c; }
