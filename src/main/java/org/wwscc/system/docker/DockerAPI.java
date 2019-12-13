@@ -8,6 +8,7 @@
 
 package org.wwscc.system.docker;
 
+import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -319,17 +320,20 @@ public class DockerAPI
     private void pullStatusHandler(String image, InputStream in) throws IOException
     {
         BufferedReader buf = new BufferedReader(new InputStreamReader(in));
-        PullStatusDialog d = new PullStatusDialog(image);
+        PullStatusDialog d = null;
 
         try {
-            d.doDialog("Download Status", o -> {
-                try {
-                    pullCancelFlag = true;
-                    in.close();
-                } catch (Throwable ioe) {
-                    log.warning("User pull cancel failed: " + ioe);
-                }
-            });
+            if (!GraphicsEnvironment.isHeadless()) {
+                d = new PullStatusDialog(image);
+                d.doDialog("Download Status", o -> {
+                    try {
+                        pullCancelFlag = true;
+                        in.close();
+                    } catch (Throwable ioe) {
+                        log.warning("User pull cancel failed: " + ioe);
+                    }
+                });
+            }
 
             String line;
             while ((line = buf.readLine()) != null) {
@@ -340,7 +344,7 @@ public class DockerAPI
 
                 String status = n.get("status").asText();  // Waiting/Downloading(P)/Extracting(P)/(Download complete,etc)
                 JsonNode pd = n.get("progressDetail");
-                if (pd != null) {
+                if ((d != null) && (pd != null)) {
                     String id = n.get("id").asText();
                     if (pd.has("current") && pd.has("total")) {
                         int current = pd.get("current").asInt();
@@ -354,7 +358,8 @@ public class DockerAPI
 
 
         } finally {
-            d.close();
+            if (d != null)
+                d.close();
         }
     }
 
