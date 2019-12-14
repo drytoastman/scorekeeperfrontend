@@ -10,11 +10,7 @@ package org.wwscc.system;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +24,9 @@ import org.wwscc.util.Messenger;
 import org.wwscc.util.Network;
 import org.wwscc.util.Prefs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -37,12 +36,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
 {
+    private static ObjectMapper objectMapper = new ObjectMapper();
     private static final Logger log = Logger.getLogger(FrontEndMonitor.class.getName());
 
     boolean paused;
     boolean backendready;
     BroadcastState<InetAddress> address;
-    Map<InetAddress, Set<String>> neighbors;
+    ObjectNode neighbors;
 
     public FrontEndMonitor()
     {
@@ -50,7 +50,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         paused = true; // we start in the 'paused' state
         backendready = false;
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
-        neighbors = new ConcurrentHashMap<>();
+        neighbors = objectMapper.createObjectNode();
 
         Messenger.register(MT.DISCOVERY_CHANGE,   (type, data) -> updateDiscoverySetting((boolean)data));
         Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> {
@@ -111,16 +111,17 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
                 Discovery.get().addServiceListener(this);
                 Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
                 Messenger.sendEvent(MT.DISCOVERY_OK, true);
-                DNSServer.start(neighbors);
+                MDNSProxy.start();
             }
             else
             {
-                DNSServer.stop();
+                MDNSProxy.stop();
                 Messenger.sendEvent(MT.DISCOVERY_OK, false);
                 Discovery.get().removeServiceListener(this);
                 Discovery.get().unregisterService(Prefs.getServerId(), Discovery.DATABASE_TYPE);
 
-                neighbors.clear();
+                neighbors.removeAll();
+                Database.d.recordCache("neighbors", "{}");
                 for (MergeServer m : Database.d.getMergeServers()) {
                     if (!m.isRemote() && m.isActive()) {
                         Database.d.mergeServerDeactivate(m.getServerId());
@@ -137,9 +138,24 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
     @Override
     public void serviceChange(UUID serverid, String service, InetAddress src, ObjectNode data, boolean up)
     {
-        Set<String> sset = neighbors.computeIfAbsent(src, k -> new HashSet<>());
-        if (up) sset.add(service);
-        else    sset.remove(service);
+        ArrayNode a = neighbors.withArray(src.getHostAddress());
+        if (up)  {
+            if (a.findValue(service) == null)
+                a.add(service);
+        } else {
+            for (int ii = 0; ii < a.size(); ii++) {
+                if (a.get(ii).asText().equals(service)) {
+                    a.remove(ii);
+                    break;
+                }
+            }
+        }
+
+        try {
+            Database.d.recordCache("neighbors", objectMapper.writeValueAsString(neighbors));
+        } catch (JsonProcessingException e) {
+            log.warning("Failed to write neighbors cache: " + e);
+        }
 
         if (!service.equals(Discovery.DATABASE_TYPE))
             return;

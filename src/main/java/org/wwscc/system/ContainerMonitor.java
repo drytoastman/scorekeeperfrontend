@@ -46,7 +46,7 @@ public class ContainerMonitor extends MonitorBase
 
     private DockerAPI docker;
     private List<DockerContainer> all, nondb;
-    private DockerContainer db, web, sync;
+    private DockerContainer db, web, sync, dns;
     private BroadcastState<String> status;
     private BroadcastState<String> containers;
     private Path importRequestFile;
@@ -107,6 +107,14 @@ public class ContainerMonitor extends MonitorBase
         all.add(sync);
         nondb.add(sync);
 
+        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME);
+        dns.addCmdItem("dnsserver");
+        dns.addVolume(volname("logs"),  "/var/log");
+        dns.addVolume(volname("socket"), "/var/run/postgresql");
+        dns.addPort("0.0.0.0", 53, 53, "udp");
+        all.add(dns);
+        nondb.add(dns);
+
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(sync) );
         Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
@@ -127,7 +135,7 @@ public class ContainerMonitor extends MonitorBase
 
         if (!external_backend) {
             status.set( "Clearing old containers");
-            docker.teardown(all, s -> {});
+            docker.teardown(all, (c,t) -> status.set(String.format("Clear Step %d of %d", c, t)));
 
             status.set( "Establishing Network");
             long starttime = System.currentTimeMillis();
@@ -234,7 +242,10 @@ public class ContainerMonitor extends MonitorBase
 
         status.set("Shutting down ...");
         if (!external_backend) {
-            docker.teardown(all, s -> { status.set(s); });
+            List<DockerContainer> justdb = new ArrayList<>();
+            justdb.add(db);
+            docker.teardown(nondb,  (c,t) -> status.set(String.format("Shutdown Step %d of %d", c, t)));
+            docker.teardown(justdb, (c,t) -> status.set(String.format("Final Step %d of %d", c, t)));
         }
         containers.set("");
         status.set("Done");

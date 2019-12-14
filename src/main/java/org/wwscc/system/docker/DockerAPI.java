@@ -557,7 +557,7 @@ public class DockerAPI
     }
 
 
-    public void teardown(Collection<DockerContainer> containers, DockerStatusListener listener)
+    public void teardown(Collection<DockerContainer> containers, DockerParallelStatusListener listener)
     {
         List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
         for (DockerContainer c : containers) {
@@ -567,7 +567,7 @@ public class DockerAPI
             outer.add(inner);
         }
 
-        parallelAndReport("teardown", outer, (c,t) -> { listener.status(String.format("Shutdown Step %d of %d", c, t)); });
+        parallelAndReport("teardown", outer, listener);
     }
 
 

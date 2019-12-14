@@ -51,7 +51,6 @@ public enum MT {
     DOCKER_NOT_OK,
     DOCKER_OK,
     // Frontend
-    DNS_OK,
     MDNS_OK,
     DISCOVERY_OK,
 

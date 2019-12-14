@@ -295,7 +295,7 @@ public class ScorekeeperStatusWindow extends JFrame
             } else if (txt.equalsIgnoreCase("Not Needed")) {
                 setBackground(nnbg);
                 setForeground(nnfg);
-            } else if (txt.equals("web")) {
+            } else if (txt.equals("web") || txt.equals("dns") || txt.equals("web,dns")) {
                 setBackground(warnbg);
                 setForeground(warnfg);
             } else {
@@ -307,7 +307,6 @@ public class ScorekeeperStatusWindow extends JFrame
 
     class NetworkStatusLabel extends StatusLabel
     {
-        boolean unicast = false;
         boolean multicast = false;
         boolean discovery = false;
         InetAddress ip = null;
@@ -316,14 +315,13 @@ public class ScorekeeperStatusWindow extends JFrame
         {
             super(null);
             Messenger.register(MT.NETWORK_CHANGED, (t, d) -> { ip    = (InetAddress)d; update(); });
-            Messenger.register(MT.DNS_OK,          (t, d) -> { unicast   = (boolean)d; update(); });
             Messenger.register(MT.MDNS_OK,         (t, d) -> { multicast = (boolean)d; update(); });
             Messenger.register(MT.DISCOVERY_OK,    (t, d) -> { discovery = (boolean)d; update(); });
         }
 
         protected void update()
         {
-            if (ip != null && discovery && unicast && multicast) {
+            if (ip != null && discovery && multicast) {
                 setBackground(okbg);
                 setForeground(okfg);
                 setText(ip.getHostAddress());
@@ -333,9 +331,8 @@ public class ScorekeeperStatusWindow extends JFrame
                 String text = ip.getHostAddress();
                 if (!discovery) {
                     text += ", Discovery Off";
-                } else {
-                    if (!unicast)   text += ", No DNS";
-                    if (!multicast) text += ", No MDNS";
+                } else if (!multicast) {
+                    text += ", No MDNS";
                 }
                 setText(text);
             } else {
