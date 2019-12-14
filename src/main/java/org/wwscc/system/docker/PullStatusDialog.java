@@ -31,6 +31,7 @@ public class PullStatusDialog extends BaseDialog<Void>
         header = new JLabel("Pulling " + name + " layers");
         mainPanel.add(header, "gapbottom 10, spanx 2, wrap");
         buttonPanel.remove(ok);
+        cancel.setText("Close");
     }
 
     private JProgressBar newBar(String id)

@@ -26,6 +26,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.swing.FocusManager;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
@@ -196,7 +197,14 @@ public class AppSetup
                     });
                 } else {
                     final String msg = (record.contains("\n")) ? "<HTML>" + record.replace("\n", "<br>") + "</HTML>" : record;
-                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(FocusManager.getCurrentManager().getActiveWindow(), msg, title, swingtype));
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane p = new JOptionPane(msg, swingtype);
+                        JDialog d = p.createDialog(title);
+                        d.setAlwaysOnTop(true);
+                        d.setLocationRelativeTo(FocusManager.getCurrentManager().getActiveWindow());
+                        d.setVisible(true);
+                    });
+
                 }
             }
         }

@@ -94,7 +94,6 @@ public class DockerAPI
     HttpHost host;
     ExecutorService executor;
     Map<String, String> lastenv;
-    boolean pullCancelFlag = false;
 
     public class DockerDownException extends IOException {
         public DockerDownException() {
@@ -303,11 +302,8 @@ public class DockerAPI
 
             listener.status("Download " + container.getImage());
             try {
-                pullCancelFlag = false;
                 pullStatusHandler(container.getImage(), request(new Requests.PullImage(container.getImage())));
             } catch (IOException ioe) {
-                if (pullCancelFlag)
-                    return;
                 log.severe("Download of " + container.getImage() + " failed: " + ioe);
                 if (warned.add(container.getImage())) {
                     log.severe("\bUnable to download backend image " + container.getImage() + ", you must be online to do so");
@@ -325,14 +321,7 @@ public class DockerAPI
         try {
             if (!GraphicsEnvironment.isHeadless()) {
                 d = new PullStatusDialog(image);
-                d.doDialog("Download Status", o -> {
-                    try {
-                        pullCancelFlag = true;
-                        in.close();
-                    } catch (Throwable ioe) {
-                        log.warning("User pull cancel failed: " + ioe);
-                    }
-                });
+                d.doDialog("Download Status", v -> {});
             }
 
             String line;
@@ -472,9 +461,8 @@ public class DockerAPI
 
         listener.status("Download alpine"); // ensure image is available
         if ((islist == null) || !Arrays.asList(islist).stream().anyMatch(is -> is.getRepoTags().contains(image))) {
-            request(new Requests.PullImage(image));
+            pullStatusHandler(image, request(new Requests.PullImage(image)));
         }
-
 
         listener.status("Create volume"); // ensure volume is created
         if (volumes.getVolumes().stream().anyMatch(v -> v.getName().equals(volname))) {
