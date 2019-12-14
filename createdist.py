@@ -7,9 +7,9 @@ import subprocess
 import sys
 
 
-BASH = """#!/usr/bin/env sh
+BASH = """#!/usr/bin/env bash
 cd $(dirname ${{BASH_SOURCE[0]}})/bin
-java -classpath {classpath} {mainclass}
+./java -classpath {classpath} {mainclass}
 """
 
 BATCH = """cd %~dp0bin
