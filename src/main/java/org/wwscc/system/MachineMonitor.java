@@ -179,6 +179,8 @@ public class MachineMonitor extends MonitorBase
                 forwardPort("*", 80);
             if (missing.contains("54329"))
                 forwardPort("*", 54329);
+            if (missing.contains("53"))
+                forwardPort("127.0.0.1", 53);
             missing = missingPorts();
         }
         catch (Exception jse)
@@ -187,6 +189,7 @@ public class MachineMonitor extends MonitorBase
             return;
         }
 
+        missing.remove("53");
         if (missing.size() > 0)
             status.set("Ports " + String.join(",", missing));
         else
@@ -204,7 +207,7 @@ public class MachineMonitor extends MonitorBase
 
     private List<String> missingPorts()
     {
-        List<String> ret = new ArrayList<String>(Arrays.asList(new String[] { "6432", "80", "54329" }));
+        List<String> ret = new ArrayList<String>(Arrays.asList(new String[] { "6432", "80", "54329", "53" }));
         try {
             for (String s : ports.getPortForwardingL())
                 ret.remove(s.split(":")[0]);
