@@ -12,39 +12,29 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import org.wwscc.util.BroadcastState;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
-import org.wwscc.util.Network;
+import org.xbill.DNS.Message;
+import org.xbill.DNS.SimpleResolver;
 
 /**
- * Proxy MDNS UDP packets to 127.0.0.1:53/udp as docker doesn't do multicast
+ * We can't easily forward UDP packets over VBox interface to get to our backend services.
+ * In that case just run the server on the front and use a TCP/DNS client to talk to the
+ * backend.
  */
-public class MDNSProxy
+public class VBoxDNSServer
 {
-    private static final Logger log = Logger.getLogger(MDNSProxy.class.getName());
-    private static volatile MDNSProxy singleton;
+    private static final Logger log = Logger.getLogger(VBoxDNSServer.class.getName());
+    private static volatile VBoxDNSServer singleton;
 
-    public static InetAddress  MDNS_GROUP = null;
-    public static final int     MDNS_PORT = 5353;
-    public static final int      DNS_PORT = 53;
-    public static final int MULTICAST_TTL = 4;
-    public static final int    COOLOFF_MS = 5000;
+    public static final int   DNS_PORT = 53;
+    public static final int COOLOFF_MS = 5000;
 
-    static {
-        try {
-            MDNS_GROUP = InetAddress.getByName("224.0.0.251");
-        } catch (UnknownHostException e) {}
-    }
-
-    ServerThread thread;
+    ServerThread server;
 
     static class NoInternetException extends IOException {}
     static class PausedException extends IOException {}
@@ -52,30 +42,29 @@ public class MDNSProxy
     public static void start()
     {
         if (singleton == null) {
-            singleton = new MDNSProxy();
+            singleton = new VBoxDNSServer();
         }
-        singleton.thread.pause = false;
+        singleton.server.pause = false;
     }
 
     public static void stop()
     {
         if (singleton == null)
             return;
-        singleton.thread.pause = true;
+        singleton.server.pause = true;
     }
 
-    protected MDNSProxy()
+    protected VBoxDNSServer()
     {
-        thread = new ServerThread();
+        server = new ServerThread();
         Messenger.register(MT.NETWORK_CHANGED, (e,o) -> {
-            thread.reset   = true;
+            server.reset   = true;
         });
 
-        Thread t1 = new Thread(thread, "MDNSProxy");
+        Thread t1 = new Thread(server, "TCPDNSProxy");
         t1.setDaemon(true);
         t1.start();
     }
-
 
     static class SocketWrapper
     {
@@ -93,29 +82,8 @@ public class MDNSProxy
 
         public void checkconnect() throws IOException {
             if ((sock == null) || (sock.isClosed())) {
-                sock = new DatagramSocket();
+                sock = new DatagramSocket(DNS_PORT);
                 sock.setReuseAddress(true);
-                sock.setSoTimeout(250); // expect fairly quick response from self
-            }
-        }
-    }
-
-    static class MCSocketWrapper extends SocketWrapper
-    {
-        @Override
-        public void checkconnect() throws IOException
-        {
-            if ((sock == null) || (sock.isClosed()))
-            {
-                InetAddress bind = Network.getPrimaryAddress();
-                if (bind == null)
-                    throw new NoInternetException();
-                MulticastSocket s = new MulticastSocket(MDNS_PORT);
-                s.setTimeToLive(MULTICAST_TTL);
-                s.setInterface(bind);
-                s.joinGroup(MDNS_GROUP);
-                sock = s;
-                log.info(String.format("Joined %s on %s", MDNS_GROUP, bind));
             }
         }
     }
@@ -124,16 +92,14 @@ public class MDNSProxy
     class ServerThread implements Runnable
     {
         BroadcastState<Boolean> isUp;
-        MCSocketWrapper server;
-        SocketWrapper client;
+        SocketWrapper socket;
         boolean reset;
         boolean pause;
 
         public ServerThread()
         {
-            server = new MCSocketWrapper();
-            client = new SocketWrapper();
-            isUp = new BroadcastState<Boolean>(MT.MDNS_OK, null);
+            isUp = new BroadcastState<Boolean>(MT.VBOX_HACK_OK, null);
+            socket = new SocketWrapper();
             isUp.set(false);
         }
 
@@ -149,46 +115,45 @@ public class MDNSProxy
         {
             byte[] buf = new byte[512];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            SimpleResolver resolver = null;
 
             while (true)
             {
                 try
                 {
+                    if (resolver == null) {
+                        resolver = new SimpleResolver("127.0.0.1");
+                        resolver.setTCP(true);
+                    }
+
                     if (pause)
                         throw new PausedException();
                     if (reset) {
                         isUp.set(false);
-                        server.reset();
-                        client.reset();
+                        socket.reset();
                         reset = false;
                     }
 
-                    server.checkconnect();
-                    client.checkconnect();
+                    socket.checkconnect();
                     isUp.set(true);
                     packet.setData(buf);
-                    server.receive(packet); // blocking call
+                    socket.receive(packet); // blocking call
 
                     if (pause) throw new PausedException();
 
-                    if ((packet.getLength() > 12) && ((buf[3] & 0x80) == 0)) {
-                        // packet has proper length and is a query (not answer)
-                        packet.setAddress(InetAddress.getLocalHost());
-                        packet.setPort(DNS_PORT);
-                        client.send(packet);
-                        client.receive(packet);
+                    Message message = new Message(buf);
+                    Message response = resolver.send(message);
+                    if (response == null) continue;
 
-                        packet.setAddress(MDNS_GROUP);
-                        packet.setPort(MDNS_PORT);
-                        server.send(packet);
-                    }
+                    packet.setData(response.toWire());
+                    socket.send(packet);
 
                 } catch (SocketTimeoutException ie) {
-                    log.warning("DNS Proxy client read timeout");
+                    log.warning("VBox DNS Proxy client read timeout");
                 } catch (NoInternetException|PausedException ie) {
                     sleep(COOLOFF_MS);
                 } catch (BindException be) {
-                    log.log(Level.WARNING, "Proxy bind error: " + be);
+                    log.log(Level.WARNING, socket.getClass().getName() + ": " + be);
                     reset = true;
                     sleep(COOLOFF_MS*5);
                 } catch (Exception e) {

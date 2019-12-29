@@ -41,6 +41,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
 
     boolean paused;
     boolean backendready;
+    boolean usingmachine;
     BroadcastState<InetAddress> address;
     ObjectNode neighbors;
 
@@ -52,6 +53,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         address = new BroadcastState<InetAddress>(MT.NETWORK_CHANGED, null);
         neighbors = objectMapper.createObjectNode();
 
+        Messenger.register(MT.USING_MACHINE,      (type, data) -> usingmachine = (boolean)data);
         Messenger.register(MT.DISCOVERY_CHANGE,   (type, data) -> updateDiscoverySetting((boolean)data));
         Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> {
             String s = (String)data;
@@ -112,9 +114,13 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
                 Discovery.get().registerService(Prefs.getServerId(), Discovery.DATABASE_TYPE, data);
                 Messenger.sendEvent(MT.DISCOVERY_OK, true);
                 MDNSProxy.start();
+                if (usingmachine)
+                    VBoxDNSServer.start();
             }
             else
             {
+                if (usingmachine)
+                    VBoxDNSServer.stop();
                 MDNSProxy.stop();
                 Messenger.sendEvent(MT.DISCOVERY_OK, false);
                 Discovery.get().removeServiceListener(this);

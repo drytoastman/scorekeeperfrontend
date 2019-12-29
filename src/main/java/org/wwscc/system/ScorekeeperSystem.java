@@ -194,12 +194,12 @@ public class ScorekeeperSystem
      */
     public void startAndWaitForThreads()
     {
+        pmonitor = new FrontEndMonitor();
+        pmonitor.start();
         cmonitor = new ContainerMonitor();
         cmonitor.start();
         mmonitor = new MachineMonitor();
         mmonitor.start();
-        pmonitor = new FrontEndMonitor();
-        pmonitor.start();
 
         try {
             // wait for two monitor threads to finish

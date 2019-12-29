@@ -52,6 +52,7 @@ public enum MT {
     DOCKER_OK,
     // Frontend
     MDNS_OK,
+    VBOX_HACK_OK,
     DISCOVERY_OK,
 
     // Data Entry
