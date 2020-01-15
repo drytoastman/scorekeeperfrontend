@@ -24,37 +24,37 @@ import javafx.scene.web.WebView;
  */
 public class AnnouncerPanel extends JFXPanel implements MessageListener
 {
-	WebEngine engine;
-	
-	public AnnouncerPanel()
-	{
-	    Messenger.register(MT.SERIES_CHANGED, this);
-	    Messenger.register(MT.EVENT_CHANGED, this);  
-	}
-	
-	private void setURL()
-	{
-	    if (engine == null)
-	    {
-	        WebView view = new WebView();
-	        setScene(new Scene(view));
-	        engine = view.getEngine();
-	    }
-	    
-        String url = String.format("http://127.0.0.1/announcer/%s/event/%s/?mini=1", 
+    WebEngine engine;
+
+    public AnnouncerPanel()
+    {
+        Messenger.register(MT.SERIES_CHANGED, this);
+        Messenger.register(MT.EVENT_CHANGED, this);
+    }
+
+    private void setURL()
+    {
+        if (engine == null)
+        {
+            WebView view = new WebView();
+            setScene(new Scene(view));
+            engine = view.getEngine();
+        }
+
+        String url = String.format("http://127.0.0.1/live/%s/event/%s/dataentry",
                 DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId());
         engine.load(url);
-	}
+    }
 
-	@Override
-	public void event(MT type, Object o)
-	{
-		switch (type)
-		{
-		    case SERIES_CHANGED:
-		    case EVENT_CHANGED:
-		        Platform.runLater(new Runnable () { public void run() { setURL(); }});
-		        break;
-		}
-	}
+    @Override
+    public void event(MT type, Object o)
+    {
+        switch (type)
+        {
+            case SERIES_CHANGED:
+            case EVENT_CHANGED:
+                Platform.runLater(new Runnable () { public void run() { setURL(); }});
+                break;
+        }
+    }
 }
