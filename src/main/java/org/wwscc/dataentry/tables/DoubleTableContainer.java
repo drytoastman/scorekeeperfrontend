@@ -314,10 +314,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
         switch (type)
         {
             case DATABASE_NOTIFICATION:
-                @SuppressWarnings("unchecked")
-                Set<String> tables = new HashSet<>((Set<String>)o);
-                tables.retainAll(watchlist);
-                if (tables.size()  > 0) {
+                if (watchlist.contains(o)) {
                     List<Entrant> dbData = Database.d.getEntrantsByRunOrder(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                     List<Entrant> tblData = dataModel.tableData;
                     if (!fullCompare(dbData, tblData)) {
@@ -328,7 +325,7 @@ public class DoubleTableContainer extends JScrollPane implements MessageListener
                         dataModel.groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                         dataModel.fireTableDataChanged();
                         saved.restore();
-                    } else if (tables.contains("runorder") && DataEntry.state.isPro()) {
+                    } else if (o.equals("runorder") && DataEntry.state.isPro()) {
                         List<Integer> groupings = Database.d.getProGroupings(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup());
                         if (!groupings.equals(dataModel.groupings)) {
                             dataModel.groupings = groupings;

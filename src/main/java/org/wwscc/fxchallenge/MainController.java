@@ -266,7 +266,7 @@ public class MainController
     public void connectSeries(String name)
     {
         try {
-            String seriesattached = Database.openSeriesNM(name, 0);
+            String seriesattached = Database.openSeriesNM(name, 0, null);
             currentSeries.set(seriesattached);
             return;
         } catch (SQLException sqle) {

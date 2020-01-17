@@ -14,8 +14,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -449,7 +447,7 @@ public class Actions
 
             // inactive all
             Database.d.mergeServerInactivateAll();
-            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, "mergeservers");
         }
     }
 }

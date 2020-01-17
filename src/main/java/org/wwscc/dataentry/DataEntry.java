@@ -10,7 +10,8 @@ package org.wwscc.dataentry;
 
 import java.awt.Dimension;
 import java.io.IOException;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -45,6 +46,7 @@ public class DataEntry extends JFrame implements MessageListener
     private static final Logger log = Logger.getLogger(DataEntry.class.getName());
     public static final ApplicationState state = new ApplicationState();
     public static final SyncPoker poker = new SyncPoker();
+    public static final Collection<String> watch = Arrays.asList("registered", "runorder", "cars", "drivers");
 
     Menus menus;
     SelectionBar setupBar;
@@ -141,8 +143,7 @@ public class DataEntry extends JFrame implements MessageListener
 
         Messenger.register(MT.OBJECT_DCLICKED, this);
         Messenger.register(MT.DATABASE_NOTIFICATION, this);
-        Database.openDefault();
-
+        Database.openDefault(watch);
         Discovery.get().registerService(Prefs.getServerId(), Discovery.DATAENTRY_TYPE, new ObjectNode(JsonNodeFactory.instance));
     }
 
@@ -157,13 +158,8 @@ public class DataEntry extends JFrame implements MessageListener
                     tabs.setSelectedComponent(addByName);
                 break;
             case DATABASE_NOTIFICATION:
-                @SuppressWarnings("unchecked")
-                Set<String> tables = (Set<String>)o;
-                if (tables.contains("registered") || tables.contains("runorder") || tables.contains("cars") || tables.contains("drivers")) {
-                    // this does not go to the table model, that is a separate processor
-                    log.fine("directing db notification into entrants changed");
-                    Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
-                }
+                log.fine("directing db notification into entrants changed");
+                Messenger.sendEventNow(MT.ENTRANTS_CHANGED, null);
                 break;
         }
     }

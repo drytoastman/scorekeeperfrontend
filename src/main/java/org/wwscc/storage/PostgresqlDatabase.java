@@ -21,6 +21,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +57,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
     class ConnectParam {
         String user, series;
         int statementtimeout;
+        Set<String> watchtables;
     }
 
     /**
@@ -63,9 +65,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
      * @param user localuser or postgres
      * @throws SQLException
      */
-    public PostgresqlDatabase(String user) throws SQLException
+    public PostgresqlDatabase(String user, Collection<String> watch) throws SQLException
     {
-        this(user, 0);
+        this(user, 0, watch);
     }
 
     /**
@@ -74,13 +76,16 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
      * @param statementtimeout if > 0, a statement timeout in ms
      * @throws SQLException
      */
-    public PostgresqlDatabase(String user, int statementtimeout) throws SQLException
+    public PostgresqlDatabase(String user, int statementtimeout, Collection<String> watch) throws SQLException
     {
         leftovers = new HashMap<ResultSet, PreparedStatement>();
         connectParam = new ConnectParam();
         connectParam.user = user;
         connectParam.statementtimeout = statementtimeout;
         connectParam.series = null;
+        connectParam.watchtables = new HashSet<String>();
+        if (watch != null)
+            connectParam.watchtables.addAll(watch);
         conn = internalConnect();
 
         watcher = new PostgresConnectionWatcher();
@@ -88,7 +93,6 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         watcher.setDaemon(true);
         watcher.start();
     }
-
 
     /**
      * Wrap the connect in a state based call so we can reconnect internally as well
@@ -111,7 +115,8 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
 
         Statement s = c.createStatement();
         s.execute("set time zone 'UTC'");
-        s.execute("LISTEN datachange");
+        for (String table : connectParam.watchtables)
+            s.execute("LISTEN " + table);
         if (connectParam.statementtimeout > 0)
             s.execute("SET statement_timeout='"+connectParam.statementtimeout+"'");
         if (connectParam.series != null)
@@ -181,11 +186,9 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
                     }
                     PGNotification notifications[] = pg.getNotifications();
                     if (notifications != null) {
-                        Set<String> changes = new HashSet<String>();
                         for (PGNotification n : notifications) {
-                            changes.add(n.getParameter());
+                            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, n.getName());
                         }
-                        Messenger.sendEvent(MT.DATABASE_NOTIFICATION, changes);
                     }
                 } catch (Throwable e) {
                     log.log(Level.WARNING, "ConnectionWatcher exception: " + e, e);

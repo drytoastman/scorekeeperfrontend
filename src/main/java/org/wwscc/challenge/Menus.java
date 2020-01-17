@@ -49,7 +49,7 @@ public class Menus extends JMenuBar implements ActionListener
         /* File Menu */
         JMenu file = new JMenu("File");
         add(file);
-        file.add(new OpenSeriesAction());
+        file.add(new OpenSeriesAction(ChallengeGUI.watch));
         file.add(createItem("Print Bracket", KeyEvent.VK_P));
         file.addSeparator();
         file.add(createItem("Quit", KeyEvent.VK_Q));

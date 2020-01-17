@@ -12,8 +12,6 @@ package org.wwscc.registration;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Set;
-
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -115,9 +113,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
                 break;
 
             case DATABASE_NOTIFICATION:
-                 @SuppressWarnings("unchecked")
-                 Set<String> tables = (Set<String>)o;
-                 if (tables.contains("registered") || tables.contains("payments")) {
+                 if (o.equals("registered") || o.equals("payments")) {
                      updateCounts();
                  }
                  break;

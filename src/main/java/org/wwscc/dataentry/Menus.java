@@ -61,7 +61,7 @@ public class Menus extends JMenuBar implements ActionListener, MessageListener
 
         /* File Menu */
         JMenu file = new JMenu("File");
-        file.add(new OpenSeriesAction());
+        file.add(new OpenSeriesAction(DataEntry.watch));
         file.add(new QuitAction());
 
         /* Edit Menu */

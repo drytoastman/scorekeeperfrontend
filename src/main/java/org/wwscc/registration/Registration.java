@@ -11,6 +11,8 @@ package org.wwscc.registration;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +45,7 @@ public class Registration extends JFrame
 {
     private static final Logger log = Logger.getLogger(Registration.class.getCanonicalName());
     public static final ApplicationState state = new ApplicationState();
+    public static final Collection<String> watch = Arrays.asList("drivers", "cars", "registered", "runorder", "runs", "payments");
 
     SelectionBar setupBar;
     EntryPanel driverEntry;
@@ -51,6 +54,7 @@ public class Registration extends JFrame
     {
         super("Registration");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
 
         setupBar = new SelectionBar();
         driverEntry = new EntryPanel();
@@ -63,7 +67,7 @@ public class Registration extends JFrame
         setContentPane(content);
 
         JMenu file = new JMenu("File");
-        file.add(new OpenSeriesAction());
+        file.add(new OpenSeriesAction(watch));
         file.add(new JSeparator());
         file.add(new QuitAction());
 
@@ -85,7 +89,7 @@ public class Registration extends JFrame
         Prefs.trackWindowBounds(this, "registration");
         setVisible(true);
 
-        Database.openDefault();
+        Database.openDefault(watch);
         Discovery.get().registerService(Prefs.getServerId(), Discovery.REGISTRATION_TYPE, new ObjectNode(JsonNodeFactory.instance));
     }
 

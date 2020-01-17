@@ -68,7 +68,7 @@ public class TestDatabaseContainer extends ExternalResource
         while (!Database.testUp())
             Thread.sleep(500);
 
-        Database.openSeries("template", 0);
+        Database.openSeries("template", 0, null);
         PostgresqlDatabase pgdb = (PostgresqlDatabase)Database.d;
         pgdb.start();
         pgdb.executeUpdate("SET search_path='template','public'", null);

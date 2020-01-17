@@ -13,7 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -215,8 +214,8 @@ public class ContainerMonitor extends MonitorBase
                     return;
             }
             if (done) return;
-            Database.openPublic(true, 5000);
-            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, new HashSet<String>(Arrays.asList("mergeservers")));
+            Database.openPublic(true, 5000, Arrays.asList("mergeservers"));
+            Messenger.sendEvent(MT.DATABASE_NOTIFICATION, "mergeservers");
         }
 
         containers.set(all.stream().filter(c -> c.isUp()).map(c -> c.shortName()).collect(Collectors.joining(",")));

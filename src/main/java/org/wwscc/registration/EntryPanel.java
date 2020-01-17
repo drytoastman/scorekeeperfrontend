@@ -16,7 +16,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -815,11 +814,9 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 break;
 
             case DATABASE_NOTIFICATION:
-                @SuppressWarnings("unchecked")
-                Set<String> tables = (Set<String>)o;
-                if (tables.contains("drivers")) {
+                if (o.equals("drivers")) {
                     reloadDrivers();
-                } else if (tables.contains("cars") || tables.contains("registered") || tables.contains("runorder") || tables.contains("runs") || tables.contains("payments")) {
+                } else {
                     if (!dbtickled)
                         reloadCars(selectedCar);
                     dbtickled = false;

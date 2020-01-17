@@ -10,6 +10,7 @@ package org.wwscc.storage;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,9 +30,9 @@ public class Database
     /**
      * Used at startup to open the series that was previously opened
      */
-    public static void openDefault()
+    public static void openDefault(Collection<String> watch)
     {
-        openSeries(Prefs.getSeries(""), 0);
+        openSeries(Prefs.getSeries(""), 0, watch);
     }
 
    /**
@@ -40,14 +41,14 @@ public class Database
      * @param timeoutms a statement timeout after the database is connected in ms, <=0 means no timeout
      * @return true if the series was opened, false otherwise
      */
-    public static boolean openPublic(boolean superuser, int timeoutms)
+    public static boolean openPublic(boolean superuser, int timeoutms, Collection<String> watch)
     {
         if (d != null)
             d.close();
 
         while (true) {
             try {
-                d = new PostgresqlDatabase(superuser?"postgres":"localuser");
+                d = new PostgresqlDatabase(superuser?"postgres":"localuser", watch);
                 Messenger.sendEvent(MT.SERIES_CHANGED, "publiconly");
                 return true;
             } catch (SQLException sqle) {
@@ -63,13 +64,13 @@ public class Database
      * @param timeoutms a statement timeout after the database is connected in ms, <=0 means no timeout
      * @return true if the series was opened, false otherwise
      */
-    public static boolean openSeries(String series, int timeoutms)
+    public static boolean openSeries(String series, int timeoutms, Collection<String> watch)
     {
         if (d != null)
             d.close();
 
         try {
-            d = new PostgresqlDatabase("localuser", timeoutms);
+            d = new PostgresqlDatabase("localuser", timeoutms, watch);
             if (series.equals("") || !d.getSeriesList().contains(series))
             {
                 Messenger.sendEvent(MT.SERIES_CHANGED, "<none>");
@@ -93,12 +94,12 @@ public class Database
      * @return name of the series is actually opened, blank for no series but active database
      * @throws SQLException
      */
-    public static String openSeriesNM(String series, int timeoutms) throws SQLException
+    public static String openSeriesNM(String series, int timeoutms, Collection<String> watch) throws SQLException
     {
         if (d != null)
             d.close();
 
-        d = new PostgresqlDatabase("localuser", timeoutms);
+        d = new PostgresqlDatabase("localuser", timeoutms, watch);
         if (series.equals("") || !d.getSeriesList().contains(series))
             return "";
         d.useSeries(series);
@@ -113,7 +114,7 @@ public class Database
     {
         try {
             Logger.getLogger("org.postgresql.Driver").setLevel(Level.OFF); // Apparently, I have to set this again
-            PostgresqlDatabase db = new PostgresqlDatabase("localuser");
+            PostgresqlDatabase db = new PostgresqlDatabase("localuser", null);
             db.close();
             return true;
         } catch (SQLException sqle) {

@@ -10,6 +10,8 @@ package org.wwscc.dialogs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.Collection;
+
 import javax.swing.AbstractAction;
 import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
@@ -20,10 +22,13 @@ import org.wwscc.util.Prefs;
 
 public class OpenSeriesAction extends AbstractAction
 {
-    public OpenSeriesAction()
+    Collection<String> watch;
+
+    public OpenSeriesAction(Collection<String> watch)
     {
         super("Open Series");
         putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        this.watch = watch;
     }
 
     @Override
@@ -34,7 +39,7 @@ public class OpenSeriesAction extends AbstractAction
         if (series == null)
             return;
 
-        if (Database.openSeries(series, 0))
+        if (Database.openSeries(series, 0, watch))
         {
             Prefs.setSeries(series);
             return;

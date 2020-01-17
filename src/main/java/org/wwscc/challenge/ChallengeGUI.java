@@ -12,7 +12,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JComboBox;
@@ -35,6 +36,7 @@ public class ChallengeGUI extends JFrame
 {
     private static Logger log = Logger.getLogger(BracketPane.class.getCanonicalName());
     public static final ApplicationState state = new ApplicationState();
+    public static final Collection<String> watch = Arrays.asList("runs", "cars", "drivers", "events");
 
     ChallengeModel model;
     JScrollPane bracketScroll;
@@ -96,16 +98,12 @@ public class ChallengeGUI extends JFrame
         setSize(1024,768);
         setVisible(true);
 
-        Messenger.register(MT.DATABASE_NOTIFICATION, (m, o) -> {
-            @SuppressWarnings("unchecked")
-            Set<String> tables = (Set<String>)o;
-            if (tables.contains("runs") || tables.contains("cars") || tables.contains("drivers") || tables.contains("events")) {
-                log.fine("directing db notification into entrants changed");
-                Messenger.sendEventNow(MT.EVENT_CHANGED, null);
-            }
+        Messenger.register(MT.DATABASE_NOTIFICATION, (m, tbl) -> {
+            log.fine("directing db notification into entrants changed");
+            Messenger.sendEventNow(MT.EVENT_CHANGED, null);
         });
 
-        Database.openDefault();
+        Database.openDefault(watch);
     }
 
     /**
