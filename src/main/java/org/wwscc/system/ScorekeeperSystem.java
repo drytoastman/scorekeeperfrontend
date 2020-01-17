@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,7 +42,6 @@ public class ScorekeeperSystem
     FrontEndMonitor pmonitor;
     boolean usingmachine, shutdownstarted;
 
-    @SuppressWarnings("unchecked")
     public ScorekeeperSystem()
     {
         actions  = new Actions();
@@ -64,12 +62,12 @@ public class ScorekeeperSystem
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
         Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest());
         Messenger.register(MT.DOWNLOAD_NEW_REQUEST,  (t,d) -> downloadNewRequest((MergeServer)d));
-        Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((Set<String>)d));
+        Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((String)d));
         Messenger.register(MT.DOCKER_NOT_OK,         (t,d) -> mdiag.doDialog("Docker Check", e -> {}, window));
         Messenger.register(MT.DOCKER_OK,             (t,d) -> mdiag.close());
     }
 
-    public void dataUpdate(Set<String> tables)
+    public void dataUpdate(String table)
     {
         List<MergeServer> s = Database.d.getMergeServers();
         model.setData(s);
