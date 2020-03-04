@@ -28,8 +28,7 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
 
     public AnnouncerPanel()
     {
-        Messenger.register(MT.SERIES_CHANGED, this);
-        Messenger.register(MT.EVENT_CHANGED, this);
+        Messenger.register(MT.COURSE_CHANGED, this);
     }
 
     private void setURL()
@@ -41,8 +40,8 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
             engine = view.getEngine();
         }
 
-        String url = String.format("http://127.0.0.1/live/%s/event/%s/dataentry",
-                DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId());
+        String url = String.format("http://127.0.0.1/live/%s/event/%s/dataentry?course=%s",
+                DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
         engine.load(url);
     }
 
@@ -51,8 +50,7 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
     {
         switch (type)
         {
-            case SERIES_CHANGED:
-            case EVENT_CHANGED:
+            case COURSE_CHANGED:
                 Platform.runLater(new Runnable () { public void run() { setURL(); }});
                 break;
         }
