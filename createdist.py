@@ -51,7 +51,7 @@ class Dist():
         self.builddir = "build/runtime/"+self.target
         self.pairs = [
             ('StartScorekeeper', 'org.wwscc.system.ScorekeeperSystem'),
-            ('LoadCerts',        'org.wwscc.system.LoadCerts'),
+            #('LoadCerts',        'org.wwscc.system.LoadCerts'),
             ('StartProTimer',    'org.wwscc.protimer.ProSoloInterface'),
         ]
 
