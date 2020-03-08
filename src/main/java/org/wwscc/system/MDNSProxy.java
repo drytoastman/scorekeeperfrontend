@@ -173,7 +173,7 @@ public class MDNSProxy
 
                     if ((packet.getLength() > 12) && ((buf[3] & 0x80) == 0)) {
                         // packet has proper length and is a query (not answer)
-                        packet.setAddress(InetAddress.getLocalHost());
+                        packet.setAddress(InetAddress.getLoopbackAddress());
                         packet.setPort(DNS_PORT);
                         client.send(packet);
                         client.receive(packet);
