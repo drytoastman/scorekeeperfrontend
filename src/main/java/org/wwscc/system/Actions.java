@@ -47,7 +47,7 @@ public class Actions
 
     List<Action> apps;
     List<Action> actions;
-    Action debugRequest, backupRequest, importRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
+    Action debugRequest, backupRequest, importRequest, loadCertsRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
     Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, resetHash, quit, openStatus;
 
     public Actions()
@@ -66,6 +66,7 @@ public class Actions
         debugRequest   = new EventSendAction<>("Save Debug Info", MT.DEBUG_REQUEST);
         backupRequest  = addAction(new EventSendAction<>("Backup Database", MT.BACKUP_REQUEST));
         importRequest  = addAction(new ImportAction());
+        loadCertsRequest = addAction(new EventSendAction<>("Load Certs", MT.LOAD_CERTS_REQUEST));
 
         mergeAll       = addAction(new MergeWithAllLocalAction());
         mergeWith      = addAction(new PopupMenuWithMergeServerActions("Sync With ...", p -> p.isActive() || p.isRemote(), MergeWithHostAction.class));

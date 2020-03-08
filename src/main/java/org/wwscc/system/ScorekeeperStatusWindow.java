@@ -72,13 +72,14 @@ public class ScorekeeperStatusWindow extends JFrame
 
         activetable   = new MergeStatusTable(serverModel, true);
         inactivetable = new MergeStatusTable(serverModel, false);
-        labels = new HashMap<String, JLabel>();
-        buttons = new HashMap<String, JButton>();
+        labels   = new HashMap<String, JLabel>();
+        buttons  = new HashMap<String, JButton>();
         minimaxi = new MiniMaxiAction();
 
         labels.put("machinestatus", new StatusLabel(MT.MACHINE_STATUS));
         labels.put("backendstatus", new StatusLabel(MT.BACKEND_STATUS));
         labels.put("networkstatus", new NetworkStatusLabel());
+        labels.put("fingerprint",   new FingerprintLabel(MT.CERT_FINGERPRINT));
 
         buttons.put("minimaxi",  button(minimaxi));
         buttons.put("mergeall",  button(actions.mergeAll));
@@ -89,6 +90,7 @@ public class ScorekeeperStatusWindow extends JFrame
         JMenu file = new JMenu("File");
         file.add(actions.backupRequest);
         file.add(actions.importRequest);
+        file.add(actions.loadCertsRequest);
         file.add(new JSeparator());
         file.add(actions.quit);
 
@@ -192,6 +194,8 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(labels.get("backendstatus"), "growy, wrap");
             content.add(header("Network", 14), "");
             content.add(labels.get("networkstatus"), "growy, wrap");
+            content.add(header("Cert", 14), "");
+            content.add(labels.get("fingerprint"), "growy, wrap");
             content.add(new JLabel(""), "");
             content.add(buttons.get("minimaxi"), "al right, wrap");
 
@@ -206,6 +210,8 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(labels.get("backendstatus"), "growy, wmin 150");
             content.add(header("Network", 14), "split");
             content.add(labels.get("networkstatus"), "growy, wmin 150");
+            content.add(header("Cert", 14), "split");
+            content.add(labels.get("fingerprint"), "growy, wmin 150");
             content.add(new JLabel(""), "pushx 100, growx 100");
             content.add(buttons.get("minimaxi"), "wmin 80, wrap");
 
@@ -304,6 +310,29 @@ public class ScorekeeperStatusWindow extends JFrame
             }
         }
     }
+
+    class FingerprintLabel extends StatusLabel
+    {
+        public FingerprintLabel(MT e)
+        {
+            super(e);
+        }
+
+        @Override
+        public void event(MT type, Object data)
+        {
+            String txt = (String)data;
+            setText(txt);
+            if (txt.contains("20:21:7B:3B:EA:D9:75")) {
+                setBackground(okbg);
+                setForeground(okfg);
+            } else {
+                setBackground(notokbg);
+                setForeground(notokfg);
+            }
+        }
+    }
+
 
     class NetworkStatusLabel extends StatusLabel
     {

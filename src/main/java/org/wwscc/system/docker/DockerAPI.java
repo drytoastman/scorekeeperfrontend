@@ -548,12 +548,12 @@ public class DockerAPI
     }
 
 
-    public void stop(Collection<DockerContainer> containers, DockerStatusListener listener)
+    public void stop(Collection<DockerContainer> containers, DockerParallelStatusListener listener)
     {
         List<List<Requests.Wrapper<Void>>> outer = new ArrayList<List<Requests.Wrapper<Void>>>();
         for (DockerContainer c : containers)
             outer.add(Arrays.asList(new Requests.Stop(c.getName())));
-        parallelAndReport("stop", outer, (c,t) -> { listener.status(String.format("Stopping Step %d of %d", c, t)); });
+        parallelAndReport("stop", outer, listener);
     }
 
 

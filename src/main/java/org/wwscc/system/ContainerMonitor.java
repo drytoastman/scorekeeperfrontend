@@ -44,11 +44,11 @@ public class ContainerMonitor extends MonitorBase
     public static final String PY_IMAGE  = "drytoastman/scpython:"+Prefs.getFullVersion();
 
     private DockerAPI docker;
-    private List<DockerContainer> all, nondb;
+    private List<DockerContainer> all, nondb, justdb;
     private DockerContainer db, web, sync, dns;
     private BroadcastState<String> status;
     private BroadcastState<String> containers;
-    private Path importRequestFile;
+    private Path importRequestFile, newCertsFile;
     private BackupRequest backupRequest;
     private boolean machineready, restartsync;
     private String lastcheck;
@@ -73,6 +73,7 @@ public class ContainerMonitor extends MonitorBase
         docker       = new DockerAPI();
         all          = new ArrayList<DockerContainer>();
         nondb        = new ArrayList<DockerContainer>();
+        justdb       = new ArrayList<DockerContainer>();
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
         containers   = new BroadcastState<String>(MT.BACKEND_CONTAINERS, "");
         machineready = false;
@@ -88,6 +89,7 @@ public class ContainerMonitor extends MonitorBase
         db.addPort("127.0.0.1", 6432, 6432, "tcp");
         db.addPort("0.0.0.0",  54329, 5432, "tcp");
         all.add(db);
+        justdb.add(db);
 
         web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME);
         web.addCmdItem("webserver.py");
@@ -180,6 +182,12 @@ public class ContainerMonitor extends MonitorBase
             lastcheck = "";
         }
 
+        if (newCertsFile != null) {
+            containers.set("");
+            doCertUpload(newCertsFile);
+            newCertsFile = null;
+        }
+
         if (backupRequest != null) {
             doBackup(backupRequest);
             backupRequest = null;
@@ -214,8 +222,10 @@ public class ContainerMonitor extends MonitorBase
                     return;
             }
             if (done) return;
+
             Database.openPublic(true, 5000, Arrays.asList("mergeservers"));
             Messenger.sendEvent(MT.DATABASE_NOTIFICATION, "mergeservers");
+            Messenger.sendEvent(MT.CERT_FINGERPRINT, getFingerprint());
         }
 
         containers.set(all.stream().filter(c -> c.isUp()).map(c -> c.shortName()).collect(Collectors.joining(",")));
@@ -241,8 +251,6 @@ public class ContainerMonitor extends MonitorBase
 
         status.set("Shutting down ...");
         if (!external_backend) {
-            List<DockerContainer> justdb = new ArrayList<>();
-            justdb.add(db);
             docker.teardown(nondb,  (c,t) -> status.set(String.format("Shutdown Step %d of %d", c, t)));
             docker.teardown(justdb, (c,t) -> status.set(String.format("Final Step %d of %d", c, t)));
         }
@@ -271,7 +279,7 @@ public class ContainerMonitor extends MonitorBase
             return;
         }
 
-        docker.stop(nondb, null);
+        docker.stop(nondb, (c,t) -> { status.set(String.format("Stop nondb Step %d of %d", c, t)); });
         Database.d.close();
 
         dialog.setStatus("Importing ...", -1);
@@ -296,6 +304,22 @@ public class ContainerMonitor extends MonitorBase
             dialog.setStatus("Import failed, see logs", 100);
     }
 
+
+    private void doCertUpload(Path certsfile)
+    {
+        status.set("Loading new certs");
+        String name = db.getName();
+        try {
+            docker.uploadFile(name, certsfile, "/tmp");
+            docker.exec(name, "bash", "-c", "tar -C /certs -xf /tmp/"+certsfile.getFileName()+" && chown postgres:postgres /certs/*");
+        } catch (Exception e) {
+            log.log(Level.WARNING, "Failure in unpacking certs: " + e, e);
+        }
+
+        Database.d.close();
+        docker.stop(nondb, (c,t) -> { status.set(String.format("Stop nondb Step %d of %d", c, t)); });
+        docker.stop(justdb, (c,t) -> { status.set(String.format("Stop db Step %d of %d", c, t)); });
+    }
 
     private void doBackup(BackupRequest request)
     {
@@ -384,5 +408,24 @@ public class ContainerMonitor extends MonitorBase
         }
         log.log(Level.FINER, "syncCommand stdout is {0}", ret.stdout);
         return ret.stdout;
+    }
+
+    public String getFingerprint()
+    {
+        try {
+            DemuxedStreams ret = docker.run(db.getName(), "openssl", "x509", "-in", "/certs/server.cert", "-noout", "-fingerprint");
+            if (ret.stderr.length() > 0)
+                log.log(Level.WARNING, "getFingerprint stderr is {0}", ret.stderr);
+            int eq = ret.stdout.indexOf("=");
+            return ret.stdout.substring(eq+1, eq+21);
+        } catch (IOException ioe) {
+            return "";
+        }
+    }
+
+    public void loadCerts(Path p)
+    {
+        newCertsFile = p;
+        poke();
     }
 }

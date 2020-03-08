@@ -38,7 +38,9 @@ public enum MT {
     // Containers
     BACKEND_STATUS,
     BACKEND_CONTAINERS,
+    CERT_FINGERPRINT,
     // Other
+    LOAD_CERTS_REQUEST,
     POKE_SYNC_SERVER,
     DISCOVERY_CHANGE,
     IMPORT_REQUEST,

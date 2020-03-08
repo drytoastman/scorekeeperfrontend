@@ -17,11 +17,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.FocusManager;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
+import org.wwscc.system.LoadCerts.CertsFileFilter;
 import org.wwscc.system.SeriesSelectionDialog.HSResult;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
@@ -62,6 +65,7 @@ public class ScorekeeperSystem
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
         Messenger.register(MT.SHUTDOWN_REQUEST,      (t,d) -> shutdownRequest());
         Messenger.register(MT.DOWNLOAD_NEW_REQUEST,  (t,d) -> downloadNewRequest((MergeServer)d));
+        Messenger.register(MT.LOAD_CERTS_REQUEST,    (t,d) -> loadCerts());
         Messenger.register(MT.DATABASE_NOTIFICATION, (t,d) -> dataUpdate((String)d));
         Messenger.register(MT.DOCKER_NOT_OK,         (t,d) -> mdiag.doDialog("Docker Check", e -> {}, window));
         Messenger.register(MT.DOCKER_OK,             (t,d) -> mdiag.close());
@@ -184,6 +188,15 @@ public class ScorekeeperSystem
         }}.start();
     }
 
+    public void loadCerts()
+    {
+        JFileChooser fc = new JFileChooser(System.getProperty("user.home"));
+        fc.setDialogTitle("Select the new certificates archive file");
+        fc.setFileFilter(new CertsFileFilter());
+        if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) != JFileChooser.APPROVE_OPTION)
+            return;
+        cmonitor.loadCerts(fc.getSelectedFile().toPath());
+    }
 
     /**
      * This actually starts the threads in the program and then waits for
