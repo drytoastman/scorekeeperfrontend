@@ -20,11 +20,12 @@ import java.util.logging.Logger;
 import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
+
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.dialogs.HoverMessage;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.MergeServer;
-import org.wwscc.system.LoadCerts.CertsFileFilter;
 import org.wwscc.system.SeriesSelectionDialog.HSResult;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.MT;
@@ -196,6 +197,21 @@ public class ScorekeeperSystem
         if (fc.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow()) != JFileChooser.APPROVE_OPTION)
             return;
         cmonitor.loadCerts(fc.getSelectedFile().toPath());
+    }
+
+    static class CertsFileFilter extends FileFilter {
+        public boolean accept(File f) {
+            if (f.isDirectory()) {
+                return true;
+            }
+            for (String ext : new String[] { ".tgz", ".tar.gz", ".tar" }) {
+                if (f.getName().endsWith(ext)) return true;
+            }
+            return false;
+        }
+        public String getDescription() {
+            return "Certs Archive File (.tar, .tar.gz, .tgz)";
+        }
     }
 
     /**
