@@ -97,6 +97,7 @@ public class ContainerMonitor extends MonitorBase
         web.addVolume(volname("socket"), "/var/run/postgresql");
         web.addPort("0.0.0.0", 80, 80, "tcp");
         web.addEnvItem("FLASK_SECRET='"+Prefs.getCookieSecret()+"'");
+        web.setStopSignal("SIGINT");
         all.add(web);
         nondb.add(web);
 
