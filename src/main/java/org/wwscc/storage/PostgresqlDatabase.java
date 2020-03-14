@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
 import org.postgresql.util.PGobject;
+import org.postgresql.util.PSQLException;
 import org.wwscc.util.MT;
 import org.wwscc.util.Messenger;
 
@@ -347,11 +348,20 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         PreparedStatement p = getConnection().prepareStatement(sql);
         if (args != null)
             bindParam(p, args);
-        ResultSet s = p.executeQuery();
-        synchronized(leftovers) {
-            leftovers.put(s,  p);
+        try {
+            ResultSet s = p.executeQuery();
+            synchronized(leftovers) {
+                leftovers.put(s,  p);
+            }
+            return s;
+        } catch (SQLException sqle) {
+            if (sqle instanceof PSQLException) {
+                if (((PSQLException)sqle).getSQLState().equals("42P01")) {
+                    throw new NoSeriesException("\n\nMost likely using an old default series that is no longer present. Use the File menu to open a new series.\n\n" + sqle.getMessage());
+                }
+            }
+            throw sqle;
         }
-        return s;
     }
 
 
