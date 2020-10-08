@@ -197,7 +197,7 @@ class PaidAction extends AbstractAction
     public void actionPerformed(ActionEvent e)
     {
         try {
-            Database.d.registerPayment(DataEntry.state.getCurrentEventId(), entrant.getCarId(), "dataentry", 0.01);
+            Database.d.registerPayment(DataEntry.state.getCurrentEventId(), entrant.getDriverId(), entrant.getCarId(), "session?", "dataentry", "itemname?", 1);
             Messenger.sendEvent(MT.RUNGROUP_CHANGED, null);
         } catch (Exception ioe) {
             log.severe("\bFailed to mark driver paid: " + ioe.getMessage());

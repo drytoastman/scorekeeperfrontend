@@ -481,7 +481,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
                 CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
                 if (d.doDialog("Payment", null)) {
                     Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
-                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getCarId(), ONSITE_PAYMENT, d.getResult());
+                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getDriverId(), selectedCar.getCarId(), "session?", ONSITE_PAYMENT, "itemname?", d.getResult()*100);
                 }
                 dbtickled = true;
                 reloadCars(selectedCar);

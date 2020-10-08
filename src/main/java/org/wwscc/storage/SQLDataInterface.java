@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -202,7 +203,10 @@ public abstract class SQLDataInterface implements DataInterface
         try
         {
             return loadEntrants(executeSelect("SELECT DISTINCT d.firstname, d.lastname, c.*, r.session, SUM(p.amount) AS paid " +
-                        "FROM registered r LEFT JOIN payments p ON r.carid=p.carid AND r.eventid=p.eventid JOIN cars c ON r.carid=c.carid JOIN drivers d ON c.driverid=d.driverid " +
+                        "FROM registered r " +
+                        "JOIN cars c ON r.carid=c.carid " +
+                        "JOIN drivers d ON c.driverid=d.driverid " +
+                        "LEFT JOIN payments p ON d.driverid=p.driverid AND r.eventid=p.eventid " +
                         "WHERE r.eventid=? GROUP BY d.firstname,d.lastname,c.carid,r.session ORDER BY d.firstname,d.lastname", newList(eventid)), null);
         }
         catch (Exception ioe)
@@ -242,9 +246,11 @@ public abstract class SQLDataInterface implements DataInterface
         try
         {
             ResultSet d = executeSelect("WITH r AS (SELECT x.cid,x.row from runorder, unnest(runorder.cars) WITH ORDINALITY x(cid,row) WHERE eventid=? and course=? and rungroup=?) " +
-                        "SELECT d.firstname, d.lastname, c.*, MAX(reg.session) as session, SUM(p.amount) AS paid " +
-                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid JOIN r ON c.carid=r.cid " +
-                        "LEFT JOIN registered as reg ON reg.carid=c.carid and reg.eventid=? LEFT JOIN payments p ON reg.carid=p.carid AND reg.eventid=p.eventid  " +
+                        "SELECT d.firstname, d.lastname, c.*, MAX(reg.session) as session, SUM(p.amount) AS paid FROM drivers d " +
+                        "JOIN cars c ON c.driverid=d.driverid " +
+                        "JOIN r ON c.carid=r.cid " +
+                        "LEFT JOIN registered reg ON reg.carid=c.carid and reg.eventid=? " +
+                        "LEFT JOIN payments p ON d.driverid=p.driverid AND reg.eventid=p.eventid  " +
                         "GROUP BY d.firstname, d.lastname, c.carid, r.row ORDER BY r.row", newList(eventid, course, rungroup, eventid));
             if (d == null)
                 return new ArrayList<Entrant>();
@@ -267,8 +273,10 @@ public abstract class SQLDataInterface implements DataInterface
     {
         try
         {
-            ResultSet d = executeSelect("select d.firstname, d.lastname, c.*, MAX(r.session) as session, SUM(p.amount) as paid " +
-                        "FROM drivers d JOIN cars c ON c.driverid=d.driverid LEFT JOIN registered r ON r.carid=c.carid AND r.eventid=? LEFT JOIN payments p ON p.carid=r.carid AND p.eventid=r.eventid " +
+            ResultSet d = executeSelect("select d.firstname, d.lastname, c.*, MAX(r.session) as session, SUM(p.amount) as paid FROM drivers d " +
+                        "JOIN cars c ON c.driverid=d.driverid " +
+                        "LEFT JOIN registered r ON r.carid=c.carid AND r.eventid=? " +
+                        "LEFT JOIN payments p ON p.driverid=d.driverid AND p.eventid=r.eventid " +
                         "WHERE c.carid=? GROUP BY d.firstname, d.lastname, c.carid ORDER BY d.firstname, d.lastname", newList(eventid, carid));
             ResultSet runs = null;
             if (loadruns)
@@ -704,10 +712,11 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
-    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception
+    public void registerPayment(UUID eventid, UUID driverid, UUID carid, String session, String txtype, String itemname, double amountInCents) throws Exception
     {
-        executeUpdate("INSERT INTO payments (payid, eventid, carid, txtype, txtime, amount) VALUES (?, ?, ?, ?, now(), ?)",
-                newList(IdGenerator.generateId(), eventid, carid, txtype, amount));
+        executeUpdate("INSERT INTO payments (payid, eventid, driverid, carid, session, txtype, itemname, amount, txtime) " +
+                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, now())",
+                newList(IdGenerator.generateId(), eventid, driverid, carid, session, txtype, itemname, amountInCents));
     }
 
     @Override

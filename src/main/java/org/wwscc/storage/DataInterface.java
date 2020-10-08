@@ -65,20 +65,20 @@ public interface DataInterface
     public boolean updateEventRuns(UUID eventid, int runs);
 
     /**
-     * @param eventid TODO
+     * @param eventid the id of the event
      * @return a list of all entrants participating in the current event
      */
     public List<Entrant> getEntrantsByEvent(UUID eventid);
 
     /**
-     * @param eventid TODO
+     * @param eventid the id of the event
      * @return a list of all entrants registered for an event
      */
     public List<Entrant> getRegisteredEntrants(UUID eventid);
 
     /**
      * @param driverid the driver id of the cars to search for
-     * @param eventid TODO
+     * @param eventid the id of the event
      * @return a list of all registered car ids for a driver
      */
     public List<Car> getRegisteredCars(UUID driverid, UUID eventid);
@@ -123,7 +123,7 @@ public interface DataInterface
     public void registerCar(UUID eventid, UUID carid, String session) throws Exception;
     public void ensureRegistration(UUID eventid, UUID carid, String session) throws Exception;
     public void unregisterCar(UUID eventid, UUID carid, String session) throws Exception; // remove this car from the current event registration
-    public void registerPayment(UUID eventid, UUID carid, String txtype, double amount) throws Exception;
+    public void registerPayment(UUID eventid, UUID driverid, UUID carid, String session, String txtype, String itemname, double amountInCents) throws Exception;
     public void movePayments(UUID eventid, UUID srccarid, UUID dstcarid) throws Exception;
     public void deletePayment(UUID payid) throws Exception;
 

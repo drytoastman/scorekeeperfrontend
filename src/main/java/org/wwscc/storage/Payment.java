@@ -17,13 +17,16 @@ public class Payment
 {
     protected UUID payid;
     protected UUID eventid;
+    protected UUID driverid;
     protected UUID carid;
-    protected String refid;
+    protected String session;
     protected String txtype;
     protected String txid;
     protected Timestamp txtime;
     protected String itemname;
-    protected double amount;
+    protected String accountid;
+    protected boolean refunded;
+    protected int amountInCents;
 
     public Payment()
     {
@@ -33,18 +36,22 @@ public class Payment
     {
         payid    = (UUID)rs.getObject("payid");
         eventid  = (UUID)rs.getObject("eventid");
+        driverid = (UUID)rs.getObject("driverid");
         carid    = (UUID)rs.getObject("carid");
-        refid    = rs.getString("refid");
+        session  = rs.getString("session");
         txtype   = rs.getString("txtype");
         txid     = rs.getString("txid");
         txtime   = rs.getTimestamp("txtime", Database.utc);
         itemname = rs.getString("itemname");
-        amount   = rs.getDouble("amount");
+        accountid = rs.getString("accountid");
+        refunded = rs.getBoolean("refunded");
+        amountInCents = rs.getInt("amount");
     }
 
     public UUID getPayId()    { return payid; }
     public UUID getCarId()    { return carid; }
     public UUID getEventId()  { return eventid; }
-    public double getAmount() { return amount; }
+    public int getAmountInCents() { return amountInCents; }
+    public double getAmount() { return amountInCents/100.0; }
     public String getTxType() { return txtype; }
 }
