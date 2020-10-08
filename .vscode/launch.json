@@ -1,0 +1,88 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-PrinterTest<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.barcodes.PrinterTest",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-ChallengeGUI<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.challenge.ChallengeGUI",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-DataEntry<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.dataentry.DataEntry",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-MainHack<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.fxchallenge.MainHack",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-ProSoloInterface<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.protimer.ProSoloInterface",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Registration<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.registration.Registration",
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-ScorekeeperStatusWindow<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.system.ScorekeeperStatusWindow",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-ScorekeeperSystem<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.system.ScorekeeperSystem",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-DockerAPI<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.system.docker.DockerAPI",
+            "projectName": "ScorekeeperFrontend"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-DebugTimer<ScorekeeperFrontend>",
+            "request": "launch",
+            "mainClass": "org.wwscc.timercomm.DebugTimer",
+            "projectName": "ScorekeeperFrontend"
+        }
+    ]
+}
