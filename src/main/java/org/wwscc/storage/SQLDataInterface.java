@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.postgresql.util.PSQLException;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 
@@ -115,18 +114,17 @@ public abstract class SQLDataInterface implements DataInterface
         {
             return executeSelect("SELECT * FROM events WHERE NOT isexternal ORDER BY date", null, Event.class.getConstructor(ResultSet.class));
         }
+        catch (NoSeriesException nse)
+        {
+            return new ArrayList<Event>();
+        }
         catch (Exception ioe)
         {
-            List<Event> blank = new ArrayList<Event>();
-            if (ioe instanceof PSQLException) {
-                if (((PSQLException)ioe).getSQLState().equals("42P01")) {
-                    return blank;
-                }
-            }
             logError("getEvents", ioe);
             return new ArrayList<Event>();
         }
     }
+
 
     @Override
     public boolean updateEventRuns(UUID eventid, int runs)
