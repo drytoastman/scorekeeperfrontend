@@ -61,7 +61,7 @@ public class ScannerTest {
 
     @Test
     public void testGood() throws InterruptedException {
-        for (int delay : new int[] { 0, 100, 190 }) {
+        for (int delay : new int[] { 0, 100, 170 }) {
             scanned = "";
             for (char c : new char[] { start, '1', '2', '3', end }) {
                 watcher.processEvent(new KeyEvent(ignore, KeyEvent.KEY_TYPED, System.currentTimeMillis(), 0,  KeyEvent.VK_UNDEFINED, c));

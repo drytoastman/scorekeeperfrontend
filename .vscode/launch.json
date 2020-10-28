@@ -6,48 +6,50 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Debug (Launch) - Current File",
+            "name": "Debug - Current File",
             "request": "launch",
-            "mainClass": "${file}"
+            "mainClass": "${file}",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-PrinterTest<ScorekeeperFrontend>",
-            "request": "launch",
-            "mainClass": "org.wwscc.barcodes.PrinterTest",
-            "projectName": "ScorekeeperFrontend"
-        },
-        {
-            "type": "java",
-            "name": "Debug (Launch)-ChallengeGUI<ScorekeeperFrontend>",
+            "name": "Debug ChallengeGUI",
             "request": "launch",
             "mainClass": "org.wwscc.challenge.ChallengeGUI",
-            "projectName": "ScorekeeperFrontend"
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-DataEntry<ScorekeeperFrontend>",
+            "name": "Debug DataEntry",
             "request": "launch",
             "mainClass": "org.wwscc.dataentry.DataEntry",
-            "projectName": "ScorekeeperFrontend"
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-MainHack<ScorekeeperFrontend>",
-            "request": "launch",
-            "mainClass": "org.wwscc.fxchallenge.MainHack",
-            "projectName": "ScorekeeperFrontend"
-        },
-        {
-            "type": "java",
-            "name": "Debug (Launch)-ProSoloInterface<ScorekeeperFrontend>",
+            "name": "Debug ProSoloInterface",
             "request": "launch",
             "mainClass": "org.wwscc.protimer.ProSoloInterface",
-            "projectName": "ScorekeeperFrontend"
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-Registration<ScorekeeperFrontend>",
+            "name": "Debug Registration",
             "request": "launch",
             "mainClass": "org.wwscc.registration.Registration",
             "projectName": "ScorekeeperFrontend",
@@ -58,31 +60,25 @@
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-ScorekeeperStatusWindow<ScorekeeperFrontend>",
-            "request": "launch",
-            "mainClass": "org.wwscc.system.ScorekeeperStatusWindow",
-            "projectName": "ScorekeeperFrontend"
-        },
-        {
-            "type": "java",
-            "name": "Debug (Launch)-ScorekeeperSystem<ScorekeeperFrontend>",
+            "name": "Debug ScorekeeperSystem",
             "request": "launch",
             "mainClass": "org.wwscc.system.ScorekeeperSystem",
-            "projectName": "ScorekeeperFrontend"
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         },
         {
             "type": "java",
-            "name": "Debug (Launch)-DockerAPI<ScorekeeperFrontend>",
-            "request": "launch",
-            "mainClass": "org.wwscc.system.docker.DockerAPI",
-            "projectName": "ScorekeeperFrontend"
-        },
-        {
-            "type": "java",
-            "name": "Debug (Launch)-DebugTimer<ScorekeeperFrontend>",
+            "name": "Debug DebugTimer",
             "request": "launch",
             "mainClass": "org.wwscc.timercomm.DebugTimer",
-            "projectName": "ScorekeeperFrontend"
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            }
         }
     ]
 }

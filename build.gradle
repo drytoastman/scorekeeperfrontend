@@ -51,7 +51,7 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5.13'
     compile 'org.kamranzafar:jtar:2.3'
     compile 'org.mindrot:jbcrypt:0.4'
-    compile 'org.postgresql:postgresql:42.2.18'
+    compile 'org.postgresql:postgresql:42.2.5'
 
     compile "org.openjfx:javafx-base:$fxver:$target"
     compile "org.openjfx:javafx-controls:$fxver:$target"

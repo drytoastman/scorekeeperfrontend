@@ -62,6 +62,8 @@ public class RegCarRenderer implements ListCellRenderer<Object>
             }
         }
 
+        if (c == null) { return p; }
+
         p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
         p.payment.setForeground(c.getPaymentTotal() > 0 ? greenish : Color.gray);
         p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
