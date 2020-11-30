@@ -175,7 +175,7 @@ public class ScorekeeperSystem
 
     public void downloadNewRequest(MergeServer server)
     {
-        SeriesSelectionDialog hd = new SeriesSelectionDialog(cmonitor, server.getConnectEndpoint());
+        SeriesSelectionDialog hd = new SeriesSelectionDialog(server.getConnectEndpoint());
         if (!hd.doDialog("Select Host and Series", null))
             return;
         HSResult ret = hd.getResult();

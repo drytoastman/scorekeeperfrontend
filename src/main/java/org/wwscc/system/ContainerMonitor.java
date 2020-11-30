@@ -2,7 +2,7 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2018 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2020 Brett Wilson.
  * All rights reserved.
  */
 
@@ -11,7 +11,6 @@ package org.wwscc.system;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -41,16 +40,16 @@ public class ContainerMonitor extends MonitorBase
     public static final String NET_NAME  = volname("net1");
     public static final String CERTS_VOL = "certs";
     public static final String DB_IMAGE  = "drytoastman/scdb:"+Prefs.getFullVersion();
-    public static final String PY_IMAGE  = "drytoastman/scpython:"+Prefs.getFullVersion();
+    public static final String SV_IMAGE  = "drytoastman/scserver:"+Prefs.getFullVersion();
+    public static final String PX_IMAGE  = "drytoastman/scproxy:"+Prefs.getFullVersion();
 
     private DockerAPI docker;
-    private List<DockerContainer> all, nondb, justdb;
-    private DockerContainer db, web, sync, dns;
+    private DockerContainer db, server, proxy;
     private BroadcastState<String> status;
     private BroadcastState<String> containers;
     private Path importRequestFile, newCertsFile;
     private BackupRequest backupRequest;
-    private boolean machineready, restartsync;
+    private boolean machineready; // , restartsync;
     private String lastcheck;
 
     /** flag for debug environment where we are running the backend separately */
@@ -64,16 +63,13 @@ public class ContainerMonitor extends MonitorBase
     }
 
     public static String volname(String name) { return String.format("%s_%s", Prefs.getVersionBase(), name); }
-    public static String conname(String name) { return String.format("%s_%s_1", Prefs.getVersionBase(), name); }
+    public static String conname(String name) { return name; }
 
     @SuppressWarnings("unchecked")
     public ContainerMonitor()
     {
         super("ContainerMonitor", 5000);
         docker       = new DockerAPI();
-        all          = new ArrayList<DockerContainer>();
-        nondb        = new ArrayList<DockerContainer>();
-        justdb       = new ArrayList<DockerContainer>();
         status       = new BroadcastState<String>(MT.BACKEND_STATUS, "");
         containers   = new BroadcastState<String>(MT.BACKEND_CONTAINERS, "");
         machineready = false;
@@ -84,45 +80,31 @@ public class ContainerMonitor extends MonitorBase
         db = new DockerContainer(conname("db"), DB_IMAGE, NET_NAME);
         db.addVolume(volname("database"),  "/var/lib/postgresql/data");
         db.addVolume(volname("logs"),      "/var/log");
-        db.addVolume(volname("socket"),    "/var/run/postgresql");
         db.addVolume(CERTS_VOL, "/certs");
+        db.addPort("127.0.0.1", 6666, 6666, "tcp"); // request backup with name
         db.addPort("127.0.0.1", 6432, 6432, "tcp");
         db.addPort("0.0.0.0",  54329, 5432, "tcp");
-        all.add(db);
-        justdb.add(db);
 
-        web = new DockerContainer(conname("web"), PY_IMAGE, NET_NAME);
-        web.addCmdItem("webserver.py");
-        web.addVolume(volname("logs"),  "/var/log");
-        web.addVolume(volname("socket"), "/var/run/postgresql");
-        web.addPort("0.0.0.0", 80, 80, "tcp");
-        web.addEnvItem("FLASK_SECRET='"+Prefs.getCookieSecret()+"'");
-        web.setStopSignal("SIGINT");
-        all.add(web);
-        nondb.add(web);
+        // SIGHUP starts a sync
+        server = new DockerContainer(conname("server"), SV_IMAGE, NET_NAME);
+        server.addVolume(volname("logs"),  "/var/log");
+        server.addVolume(CERTS_VOL, "/certs");
+        server.addEnvItem("DBHOST=db");
+        server.addEnvItem("DBPORT=6432");
+        server.addEnvItem("TZ=America/Los_Angeles");
 
-        sync = new DockerContainer(conname("sync"), PY_IMAGE, NET_NAME);
-        sync.addCmdItem("syncserver");
-        sync.addVolume(volname("logs"),  "/var/log");
-        sync.addVolume(volname("socket"), "/var/run/postgresql");
-        sync.addVolume(CERTS_VOL, "/certs");
-        all.add(sync);
-        nondb.add(sync);
+        proxy = new DockerContainer(conname("proxy"), PX_IMAGE, NET_NAME);
+        proxy.addVolume(volname("logs"),  "/var/log");
+        proxy.addEnvItem("TZ=America/Los_Angeles");
+        proxy.addPort("0.0.0.0", 80, 80, "tcp");
 
-        dns = new DockerContainer(conname("dns"), PY_IMAGE, NET_NAME);
-        dns.addCmdItem("dnsserver");
-        dns.addVolume(volname("logs"),  "/var/log");
-        dns.addVolume(volname("socket"), "/var/run/postgresql");
-        dns.addPort("0.0.0.0", 53, 53, "udp");
-        all.add(dns);
-        nondb.add(dns);
-
-        Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(sync) );
-        Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
+        Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(server) );
+        // Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
         Messenger.register(MT.MACHINE_READY,    (m, o) -> { machineready = (boolean)o; poke(); });
         Messenger.register(MT.DOCKER_ENV,       (m, o) -> docker.setup((Map<String,String>)o) );
 
-        external_backend = System.getenv("EXTERNAL_BACKEND") != null;
+        String eb = System.getenv("EXTERNAL_BACKEND");
+        external_backend = (eb != null && eb.equals("1"));
     }
 
     public boolean minit()
@@ -137,7 +119,7 @@ public class ContainerMonitor extends MonitorBase
 
         if (!external_backend) {
             status.set( "Clearing old containers");
-            docker.teardown(all, (c,t) -> status.set(String.format("Clear Step %d of %d", c, t)));
+            this.cdown(true);
 
             status.set( "Establishing Network");
             long starttime = System.currentTimeMillis();
@@ -153,17 +135,34 @@ public class ContainerMonitor extends MonitorBase
 
             status.set( "Creating containers");
             while (!done) {
-                docker.containersUp(all, s -> { status.set(s); });
-                try { docker.loadState(all); } catch (IOException ioe) {}
-
+                this.cup();
+                try { docker.loadState(Arrays.asList(db, server, proxy)); } catch (IOException ioe) {}
                 if (db.isUp())  // only need db to run applications
                     break;
-
                 donefornow();
             }
         }
 
         return true;
+    }
+
+    private void cup() {
+        docker.containersUp(Arrays.asList(db),     s -> { status.set("Start db"); });
+        docker.containersUp(Arrays.asList(server), s -> { status.set("Start server"); });
+        docker.containersUp(Arrays.asList(proxy),  s -> { status.set("Start proxy"); });
+    }
+
+    private void cdown(boolean clear) {
+        String name = clear ? "Clear" : "Shutdown";
+        docker.teardown(Arrays.asList(proxy),  (c,t) -> status.set(name + " proxy"));
+        docker.teardown(Arrays.asList(server), (c,t) -> status.set(name + " server"));
+        docker.teardown(Arrays.asList(db),     (c,t) -> status.set(name + " db"));
+    }
+
+    private void cstop() {
+        docker.stop(Arrays.asList(proxy),  (c,t) -> status.set("Stop proxy"));
+        docker.stop(Arrays.asList(server), (c,t) -> status.set("Stop server"));
+        docker.stop(Arrays.asList(db),     (c,t) -> status.set("Stop db"));
     }
 
     public void mloop() throws IOException
@@ -194,11 +193,14 @@ public class ContainerMonitor extends MonitorBase
             backupRequest = null;
         }
 
+        /*
         if (restartsync && sync.isUp()) {
             docker.restart(sync);
             restartsync = false;
         }
+        */
 
+        List<DockerContainer> all = Arrays.asList(db, server, proxy);
         // If something isn't running, try and start them now
         docker.loadState(all);
         List<DockerContainer> down = all.stream().filter(c -> !c.isUp()).collect(Collectors.toList());
@@ -245,15 +247,14 @@ public class ContainerMonitor extends MonitorBase
             request.directory = Prefs.getBackupDirectory();
             request.compress  = true;
             request.usedialog = false;
-            doBackup(request);
+            // doBackup(request);
         }
 
         Database.d.close();
 
         status.set("Shutting down ...");
         if (!external_backend) {
-            docker.teardown(nondb,  (c,t) -> status.set(String.format("Shutdown Step %d of %d", c, t)));
-            docker.teardown(justdb, (c,t) -> status.set(String.format("Final Step %d of %d", c, t)));
+            this.cdown(false);
         }
         containers.set("");
         status.set("Done");
@@ -280,7 +281,7 @@ public class ContainerMonitor extends MonitorBase
             return;
         }
 
-        docker.stop(nondb, (c,t) -> { status.set(String.format("Stop nondb Step %d of %d", c, t)); });
+        docker.stop(Arrays.asList(server), (c,t) -> { status.set(String.format("Stop server")); });
         Database.d.close();
 
         dialog.setStatus("Importing ...", -1);
@@ -318,8 +319,7 @@ public class ContainerMonitor extends MonitorBase
         }
 
         Database.d.close();
-        docker.stop(nondb, (c,t) -> { status.set(String.format("Stop nondb Step %d of %d", c, t)); });
-        docker.stop(justdb, (c,t) -> { status.set(String.format("Stop db Step %d of %d", c, t)); });
+        this.cstop();
     }
 
     private void doBackup(BackupRequest request)
@@ -389,26 +389,6 @@ public class ContainerMonitor extends MonitorBase
     {
         importRequestFile = importfile;
         poke();
-    }
-
-    public String syncCommand(String ... cmd) throws IOException
-    {
-        // a single wait to see if it comes up, otherwise just fail
-        if (!sync.isUp()) { try { Thread.sleep(1000); } catch (InterruptedException e) {}}
-
-        DemuxedStreams ret = docker.run(sync.getName(), cmd);
-        if (ret.stderr.length() > 0) {
-            log.log(Level.WARNING, "syncCommand stderr is {0}", ret.stderr);
-            if (ret.stdout.length() == 0) {
-                if (ret.stderr.contains("Traceback")) {
-                    String err[] = ret.stderr.split("\n");
-                    throw new IOException(err[err.length-1]);
-                }
-                throw new IOException(ret.stderr);
-            }
-        }
-        log.log(Level.FINER, "syncCommand stdout is {0}", ret.stdout);
-        return ret.stdout;
     }
 
     public String getFingerprint()

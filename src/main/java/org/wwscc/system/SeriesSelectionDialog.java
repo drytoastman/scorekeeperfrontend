@@ -10,7 +10,6 @@ package org.wwscc.system;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,28 +26,22 @@ import org.wwscc.util.TextChangeTrigger;
 
 import net.miginfocom.swing.MigLayout;
 
-public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSResult>
-{
+public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSResult> {
     private static final Logger log = Logger.getLogger(SeriesSelectionDialog.class.getCanonicalName());
 
     GetRemoteSeries seriesgetter;
     CheckRemotePassword passchecker;
     JLabel errornote;
-
-    ContainerMonitor cmonitor;
     String host;
 
-    static public class HSResult
-    {
+    static public class HSResult {
         public String series;
         public String password;
     }
 
-    public SeriesSelectionDialog(ContainerMonitor cmonitor, String host)
-    {
+    public SeriesSelectionDialog(String host) {
         super(new MigLayout("", "[][fill, 300]", "[fill]"), false);
         this.host = host;
-        this.cmonitor = cmonitor;
 
         mainPanel.add(label("Series", true), "");
         mainPanel.add(select("series", null, new Object[] {}, this), "grow, wrap");
@@ -60,8 +53,14 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         mainPanel.add(errornote, "spanx 2, center, grow, wrap");
 
         selects.get("series").addAncestorListener(new AncestorListener() {
-            @Override public void ancestorRemoved(AncestorEvent event) {}
-            @Override public void ancestorMoved(AncestorEvent event) {}
+            @Override
+            public void ancestorRemoved(AncestorEvent event) {
+            }
+
+            @Override
+            public void ancestorMoved(AncestorEvent event) {
+            }
+
             @Override
             public void ancestorAdded(AncestorEvent event) {
                 selects.get("series").setModel(new DefaultComboBoxModel<Object>(new String[] { "loading ..." }));
@@ -75,48 +74,42 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         });
 
         fields.get("password").getDocument().addDocumentListener(new TextChangeTrigger() {
-            @Override public void changedTo(String txt) {
+            @Override
+            public void changedTo(String txt) {
                 ok.setText("Verify Password");
-        }});
+            }
+        });
     }
 
     @Override
-    public void actionPerformed(ActionEvent e)
-    {
-        if (e.getSource() == selects.get("series"))
-        {
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == selects.get("series")) {
             ok.setText("Verify Password");
             errornote.setText(" ");
-        }
-        else if ((e.getSource() == ok) && (ok.getText().equals("Verify Password")))
-        {
+        } else if ((e.getSource() == ok) && (ok.getText().equals("Verify Password"))) {
             errornote.setText("Checking ...");
             if (passchecker != null)
                 passchecker.cancel(true);
-            String s = (String)getSelect("series");
+            String s = (String) getSelect("series");
             String p = getEntryText("password");
-            if ((host != null) && (s != null) && (p != null))
-            {
+            if ((host != null) && (s != null) && (p != null)) {
                 passchecker = new CheckRemotePassword(s, p);
                 passchecker.execute();
             }
-        }
-        else
+        } else
             super.actionPerformed(e);
     }
 
     @Override
-    public HSResult getResult()
-    {
+    public HSResult getResult() {
         HSResult ret = new HSResult();
-        ret.series = (String)getSelect("series");
+        ret.series = (String) getSelect("series");
         ret.password = getEntryText("password");
         return ret;
     }
 
     @Override
-    public boolean verifyData()
-    {
+    public boolean verifyData() {
         return ok.getText().equals("Download");
     }
 
@@ -126,7 +119,7 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         @Override
         protected List<String> doInBackground() throws Exception
         {
-            return Arrays.asList(cmonitor.syncCommand("remotelist", host).split(","));
+            return Api2.remotelist(host);
         }
 
         @Override
@@ -157,7 +150,7 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         @Override
         protected Boolean doInBackground() throws Exception
         {
-            return cmonitor.syncCommand("remotepassword", host, series, password).equals("accepted");
+            return Api2.passwordcheck(host, series, password);
         }
 
         @Override

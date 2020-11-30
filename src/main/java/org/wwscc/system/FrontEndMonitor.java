@@ -57,7 +57,7 @@ public class FrontEndMonitor extends MonitorBase implements DiscoveryListener
         Messenger.register(MT.DISCOVERY_CHANGE,   (type, data) -> updateDiscoverySetting((boolean)data));
         Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> {
             String s = (String)data;
-            backendready = s.contains("db") && s.contains("sync");
+            backendready = s.contains("db") && s.contains("server");
             setPause(!backendready);
             poke();
         });

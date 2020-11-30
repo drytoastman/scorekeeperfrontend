@@ -127,7 +127,7 @@ public class DebugCollector extends Thread
             monitor.setProgress(80);
 
             monitor.setNote("saving zipfile to disk");
-            zipfiles(zipfile);
+            zipfiles(temp, zipfile);
 
             // Just me being worried, make sure someone doesn't hand us "/", "/tmp/asdf" is count == 2
             monitor.setProgress(90);
@@ -151,13 +151,16 @@ public class DebugCollector extends Thread
      * @param dest
      * @throws IOException
      */
-    private void zipfiles(File dest) throws IOException
+    private void zipfiles(Path relative, File dest) throws IOException
     {
         FileOutputStream fos = new FileOutputStream(dest);
         ZipOutputStream zos = new ZipOutputStream(fos);
         for (Path p : files) {
             try {
-                Path file = p.getFileName();
+                Path file = relative.relativize(p);
+                if (file.startsWith("..")) {
+                    file = p.getFileName();
+                }
                 if (file != null) {
                     zos.putNextEntry(new ZipEntry(file.toString()));
                     Files.copy(p, zos);

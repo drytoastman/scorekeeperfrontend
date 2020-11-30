@@ -66,7 +66,20 @@
             "projectName": "ScorekeeperFrontend",
             "env": {
                 "DEBUG": "1",
-                "LOG_LEVEL": "DEBUG"
+                "LOG_LEVEL": "DEBUG",
+                "EXTERNAL_BACKEND": "0"
+            }
+        },
+        {
+            "type": "java",
+            "name": "Debug ScorekeeperSystem (External Backend)",
+            "request": "launch",
+            "mainClass": "org.wwscc.system.ScorekeeperSystem",
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG",
+                "EXTERNAL_BACKEND": "1"
             }
         },
         {
