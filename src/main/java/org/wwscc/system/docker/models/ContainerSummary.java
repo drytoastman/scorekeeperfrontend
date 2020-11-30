@@ -15,7 +15,6 @@ package org.wwscc.system.docker.models;
 
 import java.util.Objects;
 import java.util.ArrayList;
-import org.wwscc.system.docker.models.ContainerSummaryInner;
 
 /**
  * ContainerSummary

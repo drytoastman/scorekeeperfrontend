@@ -18,9 +18,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModelProperty;
-import org.wwscc.system.docker.models.MountBindOptions;
-import org.wwscc.system.docker.models.MountTmpfsOptions;
-import org.wwscc.system.docker.models.MountVolumeOptions;
 
 /**
  * Mount

@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.wwscc.system.docker.models.ContainerConfigVolumes;
-import org.wwscc.system.docker.models.HealthConfig;
 
 /**
  * Configuration for a container that is portable between hosts

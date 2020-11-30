@@ -23,14 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.wwscc.system.docker.models.DeviceMapping;
-import org.wwscc.system.docker.models.HostConfigLogConfig;
-import org.wwscc.system.docker.models.Mount;
-import org.wwscc.system.docker.models.PortMap;
-import org.wwscc.system.docker.models.ResourcesBlkioWeightDevice;
-import org.wwscc.system.docker.models.ResourcesUlimits;
-import org.wwscc.system.docker.models.RestartPolicy;
-import org.wwscc.system.docker.models.ThrottleDevice;
 
 /**
  * Container configuration that depends on the host we are running on

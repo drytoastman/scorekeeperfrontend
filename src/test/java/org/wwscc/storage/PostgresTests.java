@@ -11,7 +11,6 @@ package org.wwscc.storage;
 import java.sql.ResultSet;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.wwscc.storage.Database;
 
 public class PostgresTests
 {

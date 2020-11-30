@@ -19,7 +19,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
 import java.util.Map;
-import org.wwscc.system.docker.models.MountVolumeOptionsDriverConfig;
 
 /**
  * Optional configuration for the &#x60;volume&#x60; type.

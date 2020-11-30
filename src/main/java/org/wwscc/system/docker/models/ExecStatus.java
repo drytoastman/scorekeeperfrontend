@@ -16,7 +16,6 @@ package org.wwscc.system.docker.models;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
-import org.wwscc.system.docker.models.ProcessConfig;
 
 /**
  * InlineResponse20014

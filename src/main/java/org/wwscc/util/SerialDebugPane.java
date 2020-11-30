@@ -22,10 +22,6 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-import org.wwscc.util.MT;
-import org.wwscc.util.MessageListener;
-import org.wwscc.util.Messenger;
-
 
 public class SerialDebugPane extends JFrame implements MessageListener
 {

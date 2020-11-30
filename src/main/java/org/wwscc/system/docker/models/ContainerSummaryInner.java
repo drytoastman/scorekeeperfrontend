@@ -20,10 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.wwscc.system.docker.models.ContainerSummaryInnerHostConfig;
-import org.wwscc.system.docker.models.ContainerSummaryInnerNetworkSettings;
-import org.wwscc.system.docker.models.Mount;
-import org.wwscc.system.docker.models.Port;
 
 /**
  * ContainerSummaryInner
