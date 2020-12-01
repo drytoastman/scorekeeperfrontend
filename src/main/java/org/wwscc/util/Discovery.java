@@ -11,6 +11,7 @@ package org.wwscc.util;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
@@ -280,9 +281,10 @@ public class Discovery
                         socket = new MulticastSocket(DISCOVERY_PORT);
                         socket.setTimeToLive(MULTICAST_TTL);
                         socket.setSoTimeout(READ_TIMEOUT_MS);
-                        socket.setInterface(bind);
-                        socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
-                        log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getInterface()));
+                        // socket.setInterface(bind);
+                        // socket.joinGroup(InetAddress.getByName(DISCOVERY_GROUP));
+                        socket.joinGroup(new InetSocketAddress(DISCOVERY_GROUP, DISCOVERY_PORT), Network.getPrimaryInterface());
+                        log.info(String.format("Joined %s on %s", DISCOVERY_GROUP, socket.getNetworkInterface()));
                     }
 
                     try {

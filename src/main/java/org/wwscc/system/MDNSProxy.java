@@ -13,6 +13,7 @@ import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -112,8 +113,9 @@ public class MDNSProxy
                     throw new NoInternetException();
                 MulticastSocket s = new MulticastSocket(MDNS_PORT);
                 s.setTimeToLive(MULTICAST_TTL);
-                s.setInterface(bind);
-                s.joinGroup(MDNS_GROUP);
+                // s.setInterface(bind);
+                // s.joinGroup(MDNS_GROUP);
+                s.joinGroup(new InetSocketAddress(MDNS_GROUP, MDNS_PORT), Network.getPrimaryInterface());
                 sock = s;
                 log.info(String.format("Joined %s on %s", MDNS_GROUP, bind));
             }

@@ -1,15 +1,8 @@
 plugins {
     id 'application'
     id 'eclipse'
-}
-
-import org.gradle.internal.os.OperatingSystem
-def getOSName = { ->
-    def os = OperatingSystem.current();
-    if (os.isWindows()) return "win";
-    if (os.isLinux()) return "linux";
-    if (os.isMacOsX()) return "mac";
-    return "Unknown";
+    id "org.beryx.runtime" version "1.11.4"
+    id "org.openjfx.javafxplugin" version "0.0.9"
 }
 
 def getVersionName = { ->
@@ -30,38 +23,37 @@ def getVersionName = { ->
 
 version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
-def target = System.getProperty("target", getOSName())
-def fxver = "13"
-def targetjdk = file("jdk-12.0.2+10-${target}")
-
 repositories {
     jcenter()
 }
 
+javafx {
+    version = "13"
+    modules = [
+        'javafx.controls',
+        'javafx.fxml',
+        'javafx.media',
+        'javafx.graphics',
+        'javafx.swing',
+        'javafx.web'
+    ]
+}
+
 dependencies {
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
-    compile 'com.github.jnr:jnr-unixsocket:0.23'
-    compile 'com.miglayout:miglayout-swing:5.2'
-    compile 'com.fazecast:jSerialComm:2.5.2'
-    compile 'com.jcraft:jsch:0.1.54'
-    compile 'dnsjava:dnsjava:2.1.9'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+    implementation 'com.github.jnr:jnr-unixsocket:0.23'
+    implementation 'com.miglayout:miglayout-swing:5.2'
+    implementation 'com.fazecast:jSerialComm:2.5.2'
+    implementation 'com.jcraft:jsch:0.1.54'
 
-    compile 'io.swagger:swagger-annotations:1.5.18'
-    compile 'javax.annotation:javax.annotation-api:1.3.2'
-    compile 'org.apache.httpcomponents:httpclient:4.5.13'
-    compile 'org.kamranzafar:jtar:2.3'
-    compile 'org.mindrot:jbcrypt:0.4'
-    compile 'org.postgresql:postgresql:42.2.5'
+    implementation 'io.swagger:swagger-annotations:1.5.18'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'org.kamranzafar:jtar:2.3'
+    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'org.postgresql:postgresql:42.2.5'
 
-    compile "org.openjfx:javafx-base:$fxver:$target"
-    compile "org.openjfx:javafx-controls:$fxver:$target"
-    compile "org.openjfx:javafx-fxml:$fxver:$target"
-    compile "org.openjfx:javafx-media:$fxver:$target"
-    compile "org.openjfx:javafx-graphics:$fxver:$target"
-    compile "org.openjfx:javafx-swing:$fxver:$target"
-    compile "org.openjfx:javafx-web:$fxver:$target"
-
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 }
 
 jar {
@@ -69,41 +61,6 @@ jar {
         attributes("Implementation-Version": version)
     }
 }
-
-task targetJDK() {
-    doLast {
-        def basejdk = file("jdk-12.0.2+10")
-        if (!targetjdk.exists()) {
-            switch (target) {
-                case 'mac':
-                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10.3/OpenJDK12U-jdk_x64_mac_hotspot_12.0.2_10.tar.gz',
-                            dest: 'mac.tar.gz')
-                    copy { from tarTree(resources.gzip('mac.tar.gz')) into projectDir }
-                    file(basejdk.toString()+'/Contents/Home').renameTo(targetjdk)
-                    basejdk.deleteDir()
-                    break
-
-                case 'win':
-                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_windows_hotspot_12.0.2_10.zip',
-                            dest: 'win.zip')
-                    copy { from zipTree('win.zip') into projectDir }
-                    basejdk.renameTo(targetjdk)
-                    break
-
-                case 'linux':
-                    ant.get(src:  'https://github.com/AdoptOpenJDK/openjdk12-binaries/releases/download/jdk-12.0.2%2B10/OpenJDK12U-jdk_x64_linux_hotspot_12.0.2_10.tar.gz',
-                            dest: 'linux.tar.gz')
-                    copy { from tarTree(resources.gzip('linux.tar.gz')) into projectDir }
-                    basejdk.renameTo(targetjdk)
-                    break
-
-                default:
-                    throw new Exception("Unknown target")
-            }
-        }
-    }
-}
-
 
 def jmodules = [
     'java.base',
@@ -126,18 +83,103 @@ def jmodules = [
     'jdk.xml.dom'
 ]
 
-task scruntime (type: Exec) {
-    afterEvaluate { project ->
-        dependsOn(installDist)
-        dependsOn(targetJDK)
+runtime {
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    modules = jmodules
+
+    targetPlatform("win") {
+        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_windows_hotspot_15.0.1_9.zip")
     }
-    commandLine "python3", "createdist.py",
-        "--modules", jmodules.join(","),
-        "--jdk",     targetjdk,
-        "--target",  target,
-        "--version", version,
-        "--app",     installDist.destinationDir
+
+    targetPlatform("linux") {
+        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz")
+    }
+
+    targetPlatform("mac") {
+        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_mac_hotspot_15.0.1_9.tar.gz")
+    }
+
+    launcher {
+        noConsole = true
+    }
 }
+
+
+task distribzips {
+    afterEvaluate { project ->
+        dependsOn('runtime')
+    }
+    doLast {
+        def dir = runtime.imageDir.get()
+        def base = "$dir/$project.name"
+
+        if (runtime.targetPlatforms.get()['win']) {
+            def name = 'win'
+            delete "$base-$name/release"
+            new File("$base-$name/Scorekeeper.bat").text = """
+                cd %~dp0bin
+                start javaw.exe -classpath "../lib/*" org.wwscc.system.ScorekeeperSystem
+            """
+            new File("$base-$name/ProTimer.bat").text = """
+                cd %~dp0bin
+                start javaw.exe -classpath "../lib/*" org.wwscc.protimer.ProSoloInterface
+            """
+            new File("$base-$name/fwrules.bat").text = """
+                %echo off
+                CALL :addrule ScorekeeperWeb       TCP 80
+                CALL :addrule ScorekeeperTimers    TCP 54328
+                CALL :addrule ScorekeeperDatabase  TCP 54329
+                CALL :addrule ScorekeeperDNS       UDP 53
+                CALL :addrule ScorekeeperMDNS      UDP 5353
+                CALL :addrule ScorekeeperDiscovery UDP 5454
+
+                CALL :disableservice w3svc
+                CALL :disableservice SharedAccess
+
+                pause
+                exit /B 0
+
+                :addrule
+                netsh advfirewall firewall show rule name=%1
+                if %ERRORLEVEL% NEQ 0  netsh advfirewall firewall add rule name=%1 dir=in action=allow protocol=%2 localport=%3
+                EXIT /B 0
+
+                :disableservice
+                sc query %1
+                if %ERRORLEVEL% EQU 0 sc stop %1 & sc config %1 start=disabled
+                EXIT /B 0
+            """
+            // file("$base-$name").renameTo(file("$base-$version-$name"))
+            createZip(new File("$base-$name"), new File("$base-$version-$name" + ".zip"))
+        }
+
+        ['linux', 'mac'].each { name ->
+            if (runtime.targetPlatforms.get()[name]) {
+                delete "$base-$name/release"
+                new File("$base-$name/Scorekeeper").text = """
+                    #!/usr/bin/env bash
+                    cd bin
+                    ./java -classpath "../lib/*" org.wwscc.system.ScorekeeperSystem
+                """
+                // file("$base-$name").renameTo(file("$base-$version-$name"))
+                createZip(new File("$base-$name"), new File("$base-$version-$name" + ".zip"))
+            }
+        }
+    }
+}
+
+ext.createZip = { imageDir, zipFile ->
+    def parentPath = imageDir.toPath()
+    project.ant.zip(destfile: zipFile, duplicate: 'fail') {
+        imageDir.eachFileRecurse { f ->
+            int mode = f.canExecute() ? 755 : 644
+            def relPath = parentPath.relativize(f.toPath()).toString()
+            zipfileset(dir: parentPath, includes: relPath, filemode: mode)
+        }
+    }
+}
+
+/**************** Misc stuff ***************************/
 
 task ver {
     doLast() { print "${version}" }

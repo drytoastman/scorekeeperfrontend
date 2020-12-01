@@ -3,7 +3,8 @@ services: [docker]
 language: java
 
 before_install:
-  - ./gradlew -D target=linux targetJDK
+  - wget https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz
+  - tar xf OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz
   - export JAVA_HOME=$PWD/jdk-12.0.2+10-linux
   - export PATH=$JAVA_HOME/bin:$PATH
 
@@ -22,9 +23,7 @@ script:
 after_success:
   - |
     if [ ! -z "$TRAVIS_TAG" ]; then
-      ./gradlew -D target=linux scruntime;
-      ./gradlew -D target=mac scruntime;
-      ./gradlew -D target=win scruntime;
+      ./gradlew distribzips
     fi
 
 deploy:
@@ -34,7 +33,7 @@ deploy:
     skip_cleanup: true
     file_glob: true
     file:
-      - "build/runtime/*.zip"
+      - "build/image/*.zip"
     on:
       tags: true
 
