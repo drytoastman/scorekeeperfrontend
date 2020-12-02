@@ -3,6 +3,7 @@ package org.wwscc.system;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.CookieSpecs;
@@ -13,6 +14,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
 public class Api2 {
+    private static final Logger log = Logger.getLogger(Api2.class.getCanonicalName());
 
     private static String api2(String call) throws IOException {
         CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build()).build();
@@ -29,8 +31,12 @@ public class Api2 {
     }
 
     static public boolean passwordcheck(String host, String series, String password) throws IOException {
-        String res = api2(String.format("remotecheck?host=%s&series=%s&password=%s", host, series, password));
-        System.out.println(res);
-        return res.equals("accepted");
+        try {
+            String res = api2(String.format("remotecheck?host=%s&series=%s&password=%s", host, series, password));
+            return res.equals("accepted");
+        } catch (IOException ioe) {
+            log.warning(ioe.getMessage());
+            return false;
+        }
     }
 }

@@ -10,6 +10,7 @@ package org.wwscc.system;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,6 +23,7 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
 import org.wwscc.dialogs.BaseDialog;
+import org.wwscc.storage.Database;
 import org.wwscc.util.TextChangeTrigger;
 
 import net.miginfocom.swing.MigLayout;
@@ -126,11 +128,16 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
         protected void done()
         {
             try {
-                selects.get("series").setModel(new DefaultComboBoxModel<Object>(get().toArray()));
+                errornote.setText(" ");
+                List<String> remote = new ArrayList<String>(get());
+                remote.removeAll(Database.d.getSeriesList());
+
+                selects.get("series").setModel(new DefaultComboBoxModel<Object>(remote.toArray()));
                 if (currentDialog != null)
                     currentDialog.pack();
             } catch (Exception e) {
-                log.log(Level.WARNING, "\bError getting series list: " + e.getMessage(), e);
+                errornote.setText("Error getting series list: " + e.getMessage());
+                log.log(Level.WARNING, "Error getting series list: " + e.getMessage(), e);
                 close();
             }
         }

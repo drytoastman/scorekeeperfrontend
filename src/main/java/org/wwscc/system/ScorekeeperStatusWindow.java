@@ -166,6 +166,11 @@ public class ScorekeeperStatusWindow extends JFrame
         Messenger.register(MT.OPEN_STATUS_REQUEST, (t,o) -> { setVisible(true); toFront(); });
     }
 
+    private JScrollPane scrollWrap(MergeStatusTable table) {
+        JScrollPane p = new JScrollPane(table);
+        // ignored by current UI p.getHorizontalScrollBar().setUnitIncrement(2000);
+        return p;
+    }
 
     class LogLevelChanges implements ActionListener
     {
@@ -220,12 +225,12 @@ public class ScorekeeperStatusWindow extends JFrame
             content.add(buttons.get("mergeall"),  "gapleft 10");
             content.add(buttons.get("mergewith"), "gapleft 10");
             content.add(buttons.get("download"),  "gapleft 10, wrap");
-            content.add(new JScrollPane(activetable), "grow, wrap");
+            content.add(scrollWrap(activetable), "grow, wrap");
 
             content.add(new JSeparator(), "growx, wrap");
             content.add(header("Inactive Hosts", 16), "split");
             content.add(buttons.get("clearold"), "gapleft 10, wrap");
-            content.add(new JScrollPane(inactivetable), "grow");
+            content.add(scrollWrap(inactivetable), "grow");
 
             setResizable(true);
             setBounds(Prefs.getWindowBounds("statuswindow"));
