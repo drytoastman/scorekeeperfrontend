@@ -27,6 +27,17 @@
         },
         {
             "type": "java",
+            "name": "Debug FXChallengeGUI",
+            "request": "launch",
+            "mainClass": "org.wwscc.fxchallenge.MainHack",
+            "projectName": "ScorekeeperFrontend",
+            "env": {
+                "DEBUG": "1",
+                "LOG_LEVEL": "DEBUG"
+            },
+        },
+        {
+            "type": "java",
             "name": "Debug DataEntry",
             "request": "launch",
             "mainClass": "org.wwscc.dataentry.DataEntry",

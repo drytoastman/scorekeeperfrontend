@@ -18,9 +18,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
 import org.wwscc.storage.Challenge;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.Event;
@@ -247,7 +244,7 @@ public class MainController
 
     public void viewInBrowser(ActionEvent event)
     {
-        BrowserControl.openURL(String.format("http://127.0.0.1/results/%s/challenge/%s/bracket", currentSeries.get(), currentChallenge.get().getChallengeId()));
+        BrowserControl.openURL(String.format("http://127.0.0.1/results/%s/%s/bracket", currentSeries.get(), currentChallenge.get().getChallengeId()));
     }
 
     public void timerConnect(ActionEvent event)
@@ -330,21 +327,12 @@ public class MainController
             return;
         }
 
-        String url = String.format("http://127.0.0.1/results/%s/challenge/%s/bracket", currentSeries.get(), currentChallenge.get().getChallengeId());
+        String url = String.format("http://127.0.0.1/results/%s/%s/bracket?gui=1", currentSeries.get(), currentChallenge.get().getChallengeId());
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == State.SUCCEEDED) {
-                Document doc = engine.getDocument() ;
-                Element styleNode = doc.createElement("style");
-                Text styleContent = doc.createTextNode(
-                          "nav, h3 { display: none !important; } "
-                        + ".container { max-width: 4000px !important; } "
-                        );
-                styleNode.appendChild(styleContent);
-                doc.getDocumentElement().getElementsByTagName("head").item(0).appendChild(styleNode);
-
                 JSObject win = (JSObject)engine.executeScript("window");
                 win.setMember("maincontroller", this);
-                engine.executeScript("openround = function(ev, rnd) { maincontroller.doPopup(rnd); }");
+                engine.executeScript("openround = function(rnd) { maincontroller.doPopup(rnd); }");
             }
         });
         engine.load(url);
