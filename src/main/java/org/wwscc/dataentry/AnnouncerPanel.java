@@ -40,7 +40,7 @@ public class AnnouncerPanel extends JFXPanel implements MessageListener
             engine = view.getEngine();
         }
 
-        String url = String.format("http://127.0.0.1/live/%s/event/%s/dataentry?course=%s",
+        String url = String.format("http://127.0.0.1/results/%s/%s/dataentry?gui=1&course=%s",
                 DataEntry.state.getCurrentSeries(), DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
         engine.load(url);
     }
