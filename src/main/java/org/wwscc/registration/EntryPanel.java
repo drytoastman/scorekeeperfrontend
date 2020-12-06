@@ -52,13 +52,13 @@ import org.wwscc.barcodes.InvalidBarcodeException;
 import org.wwscc.components.DriverCarPanelBase;
 import org.wwscc.components.UnderlineBorder;
 import org.wwscc.dialogs.CarDialog;
-import org.wwscc.dialogs.CurrencyDialog;
 import org.wwscc.dialogs.NotesDialog;
 import org.wwscc.dialogs.WeekendMemberDialog;
 import org.wwscc.dialogs.BaseDialog.DialogFinisher;
 import org.wwscc.storage.Car;
 import org.wwscc.storage.Driver;
 import org.wwscc.storage.Payment;
+import org.wwscc.storage.PaymentItem;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;
 import org.wwscc.util.MT;
@@ -478,10 +478,17 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         public void actionPerformed(ActionEvent e)
         {
             try {
-                CurrencyDialog d = new CurrencyDialog("Enter an (additional) amount paid onsite:");
+                PaymentDialog d = new PaymentDialog(Registration.state.getCurrentEventId());
                 if (d.doDialog("Payment", null)) {
+                    PaymentItem selected = d.getSelectedItem();
+                    double amount = selected.getPrice();
+                    if (amount <= 0.0) {
+                        amount = d.getOtherAmount();
+                    }
+
                     Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
-                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getDriverId(), selectedCar.getCarId(), "session?", ONSITE_PAYMENT, "itemname?", d.getResult()*100);
+                    Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getDriverId(), selectedCar.getCarId(),
+                                                "", ONSITE_PAYMENT, selected.getName(), amount*100);
                 }
                 dbtickled = true;
                 reloadCars(selectedCar);

@@ -15,6 +15,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -25,6 +27,7 @@ import javax.swing.UIManager;
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.storage.DecoratedCar;
+import org.wwscc.storage.Payment;
 import org.wwscc.util.Resources;
 
 public class RegCarRenderer implements ListCellRenderer<Object>
@@ -64,8 +67,7 @@ public class RegCarRenderer implements ListCellRenderer<Object>
 
         if (c == null) { return p; }
 
-        p.payment.setText(String.format("$%.2f", c.getPaymentTotal()));
-        p.payment.setForeground(c.getPaymentTotal() > 0 ? greenish : Color.gray);
+        p.setPayments(c.getPayments());
         p.carinfo.setText(String.format("%s %s #%d", c.getClassCode(), c.getEffectiveIndexStr(), c.getNumber()));
         p.cardesc.setText(String.format("%s %s %s %s", c.getYear(), c.getMake(), c.getModel(), c.getColor()));
 
@@ -106,27 +108,23 @@ public class RegCarRenderer implements ListCellRenderer<Object>
     class CarPanel extends JPanel
     {
         RegPanel reg;
-        JLabel payment;
         JLabel runs;
         JLabel carinfo;
         JLabel cardesc;
         JLabel quicklbl;
         JLabel quickid;
+        List<JLabel> paymentlabels;
         boolean inevent;
         boolean sessions;
 
         public CarPanel(boolean usingSessions)
         {
-            setLayout(new MigLayout("ins 5, gapx 0, gapy 1", "[]10[40!]7[]5[100:500:10000]", ""));
+            setLayout(new MigLayout("ins 5, gapx 0, gapy 1", "[]10[]5[100:500:10000]", ""));
             sessions = usingSessions;
 
             reg = new RegPanel();
             reg.setOpaque(false);
             add(reg, "ay center, spany 3");
-
-            payment = new JLabel();
-            payment.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-            add(payment, "ax right, spany 3");
 
             runs = new JLabel("");
             runs.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 10));
@@ -146,7 +144,9 @@ public class RegCarRenderer implements ListCellRenderer<Object>
 
             quickid = new JLabel("");
             quickid.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-            add(quickid, "gap 0, wrap");
+            add(quickid, "gap 0, gapbottom 5, wrap");
+
+            paymentlabels = new ArrayList<JLabel>();
         }
 
         public void paint(Graphics g)
@@ -182,6 +182,27 @@ public class RegCarRenderer implements ListCellRenderer<Object>
             if (carinfo != null) carinfo.setBackground(f);
             if (cardesc != null) cardesc.setBackground(f);
             if (quickid != null) quickid.setBackground(f);
+        }
+
+        public void setPayments(List<Payment> payments)
+        {
+            int ii;
+            for (ii = 0; ii < payments.size(); ii++) {
+                if (paymentlabels.size() <= ii) {
+                    JLabel l = new JLabel("");
+                    l.setForeground(greenish);
+                    add(l, "skip 2, wrap");
+                    paymentlabels.add(l);
+                }
+                Payment p = payments.get(ii);
+                paymentlabels.get(ii).setText(String.format("$%.2f %s", p.getAmount(), p.getItemName()));
+                paymentlabels.get(ii).setVisible(true);
+            }
+
+            for (; ii < paymentlabels.size(); ii++) {
+                paymentlabels.get(ii).setText("");
+                paymentlabels.get(ii).setVisible(false);
+            }
         }
     }
 }

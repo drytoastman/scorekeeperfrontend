@@ -54,4 +54,5 @@ public class Payment
     public int getAmountInCents() { return amountInCents; }
     public double getAmount() { return amountInCents/100.0; }
     public String getTxType() { return txtype; }
+    public String getItemName() { return itemname; }
 }

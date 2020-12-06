@@ -663,6 +663,19 @@ public abstract class SQLDataInterface implements DataInterface
 
 
     @Override
+    public List<PaymentItem> getPaymentItemsForEvent(UUID eventid)
+    {
+        try {
+            return executeSelect("SELECT i.* from paymentitems i JOIN itemeventmap m ON i.itemid=m.itemid WHERE m.eventid=?", newList(eventid),
+                                    PaymentItem.class.getConstructor(ResultSet.class));
+        } catch (Exception ioe) {
+            logError("getPaymentItemsForEvent", ioe);
+            return new ArrayList<PaymentItem>();
+        }
+    }
+
+
+    @Override
     public List<Integer> getUnavailableNumbers(UUID driverid, String classcode)
     {
         List<Integer> ret = new ArrayList<Integer>();
