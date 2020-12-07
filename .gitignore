@@ -7,3 +7,4 @@ logs
 *.swp
 .gradle
 jdk-*
+org.eclipse.buildship.core.prefs

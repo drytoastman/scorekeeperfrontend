@@ -136,8 +136,8 @@ public class SeriesSelectionDialog extends BaseDialog<SeriesSelectionDialog.HSRe
                 if (currentDialog != null)
                     currentDialog.pack();
             } catch (Exception e) {
-                errornote.setText("Error getting series list: " + e.getMessage());
-                log.log(Level.WARNING, "Error getting series list: " + e.getMessage(), e);
+                // this causes dialog to close, can use regular error label, need to open another dialog
+                log.log(Level.WARNING, "\bError getting series list: " + e.getMessage(), e);
                 close();
             }
         }
