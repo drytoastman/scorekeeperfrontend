@@ -92,6 +92,9 @@ public class ContainerMonitor extends MonitorBase
         server.addEnvItem("DBHOST=db");
         server.addEnvItem("DBPORT=6432");
         server.addEnvItem("TZ=America/Los_Angeles");
+        server.addPort("0.0.0.0", 53, 53, "tcp");
+        server.addPort("0.0.0.0", 53, 53, "udp");
+
 
         proxy = new DockerContainer(conname("proxy"), PX_IMAGE, NET_NAME);
         proxy.addVolume(volname("logs"),  "/var/log");
