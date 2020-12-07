@@ -65,7 +65,11 @@ public class BrowserControl
             @Override public void run() {
                 try{
                     log.info("openURL request: " + url);
-                    Desktop.getDesktop().browse(new URI(url));
+                    try {
+                        Desktop.getDesktop().browse(new URI(url));
+                    } catch (UnsupportedOperationException uoe ) {
+                        Runtime.getRuntime().exec("xdg-open " + url);  // for other linux desktops
+                    }
                 } catch (Exception ex) {
                     log.severe("\bCouldn't open default web browser:" + ex);
                 }
