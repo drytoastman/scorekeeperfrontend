@@ -2,22 +2,19 @@
  * This software is licensed under the GPLv3 license, included as
  * ./GPLv3-LICENSE.txt in the source distribution.
  *
- * Portions created by Brett Wilson are Copyright 2009 Brett Wilson.
+ * Portions created by Brett Wilson are Copyright 2020 Brett Wilson.
  * All rights reserved.
  */
 
 package org.wwscc.registration;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
+import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
-import javax.swing.JList;
+import javax.swing.JRadioButton;
 
 import org.wwscc.dialogs.BaseDialog;
 import org.wwscc.storage.Database;
@@ -26,41 +23,44 @@ import org.wwscc.util.NumberField;
 
 import net.miginfocom.swing.MigLayout;
 
+
 /**
  */
-public class PaymentDialog extends BaseDialog<Void> {
-    NumberField amount = new NumberField(3, 2);
-    JLabel otherlabel = new JLabel("Amount");
-    JComboBox<PaymentItem> cb;
+public class PaymentDialog extends BaseDialog<PaymentItem> {
+    NumberField amount;
+    List<PaymentItem> items;
+    ButtonGroup buttonGroup;
 
     public PaymentDialog(UUID eventid) {
         super(new MigLayout(""), false);
-        List<PaymentItem> items = Database.d.getPaymentItemsForEvent(eventid);
+
+        items = Database.d.getPaymentItemsForEvent(eventid);
         items.removeIf(pi -> pi.getItemType() != PaymentItem.ENTRY);
         items.sort(new Comparator<PaymentItem>() {
             public int compare(PaymentItem i1, PaymentItem i2) {
                 return i1.getName().compareTo(i2.getName());
             }
         });
-        items.add(PaymentItem.otherItem());
 
-        cb = new JComboBox<PaymentItem>(items.toArray(new PaymentItem[0]));
-        cb.setRenderer(new ItemRenderer());
-        cb.addActionListener(e -> {
-            boolean show = (((PaymentItem)cb.getSelectedItem()).getPrice() <= 0.0);
-            otherlabel.setVisible(show);
-            amount.setVisible(show);
-        });
-        cb.setSelectedIndex(0);
+        amount = new NumberField(3, 2);
+        buttonGroup = new ButtonGroup();
 
-        mainPanel.add(cb, "growx, spanx 2, wrap");
-        mainPanel.add(otherlabel, "");
-        mainPanel.add(amount, "wmin 150, growx, gapleft 10, wrap");
+        for (PaymentItem i: items) {
+            JRadioButton rb = new JRadioButton(i.getName());
+            buttonGroup.add(rb);
+            rb.addActionListener(e -> { result = i; });
+
+            mainPanel.add(rb, "");
+            mainPanel.add(new JLabel(String.format("$%.2f", i.getPrice())), "wrap");
+        }
+
+        JRadioButton rb = new JRadioButton("Other");
+        buttonGroup.add(rb);
+        rb.addActionListener(e -> { result = null; });
+
+        mainPanel.add(rb, "");
+        mainPanel.add(amount, "wmin 100, growx, wrap");
         result = null;
-    }
-
-    public PaymentItem getSelectedItem() {
-        return (PaymentItem)cb.getSelectedItem();
     }
 
     public double getOtherAmount() {
@@ -73,9 +73,7 @@ public class PaymentDialog extends BaseDialog<Void> {
     @Override
     public boolean verifyData() {
         try {
-            if (((PaymentItem)cb.getSelectedItem()).getPrice() > 0.0) return true;
-            getOtherAmount(); // valid double
-            return true;
+            return (result != null) || (getOtherAmount() > 0.0);
         } catch (Exception e) {
             return false;
         }
@@ -85,27 +83,7 @@ public class PaymentDialog extends BaseDialog<Void> {
      * Data is good, return it.
      */
     @Override
-    public Void getResult() { return result; }
-
-    class ItemRenderer extends DefaultListCellRenderer {
-        public ItemRenderer() {
-            super();
-            setBackground(Color.WHITE);
-        }
-
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                boolean isSelected, boolean cellHasFocus) {
-
-            PaymentItem item = (PaymentItem)value;
-            if (item.getPrice() > 0.0) {
-                setText(String.format("$%.2f - %s", item.getPrice(), item.getName()));
-            } else {
-                setText(String.format("%s", item.getName()));
-            }
-            return this;
-        }
-    }
+    public PaymentItem getResult() { return result; }
 }
 
 

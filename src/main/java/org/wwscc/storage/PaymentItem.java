@@ -36,12 +36,12 @@ public class PaymentItem
         currency     = rs.getString("currency");
     }
 
-    public static PaymentItem otherItem() {
+    public static PaymentItem otherItem(double price) {
         PaymentItem ret = new PaymentItem();
         ret.itemid = "other";
         ret.name   = "other";
         ret.itemtype = ENTRY;
-        ret.priceInCents = 0;
+        ret.priceInCents = (int)(price * 100);
         ret.currency = "USD";
         return ret;
     }
@@ -49,4 +49,5 @@ public class PaymentItem
     public String getName() { return name; }
     public int getItemType() { return itemtype; }
     public double getPrice() { return priceInCents/100.0; }
+    public int getPriceInCents() { return priceInCents; }
 }

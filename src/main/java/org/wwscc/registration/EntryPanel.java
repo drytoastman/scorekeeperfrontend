@@ -480,15 +480,14 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             try {
                 PaymentDialog d = new PaymentDialog(Registration.state.getCurrentEventId());
                 if (d.doDialog("Payment", null)) {
-                    PaymentItem selected = d.getSelectedItem();
-                    double amount = selected.getPrice();
-                    if (amount <= 0.0) {
-                        amount = d.getOtherAmount();
+                    PaymentItem selected = d.getResult();
+                    if (selected == null) {
+                        selected = PaymentItem.otherItem(d.getOtherAmount());
                     }
 
                     Database.d.registerCar(Registration.state.getCurrentEventId(), selectedCar.getCarId(), session);
                     Database.d.registerPayment(Registration.state.getCurrentEventId(), selectedCar.getDriverId(), selectedCar.getCarId(),
-                                                "", ONSITE_PAYMENT, selected.getName(), amount*100);
+                                                "", ONSITE_PAYMENT, selected.getName(), selected.getPriceInCents());
                 }
                 dbtickled = true;
                 reloadCars(selectedCar);
