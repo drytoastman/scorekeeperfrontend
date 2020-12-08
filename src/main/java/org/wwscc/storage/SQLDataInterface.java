@@ -697,6 +697,17 @@ public abstract class SQLDataInterface implements DataInterface
     }
 
     @Override
+    public List<Payment> getNonEntryPayments(UUID driverid, UUID eventid)
+    {
+        try {
+            return executeSelect("SELECT * from payments WHERE driverid=? AND eventid=? AND carid IS NULL", newList(driverid, eventid), Payment.class.getConstructor(ResultSet.class));
+        } catch (Exception ioe) {
+            logError("getNonEntryPayments", ioe);
+            return new ArrayList<Payment>();
+        }
+    }
+
+    @Override
     public List<Integer> getUnavailableNumbers(UUID driverid, String classcode)
     {
         List<Integer> ret = new ArrayList<Integer>();

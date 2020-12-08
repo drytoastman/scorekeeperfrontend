@@ -82,7 +82,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     JButton clearSearch, newdriver, editdriver, editnotes, weekmember, membership;
     JButton newcar, newcarfrom, editcar, deletecar, print;
     JLabel paidwarning, mergeWarning;
-    JPanel singleCarPanel, multiCarPanel;
+    JPanel singleCarPanel, multiCarPanel, otherpayments;
     JComboBox<PrintService> printers;
 
     LayeredBarcode barcode;
@@ -169,7 +169,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         JPanel searchp = new JPanel(new MigLayout("fill, gap 2", "[fill,15%][fill,50%][fill,35%]", ""));
         JPanel driverp = new JPanel(new MigLayout("fill, gap 2, ins 0 6 6 6, hidemode 3", "[fill,50%][50%!]", "fill"));
         JPanel leftp   = new JPanel(new MigLayout("fill, gap 0, ins 0", "fill", "[grow 0][grow 100]"));
-        JPanel rightp  = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", "[grow 0][grow 100][grow 0]"));
+        JPanel rightp  = new JPanel(new MigLayout("fill, gap 2", "[fill,55%][45%!]", "[grow 0][grow 100][grow 100, al top]"));
 
         leftp.add(searchp, "growx, wrap");
         leftp.add(driverp, "grow");
@@ -199,14 +199,16 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         driverp.add(print,             "growx, wrap");
         driverp.add(new JLabel(""),    "pushy 15");
 
+        otherpayments  = new JPanel(new MigLayout("fill, ins 0, gap 2", "[grow 0][grow 0][grow 100]"));
         singleCarPanel = new JPanel(new MigLayout("fill, ins 0, gap 2"));
         multiCarPanel  = new JPanel(new MigLayout("fill, ins 0, gap 2"));
         multiCarPanel.setVisible(false);
 
         rightp.add(createTitle("3. Car"), "spanx 2, growx, wrap");
-        rightp.add(cscroll,            "grow");
+        rightp.add(cscroll,            "grow, spany 3");
         rightp.add(singleCarPanel,     "grow, wrap, hidemode 3");
         rightp.add(multiCarPanel,      "grow, wrap, hidemode 3");
+        rightp.add(otherpayments,      "growx, wrap, hidemode 3");
 
         singleCarPanel.add(new JLabel(""),    "pushy 10, wrap");
         singleCarPanel.add(newcar,            "growx, split");
@@ -742,6 +744,15 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             String notes = selectedDriver.getAttrS("notes");
             if (!notes.trim().equals(""))
                 editnotes.setIcon(noteicon);
+
+            List<Payment> other = Database.d.getNonEntryPayments(selectedDriver.getDriverId(), Registration.state.getCurrentEventId());
+            otherpayments.removeAll();
+            otherpayments.add(createTitle("Other Payments"), "spanx 3, growx, wrap");
+            for (Payment p : other) {
+                otherpayments.add(new JLabel(p.getItemName()));
+                otherpayments.add(new JLabel(String.format("$%.2f", p.getAmount())), "grow, wrap");
+            }
+            otherpayments.setVisible(true);
         }
         else
         {

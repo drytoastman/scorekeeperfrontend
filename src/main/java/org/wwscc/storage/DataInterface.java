@@ -116,6 +116,7 @@ public interface DataInterface
     public List<PaymentItem> getPaymentItemsForEvent(UUID eventid);
     public List<PaymentItem> getPaymentItemsForMembership();
     public List<Payment> getMembershipPayments(UUID driverid);
+    public List<Payment> getNonEntryPayments(UUID driverid, UUID eventid);
 
     /**
      * Upon successful return, the provided car will be in the registered table for the current event.
