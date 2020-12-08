@@ -79,7 +79,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
     public static final String ONSITE_PAYMENT = "onsite";
 
     JButton registerandpay, registerit, unregisterit, movepayment, deletepayment;
-    JButton clearSearch, newdriver, editdriver, editnotes, weekmember;
+    JButton clearSearch, newdriver, editdriver, editnotes, weekmember, membership;
     JButton newcar, newcarfrom, editcar, deletecar, print;
     JLabel paidwarning, mergeWarning;
     JPanel singleCarPanel, multiCarPanel;
@@ -141,6 +141,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         editdriver  = regButton(new EditDriverAction(), false);
         editnotes   = regButton(new EditNotesAction(), false);
         weekmember  = regButton(new WeekendMemberAction(), false);
+        membership  = regButton(new MembershipAction(), false);
         newcar      = regButton(new NewCarAction(false), false);
         newcarfrom  = regButton(new NewCarAction(true), false);
 
@@ -191,9 +192,8 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         driverp.add(editdriver,        "growx, wrap");
         driverp.add(editnotes,         "growx, wrap");
         driverp.add(weekmember,        "growx, wrap");
-        driverp.add(new JLabel(""),    "pushy 10, wrap");
+        driverp.add(membership,        "growx, wrap");
         driverp.add(driverInfoWrapper, "growx, wrap");
-        driverp.add(new JLabel(""),    "pushy 10, wrap");
         driverp.add(barcode,           "growx, h 50, center, wrap");
         driverp.add(printers,          "growx, wrap");
         driverp.add(print,             "growx, wrap");
@@ -259,6 +259,27 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             WeekendMemberDialog wd = new WeekendMemberDialog(selectedDriver, Database.d.getActiveWeekendMembership(selectedDriver.getDriverId()));
             wd.doDialog("Weekend Membership", null);
             valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
+        }
+    }
+
+    class MembershipAction extends AbstractAction
+    {
+        public MembershipAction() { super("Membership"); }
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            try {
+                if (selectedDriver == null)
+                    return;
+                MembershipDialog wd = new MembershipDialog(selectedDriver);
+                if (wd.doDialog("Membership", null)) {
+                    PaymentItem pi = wd.getResult();
+                    if (pi != null)
+                        Database.d.registerPayment(null, selectedCar.getDriverId(), null, "", ONSITE_PAYMENT, pi.getName(), pi.getPriceInCents());
+                    valueChanged(new ListSelectionEvent(drivers, -1, -1, false));
+                }
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, "\bMembership dialog failed: " + ex.getMessage(), ex);
+            }
         }
     }
 
@@ -682,6 +703,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             editdriver.setEnabled(true);
             editnotes.setEnabled(true);
             weekmember.setEnabled(true);
+            membership.setEnabled(true);
 
             try {
                 barcode.setValue(selectedDriver.getBarcode(), String.format("%s - %s", selectedDriver.getBarcode(), selectedDriver.getFullName()));
@@ -727,6 +749,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
             editdriver.setEnabled(false);
             editnotes.setEnabled(false);
             weekmember.setEnabled(false);
+            membership.setEnabled(false);
             barcode.clear();
             barcode.setWarning("");
             carVector.clear();
@@ -811,6 +834,7 @@ public class EntryPanel extends DriverCarPanelBase implements MessageListener
         {
             case SERIES_CHANGED:
                 weekmember.setVisible(Database.d.getSetting("doweekendmembers", Boolean.class));
+                membership.setVisible(Database.d.getPaymentItemsForMembership().size() > 0);
                 break;
 
             case EVENT_CHANGED:

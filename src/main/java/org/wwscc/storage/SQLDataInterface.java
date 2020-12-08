@@ -674,6 +674,27 @@ public abstract class SQLDataInterface implements DataInterface
         }
     }
 
+    @Override
+    public List<PaymentItem> getPaymentItemsForMembership()
+    {
+        try {
+            return executeSelect("SELECT * from paymentitems WHERE itemtype=2", null, PaymentItem.class.getConstructor(ResultSet.class));
+        } catch (Exception ioe) {
+            logError("getPaymentItemsForMembership", ioe);
+            return new ArrayList<PaymentItem>();
+        }
+    }
+
+    @Override
+    public List<Payment> getMembershipPayments(UUID driverid)
+    {
+        try {
+            return executeSelect("SELECT * from payments WHERE driverid=? AND eventid IS NULL", newList(driverid), Payment.class.getConstructor(ResultSet.class));
+        } catch (Exception ioe) {
+            logError("getMembershipPayments", ioe);
+            return new ArrayList<Payment>();
+        }
+    }
 
     @Override
     public List<Integer> getUnavailableNumbers(UUID driverid, String classcode)

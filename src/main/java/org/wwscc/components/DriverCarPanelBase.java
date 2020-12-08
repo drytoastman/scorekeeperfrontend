@@ -9,6 +9,7 @@
 package org.wwscc.components;
 
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +30,7 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
@@ -40,6 +42,7 @@ import org.wwscc.storage.Car;
 import org.wwscc.storage.Database;
 import org.wwscc.storage.DecoratedCar;
 import org.wwscc.storage.Driver;
+import org.wwscc.storage.Payment;
 import org.wwscc.util.ApplicationState;
 import org.wwscc.util.IdGenerator;
 import org.wwscc.util.MT;
@@ -163,6 +166,9 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
             if (o instanceof Driver) {
                 selectedDriver = (Driver)o;
                 driverInfo.setText(driverDisplay(selectedDriver));
+                SwingUtilities.invokeLater(() -> {
+                    driverInfoWrapper.getViewport().setViewPosition(new Point(0, 0));
+                });
                 reloadCars(null);
             } else {
                 selectedDriver = null;
@@ -350,6 +356,14 @@ public abstract class DriverCarPanelBase extends JPanel implements ListSelection
         ret.append(String.format("%s%s%s %s\n", d.getAttrS("city"), d.hasAttr("city")&&d.hasAttr("state")?", ":"", d.getAttrS("state"), d.getAttrS("zip")));
         if (!d.getAttrS("phone").isEmpty())
             ret.append("\n" + d.getAttrS("phone"));
+
+        List<Payment> items = Database.d.getMembershipPayments(d.getDriverId());
+        if (items.size() > 0) {
+            ret.append("\nMember: " + items.stream().map(p -> p.getItemName()).collect(Collectors.joining(",")));
+        } else {
+            ret.append("\nNo series membership");
+        }
+
         return ret.toString();
     }
 

@@ -114,6 +114,8 @@ public interface DataInterface
     public Map<String, Set<String>> getCarAttributes(); // get a unique list of possible 'attr' for the car
     public List<Integer> getUnavailableNumbers(UUID driverid, String classcode);
     public List<PaymentItem> getPaymentItemsForEvent(UUID eventid);
+    public List<PaymentItem> getPaymentItemsForMembership();
+    public List<Payment> getMembershipPayments(UUID driverid);
 
     /**
      * Upon successful return, the provided car will be in the registered table for the current event.
