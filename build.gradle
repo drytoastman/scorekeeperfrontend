@@ -40,7 +40,7 @@ javafx {
 }
 
 dependencies {
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.5.1'
     implementation 'com.github.jnr:jnr-unixsocket:0.23'
     implementation 'com.miglayout:miglayout-swing:5.2'
     implementation 'com.fazecast:jSerialComm:2.5.2'
