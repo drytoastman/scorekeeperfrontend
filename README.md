@@ -1,3 +1,4 @@
+# This repository is being sunsetted as we move GUI piece to Electron in https://github.com/drytoastman/scorekeeperts
 
 # Scorekeeper Frontend
 
