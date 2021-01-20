@@ -1,8 +1,7 @@
 plugins {
     id 'application'
     id 'eclipse'
-    id "org.beryx.runtime" version "1.11.4"
-    id "org.openjfx.javafxplugin" version "0.0.9"
+    id "org.beryx.runtime" version "1.12.1"
 }
 
 def getVersionName = { ->
@@ -21,23 +20,24 @@ def getVersionName = { ->
     }
 }
 
+import org.gradle.internal.os.OperatingSystem
+def getOSName = { ->
+    def os = OperatingSystem.current();
+    if (os.isWindows()) return "win";
+    if (os.isLinux()) return "linux";
+    if (os.isMacOsX()) return "mac";
+    return "Unknown";
+}
+
 version = getVersionName()
 mainClassName = 'org.wwscc.system.ScorekeeperSystem'
 repositories {
     jcenter()
 }
 
-javafx {
-    version = "13"
-    modules = [
-        'javafx.controls',
-        'javafx.fxml',
-        'javafx.media',
-        'javafx.graphics',
-        'javafx.swing',
-        'javafx.web'
-    ]
-}
+
+def target = System.getProperty("target", getOSName())
+def fxver = "13"
 
 dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.5.1'
@@ -52,6 +52,14 @@ dependencies {
     implementation 'org.kamranzafar:jtar:2.3'
     implementation 'org.mindrot:jbcrypt:0.4'
     implementation 'org.postgresql:postgresql:42.2.5'
+
+    implementation "org.openjfx:javafx-base:$fxver:$target"
+    implementation "org.openjfx:javafx-controls:$fxver:$target"
+    implementation "org.openjfx:javafx-fxml:$fxver:$target"
+    implementation "org.openjfx:javafx-media:$fxver:$target"
+    implementation "org.openjfx:javafx-graphics:$fxver:$target"
+    implementation "org.openjfx:javafx-swing:$fxver:$target"
+    implementation "org.openjfx:javafx-web:$fxver:$target"
 
     testImplementation 'junit:junit:4.12'
 }
@@ -87,16 +95,15 @@ runtime {
     options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
     modules = jmodules
 
-    targetPlatform("win") {
-        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_windows_hotspot_15.0.1_9.zip")
-    }
-
-    targetPlatform("linux") {
-        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_linux_hotspot_15.0.1_9.tar.gz")
-    }
-
-    targetPlatform("mac") {
-        jdkHome = jdkDownload("https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64_mac_hotspot_15.0.1_9.tar.gz")
+    targetPlatform(target) {
+        def prefix = "https://github.com/AdoptOpenJDK/openjdk15-binaries/releases/download/jdk-15.0.1%2B9/OpenJDK15U-jdk_x64"
+        if (target == 'linux') {
+            jdkHome = jdkDownload(prefix + "_linux_hotspot_15.0.1_9.tar.gz")
+        } else if (target == 'win') {
+            jdkHome = jdkDownload(prefix + "_windows_hotspot_15.0.1_9.zip")
+        } else if (target == 'mac') {
+            jdkHome = jdkDownload(prefix + "_mac_hotspot_15.0.1_9.tar.gz")
+        }
     }
 
     launcher {
@@ -105,7 +112,7 @@ runtime {
 }
 
 
-task distribzips {
+task distrib {
     afterEvaluate { project ->
         dependsOn('runtime')
     }
@@ -113,18 +120,17 @@ task distribzips {
         def dir = runtime.imageDir.get()
         def base = "$dir/$project.name"
 
-        if (runtime.targetPlatforms.get()['win']) {
-            def name = 'win'
-            delete "$base-$name/release"
-            new File("$base-$name/Scorekeeper.bat").text = """
+        if (target == 'win') {
+            delete "$base-$target/release"
+            new File("$base-$target/Scorekeeper.bat").text = """
                 cd %~dp0bin
                 start javaw.exe -classpath "../lib/*" org.wwscc.system.ScorekeeperSystem
             """
-            new File("$base-$name/ProTimer.bat").text = """
+            new File("$base-$target/ProTimer.bat").text = """
                 cd %~dp0bin
                 start javaw.exe -classpath "../lib/*" org.wwscc.protimer.ProSoloInterface
             """
-            new File("$base-$name/fwrules.bat").text = """
+            new File("$base-$target/fwrules.bat").text = """
                 %echo off
                 CALL :addrule ScorekeeperWeb       TCP 80
                 CALL :addrule ScorekeeperTimers    TCP 54328
@@ -149,21 +155,15 @@ task distribzips {
                 if %ERRORLEVEL% EQU 0 sc stop %1 & sc config %1 start=disabled
                 EXIT /B 0
             """
-            // file("$base-$name").renameTo(file("$base-$version-$name"))
-            createZip(new File("$base-$name"), new File("$base-$version-$name" + ".zip"))
-        }
+            createZip(new File("$base-$target"), new File("$base-$version-$target" + ".zip"))
 
-        ['linux', 'mac'].each { name ->
-            if (runtime.targetPlatforms.get()[name]) {
-                delete "$base-$name/release"
-                new File("$base-$name/Scorekeeper").text = """
-                    #!/usr/bin/env bash
-                    cd bin
-                    ./java -classpath "../lib/*" org.wwscc.system.ScorekeeperSystem
-                """
-                // file("$base-$name").renameTo(file("$base-$version-$name"))
-                createZip(new File("$base-$name"), new File("$base-$version-$name" + ".zip"))
-            }
+        } else {
+            delete "$base-$target/release"
+            def s = "#!/usr/bin/env bash\n"
+            s += "cd bin\n"
+            s += './java -classpath "../lib/*" org.wwscc.system.ScorekeeperSystem\n'
+            new File("$base-$target/Scorekeeper").text = s
+            createZip(new File("$base-$target"), new File("$base-$version-$target" + ".zip"))
         }
     }
 }
