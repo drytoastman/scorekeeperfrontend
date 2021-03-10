@@ -81,9 +81,9 @@ public class ContainerMonitor extends MonitorBase
         db.addVolume(volname("database"),  "/var/lib/postgresql/data");
         db.addVolume(volname("logs"),      "/var/log");
         db.addVolume(CERTS_VOL, "/certs");
-        db.addPort("127.0.0.1", 6666, 6666, "tcp"); // request backup with name
-        db.addPort("127.0.0.1", 6432, 6432, "tcp");
-        db.addPort("0.0.0.0",  54329, 5432, "tcp");
+        db.changePort("127.0.0.1", 6666, 6666, "tcp", true); // request backup with name
+        db.changePort("127.0.0.1", 6432, 6432, "tcp", true);
+        db.changePort("0.0.0.0",  54329, 5432, "tcp", true);
 
         // SIGHUP starts a sync
         server = new DockerContainer(conname("server"), SV_IMAGE, NET_NAME);
@@ -92,14 +92,14 @@ public class ContainerMonitor extends MonitorBase
         server.addEnvItem("DBHOST=db");
         server.addEnvItem("DBPORT=6432");
         server.addEnvItem("TZ=America/Los_Angeles");
-        server.addPort("0.0.0.0", 53, 53, "tcp");
-        server.addPort("0.0.0.0", 53, 53, "udp");
+        server.changePort("0.0.0.0", 53, 53, "tcp", !Prefs.getSkip53());
+        server.changePort("0.0.0.0", 53, 53, "udp", !Prefs.getSkip53());
 
 
         proxy = new DockerContainer(conname("proxy"), PX_IMAGE, NET_NAME);
         proxy.addVolume(volname("logs"),  "/var/log");
         proxy.addEnvItem("TZ=America/Los_Angeles");
-        proxy.addPort("0.0.0.0", 80, 80, "tcp");
+        proxy.changePort("0.0.0.0", 80, 80, "tcp", !Prefs.getSkip80());
 
         Messenger.register(MT.POKE_SYNC_SERVER, (m, o) -> docker.poke(server) );
         // Messenger.register(MT.NETWORK_CHANGED,  (m, o) -> { restartsync  = true;       poke(); });
@@ -150,6 +150,10 @@ public class ContainerMonitor extends MonitorBase
     }
 
     private void cup() {
+        server.changePort("0.0.0.0", 53, 53, "tcp", !Prefs.getSkip53());
+        server.changePort("0.0.0.0", 53, 53, "udp", !Prefs.getSkip53());
+        proxy.changePort("0.0.0.0",  80, 80, "tcp", !Prefs.getSkip80());
+
         docker.containersUp(Arrays.asList(db),     s -> { status.set("Start db"); });
         docker.containersUp(Arrays.asList(server), s -> { status.set("Start server"); });
         docker.containersUp(Arrays.asList(proxy),  s -> { status.set("Start proxy"); });
@@ -250,7 +254,7 @@ public class ContainerMonitor extends MonitorBase
             request.directory = Prefs.getBackupDirectory();
             request.compress  = true;
             request.usedialog = false;
-            // doBackup(request);
+            doBackup(request);
         }
 
         Database.d.close();

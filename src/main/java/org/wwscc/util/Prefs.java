@@ -195,6 +195,8 @@ public class Prefs
     public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
     public static String getIssuer()           { return prefs.get("issuer", ""); }
     public static String getIssuerMem()        { return prefs.get("issuermem", ""); }
+    public static boolean getSkip53()          { return prefs.getBoolean("skip53", false); }
+    public static boolean getSkip80()          { return prefs.getBoolean("skip80", false); }
 
     public static String getScannerConfig(String type) { return prefs.get("scannerconfig-"+type, ""); }
     public static String getScannerInput() { return prefs.get("scannerinput", ""); }
@@ -221,6 +223,8 @@ public class Prefs
     public static void setLogLevel(AppLogLevel l)    { prefs.put("loglevel", l.getName()); }
     public static void setIssuer(String s)           { prefs.put("issuer", s); }
     public static void setIssuerMem(String s)        { prefs.put("issuermem", s); }
+    public static void setSkip53(boolean b)          { prefs.putBoolean("skip53", b); }
+    public static void setSkip80(boolean b)          { prefs.putBoolean("skip80", b); }
 
     public static void setScannerConfig(String type, String s) { prefs.put("scannerconfig-"+type, s); }
     public static void setScannerInput(String s) { prefs.put("scannerinput", s); }

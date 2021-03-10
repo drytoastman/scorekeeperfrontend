@@ -11,6 +11,7 @@ package org.wwscc.system.docker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 import org.wwscc.system.docker.models.CreateContainerConfig;
 import org.wwscc.system.docker.models.HostConfig;
@@ -93,14 +94,22 @@ public class DockerContainer extends CreateContainerConfig
         return name;
     }
 
-    public void addPort(String hostip, int hostport, int containerport, String proto)
+    public void changePort(String hostip, int hostport, int containerport, String proto, boolean add)
     {
         String to = containerport+"/"+proto;
         HashMap<String, String> h = new HashMap<String, String>();
         h.put("HostIP", hostip);
         h.put("HostPort", ""+hostport);
-        getHostConfig().getPortBindings().put(to, Arrays.asList(new Object[] { h }));
-        getExposedPorts().put(to, new HashMap<Object,Object>());
+
+        PortMap pmap = getHostConfig().getPortBindings();
+        Map<String,Object> emap = getExposedPorts();
+        if (add) {
+            pmap.put(to, Arrays.asList(new Object[] { h }));
+            emap.put(to, new HashMap<Object,Object>());
+        } else {
+            pmap.remove(to);
+            emap.remove(to);
+        }
     }
 
     public void addVolume(String vol, String path)

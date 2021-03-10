@@ -49,6 +49,7 @@ public class Actions
     List<Action> actions;
     Action debugRequest, backupRequest, importRequest, loadCertsRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
     Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, resetHash, quit, openStatus;
+    Action skip53, skip80;
 
     public Actions()
     {
@@ -82,6 +83,8 @@ public class Actions
         changeSeriesPassword = addAction(new ChangeSeriesPasswordAction());
         discovery      = addAction(new LocalDiscoveryAction());
         resetHash      = addAction(new ResetHashAction());
+        skip53         = addAction(new Skip53Action());
+        skip80         = addAction(new Skip80Action());
 
         backendReady(false);
         Messenger.register(MT.BACKEND_CONTAINERS, (type, data) -> backendReady(((String)data).contains("db")));
@@ -181,24 +184,46 @@ public class Actions
         }
     }
 
-
-    static class LocalDiscoveryAction extends AbstractAction
+    static abstract class BooleanPrefAction extends AbstractAction
     {
-        public LocalDiscoveryAction() {
-            boolean on = Prefs.getAllowDiscovery();
-            putValue(Action.SELECTED_KEY, on);
-            putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
+        String title;
+        public BooleanPrefAction(String title, boolean initial) {
+            this.title = title;
+            putValue(Action.SELECTED_KEY, initial);
+            putValue(Action.NAME, this.title + (initial ? "On":"Off"));
         }
 
         public void actionPerformed(ActionEvent e) {
             boolean on = ((AbstractButton)e.getSource()).getModel().isSelected();
             putValue(Action.SELECTED_KEY, on);
-            putValue(Action.NAME, "Peer Discovery " + (on ? "On":"Off"));
+            putValue(Action.NAME, title + (on ? "On":"Off"));
+            onChange(on);
+        }
+
+        protected abstract void onChange(boolean on);
+    }
+
+    static class LocalDiscoveryAction extends BooleanPrefAction
+    {
+        public LocalDiscoveryAction() {
+            super("Peer Discovery ", Prefs.getAllowDiscovery());
+        }
+
+        protected void onChange(boolean on) {
             Prefs.setAllowDiscovery(on);
             Messenger.sendEvent(MT.DISCOVERY_CHANGE, on);
         }
     }
 
+    static class Skip53Action extends BooleanPrefAction {
+        public Skip53Action() { super("Skip Port 53 ", Prefs.getSkip53()); }
+        protected void onChange(boolean on) { Prefs.setSkip53(on); }
+    }
+
+    static class Skip80Action extends BooleanPrefAction {
+        public Skip80Action() { super("Skip Port 80 ", Prefs.getSkip80()); }
+        protected void onChange(boolean on) { Prefs.setSkip80(on); }
+    }
 
     static class ClearOldDiscoveredAction extends AbstractAction
     {
