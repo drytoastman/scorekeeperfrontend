@@ -106,13 +106,15 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         Properties props = new Properties();
         props.setProperty("ApplicationName", System.getProperty("program.name", "Java"));
         props.setProperty("user", connectParam.user);
-        props.setProperty("loginTimeout", "1");
+        props.setProperty("loginTimeout", "5");
         host = "127.0.0.1";
         port = 6432;
 
         String url = String.format("jdbc:postgresql://%s:%d/scorekeeper", host, port);
         log.log(Level.INFO, "Connecting to postgres @ {0} with param {1}", new Object[] { url, props });
+        long start = System.currentTimeMillis();
         Connection c = DriverManager.getConnection(url, props);
+        log.log(Level.INFO, "Connect time = {0}ms", System.currentTimeMillis() - start);
 
         Statement s = c.createStatement();
         s.execute("set time zone 'UTC'");
