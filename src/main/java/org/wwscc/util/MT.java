@@ -119,6 +119,7 @@ public enum MT {
 
     // ProTimer
     TREE,
+    PRO_RESET,
     DIALIN_LEFT,
     DIALIN_RIGHT,
     OPEN_SENSOR,

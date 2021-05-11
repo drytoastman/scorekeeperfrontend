@@ -16,27 +16,42 @@ public class Simulator
     {
     }
 
-    public void reaction(boolean left, double time, int color)
+    public void reaction(boolean left, double time, String status)
     {
-        Messenger.sendEvent(left?MT.REACTION_LEFT:MT.REACTION_RIGHT, new ColorTime(time, color));
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("rt %s %s %s", left ? "L":"R", time, status));
     }
 
-    public void sixty(boolean left, double time, int color)
+    public void sixty(boolean left, double time)
     {
-        Messenger.sendEvent(left?MT.SIXTY_LEFT:MT.SIXTY_RIGHT, new ColorTime(time, color));
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("sixty %s %s", left ? "L":"R", time));
     }
 
-    public void finish(boolean left, double time, double dial, int color)
+    public void finish(boolean left, double time, double dial)
     {
-        Object [] result = { new ColorTime(time, color), dial };
-        Messenger.sendEvent(left?MT.FINISH_LEFT:MT.FINISH_RIGHT, result);
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("fin %s %s", left ? "L":"R", time));
     }
 
     public void tree()
     {
-        Messenger.sendEvent(MT.TREE, null);
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "TREE");
     }
 
+    public void runMode()
+    {
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "RUN");
+    }
+
+    public void alignMode()
+    {
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "ALIGN");
+    }
+
+    public void error()
+    {
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "Error: No run slots left, resettingTREE");
+    }
+
+    /*
     public void dialleft(double d)
     {
         Messenger.sendEvent(MT.DIALIN_LEFT, d);
@@ -47,7 +62,6 @@ public class Simulator
         Messenger.sendEvent(MT.DIALIN_RIGHT, d);
     }
 
-    /*
     public void win(boolean left)
     {
         Messenger.sendEvent(left?MT.WIN_LEFT:MT.WIN_RIGHT, null);

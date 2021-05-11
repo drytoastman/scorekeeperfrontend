@@ -168,7 +168,7 @@ public class TimingInterface implements MessageListener
 
     public void processData(String input)
     {
-        log.log(Level.FINE, "Process: ({0})", input);
+        log.log(Level.FINE, "Process: \"{0}\"", input);
         String args[] = input.split("[ \r\n]");
 
         boolean left;
@@ -273,8 +273,15 @@ public class TimingInterface implements MessageListener
         {
             Messenger.sendEvent(MT.ALIGN_MODE, null);
         }
-
-        else if (args[0].equals("HARD")) { Messenger.sendEvent(MT.INPUT_RESET_HARD, null); }
+        else if (args[0].equals("HARD")) 
+        { 
+            Messenger.sendEvent(MT.INPUT_RESET_HARD, null); 
+        }
+        else if (input.toLowerCase().contains("reset"))
+        {
+            log.warning("Reset notice from Pro Hardware");
+            Messenger.sendEvent(MT.PRO_RESET, null);
+        }
 
         /*
         else if (args[0].equalsIgnoreCase("lip"))

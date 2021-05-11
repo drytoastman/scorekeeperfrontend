@@ -67,6 +67,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
         Messenger.register(MT.INPUT_RESET_SOFT, this);
         Messenger.register(MT.INPUT_RESET_HARD, this);
+        Messenger.register(MT.PRO_RESET, this);
 
         nextLeftFinish    = 0;
         nextRightFinish   = 0;
@@ -250,6 +251,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
                 case INPUT_RESET_SOFT:
                 case INPUT_RESET_HARD:
+                case PRO_RESET:
                     createNewEntry();
                     nextLeftFinish = nextRightFinish = runs.size() - 1;
                     break;

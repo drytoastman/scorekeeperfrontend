@@ -51,7 +51,9 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
     protected TimerServer server;
 
     protected DialinPane dialins;
+    protected JPanel topPanel;
     protected JLabel alignModeLabel;
+    protected JLabel errorLabel;
     protected JLabel openPort;
 
     public ProSoloInterface() throws Exception
@@ -72,14 +74,22 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         alignModeLabel.setFont(new Font("serif", Font.BOLD, 20));
         alignModeLabel.setHorizontalAlignment(JLabel.CENTER);
 
+        errorLabel = new JLabel("Received RESET notice from Pro hardware");
+        errorLabel.setForeground(Color.RED);
+        errorLabel.setFont(new Font("serif", Font.BOLD, 20));
+        errorLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        topPanel = new JPanel(new MigLayout("ins 0, al center", "al center"));
+        topPanel.add(dialins);
+
         Messenger.register(MT.RUN_MODE, this);
         Messenger.register(MT.ALIGN_MODE, this);
+        Messenger.register(MT.PRO_RESET, this);
         Messenger.register(MT.SERIAL_PORT_OPEN, this);
         Messenger.register(MT.SERIAL_PORT_CLOSED, this);
 
         createMenus();
-        add(dialins, "wrap");
-
+        add(topPanel, "wrap");
 
         JTabbedPane tp = new JTabbedPane();
         tp.addTab("Results", null, results, "results interface");
@@ -206,12 +216,16 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         switch (type)
         {
             case ALIGN_MODE:
-                remove(dialins);
-                add(alignModeLabel, "wrap", 0);
+                topPanel.removeAll();
+                topPanel.add(alignModeLabel, "");
                 break;
             case RUN_MODE:
-                remove(alignModeLabel);
-                add(dialins, "wrap", 0);
+                topPanel.removeAll();
+                topPanel.add(dialins, "");
+                break;
+            case PRO_RESET:
+                topPanel.removeAll();
+                topPanel.add(errorLabel, "");
                 break;
             case SERIAL_PORT_OPEN:
                 openPort.setText("Connected to Port " + o);
