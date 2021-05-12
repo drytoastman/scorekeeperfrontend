@@ -29,22 +29,30 @@ public class Dialins
 		Double net;
 		Double bonus;
 		Double dial;
-	}
-	
-	private class Leader
-	{
-		double net;   // net time of class leader
-		double basis; // leader dialin * leader index for other dialin calculations
-		public Leader() { net = basis = 999.999; }
+		Double classdiff;
 	}
 
-	private Map <String, Leader> classmap;   // used to determine class dialin basis
+	private class CarInfoNet implements Comparator<CarInfo> {
+		@Override
+		public int compare(CarInfo o1, CarInfo o2) {
+			return o1.net.compareTo(o2.net);
+		}		
+	}
+
+	private class CarInfoDiff implements Comparator<CarInfo> {
+		@Override
+		public int compare(CarInfo o1, CarInfo o2) {
+			return o1.classdiff.compareTo(o2.classdiff);
+		}		
+	}
+
+	private Map <String, List<CarInfo>> classmap;   // used to determine class dialin basis
 	private Map <UUID, CarInfo> carmap;     // map from carid to details for the Car
 	
 	public Dialins()
 	{
-		classmap = new HashMap<String, Leader>();
-		carmap   = new HashMap<UUID, CarInfo>();
+		classmap = new HashMap<>();
+		carmap   = new HashMap<>();
 	}
 	
 	public void setEntrant(UUID carid, String classcode, double raw, double net, double index)
@@ -57,29 +65,37 @@ public class Dialins
 		c.net       = net;
 		c.bonus     = raw/2.0;
 		c.dial      = 999.999;
+		c.classdiff = 666.666;
 		
 		if (!classmap.containsKey(c.classcode))
-			classmap.put(c.classcode, new Leader());
-		
-		Leader l = classmap.get(c.classcode);
-		if (c.net < l.net)  // new leader
-		{
-			l.net   = c.net;
-			l.basis = c.bonus*index;
-		}
+			classmap.put(c.classcode, new ArrayList<>());
+		classmap.get(c.classcode).add(c);
 	}
 	
 	public void finalizedialins()
 	{
-		for (CarInfo info : carmap.values())
-		{
-			Leader l = classmap.get(info.classcode);
-			info.dial = l.basis / info.index;
+		for (List<CarInfo> l : classmap.values()) {
+			if (l.size() == 0) continue;
+			l.sort(new CarInfoNet());
+
+			CarInfo lead = l.get(0);
+			lead.dial = lead.bonus;
+			lead.classdiff = 0.0;
+			if (l.size() == 1) continue;
+			
+			double basis = lead.bonus * lead.index;
+			lead.classdiff = lead.net - l.get(1).net;
+
+			for (CarInfo info : l.subList(1, l.size())) {
+				info.dial      = basis / info.index;
+				info.classdiff = info.net - lead.net;
+			}
 		}
 	}
 	
 	public double getNet(UUID carid)  { return carmap.get(carid).net; }
-	public double getDial(UUID carid, boolean bonus)
+	public double getDiff(UUID carid) { return carmap.get(carid).classdiff; }
+ 	public double getDial(UUID carid, boolean bonus)
 	{
 		double ret;
 		if (bonus)
@@ -92,14 +108,13 @@ public class Dialins
 
 	public List<UUID> getNetOrder()
 	{
-		return mapSort(
-			new Comparator<CarInfo>() {
-				public int compare(CarInfo o1, CarInfo o2) {
-					return (o1.net.compareTo(o2.net));
-				}
-			});
+		return mapSort(new CarInfoNet());
 	}
 
+	public List<UUID> getDiffOrder()
+	{
+		return mapSort(new CarInfoDiff());
+	}
 
 	private List<UUID> mapSort(Comparator<CarInfo> compare)
 	{
