@@ -47,7 +47,7 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
             getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
             getDialogPane().setContent(root);
             getDialogPane().lookupButton(ButtonType.OK).setDisable(true);
-            getDialogPane().setPrefSize(500, 650);
+            getDialogPane().setPrefSize(600, 650);
 
             setResultConverter(dialogButton -> {
                 if (dialogButton == ButtonType.OK) {
@@ -91,6 +91,8 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
         @FXML TableColumn<DialinEntry, String> classCodeColumn;
         @FXML TableColumn<DialinEntry, Double> netColumn;
         @FXML TableColumn<DialinEntry, Double> dialinColumn;
+        @FXML TableColumn<DialinEntry, Integer> diffPositionColumn;
+        @FXML TableColumn<DialinEntry, Double> diffColumn;
 
         Challenge target;
         DialogPane pane;
@@ -117,9 +119,12 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
             classCodeColumn.setCellValueFactory(cellData -> { return cellData.getValue().classCode; });
                   netColumn.setCellValueFactory(cellData -> { return cellData.getValue().net.asObject(); });
                dialinColumn.setCellValueFactory(cellData -> { return cellData.getValue().dialin.asObject(); });
+         diffPositionColumn.setCellValueFactory(cellData -> { return cellData.getValue().diffposition.asObject(); });
+                 diffColumn.setCellValueFactory(cellData -> { return cellData.getValue().classdiff.asObject(); });
 
                selectColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
                   netColumn.setCellFactory(tc -> new DoubleCell());
+                 diffColumn.setCellFactory(tc -> new DoubleCell());
                dialinColumn.setCellFactory(tc -> new DoubleCell());
 
                maxCount.setText("/ " + target.getMaxEntrantCount());
@@ -147,12 +152,15 @@ public class LoadEntrantsDialog extends Dialog<List<DialinEntry>>
 
             List<DialinEntry> data = new ArrayList<DialinEntry>();
             Dialins dialins = Database.d.loadDialins(target.getEventId());
+            List<UUID> dpos = dialins.getDiffOrder();
             int pos = 1;
             for (UUID id : dialins.getNetOrder())
             {
                 if (!entrants.containsKey(id))
                     continue;
-                DialinEntry de = new DialinEntry(entrants.get(id), pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected()));
+                DialinEntry de = new DialinEntry(entrants.get(id), 
+                                    pos, dialins.getNet(id), dialins.getDial(id, bonusCheck.isSelected()), 
+                                    dpos.indexOf(id) + 1, dialins.getDiff(id));
                 data.add(de);
                 de.selected.addListener(e -> selectChange());
                 pos++;

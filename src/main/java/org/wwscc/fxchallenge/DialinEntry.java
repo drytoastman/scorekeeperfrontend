@@ -14,8 +14,8 @@ import javafx.beans.property.StringProperty;
 public final class DialinEntry
 {
     Entrant entrant;
-    IntegerProperty position;
-    DoubleProperty net, dialin;
+    IntegerProperty position, diffposition;
+    DoubleProperty net, dialin, classdiff;
     StringProperty first, last, classCode;
     BooleanProperty selected;
 
@@ -23,7 +23,7 @@ public final class DialinEntry
     {
     }
 
-    public DialinEntry(Entrant e, int position, double net, double dialin)
+    public DialinEntry(Entrant e, int position, double net, double dialin, int diffposition, double classdiff)
     {
         this.entrant   = e;
         this.first     = new SimpleStringProperty(e.getFirstName());
@@ -33,5 +33,8 @@ public final class DialinEntry
         this.net       = new SimpleDoubleProperty(net);
         this.dialin    = new SimpleDoubleProperty(dialin);
         this.selected  = new SimpleBooleanProperty(false);
+
+        this.diffposition = new SimpleIntegerProperty(diffposition);
+        this.classdiff    = new SimpleDoubleProperty(classdiff);
     }
 }
