@@ -103,7 +103,6 @@ public class AppSetup
         // Add console handler if running in debug mode
         if (Prefs.isDebug()) {
             ConsoleHandler ch = new ConsoleHandler();
-            applog.setLevel(Level.ALL);
             ch.setLevel(Level.ALL);
             ch.setFormatter(format);
             root.addHandler(ch);
@@ -228,11 +227,17 @@ public class AppSetup
         {
             date.setTime(record.getMillis());
             StringBuffer sb = new StringBuffer(dformat.format(date));
-            if (record.getLoggerName() != null)
-                sb.append(" " + record.getLoggerName());
-            if (record.getSourceMethodName() != null)
-                sb.append(" " + record.getSourceMethodName());
-            sb.append(" " + record.getLevel().getLocalizedName() + ": ");
+            String name   = record.getLoggerName();
+            String source = record.getSourceMethodName();
+            String level  = record.getLevel().getLocalizedName();
+
+            if (name != null)
+                sb.append(" " + name);
+            if (source != null)
+                sb.append(" " + source);
+            if (level.length() > 0)
+                sb.append(" " + level);
+            sb.append(": ");
             sb.append(formatMessage(record).replaceAll("[\b]", ""));
             sb.append("\n");
 

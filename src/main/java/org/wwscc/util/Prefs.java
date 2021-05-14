@@ -192,7 +192,7 @@ public class Prefs
     public static boolean usePaidFlag()        { return prefs.getBoolean("paidflag", false); }
     public static boolean getAllowDiscovery()  { return prefs.getBoolean("allowdiscovery", true); }
     public static boolean getPrintDirectly()   { return prefs.getBoolean("printdirectly", true); }
-    public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "INFO")); }
+    public static AppLogLevel getLogLevel()    { return new AppLogLevel(prefs.get("loglevel", "Normal")); }
     public static String getIssuer()           { return prefs.get("issuer", ""); }
     public static String getIssuerMem()        { return prefs.get("issuermem", ""); }
     public static boolean getSkip53()          { return prefs.getBoolean("skip53", false); }
