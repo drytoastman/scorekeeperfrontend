@@ -68,9 +68,9 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         Messenger.register(MT.SERIAL_PORT_CLOSED, this);
 
         createMenus();
-        add(dialins, "wrap");
-        add(new NipErrorPanel(), "wrap, hidemode 3");
-        add(new StopErrorPanel(), "wrap, hidemode 3");
+        add(dialins, "wrap, hidemode 2");
+        add(new NipErrorPanel(), "wrap, hidemode 2");
+        add(new StopErrorPanel(), "wrap, hidemode 2");
 
         JTabbedPane tp = new JTabbedPane();
         tp.addTab("Results", null, results, "results interface");
@@ -111,22 +111,20 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
     public void createMenus()
     {
         JMenu file = new JMenu("File");
-        file.add(createMenu("Quit", 0, 0));
+        file.add(createMenu("Quit", KeyEvent.VK_Q, ActionEvent.CTRL_MASK));
 
         JMenu mode = new JMenu("Timer");
-        mode.add(createMenu("Open Comm Port", 0, 0));
-        mode.add(createMenu("Show/Hide Dialin", 0, 0));
-        mode.add(createMenu("Delete Left Finish", KeyEvent.VK_Z, ActionEvent.ALT_MASK));
-        mode.add(createMenu("Delete Right Finish", KeyEvent.VK_SLASH, ActionEvent.ALT_MASK));
+        mode.add(createMenu("Open Comm Port", KeyEvent.VK_O, ActionEvent.CTRL_MASK));
+        mode.add(createMenu("Show/Hide Dialin", KeyEvent.VK_D, ActionEvent.CTRL_MASK));
+        mode.add(createMenu("Delete Left Finish", KeyEvent.VK_Z, ActionEvent.CTRL_MASK));
+        mode.add(createMenu("Delete Right Finish", KeyEvent.VK_SLASH, ActionEvent.CTRL_MASK));
         mode.add(createMenu("Set Run Mode", 0, 0));
         mode.add(createMenu("Set Align Mode", 0, 0));
-        mode.add(createMenu("Reset", 0, 0));
+        mode.add(createMenu("Soft Reset", 0, 0));
+        mode.add(createMenu("Hard Reset", 0, 0));
 
         JMenu other = new JMenu("Other");
-        other.add(createMenu("Show In Progress", 0, 0));
-        other.add(createMenu("Show State", 0, 0));
-        other.add(createMenu("Hard", 0, 0));
-        other.add(createMenu("Simulator", 0, 0));
+        other.add(createMenu("Simulator",  KeyEvent.VK_S, ActionEvent.CTRL_MASK));
 
         JMenuBar bar = new JMenuBar();
         bar.add(file);
@@ -169,8 +167,8 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         else if (com.equals("Delete Left Finish")) { Messenger.sendEvent(MT.INPUT_DELETE_FINISH_LEFT, null); }
         else if (com.equals("Delete Right Finish")) { Messenger.sendEvent(MT.INPUT_DELETE_FINISH_RIGHT, null); }
 
-        else if (com.equals("Reset")) { Messenger.sendEvent(MT.INPUT_RESET_SOFT, null); }
-        else if (com.equals("Hard")) { Messenger.sendEvent(MT.INPUT_RESET_HARD, null); }
+        else if (com.equals("Soft Reset")) { Messenger.sendEvent(MT.INPUT_RESET_SOFT, null); }
+        else if (com.equals("Hard Reset")) { Messenger.sendEvent(MT.INPUT_RESET_HARD, null); }
         else if (com.equals("Simulator")) { new SimulatorPanel(); }
 
         else if (com.startsWith("Show/Hide"))
