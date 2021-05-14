@@ -130,6 +130,8 @@ public enum MT {
     ALIGN_MODE,
     RUN_MODE,
     CONTROL_DATA,
+    RUNS_IN_PROGRESS,
+    NIP_ERROR,
 
     REACTION_LEFT,
     REACTION_RIGHT,

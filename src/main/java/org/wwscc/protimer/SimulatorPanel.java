@@ -13,6 +13,8 @@ import java.awt.event.WindowEvent;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
+
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.storage.LeftRightDialin;
@@ -29,6 +31,7 @@ public class SimulatorPanel extends JFrame
     Simulator sim;
     Returno ret;
     InternalListener lis;
+    JTextField text;
     TimeTextField reacl, sixtyl, timel;
     TimeTextField reacr, sixtyr, timer;
     TimeTextField dial;
@@ -44,6 +47,7 @@ public class SimulatorPanel extends JFrame
         sim = new Simulator();
         ret = new Returno();
         lis = new InternalListener();
+        text   = new JTextField();
         reacl  = new TimeTextField("0.500",  6);
         sixtyl = new TimeTextField("2.100",  6);
         timel  = new TimeTextField("30.000", 6);
@@ -52,19 +56,8 @@ public class SimulatorPanel extends JFrame
         timer  = new TimeTextField("31.000", 6);
         dial   = new TimeTextField("0.000",  6);
 
-        /*
-        JLabel diall = new JLabel("Dial");
-        diall.setFont(diall.getFont().deriveFont(14).deriveFont(Font.BOLD));
-
-        main.add(dial, "skip 2");
-        main.add(diall, "wrap");
-
-        main.add(new JSeparator(), "spanx 4, wrap");
-        */
-
-        main.add(button("error"), "");
-        main.add(button("align"), "");
-        main.add(button("run"), "wrap");
+        main.add(text, "spanx 3");
+        main.add(button("text"), "wrap");        
         main.add(button("tree"), "spanx 4, wrap");
 
         main.add(reacl, "");
@@ -104,17 +97,11 @@ public class SimulatorPanel extends JFrame
         public void actionPerformed(ActionEvent ae) {
             String s = ae.getActionCommand();
             switch (s) {
+                case "text":
+                    sim.text(text.getText());
+                    break;
                 case "tree": 
                     sim.tree(); 
-                    break;
-                case "error":
-                    sim.error();
-                    break;
-                case "align":
-                    sim.alignMode();
-                    break;
-                case "run":
-                    sim.runMode();
                     break;
                 case "reaction left":
                     sim.reaction(true, reacl.getTime(), reacl.getTime() < 0.500 ? "redlight" : "" );

@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -33,15 +34,20 @@ import org.wwscc.util.Messenger;
 
 public class DebugPane extends JPanel implements ActionListener, MessageListener
 {
-    private static final Logger log = Logger.getLogger(DebugPane.class.getCanonicalName());
+    //private static final Logger log = Logger.getLogger(DebugPane.class.getCanonicalName());
+    private static Logger seriallog = Logger.getLogger("org.wwscc.protimer.serial");
 
     JTextPane text;
     JTextField input;
     JButton enter;
 
+    static class SerialLevel extends Level { protected SerialLevel() { super("", 799); }}
+    static SerialLevel slevel = new SerialLevel();
+
     public DebugPane() throws FileNotFoundException
     {
         super(new BorderLayout());
+        seriallog.setLevel(Level.ALL);
 
         text = new JTextPane();
         input = new JTextField(40);
@@ -79,8 +85,6 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
     {
         aset = sc.addAttribute(aset, StyleConstants.FontSize, 16);
         aset = sc.addAttribute(aset, StyleConstants.Foreground, in ? inColor : outColor);
-
-        log.finer("dbp: " + s + ", " + in);
         text.setCaretPosition(text.getDocument().getLength());
         text.setCharacterAttributes(aset, false);
         text.replaceSelection(s + "\n");
@@ -93,10 +97,12 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
         switch (type)
         {
             case SERIAL_GENERIC_DATA:
+                seriallog.logp(slevel, null, null, "=> \"{0}\"", o);
                 newText((String)o, true);
                 break;
 
             case SENDING_SERIAL:
+                seriallog.logp(slevel, null, null, "<= \"{0}\"", o);
                 newText((String)o, false);
                 break;
         }

@@ -9,8 +9,6 @@
 
 package org.wwscc.protimer;
 
-import java.awt.Color;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -51,16 +49,13 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
     protected TimerServer server;
 
     protected DialinPane dialins;
-    protected JPanel topPanel;
-    protected JLabel alignModeLabel;
-    protected JLabel errorLabel;
     protected JLabel openPort;
 
     public ProSoloInterface() throws Exception
     {
         super("NWR ProSolo Interface");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new MigLayout("fill, ins 0", "fill", "[grow 0][fill][grow 0][grow 0]"));
+        setLayout(new MigLayout("fill, ins 0", "fill", "[grow 0][grow 0][grow 0][fill][grow 0][grow 0]"));
 
         debug = new DebugPane();
         model = new ResultsModel();
@@ -69,27 +64,13 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         audit = new AuditLog();
         dialins = new DialinPane();
 
-        alignModeLabel = new JLabel("Align Mode");
-        alignModeLabel.setForeground(Color.RED);
-        alignModeLabel.setFont(new Font("serif", Font.BOLD, 20));
-        alignModeLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        errorLabel = new JLabel("Received RESET notice from Pro hardware");
-        errorLabel.setForeground(Color.RED);
-        errorLabel.setFont(new Font("serif", Font.BOLD, 20));
-        errorLabel.setHorizontalAlignment(JLabel.CENTER);
-
-        topPanel = new JPanel(new MigLayout("ins 0, al center", "al center"));
-        topPanel.add(dialins);
-
-        Messenger.register(MT.RUN_MODE, this);
-        Messenger.register(MT.ALIGN_MODE, this);
-        Messenger.register(MT.PRO_RESET, this);
         Messenger.register(MT.SERIAL_PORT_OPEN, this);
         Messenger.register(MT.SERIAL_PORT_CLOSED, this);
 
         createMenus();
-        add(topPanel, "wrap");
+        add(dialins, "wrap");
+        add(new NipErrorPanel(), "wrap, hidemode 3");
+        add(new StopErrorPanel(), "wrap, hidemode 3");
 
         JTabbedPane tp = new JTabbedPane();
         tp.addTab("Results", null, results, "results interface");
@@ -215,18 +196,6 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
     {
         switch (type)
         {
-            case ALIGN_MODE:
-                topPanel.removeAll();
-                topPanel.add(alignModeLabel, "");
-                break;
-            case RUN_MODE:
-                topPanel.removeAll();
-                topPanel.add(dialins, "");
-                break;
-            case PRO_RESET:
-                topPanel.removeAll();
-                topPanel.add(errorLabel, "");
-                break;
             case SERIAL_PORT_OPEN:
                 openPort.setText("Connected to Port " + o);
                 break;

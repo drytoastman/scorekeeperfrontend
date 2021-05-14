@@ -36,56 +36,8 @@ public class Simulator
         Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "TREE");
     }
 
-    public void runMode()
+    public void text(String text)
     {
-        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "RUN");
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, text);
     }
-
-    public void alignMode()
-    {
-        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "ALIGN");
-    }
-
-    public void error()
-    {
-        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "Error: No run slots left, resettingTREE");
-    }
-
-    /*
-    public void dialleft(double d)
-    {
-        Messenger.sendEvent(MT.DIALIN_LEFT, d);
-    }
-
-    public void dialright(double d)
-    {
-        Messenger.sendEvent(MT.DIALIN_RIGHT, d);
-    }
-
-    public void win(boolean left)
-    {
-        Messenger.sendEvent(left?MT.WIN_LEFT:MT.WIN_RIGHT, null);
-    }
-
-    public void lead(boolean left, double time)
-    {
-        Messenger.sendEvent(left?MT.LEAD_LEFT:MT.LEAD_RIGHT, time);
-    }
-
-    public void challengewin(boolean left, double time)
-    {
-        Messenger.sendEvent(left?MT.CHALWIN_LEFT:MT.CHALWIN_RIGHT, time);
-    }
-
-    public void overdial(boolean left, double time, double dial)
-    {
-        Messenger.sendEvent(left?MT.CHALDIAL_LEFT:MT.CHALDIAL_RIGHT, new Double[] { time, dial } );
-    }
-
-    public void breakout(boolean left, double time, double dial)
-    {
-        Messenger.sendEvent(left?MT.CHALDIAL_LEFT:MT.CHALDIAL_RIGHT, new Double[] {-time, dial } );
-    }
-
-    */
 }

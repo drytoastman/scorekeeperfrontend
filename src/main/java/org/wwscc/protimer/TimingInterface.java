@@ -168,13 +168,12 @@ public class TimingInterface implements MessageListener
 
     public void processData(String input)
     {
-        log.log(Level.FINE, "Process: \"{0}\"", input);
-        String args[] = input.split("[ \r\n]");
+        log.log(Level.FINEST, "\"{0}\"", input);
+        String args[] = input.split("[ \r\n]+");
 
         boolean left;
         double  time;
         double  dial;
-        //int     color;
 
         /* Process comand */
         if (args[0].equalsIgnoreCase("rt"))
@@ -273,34 +272,19 @@ public class TimingInterface implements MessageListener
         {
             Messenger.sendEvent(MT.ALIGN_MODE, null);
         }
-        else if (args[0].equals("HARD")) 
-        { 
-            Messenger.sendEvent(MT.INPUT_RESET_HARD, null); 
+        else if (args[0].equalsIgnoreCase("nip") && args.length > 1)
+        {
+            try {
+                Messenger.sendEvent(MT.RUNS_IN_PROGRESS, new int[] { Integer.parseInt(args[1]), Integer.parseInt(args[2]) });
+            } catch (NumberFormatException|ArrayIndexOutOfBoundsException e) {
+                log.log(Level.WARNING, "invalid nip data: \"{0}\"", input);
+            }
         }
         else if (input.toLowerCase().contains("reset"))
         {
             log.warning("Reset notice from Pro Hardware");
             Messenger.sendEvent(MT.PRO_RESET, null);
         }
-
-        /*
-        else if (args[0].equalsIgnoreCase("lip"))
-        {
-            Boolean b[] = new Boolean[3];
-            b[0] = get_bool(args, 1);
-            b[1] = get_bool(args, 2);
-            b[2] = get_bool(args, 3);
-            Messenger.sendEvent(INPROGRESS_LEFT, b);
-        }
-        else if (args[0].equalsIgnoreCase("rip"))
-        {
-            Boolean b[] = new Boolean[3];
-            b[0] = get_bool(args, 1);
-            b[1] = get_bool(args, 2);
-            b[2] = get_bool(args, 3);
-            Messenger.sendEvent(INPROGRESS_RIGHT, b);
-        }
-        */
     }
 }
 
