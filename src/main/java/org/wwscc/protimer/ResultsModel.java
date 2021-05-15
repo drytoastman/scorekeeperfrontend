@@ -31,6 +31,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
     Vector<RunServiceInterface> listeners;
     int nextLeftFinish;
     int nextRightFinish;
+    int resetLine;
 
     double holdLeftDial;
     double holdRightDial;
@@ -74,17 +75,11 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
         nextLeftFinish    = 0;
         nextRightFinish   = 0;
+        resetLine         = 0;
         holdLeftDial	= Double.NaN;
         holdRightDial	= Double.NaN;
         
-        new Timer("StateCheckTimer").schedule(new StateCheckTimer(), 1000, 60000);
-    }
-
-    class StateCheckTimer extends TimerTask {
-        @Override
-        public void run() {
-            Messenger.sendEvent(MT.INPUT_RUNS_IN_PROGRESS, null);
-        }
+        new Timer("StateCheckTimer").schedule(new TimerTask() { public void run() { Messenger.sendEvent(MT.INPUT_RUNS_IN_PROGRESS, null); } }, 1000, 60000);
     }
 
     public void addRunServerListener(RunServiceInterface l)
@@ -265,7 +260,8 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
                 case INPUT_RESET_HARD:
                 case PRO_RESET:
                     createNewEntry();
-                    nextLeftFinish = nextRightFinish = runs.size() - 1;
+                    resetLine = nextLeftFinish = nextRightFinish = runs.size() - 1;
+                    Messenger.sendEvent(MT.NIP_ERROR, null);
                     break;
                 
                 case RUNS_IN_PROGRESS:
@@ -273,7 +269,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
                     int left = 0, right = 0;
                     boolean ld = false, rd = false;
                     
-                    for (int ii = runs.size() - 1; ii >= 0; ii--) {
+                    for (int ii = runs.size() - 1; ii >= resetLine; ii--) {
                         DualResult dr = runs.get(ii);
                         if (dr.left.completeRun()) {
                             ld = true;
