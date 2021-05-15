@@ -10,6 +10,7 @@
 package org.wwscc.protimer;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,10 +19,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+import javax.swing.SwingConstants;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -40,6 +43,7 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
     JTextPane text;
     JTextField input;
     JButton enter;
+    JPanel items;
 
     static class SerialLevel extends Level { protected SerialLevel() { super("", 799); }}
     static SerialLevel slevel = new SerialLevel();
@@ -54,7 +58,14 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
         enter = new JButton("Send");
         enter.addActionListener(this);
 
-        JScrollPane sp = new JScrollPane(text);
+        JLabel noserial = new JLabel("Serial Port Not Connected", SwingConstants.CENTER);
+        noserial.setForeground(Color.RED);
+
+        items = new JPanel(new CardLayout());
+        items.add(text, "MAIN");
+        items.add(noserial, "WARNING");
+
+        JScrollPane sp = new JScrollPane(items);
         sp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 
         JPanel p = new JPanel();
@@ -66,6 +77,8 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
 
         Messenger.register(MT.SERIAL_GENERIC_DATA, this);
         Messenger.register(MT.SENDING_SERIAL, this);
+        Messenger.register(MT.SERIAL_PORT_OPEN, this);
+        Messenger.register(MT.SERIAL_PORT_CLOSED, this);
     }
 
     @Override
@@ -104,6 +117,14 @@ public class DebugPane extends JPanel implements ActionListener, MessageListener
             case SENDING_SERIAL:
                 seriallog.logp(slevel, null, null, "<= \"{0}\"", o);
                 newText((String)o, false);
+                break;
+
+            case SERIAL_PORT_OPEN:
+                ((CardLayout)(items.getLayout())).show(items, "MAIN");
+                break;
+
+            case SERIAL_PORT_CLOSED:
+                ((CardLayout)(items.getLayout())).show(items, "WARNING");
                 break;
         }
     }

@@ -48,7 +48,11 @@ public class TimingInterface implements MessageListener
         Messenger.register(MT.INPUT_START_LEFT, this);
         Messenger.register(MT.INPUT_START_RIGHT, this);
 
+        Messenger.register(MT.INPUT_RUNS_IN_PROGRESS, this);
         Messenger.register(MT.INPUT_TEXT, this);
+
+        // start in disconnected state
+        Messenger.sendEvent(MT.SERIAL_PORT_CLOSED, null);
     }
 
 
@@ -117,6 +121,7 @@ public class TimingInterface implements MessageListener
             case INPUT_FINISH_LEFT: doCommand("FIN L"); break;
             case INPUT_FINISH_RIGHT: doCommand("FIN R"); break;
 
+            case INPUT_RUNS_IN_PROGRESS: doCommand("NIP"); break;
             case INPUT_TEXT: doCommand((String)o); break;
         }
     }
@@ -129,6 +134,10 @@ public class TimingInterface implements MessageListener
             log.log(Level.INFO, "OUT: {0}", command);
             Messenger.sendEvent(MT.SENDING_SERIAL, command);
             serial.write(command + "\r");
+        }
+        else
+        {
+            log.log(Level.FINE, "Dropping command, no serial port: {0}", command);
         }
     }
 

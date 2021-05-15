@@ -9,6 +9,7 @@
 
 package org.wwscc.protimer;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -196,9 +197,11 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
         {
             case SERIAL_PORT_OPEN:
                 openPort.setText("Connected to Port " + o);
+                openPort.setForeground(Color.BLACK);
                 break;
             case SERIAL_PORT_CLOSED:
                 openPort.setText("Serial Port Not Connected");
+                openPort.setForeground(Color.RED);
                 break;
         }
 

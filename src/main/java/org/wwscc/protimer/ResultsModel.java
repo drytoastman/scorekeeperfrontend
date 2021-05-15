@@ -10,6 +10,8 @@
 package org.wwscc.protimer;
 
 import java.util.UUID;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -74,6 +76,15 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
         nextRightFinish   = 0;
         holdLeftDial	= Double.NaN;
         holdRightDial	= Double.NaN;
+        
+        new Timer("StateCheckTimer").schedule(new StateCheckTimer(), 1000, 60000);
+    }
+
+    class StateCheckTimer extends TimerTask {
+        @Override
+        public void run() {
+            Messenger.sendEvent(MT.INPUT_RUNS_IN_PROGRESS, null);
+        }
     }
 
     public void addRunServerListener(RunServiceInterface l)
