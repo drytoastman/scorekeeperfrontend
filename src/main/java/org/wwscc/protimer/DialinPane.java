@@ -42,9 +42,9 @@ public class DialinPane extends JPanel implements ActionListener, MessageListene
 
     public DialinPane()
     {
-        super(new MigLayout("al center", "al center"));
+        super(new MigLayout("ins 0, al center"));
 
-        Font f = new Font("serif", Font.BOLD, 20);
+        Font f = new Font("sansserif", Font.BOLD, 18);
 
         Messenger.register(MT.DIALIN_LEFT, this);
         Messenger.register(MT.DIALIN_RIGHT, this);

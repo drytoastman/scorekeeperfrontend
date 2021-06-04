@@ -43,12 +43,14 @@
       <TableView fx:id="table" editable="true" BorderPane.alignment="CENTER">
         <columns>
             <TableColumn fx:id="selectColumn"                      prefWidth="${table.width * 0.04}" resizable="false" />
-            <TableColumn fx:id="positionColumn"  editable="false"  prefWidth="${table.width * 0.08}" resizable="false" text="Pos" />
-            <TableColumn fx:id="firstNameColumn" editable="false"  prefWidth="${table.width * 0.20}" resizable="false" text="First" />
-            <TableColumn fx:id="lastNameColumn"  editable="false"  prefWidth="${table.width * 0.20}" resizable="false" text="Last" />
+            <TableColumn fx:id="firstNameColumn" editable="false"  prefWidth="${table.width * 0.15}" resizable="false" text="First" />
+            <TableColumn fx:id="lastNameColumn"  editable="false"  prefWidth="${table.width * 0.16}" resizable="false" text="Last" />
             <TableColumn fx:id="classCodeColumn" editable="false"  prefWidth="${table.width * 0.11}" resizable="false" text="Class" />
-            <TableColumn fx:id="netColumn"       editable="false"  prefWidth="${table.width * 0.18}" resizable="false" text="Net" />
-            <TableColumn fx:id="dialinColumn"    editable="false"  prefWidth="${table.width * 0.18}" resizable="false" text="Dialin" />
+            <TableColumn fx:id="positionColumn"  editable="false"  prefWidth="${table.width * 0.07}" resizable="false" text="N#" />
+            <TableColumn fx:id="netColumn"       editable="false"  prefWidth="${table.width * 0.12}" resizable="false" text="Net" />
+            <TableColumn fx:id="diffPositionColumn" editable="false" prefWidth="${table.width * 0.07}" resizable="false" text="D#" />
+            <TableColumn fx:id="diffColumn"      editable="false"  prefWidth="${table.width * 0.12}" resizable="false" text="Diff" />
+            <TableColumn fx:id="dialinColumn"    editable="false"  prefWidth="${table.width * 0.12}" resizable="false" text="Dialin" />
         </columns>
       </TableView>
    </center>

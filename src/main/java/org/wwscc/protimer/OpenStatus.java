@@ -46,10 +46,10 @@ public class OpenStatus extends JPanel implements MessageListener
 		lfLabel = new JLabel("Left Finish Open", JLabel.CENTER);
 		rfLabel = new JLabel("Right Finish Open", JLabel.CENTER);
 
-		lsLabel.setFont(new Font("serif", Font.BOLD, 14));
-		rsLabel.setFont(new Font("serif", Font.BOLD, 14));
-		lfLabel.setFont(new Font("serif", Font.BOLD, 14));
-		rfLabel.setFont(new Font("serif", Font.BOLD, 14));
+		lsLabel.setFont(new Font("sansserif", Font.BOLD, 14));
+		rsLabel.setFont(new Font("sansserif", Font.BOLD, 14));
+		lfLabel.setFont(new Font("sansserif", Font.BOLD, 14));
+		rfLabel.setFont(new Font("sansserif", Font.BOLD, 14));
 
 		lsLabel.setForeground(off);
 		rsLabel.setForeground(off);

@@ -16,62 +16,28 @@ public class Simulator
     {
     }
 
-    public void reaction(boolean left, double time, int color)
+    public void reaction(boolean left, double time, String status)
     {
-        Messenger.sendEvent(left?MT.REACTION_LEFT:MT.REACTION_RIGHT, new ColorTime(time, color));
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("rt %s %s %s", left ? "L":"R", time, status));
     }
 
-    public void sixty(boolean left, double time, int color)
+    public void sixty(boolean left, double time)
     {
-        Messenger.sendEvent(left?MT.SIXTY_LEFT:MT.SIXTY_RIGHT, new ColorTime(time, color));
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("sixty %s %s", left ? "L":"R", time));
     }
 
-    public void finish(boolean left, double time, double dial, int color)
+    public void finish(boolean left, double time, double dial)
     {
-        Object [] result = { new ColorTime(time, color), dial };
-        Messenger.sendEvent(left?MT.FINISH_LEFT:MT.FINISH_RIGHT, result);
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, String.format("fin %s %s", left ? "L":"R", time));
     }
 
     public void tree()
     {
-        Messenger.sendEvent(MT.TREE, null);
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, "TREE");
     }
 
-    public void dialleft(double d)
+    public void text(String text)
     {
-        Messenger.sendEvent(MT.DIALIN_LEFT, d);
+        Messenger.sendEvent(MT.SERIAL_GENERIC_DATA, text);
     }
-
-    public void dialright(double d)
-    {
-        Messenger.sendEvent(MT.DIALIN_RIGHT, d);
-    }
-
-    /*
-    public void win(boolean left)
-    {
-        Messenger.sendEvent(left?MT.WIN_LEFT:MT.WIN_RIGHT, null);
-    }
-
-    public void lead(boolean left, double time)
-    {
-        Messenger.sendEvent(left?MT.LEAD_LEFT:MT.LEAD_RIGHT, time);
-    }
-
-    public void challengewin(boolean left, double time)
-    {
-        Messenger.sendEvent(left?MT.CHALWIN_LEFT:MT.CHALWIN_RIGHT, time);
-    }
-
-    public void overdial(boolean left, double time, double dial)
-    {
-        Messenger.sendEvent(left?MT.CHALDIAL_LEFT:MT.CHALDIAL_RIGHT, new Double[] { time, dial } );
-    }
-
-    public void breakout(boolean left, double time, double dial)
-    {
-        Messenger.sendEvent(left?MT.CHALDIAL_LEFT:MT.CHALDIAL_RIGHT, new Double[] {-time, dial } );
-    }
-
-    */
 }

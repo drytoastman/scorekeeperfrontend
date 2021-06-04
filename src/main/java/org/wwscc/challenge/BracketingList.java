@@ -74,11 +74,14 @@ public class BracketingList extends BaseDialog<List<BracketEntry>> implements Ch
         table.setDefaultRenderer(Double.class, new D3Renderer());
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getColumnModel().getColumn(0).setMaxWidth(30);
-        table.getColumnModel().getColumn(1).setMaxWidth(40);
+        table.getColumnModel().getColumn(1).setMaxWidth(200);
         table.getColumnModel().getColumn(2).setMaxWidth(200);
-        table.getColumnModel().getColumn(3).setMaxWidth(200);
-        table.getColumnModel().getColumn(4).setMaxWidth(75);
+        table.getColumnModel().getColumn(3).setMaxWidth(60);
+        table.getColumnModel().getColumn(4).setMaxWidth(40);
         table.getColumnModel().getColumn(5).setMaxWidth(75);
+        table.getColumnModel().getColumn(6).setMaxWidth(40);
+        table.getColumnModel().getColumn(7).setMaxWidth(75);
+        table.getColumnModel().getColumn(8).setMaxWidth(75);
 
         mainPanel.add(new JLabel("Number of Drivers"), "split");
         mainPanel.add(spinner, "gapbottom 4, wrap");
@@ -158,8 +161,10 @@ class BracketingListModel extends AbstractTableModel
         boolean selected;
         Entrant entrant;
         int netposition;
+        int diffposition;
         double nettime;
         double dialin;
+        double classdiff;
     }
 
     public BracketingListModel()
@@ -185,8 +190,10 @@ class BracketingListModel extends AbstractTableModel
 
         data = new ArrayList<Store>();
         dialins = Database.d.loadDialins(ChallengeGUI.state.getCurrentEventId());
+        List<UUID> nets = dialins.getNetOrder();
+        List<UUID> diffs = dialins.getDiffOrder();
         int pos = 1;
-        for (UUID id : dialins.getNetOrder())
+        for (UUID id : nets)
         {
             Store s = new Store();
             if (!entrants.containsKey(id))
@@ -194,8 +201,10 @@ class BracketingListModel extends AbstractTableModel
             s.selected = currentSelections.containsKey(id) ? currentSelections.get(id) : false;
             s.entrant = entrants.get(id);
             s.netposition = pos;
+            s.diffposition = diffs.indexOf(id) + 1;
             s.nettime = dialins.getNet(id);
             s.dialin = dialins.getDial(id, bonusStyle);
+            s.classdiff = dialins.getDiff(id);
             data.add(s);
             pos++;
         }
@@ -223,7 +232,7 @@ class BracketingListModel extends AbstractTableModel
     @Override
     public int getColumnCount()
     {
-        return 7;
+        return 9;
     }
 
     @Override
@@ -238,12 +247,14 @@ class BracketingListModel extends AbstractTableModel
         switch (columnIndex)
         {
             case 0: return Boolean.class;
-            case 1: return Integer.class;
+            case 1: return String.class;
             case 2: return String.class;
             case 3: return String.class;
-            case 4: return String.class;
+            case 4: return Integer.class;
             case 5: return Double.class;
-            case 6: return Double.class;
+            case 6: return Integer.class;
+            case 7: return Double.class;
+            case 8: return Double.class;
         }
         return Object.class;
     }
@@ -255,12 +266,14 @@ class BracketingListModel extends AbstractTableModel
         switch (columnIndex)
         {
             case 0: return s.selected;
-            case 1: return s.netposition;
-            case 2: return s.entrant.getFirstName();
-            case 3: return s.entrant.getLastName();
-            case 4: return s.entrant.getClassCode();
+            case 1: return s.entrant.getFirstName();
+            case 2: return s.entrant.getLastName();
+            case 3: return s.entrant.getClassCode();
+            case 4: return s.netposition;
             case 5: return s.nettime;
-            case 6: return s.dialin;
+            case 6: return s.diffposition;
+            case 7: return s.classdiff;
+            case 8: return s.dialin;
         }
         return null;
     }
@@ -279,12 +292,14 @@ class BracketingListModel extends AbstractTableModel
         switch (col)
         {
             case 0: return "";
-            case 1: return "Pos";
-            case 2: return "First";
-            case 3: return "Last";
-            case 4: return "Class";
+            case 1: return "First";
+            case 2: return "Last";
+            case 3: return "Class";
+            case 4: return "N#";
             case 5: return "Net";
-            case 6: return "Dialin";
+            case 6: return "D#";
+            case 7: return "Diff";
+            case 8: return "Dialin";
             default: return "ERROR";
         }
     }

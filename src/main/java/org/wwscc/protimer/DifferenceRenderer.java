@@ -49,8 +49,8 @@ public class DifferenceRenderer extends JPanel implements TableCellRenderer
 		setLayout(new MigLayout("debug 100, fill, ins 1 10 1 10, gap 1", "[grow 0, right][grow 100, center][grow 0, right]"));
 
 		Font fix = new Font("fixed", Font.PLAIN, 18);
-		Font lblfont = new Font("serif", Font.PLAIN, 18);
-		Font msgfont = new Font("serif", Font.PLAIN, 20);
+		Font lblfont = new Font("sansserif", Font.PLAIN, 18);
+		Font msgfont = new Font("sansserif", Font.PLAIN, 20);
 
 		overleft = new JLabel();
 		overleft.setFont(fix);

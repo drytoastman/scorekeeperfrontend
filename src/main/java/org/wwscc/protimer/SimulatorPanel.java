@@ -5,7 +5,6 @@
 package org.wwscc.protimer;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -13,9 +12,9 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
+import javax.swing.JTextField;
+
 import net.miginfocom.swing.MigLayout;
 
 import org.wwscc.storage.LeftRightDialin;
@@ -32,7 +31,9 @@ public class SimulatorPanel extends JFrame
     Simulator sim;
     Returno ret;
     InternalListener lis;
-    TimeTextField time;
+    JTextField text;
+    TimeTextField reacl, sixtyl, timel;
+    TimeTextField reacr, sixtyr, timer;
     TimeTextField dial;
 
     public SimulatorPanel()
@@ -46,27 +47,30 @@ public class SimulatorPanel extends JFrame
         sim = new Simulator();
         ret = new Returno();
         lis = new InternalListener();
-        time = new TimeTextField("0.000", 6);
-        dial = new TimeTextField("0.000", 6);
+        text   = new JTextField();
+        reacl  = new TimeTextField("0.500",  6);
+        sixtyl = new TimeTextField("2.100",  6);
+        timel  = new TimeTextField("30.000", 6);
+        reacr  = new TimeTextField("0.600",  6);
+        sixtyr = new TimeTextField("2.200",  6);
+        timer  = new TimeTextField("31.000", 6);
+        dial   = new TimeTextField("0.000",  6);
 
-        JLabel timel = new JLabel("Time");
-        timel.setFont(timel.getFont().deriveFont(14).deriveFont(Font.BOLD));
-        JLabel diall = new JLabel("Dial");
-        diall.setFont(diall.getFont().deriveFont(14).deriveFont(Font.BOLD));
+        main.add(text, "spanx 3");
+        main.add(button("text"), "wrap");        
+        main.add(button("tree"), "spanx 4, wrap");
 
-        main.add(timel, "split 2");
-        main.add(time, "");
-        main.add(diall, "split 2");
-        main.add(dial, "wrap");
-
-        main.add(new JSeparator(), "spanx 2, wrap");
-
-        main.add(button("tree"), "spanx 2, wrap");
+        main.add(reacl, "");
         main.add(button("reaction left"), "");
+        main.add(reacr, "");
         main.add(button("reaction right"), "wrap");
+        main.add(sixtyl, "");
         main.add(button("sixty left"), "");
+        main.add(sixtyr, "");
         main.add(button("sixty right"), "wrap");
+        main.add(timel, "");
         main.add(button("finish left"), "");
+        main.add(timer, "");
         main.add(button("finish right"), "wrap");
 
         pack();
@@ -92,20 +96,32 @@ public class SimulatorPanel extends JFrame
         @Override
         public void actionPerformed(ActionEvent ae) {
             String s = ae.getActionCommand();
-            if (s.equals("tree"))
-                sim.tree();
-            else if (s.equals("reaction left"))
-                sim.reaction(true, time.getTime(), time.getTime() < 0.500 ? ColorTime.REDLIGHT : ColorTime.NORMAL );
-            else if (s.equals("reaction right"))
-                sim.reaction(false, time.getTime(), time.getTime() < 0.500 ? ColorTime.REDLIGHT : ColorTime.NORMAL);
-            else if (s.equals("sixty left"))
-                sim.sixty(true, time.getTime(), ColorTime.NORMAL);
-            else if (s.equals("sixty right"))
-                sim.sixty(false, time.getTime(), ColorTime.NORMAL);
-            else if (s.equals("finish left"))
-                sim.finish(true, time.getTime(), dial.getTime(), ColorTime.NORMAL);
-            else if (s.equals("finish right"))
-                sim.finish(false, time.getTime(), dial.getTime(), ColorTime.NORMAL);
+            switch (s) {
+                case "text":
+                    sim.text(text.getText());
+                    break;
+                case "tree": 
+                    sim.tree(); 
+                    break;
+                case "reaction left":
+                    sim.reaction(true, reacl.getTime(), reacl.getTime() < 0.500 ? "redlight" : "" );
+                    break;
+                case "reaction right":
+                    sim.reaction(false, reacr.getTime(), reacr.getTime() < 0.500 ? "redlight" : "" );
+                    break;
+                case "sixty left":
+                    sim.sixty(true, sixtyl.getTime());
+                    break;
+                case "sixty right":
+                    sim.sixty(false, sixtyr.getTime());
+                    break;
+                case "finish left":
+                    sim.finish(true, timel.getTime(), dial.getTime());
+                    break;
+                case "finish right":
+                    sim.finish(false, timer.getTime(), dial.getTime());
+                    break;
+            }
         }
     }
 

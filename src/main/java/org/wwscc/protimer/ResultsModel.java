@@ -10,6 +10,8 @@
 package org.wwscc.protimer;
 
 import java.util.UUID;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,6 +31,7 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
     Vector<RunServiceInterface> listeners;
     int nextLeftFinish;
     int nextRightFinish;
+    int resetLine;
 
     double holdLeftDial;
     double holdRightDial;
@@ -67,11 +70,16 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
         Messenger.register(MT.INPUT_RESET_SOFT, this);
         Messenger.register(MT.INPUT_RESET_HARD, this);
+        Messenger.register(MT.PRO_RESET, this);
+        Messenger.register(MT.RUNS_IN_PROGRESS, this);
 
         nextLeftFinish    = 0;
         nextRightFinish   = 0;
+        resetLine         = 0;
         holdLeftDial	= Double.NaN;
         holdRightDial	= Double.NaN;
+        
+        new Timer("StateCheckTimer").schedule(new TimerTask() { public void run() { Messenger.sendEvent(MT.INPUT_RUNS_IN_PROGRESS, null); } }, 1000, 60000);
     }
 
     public void addRunServerListener(RunServiceInterface l)
@@ -250,8 +258,42 @@ public class ResultsModel extends AbstractTableModel implements MessageListener
 
                 case INPUT_RESET_SOFT:
                 case INPUT_RESET_HARD:
+                case PRO_RESET:
                     createNewEntry();
-                    nextLeftFinish = nextRightFinish = runs.size() - 1;
+                    resetLine = nextLeftFinish = nextRightFinish = runs.size() - 1;
+                    Messenger.sendEvent(MT.NIP_ERROR, null);
+                    break;
+                
+                case RUNS_IN_PROGRESS:
+                    int hardware[] = (int[])o;
+                    int left = 0, right = 0;
+                    boolean ld = false, rd = false;
+                    
+                    for (int ii = runs.size() - 1; ii >= resetLine; ii--) {
+                        DualResult dr = runs.get(ii);
+                        if (dr.left.completeRun()) {
+                            ld = true;
+                        } else if (!ld && dr.left.inProgress()) {
+                            left++;
+                        }
+                        if (dr.right.completeRun()) {
+                            rd = true;
+                        } else if (!rd && dr.right.inProgress()) {
+                            right++;
+                        }
+                        if (ld && rd) break;
+                    }
+
+                    String nip = "";
+                    if ( left != hardware[0]) nip += String.format( "left (%d != %d) ", left, hardware[0]);
+                    if (right != hardware[1]) nip += String.format("right (%d != %d)", right, hardware[1]);
+
+                    if (nip.length() > 0) {
+                        log.log(Level.SEVERE, "Software is not in the same state as the hardware! {0}", nip);
+                        Messenger.sendEvent(MT.NIP_ERROR, nip);
+                    } else {
+                        Messenger.sendEvent(MT.NIP_ERROR, null);
+                    }
                     break;
             }
 

@@ -47,6 +47,16 @@ public class Result
         return r;
     }
 
+    public boolean inProgress() 
+    {
+        return !Double.isNaN(rt);
+    }
+
+    public boolean completeRun() 
+    {
+        return !Double.isNaN(finish);
+    }
+
     public boolean deleteStart()
     {
         if (!Double.isNaN(rt) && Double.isNaN(finish))

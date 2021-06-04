@@ -119,6 +119,7 @@ public enum MT {
 
     // ProTimer
     TREE,
+    PRO_RESET,
     DIALIN_LEFT,
     DIALIN_RIGHT,
     OPEN_SENSOR,
@@ -129,6 +130,8 @@ public enum MT {
     ALIGN_MODE,
     RUN_MODE,
     CONTROL_DATA,
+    RUNS_IN_PROGRESS,
+    NIP_ERROR,
 
     REACTION_LEFT,
     REACTION_RIGHT,
@@ -161,6 +164,7 @@ public enum MT {
     INPUT_SHOW_STATE,
     INPUT_RESET_SOFT,
     INPUT_RESET_HARD,
+    INPUT_RUNS_IN_PROGRESS,
     INPUT_TEXT,
     SENDING_SERIAL
 }

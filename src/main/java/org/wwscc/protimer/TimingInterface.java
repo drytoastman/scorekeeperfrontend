@@ -48,7 +48,11 @@ public class TimingInterface implements MessageListener
         Messenger.register(MT.INPUT_START_LEFT, this);
         Messenger.register(MT.INPUT_START_RIGHT, this);
 
+        Messenger.register(MT.INPUT_RUNS_IN_PROGRESS, this);
         Messenger.register(MT.INPUT_TEXT, this);
+
+        // start in disconnected state
+        Messenger.sendEvent(MT.SERIAL_PORT_CLOSED, null);
     }
 
 
@@ -117,6 +121,7 @@ public class TimingInterface implements MessageListener
             case INPUT_FINISH_LEFT: doCommand("FIN L"); break;
             case INPUT_FINISH_RIGHT: doCommand("FIN R"); break;
 
+            case INPUT_RUNS_IN_PROGRESS: doCommand("NIP"); break;
             case INPUT_TEXT: doCommand((String)o); break;
         }
     }
@@ -129,6 +134,10 @@ public class TimingInterface implements MessageListener
             log.log(Level.INFO, "OUT: {0}", command);
             Messenger.sendEvent(MT.SENDING_SERIAL, command);
             serial.write(command + "\r");
+        }
+        else
+        {
+            log.log(Level.FINE, "Dropping command, no serial port: {0}", command);
         }
     }
 
@@ -168,13 +177,12 @@ public class TimingInterface implements MessageListener
 
     public void processData(String input)
     {
-        log.log(Level.FINE, "Process: ({0})", input);
-        String args[] = input.split("[ \r\n]");
+        log.log(Level.FINEST, "\"{0}\"", input);
+        String args[] = input.split("[ \r\n]+");
 
         boolean left;
         double  time;
         double  dial;
-        //int     color;
 
         /* Process comand */
         if (args[0].equalsIgnoreCase("rt"))
@@ -273,27 +281,19 @@ public class TimingInterface implements MessageListener
         {
             Messenger.sendEvent(MT.ALIGN_MODE, null);
         }
-
-        else if (args[0].equals("HARD")) { Messenger.sendEvent(MT.INPUT_RESET_HARD, null); }
-
-        /*
-        else if (args[0].equalsIgnoreCase("lip"))
+        else if (args[0].equalsIgnoreCase("nip") && args.length > 1)
         {
-            Boolean b[] = new Boolean[3];
-            b[0] = get_bool(args, 1);
-            b[1] = get_bool(args, 2);
-            b[2] = get_bool(args, 3);
-            Messenger.sendEvent(INPROGRESS_LEFT, b);
+            try {
+                Messenger.sendEvent(MT.RUNS_IN_PROGRESS, new int[] { Integer.parseInt(args[1]), Integer.parseInt(args[2]) });
+            } catch (NumberFormatException|ArrayIndexOutOfBoundsException e) {
+                log.log(Level.WARNING, "invalid nip data: \"{0}\"", input);
+            }
         }
-        else if (args[0].equalsIgnoreCase("rip"))
+        else if (input.toLowerCase().contains("reset"))
         {
-            Boolean b[] = new Boolean[3];
-            b[0] = get_bool(args, 1);
-            b[1] = get_bool(args, 2);
-            b[2] = get_bool(args, 3);
-            Messenger.sendEvent(INPROGRESS_RIGHT, b);
+            log.warning("Reset notice from Pro Hardware");
+            Messenger.sendEvent(MT.PRO_RESET, null);
         }
-        */
     }
 }
 

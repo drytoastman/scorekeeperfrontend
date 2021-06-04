@@ -34,7 +34,7 @@ public class TimingButtons extends JPanel implements ActionListener
 		JButton start = new JButton("Start");
 		JButton finish = new JButton("Finish");
 
-		Font f = new Font("Serif", Font.BOLD, 16);
+		Font f = new Font("sansserif", Font.BOLD, 16);
 
 		dstart.setFont(f);
 		dfinish.setFont(f);
