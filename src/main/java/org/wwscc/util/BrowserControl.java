@@ -34,18 +34,18 @@ public class BrowserControl
     public static void openGroupResults(ApplicationState state, String[] groups)
     {
         if (groups.length == 0) return;
-        openResults(state, String.format("bygroup?course=%s&list=%s", state.getCurrentCourse(), String.join(",", groups)));
+        openResults(state, String.format("bygroup?course=%s&groups=%s", state.getCurrentCourse(), String.join(",", groups)));
     }
 
     public static void printGroupResults(ApplicationState state)
     {
-        printURL(String.format("http://127.0.0.1/results/%s/event/%s/bygroup?course=%s&list=%s",
+        printURL(String.format("http://127.0.0.1/results/%s/%s/bygroup?course=%s&groups=%s",
                 state.getCurrentSeries(), state.getCurrentEventId(), state.getCurrentCourse(), state.getCurrentRunGroup()));
     }
 
     public static void openResults(ApplicationState state, String selection)
     {
-        openURL(String.format("http://127.0.0.1/results/%s/event/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
+        openURL(String.format("http://127.0.0.1/results/%s/%s/%s", state.getCurrentSeries(), state.getCurrentEventId(), selection));
     }
 
     public static void openAdmin(ApplicationState state, String selection)
