@@ -39,6 +39,6 @@ public class SyncPoker
 
     public void poke()
     {
-        docker.pokeByName("sync");
+        docker.pokeByName("server");
     }
 }
