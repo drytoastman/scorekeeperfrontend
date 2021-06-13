@@ -168,6 +168,12 @@ task distrib {
     }
 }
 
+
+task innosetup(type:Exec) {
+    commandLine "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe", "/DVersion=${version}", "windows.iss"
+}
+
+
 ext.createZip = { imageDir, zipFile ->
     def parentPath = imageDir.toPath()
     project.ant.zip(destfile: zipFile, duplicate: 'fail') {

@@ -203,6 +203,8 @@ public class ProSoloInterface extends JFrame implements ActionListener, MessageL
                 openPort.setText("Serial Port Not Connected");
                 openPort.setForeground(Color.RED);
                 break;
+            default:
+                break;
         }
 
         validate();
