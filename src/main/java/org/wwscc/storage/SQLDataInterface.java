@@ -116,6 +116,7 @@ public abstract class SQLDataInterface implements DataInterface
         }
         catch (NoSeriesException nse)
         {
+            log.severe("\bGetEvents failed.  There is most likely an old series in saved preferences that is no longer present. Use the File menu to open a new series.");
             return new ArrayList<Event>();
         }
         catch (Exception ioe)

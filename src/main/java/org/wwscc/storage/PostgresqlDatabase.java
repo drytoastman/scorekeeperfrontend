@@ -61,6 +61,15 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
         Set<String> watchtables;
     }
 
+    static void exceptionParser(SQLException sqle) throws NoSeriesException {
+        if (sqle instanceof PSQLException) {
+            if (((PSQLException)sqle).getSQLState().equals("42P01")) {
+                log.warning("Table does not exist error, most likely trying to open an old non-existent series");
+                throw new NoSeriesException(sqle.getMessage());
+            }
+        }
+    }
+
     /**
      * Connect to the localhost with the given user
      * @param user localuser or postgres
@@ -357,11 +366,7 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
             }
             return s;
         } catch (SQLException sqle) {
-            if (sqle instanceof PSQLException) {
-                if (((PSQLException)sqle).getSQLState().equals("42P01")) {
-                    throw new NoSeriesException("\n\nMost likely using an old default series that is no longer present. Use the File menu to open a new series.\n\n" + sqle.getMessage());
-                }
-            }
+            exceptionParser(sqle);
             throw sqle;
         }
     }
@@ -411,9 +416,10 @@ public class PostgresqlDatabase extends SQLDataInterface implements AutoCloseabl
             s.close();
             p.close();
             return result;
-        }
-        catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e)
-        {
+        } catch (SQLException sqle) {
+            exceptionParser(sqle);
+            throw sqle;
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw new SQLException(e);
         }
     }
