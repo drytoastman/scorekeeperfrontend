@@ -142,6 +142,7 @@ public class ContainerMonitor extends MonitorBase
                 try { docker.loadState(Arrays.asList(db, server, proxy)); } catch (IOException ioe) {}
                 if (db.isUp())  // only need db to run applications
                     break;
+                status.set("DB did not start");
                 donefornow();
             }
         }
@@ -154,9 +155,12 @@ public class ContainerMonitor extends MonitorBase
         server.changePort("0.0.0.0", 53, 53, "udp", !Prefs.getSkip53());
         proxy.changePort("0.0.0.0",  80, 80, "tcp", !Prefs.getSkip80());
 
-        docker.containersUp(Arrays.asList(db),     s -> { status.set("Start db"); });
-        docker.containersUp(Arrays.asList(server), s -> { status.set("Start server"); });
-        docker.containersUp(Arrays.asList(proxy),  s -> { status.set("Start proxy"); });
+        status.set("Start db");
+        docker.containersUp(Arrays.asList(db),     s -> {});
+        status.set("Start server");
+        docker.containersUp(Arrays.asList(server), s -> {});
+        status.set("Start proxy");
+        docker.containersUp(Arrays.asList(proxy),  s -> {});
     }
 
     private void cdown(boolean clear) {
@@ -213,9 +217,10 @@ public class ContainerMonitor extends MonitorBase
         List<DockerContainer> down = all.stream().filter(c -> !c.isUp()).collect(Collectors.toList());
         if (down.size() > 0) {
             if (external_backend) {
-                status.set("Down");
+                status.set("External");
             } else {
-                if (!docker.containersUp(down, s -> {status.set(s);})) {
+                status.set("Retry " + down.stream().map(c -> c.getName()).collect(Collectors.joining(",")));
+                if (!docker.containersUp(down, s -> { status.set(s); })) {
                     log.severe("Error during call to up."); // don't send to dialog, noisy
                 } else {
                     quickrecheck = true;

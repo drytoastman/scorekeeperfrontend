@@ -20,6 +20,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.InetAddress;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -114,6 +115,7 @@ public class ScorekeeperStatusWindow extends JFrame
 
         JMenu debug = new JMenu("Debug");
         debug.add(actions.debugRequest);
+        debug.add(actions.openSystemLog);
         JMenu levels = new JMenu("Logging Level");
         debug.add(levels);
         debug.add(new JSeparator());
@@ -124,7 +126,7 @@ public class ScorekeeperStatusWindow extends JFrame
         AppLogLevel current = Prefs.getLogLevel();
         LogLevelChanges levelchange = new LogLevelChanges();
 
-        for (AppLogLevel.ALevel a : AppLogLevel.ALevel.values()) {
+        for (AppLogLevel.ALevel a : Arrays.asList(AppLogLevel.ALevel.Normal, AppLogLevel.ALevel.Maximum)) {
             JRadioButtonMenuItem m = new JRadioButtonMenuItem(a.name());
             m.addActionListener(levelchange);
             options.add(m);

@@ -48,6 +48,7 @@ public class Actions
     List<Action> apps;
     List<Action> actions;
     Action debugRequest, backupRequest, importRequest, loadCertsRequest, mergeAll, mergeWith, downloadSeries, clearOld, makeActive, makeInactive;
+    Action openSystemLog;
     Action deleteServer, addServer, serverConfig, initServers, deleteSeries, changeSeriesPassword, discovery, resetHash, quit, openStatus;
     Action skip53, skip80;
 
@@ -65,6 +66,7 @@ public class Actions
         quit           = new EventSendAction<>("Shutdown",        MT.SHUTDOWN_REQUEST);
         openStatus     = new EventSendAction<>("Status Window",   MT.OPEN_STATUS_REQUEST);
         debugRequest   = new EventSendAction<>("Save Debug Info", MT.DEBUG_REQUEST);
+        openSystemLog  = new EventSendAction<>("System Warnings/Errors", MT.SYSTEMLOG_REQUEST);
         backupRequest  = addAction(new EventSendAction<>("Backup Database", MT.BACKUP_REQUEST));
         importRequest  = addAction(new ImportAction());
         loadCertsRequest = addAction(new EventSendAction<>("Load Certs", MT.LOAD_CERTS_REQUEST));

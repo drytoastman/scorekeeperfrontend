@@ -10,6 +10,7 @@ package org.wwscc.system;
 
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class ScorekeeperSystem
 
         Messenger.register(MT.USING_MACHINE,         (t,d) -> usingmachine = (boolean)d);
         Messenger.register(MT.DEBUG_REQUEST,         (t,d) -> new DebugCollector(cmonitor).start());
+        Messenger.register(MT.SYSTEMLOG_REQUEST,     (t,d) -> SystemLogViewer.show(Path.of(Prefs.getLogDirectory().toString(), "scorekeepersystem.0.log")));
         Messenger.register(MT.BACKUP_REQUEST,        (t,d) -> cmonitor.backupRequest());
         Messenger.register(MT.IMPORT_REQUEST,        (t,d) -> importRequest((File)d));
         Messenger.register(MT.LAUNCH_REQUEST,        (t,d) -> launchRequest((String)d));
