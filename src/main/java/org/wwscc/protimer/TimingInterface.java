@@ -93,7 +93,7 @@ public class TimingInterface implements MessageListener
                 break;
 
             case TIMER_SERVICE_DIALIN_R:
-                doCommand("DIAL L " + (double)o);
+                doCommand("DIAL R " + (double)o);
                 break;
 
             case TIMER_SERVICE_DIALIN:
