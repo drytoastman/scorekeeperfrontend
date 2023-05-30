@@ -83,6 +83,18 @@ public class EntryModel extends AbstractTableModel implements MessageListener
             return;
         }
 
+        Entrant eall = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), -1, true);
+        if (e.getRuns().size() == 0 && eall.getRuns().size() > 0) {
+            // orphaned runs in another run group, need to move and reload entrant
+            log.log(Level.INFO, "moving orphaned runs to rungroup {0}", DataEntry.state.getCurrentRunGroup());
+            try {
+                Database.d.moveRuns(eall.getRuns(), DataEntry.state.getCurrentRunGroup());
+            } catch (Exception e1) {
+                log.log(Level.WARNING, "\bError moving orphaned runs: {0}" + e1.getMessage(), e1);
+            }
+            e = Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), true);
+        }
+
         tableData.add(e);
 
         try {

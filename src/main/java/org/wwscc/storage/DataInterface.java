@@ -140,6 +140,7 @@ public interface DataInterface
 
     public void setRun(Run r, String quicksync) throws Exception;
     public void swapRuns(Collection<Run> runs, UUID newcarid) throws Exception;
+    public void moveRuns(Collection<Run> runs, int newrungroup) throws Exception;
     public void deleteRun(UUID eventid, UUID carid, int course, int rungroup, int run, String quicksync) throws Exception;
     public void addTimerTime(Run r);
 

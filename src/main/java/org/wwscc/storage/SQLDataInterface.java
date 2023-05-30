@@ -279,8 +279,12 @@ public abstract class SQLDataInterface implements DataInterface
                         "LEFT JOIN payments p ON p.driverid=d.driverid AND p.eventid=r.eventid " +
                         "WHERE c.carid=? GROUP BY d.firstname, d.lastname, c.carid ORDER BY d.firstname, d.lastname", newList(eventid, carid));
             ResultSet runs = null;
-            if (loadruns)
-                runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=? AND rungroup=?", newList(carid, eventid, course, rungroup));
+            if (loadruns) {
+                if (rungroup <= 0)
+                    runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=?", newList(carid, eventid, course));
+                else
+                    runs = executeSelect("SELECT * FROM runs WHERE carid=? AND eventid=? AND course=? AND rungroup=?", newList(carid, eventid, course, rungroup));
+            }
             List<Entrant> e = loadEntrants(d, runs);
             closeLeftOvers();
             if (e.size() > 0)
@@ -885,6 +889,25 @@ public abstract class SQLDataInterface implements DataInterface
             for (Run r : runs) {
                 executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND rungroup=? AND run=?", newList(r.eventid, r.carid, r.course, r.rungroup, r.run));
                 r.setCarId(newcarid);
+                executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,?,now())",
+                                  newList(r.eventid, r.carid, r.course, r.rungroup, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
+            }
+            commit();
+        } catch (Exception sqle) {
+            rollback();
+            throw sqle;
+        }
+    }
+
+    @Override
+    public void moveRuns(Collection<Run> runs, int newrungroup) throws Exception
+    {
+        try {
+            // do in a transaction so we can revert if things go south, we have to delete and reinsert to maintain primary key contract for syncing
+            start();
+            for (Run r : runs) {
+                executeUpdate("DELETE FROM runs WHERE eventid=? AND carid=? AND course=? AND rungroup=? AND run=?", newList(r.eventid, r.carid, r.course, r.rungroup, r.run));
+                r.setRunGroup(newrungroup);
                 executeUpdate("INSERT INTO runs (eventid, carid, course, rungroup, run, cones, gates, raw, status, attr, modified) values (?,?,?,?,?,?,?,?,?,?,now())",
                                   newList(r.eventid, r.carid, r.course, r.rungroup, r.run, r.cones, r.gates, r.raw, r.status, r.attr));
             }

@@ -80,7 +80,7 @@ class SelectionBar extends JPanel implements ActionListener, MessageListener
             List<UUID> carids = Database.d.getOrphanedCars(DataEntry.state.getCurrentEventId(), DataEntry.state.getCurrentCourse());
             List<Entrant> entrants = new ArrayList<Entrant>();
             for (UUID carid : carids) {
-                entrants.add(Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), DataEntry.state.getCurrentRunGroup(), true));
+                entrants.add(Database.d.loadEntrant(DataEntry.state.getCurrentEventId(), carid, DataEntry.state.getCurrentCourse(), -1, true));
             }
             PlaceOrphansDialog pd = new PlaceOrphansDialog(entrants);
             if (pd.doDialog("Place Orphans", null)) {
