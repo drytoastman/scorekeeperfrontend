@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -20,39 +20,41 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wwscc.system.docker.models.ErrorDetail;
 import org.wwscc.system.docker.models.ProgressDetail;
 
 /**
  * PushImageInfo
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class PushImageInfo {
-  @JsonProperty("errorDetail")
-  private ErrorDetail errorDetail = null;
+  @JsonProperty("error")
+  private String error = null;
 
   @JsonProperty("status")
   private String status = null;
 
+  @JsonProperty("progress")
+  private String progress = null;
+
   @JsonProperty("progressDetail")
   private ProgressDetail progressDetail = null;
 
-  public PushImageInfo errorDetail(ErrorDetail errorDetail) {
-    this.errorDetail = errorDetail;
+  public PushImageInfo error(String error) {
+    this.error = error;
     return this;
   }
 
    /**
-   * Get errorDetail
-   * @return errorDetail
+   * Get error
+   * @return error
   **/
   @ApiModelProperty(value = "")
-  public ErrorDetail getErrorDetail() {
-    return errorDetail;
+  public String getError() {
+    return error;
   }
 
-  public void setErrorDetail(ErrorDetail errorDetail) {
-    this.errorDetail = errorDetail;
+  public void setError(String error) {
+    this.error = error;
   }
 
   public PushImageInfo status(String status) {
@@ -71,6 +73,24 @@ public class PushImageInfo {
 
   public void setStatus(String status) {
     this.status = status;
+  }
+
+  public PushImageInfo progress(String progress) {
+    this.progress = progress;
+    return this;
+  }
+
+   /**
+   * Get progress
+   * @return progress
+  **/
+  @ApiModelProperty(value = "")
+  public String getProgress() {
+    return progress;
+  }
+
+  public void setProgress(String progress) {
+    this.progress = progress;
   }
 
   public PushImageInfo progressDetail(ProgressDetail progressDetail) {
@@ -101,14 +121,15 @@ public class PushImageInfo {
       return false;
     }
     PushImageInfo pushImageInfo = (PushImageInfo) o;
-    return Objects.equals(this.errorDetail, pushImageInfo.errorDetail) &&
+    return Objects.equals(this.error, pushImageInfo.error) &&
         Objects.equals(this.status, pushImageInfo.status) &&
+        Objects.equals(this.progress, pushImageInfo.progress) &&
         Objects.equals(this.progressDetail, pushImageInfo.progressDetail);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(errorDetail, status, progressDetail);
+    return Objects.hash(error, status, progress, progressDetail);
   }
 
 
@@ -117,8 +138,9 @@ public class PushImageInfo {
     StringBuilder sb = new StringBuilder();
     sb.append("class PushImageInfo {\n");
     
-    sb.append("    errorDetail: ").append(toIndentedString(errorDetail)).append("\n");
+    sb.append("    error: ").append(toIndentedString(error)).append("\n");
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    progress: ").append(toIndentedString(progress)).append("\n");
     sb.append("    progressDetail: ").append(toIndentedString(progressDetail)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -26,12 +26,13 @@ import java.util.List;
 import java.util.Map;
 import org.wwscc.system.docker.models.ConfigReference;
 import org.wwscc.system.docker.models.IPAM;
+import org.wwscc.system.docker.models.NetworkContainer;
 import org.wwscc.system.docker.models.PeerInfo;
 
 /**
  * Network
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class Network {
   @JsonProperty("Name")
   private String name = null;
@@ -47,9 +48,6 @@ public class Network {
 
   @JsonProperty("Driver")
   private String driver = null;
-
-  @JsonProperty("EnableIPv4")
-  private Boolean enableIPv4 = null;
 
   @JsonProperty("EnableIPv6")
   private Boolean enableIPv6 = null;
@@ -71,6 +69,9 @@ public class Network {
 
   @JsonProperty("ConfigOnly")
   private Boolean configOnly = false;
+
+  @JsonProperty("Containers")
+  private Map<String, NetworkContainer> containers = null;
 
   @JsonProperty("Options")
   private Map<String, String> options = null;
@@ -171,24 +172,6 @@ public class Network {
     this.driver = driver;
   }
 
-  public Network enableIPv4(Boolean enableIPv4) {
-    this.enableIPv4 = enableIPv4;
-    return this;
-  }
-
-   /**
-   * Whether the network was created with IPv4 enabled. 
-   * @return enableIPv4
-  **/
-  @ApiModelProperty(example = "true", value = "Whether the network was created with IPv4 enabled. ")
-  public Boolean isEnableIPv4() {
-    return enableIPv4;
-  }
-
-  public void setEnableIPv4(Boolean enableIPv4) {
-    this.enableIPv4 = enableIPv4;
-  }
-
   public Network enableIPv6(Boolean enableIPv6) {
     this.enableIPv6 = enableIPv6;
     return this;
@@ -213,10 +196,10 @@ public class Network {
   }
 
    /**
-   * The network&#39;s IP Address Management. 
+   * Get IPAM
    * @return IPAM
   **/
-  @ApiModelProperty(value = "The network's IP Address Management. ")
+  @ApiModelProperty(value = "")
   public IPAM getIPAM() {
     return IPAM;
   }
@@ -315,6 +298,32 @@ public class Network {
     this.configOnly = configOnly;
   }
 
+  public Network containers(Map<String, NetworkContainer> containers) {
+    this.containers = containers;
+    return this;
+  }
+
+  public Network putContainersItem(String key, NetworkContainer containersItem) {
+    if (this.containers == null) {
+      this.containers = new HashMap<>();
+    }
+    this.containers.put(key, containersItem);
+    return this;
+  }
+
+   /**
+   * Contains endpoints attached to the network. 
+   * @return containers
+  **/
+  @ApiModelProperty(example = "{\"19a4d5d687db25203351ed79d478946f861258f018fe384f229f2efa4b23513c\":{\"Name\":\"test\",\"EndpointID\":\"628cadb8bcb92de107b2a1e516cbffe463e321f548feb37697cce00ad694f21a\",\"MacAddress\":\"02:42:ac:13:00:02\",\"IPv4Address\":\"172.19.0.2/16\",\"IPv6Address\":\"\"}}", value = "Contains endpoints attached to the network. ")
+  public Map<String, NetworkContainer> getContainers() {
+    return containers;
+  }
+
+  public void setContainers(Map<String, NetworkContainer> containers) {
+    this.containers = containers;
+  }
+
   public Network options(Map<String, String> options) {
     this.options = options;
     return this;
@@ -355,10 +364,10 @@ public class Network {
   }
 
    /**
-   * Metadata specific to the network being created. 
+   * User-defined key/value metadata.
    * @return labels
   **/
-  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", value = "Metadata specific to the network being created. ")
+  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", value = "User-defined key/value metadata.")
   public Map<String, String> getLabels() {
     return labels;
   }
@@ -408,7 +417,6 @@ public class Network {
         Objects.equals(this.created, network.created) &&
         Objects.equals(this.scope, network.scope) &&
         Objects.equals(this.driver, network.driver) &&
-        Objects.equals(this.enableIPv4, network.enableIPv4) &&
         Objects.equals(this.enableIPv6, network.enableIPv6) &&
         Objects.equals(this.IPAM, network.IPAM) &&
         Objects.equals(this.internal, network.internal) &&
@@ -416,6 +424,7 @@ public class Network {
         Objects.equals(this.ingress, network.ingress) &&
         Objects.equals(this.configFrom, network.configFrom) &&
         Objects.equals(this.configOnly, network.configOnly) &&
+        Objects.equals(this.containers, network.containers) &&
         Objects.equals(this.options, network.options) &&
         Objects.equals(this.labels, network.labels) &&
         Objects.equals(this.peers, network.peers);
@@ -423,7 +432,7 @@ public class Network {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, id, created, scope, driver, enableIPv4, enableIPv6, IPAM, internal, attachable, ingress, configFrom, configOnly, options, labels, peers);
+    return Objects.hash(name, id, created, scope, driver, enableIPv6, IPAM, internal, attachable, ingress, configFrom, configOnly, containers, options, labels, peers);
   }
 
 
@@ -437,7 +446,6 @@ public class Network {
     sb.append("    created: ").append(toIndentedString(created)).append("\n");
     sb.append("    scope: ").append(toIndentedString(scope)).append("\n");
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
-    sb.append("    enableIPv4: ").append(toIndentedString(enableIPv4)).append("\n");
     sb.append("    enableIPv6: ").append(toIndentedString(enableIPv6)).append("\n");
     sb.append("    IPAM: ").append(toIndentedString(IPAM)).append("\n");
     sb.append("    internal: ").append(toIndentedString(internal)).append("\n");
@@ -445,6 +453,7 @@ public class Network {
     sb.append("    ingress: ").append(toIndentedString(ingress)).append("\n");
     sb.append("    configFrom: ").append(toIndentedString(configFrom)).append("\n");
     sb.append("    configOnly: ").append(toIndentedString(configOnly)).append("\n");
+    sb.append("    containers: ").append(toIndentedString(containers)).append("\n");
     sb.append("    options: ").append(toIndentedString(options)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    peers: ").append(toIndentedString(peers)).append("\n");

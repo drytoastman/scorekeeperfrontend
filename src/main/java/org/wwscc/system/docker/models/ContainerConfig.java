@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -27,10 +27,10 @@ import java.util.Map;
 import org.wwscc.system.docker.models.HealthConfig;
 
 /**
- * Configuration for a container that is portable between hosts. 
+ * Configuration for a container that is portable between hosts.  When used as &#x60;ContainerConfig&#x60; field in an image, &#x60;ContainerConfig&#x60; is an optional field containing the configuration of the container that was last committed when creating the image.  Previous versions of Docker builder used this field to store build cache, and it is not in active use anymore. 
  */
-@ApiModel(description = "Configuration for a container that is portable between hosts. ")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@ApiModel(description = "Configuration for a container that is portable between hosts.  When used as `ContainerConfig` field in an image, `ContainerConfig` is an optional field containing the configuration of the container that was last committed when creating the image.  Previous versions of Docker builder used this field to store build cache, and it is not in active use anymore. ")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class ContainerConfig {
   @JsonProperty("Hostname")
   private String hostname = null;
@@ -89,6 +89,9 @@ public class ContainerConfig {
   @JsonProperty("NetworkDisabled")
   private Boolean networkDisabled = null;
 
+  @JsonProperty("MacAddress")
+  private String macAddress = null;
+
   @JsonProperty("OnBuild")
   private List<String> onBuild = null;
 
@@ -146,10 +149,10 @@ public class ContainerConfig {
   }
 
    /**
-   * Commands run as this user inside the container. If omitted, commands run as the user specified in the image the container was started from.  Can be either user-name or UID, and optional group-name or GID, separated by a colon (&#x60;&lt;user-name|UID&gt;[&lt;:group-name|GID&gt;]&#x60;).
+   * The user that commands are run as inside the container.
    * @return user
   **/
-  @ApiModelProperty(example = "123:456", value = "Commands run as this user inside the container. If omitted, commands run as the user specified in the image the container was started from.  Can be either user-name or UID, and optional group-name or GID, separated by a colon (`<user-name|UID>[<:group-name|GID>]`).")
+  @ApiModelProperty(value = "The user that commands are run as inside the container.")
   public String getUser() {
     return user;
   }
@@ -486,6 +489,24 @@ public class ContainerConfig {
     this.networkDisabled = networkDisabled;
   }
 
+  public ContainerConfig macAddress(String macAddress) {
+    this.macAddress = macAddress;
+    return this;
+  }
+
+   /**
+   * MAC address of the container.  Deprecated: this field is deprecated in API v1.44 and up. Use EndpointSettings.MacAddress instead. 
+   * @return macAddress
+  **/
+  @ApiModelProperty(value = "MAC address of the container.  Deprecated: this field is deprecated in API v1.44 and up. Use EndpointSettings.MacAddress instead. ")
+  public String getMacAddress() {
+    return macAddress;
+  }
+
+  public void setMacAddress(String macAddress) {
+    this.macAddress = macAddress;
+  }
+
   public ContainerConfig onBuild(List<String> onBuild) {
     this.onBuild = onBuild;
     return this;
@@ -629,6 +650,7 @@ public class ContainerConfig {
         Objects.equals(this.workingDir, containerConfig.workingDir) &&
         Objects.equals(this.entrypoint, containerConfig.entrypoint) &&
         Objects.equals(this.networkDisabled, containerConfig.networkDisabled) &&
+        Objects.equals(this.macAddress, containerConfig.macAddress) &&
         Objects.equals(this.onBuild, containerConfig.onBuild) &&
         Objects.equals(this.labels, containerConfig.labels) &&
         Objects.equals(this.stopSignal, containerConfig.stopSignal) &&
@@ -638,7 +660,7 @@ public class ContainerConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(hostname, domainname, user, attachStdin, attachStdout, attachStderr, exposedPorts, tty, openStdin, stdinOnce, env, cmd, healthcheck, argsEscaped, image, volumes, workingDir, entrypoint, networkDisabled, onBuild, labels, stopSignal, stopTimeout, shell);
+    return Objects.hash(hostname, domainname, user, attachStdin, attachStdout, attachStderr, exposedPorts, tty, openStdin, stdinOnce, env, cmd, healthcheck, argsEscaped, image, volumes, workingDir, entrypoint, networkDisabled, macAddress, onBuild, labels, stopSignal, stopTimeout, shell);
   }
 
 
@@ -666,6 +688,7 @@ public class ContainerConfig {
     sb.append("    workingDir: ").append(toIndentedString(workingDir)).append("\n");
     sb.append("    entrypoint: ").append(toIndentedString(entrypoint)).append("\n");
     sb.append("    networkDisabled: ").append(toIndentedString(networkDisabled)).append("\n");
+    sb.append("    macAddress: ").append(toIndentedString(macAddress)).append("\n");
     sb.append("    onBuild: ").append(toIndentedString(onBuild)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    stopSignal: ").append(toIndentedString(stopSignal)).append("\n");

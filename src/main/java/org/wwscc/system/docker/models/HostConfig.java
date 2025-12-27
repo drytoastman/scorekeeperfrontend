@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -39,7 +39,7 @@ import org.wwscc.system.docker.models.ThrottleDevice;
  * Container configuration that depends on the host we are running on
  */
 @ApiModel(description = "Container configuration that depends on the host we are running on")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class HostConfig extends Resources {
   @JsonProperty("Binds")
   private List<String> binds = null;
@@ -267,7 +267,7 @@ public class HostConfig extends Resources {
    * Path to a file where the container ID is written
    * @return containerIDFile
   **/
-  @ApiModelProperty(example = "", value = "Path to a file where the container ID is written")
+  @ApiModelProperty(value = "Path to a file where the container ID is written")
   public String getContainerIDFile() {
     return containerIDFile;
   }
@@ -453,7 +453,7 @@ public class HostConfig extends Resources {
    * Initial console size, as an &#x60;[height, width]&#x60; array. 
    * @return consoleSize
   **/
-  @ApiModelProperty(example = "[80,64]", value = "Initial console size, as an `[height, width]` array. ")
+  @ApiModelProperty(value = "Initial console size, as an `[height, width]` array. ")
   public List<Integer> getConsoleSize() {
     return consoleSize;
   }
@@ -987,10 +987,10 @@ public class HostConfig extends Resources {
   }
 
    /**
-   * A list of kernel parameters (sysctls) to set in the container.  This field is omitted if not set.
+   * A list of kernel parameters (sysctls) to set in the container. For example:  &#x60;&#x60;&#x60; {\&quot;net.ipv4.ip_forward\&quot;: \&quot;1\&quot;} &#x60;&#x60;&#x60; 
    * @return sysctls
   **/
-  @ApiModelProperty(example = "{\"net.ipv4.ip_forward\":\"1\"}", value = "A list of kernel parameters (sysctls) to set in the container.  This field is omitted if not set.")
+  @ApiModelProperty(value = "A list of kernel parameters (sysctls) to set in the container. For example:  ``` {\"net.ipv4.ip_forward\": \"1\"} ``` ")
   public Map<String, String> getSysctls() {
     return sysctls;
   }
@@ -1052,7 +1052,7 @@ public class HostConfig extends Resources {
    * The list of paths to be masked inside the container (this overrides the default set of paths). 
    * @return maskedPaths
   **/
-  @ApiModelProperty(example = "[\"/proc/asound\",\"/proc/acpi\",\"/proc/kcore\",\"/proc/keys\",\"/proc/latency_stats\",\"/proc/timer_list\",\"/proc/timer_stats\",\"/proc/sched_debug\",\"/proc/scsi\",\"/sys/firmware\",\"/sys/devices/virtual/powercap\"]", value = "The list of paths to be masked inside the container (this overrides the default set of paths). ")
+  @ApiModelProperty(value = "The list of paths to be masked inside the container (this overrides the default set of paths). ")
   public List<String> getMaskedPaths() {
     return maskedPaths;
   }
@@ -1078,7 +1078,7 @@ public class HostConfig extends Resources {
    * The list of paths to be set as read-only inside the container (this overrides the default set of paths). 
    * @return readonlyPaths
   **/
-  @ApiModelProperty(example = "[\"/proc/bus\",\"/proc/fs\",\"/proc/irq\",\"/proc/sys\",\"/proc/sysrq-trigger\"]", value = "The list of paths to be set as read-only inside the container (this overrides the default set of paths). ")
+  @ApiModelProperty(value = "The list of paths to be set as read-only inside the container (this overrides the default set of paths). ")
   public List<String> getReadonlyPaths() {
     return readonlyPaths;
   }

@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -20,98 +20,153 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import org.wwscc.system.docker.models.BuildCacheDiskUsage;
-import org.wwscc.system.docker.models.ContainersDiskUsage;
-import org.wwscc.system.docker.models.ImagesDiskUsage;
-import org.wwscc.system.docker.models.VolumesDiskUsage;
+import java.util.ArrayList;
+import java.util.List;
+import org.wwscc.system.docker.models.BuildCache;
+import org.wwscc.system.docker.models.ContainerSummary;
+import org.wwscc.system.docker.models.ImageSummary;
+import org.wwscc.system.docker.models.Volume;
 
 /**
  * SystemDataUsageResponse
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class SystemDataUsageResponse {
-  @JsonProperty("ImagesDiskUsage")
-  private ImagesDiskUsage imagesDiskUsage = null;
+  @JsonProperty("LayersSize")
+  private Long layersSize = null;
 
-  @JsonProperty("ContainersDiskUsage")
-  private ContainersDiskUsage containersDiskUsage = null;
+  @JsonProperty("Images")
+  private List<ImageSummary> images = null;
 
-  @JsonProperty("VolumesDiskUsage")
-  private VolumesDiskUsage volumesDiskUsage = null;
+  @JsonProperty("Containers")
+  private List<ContainerSummary> containers = null;
 
-  @JsonProperty("BuildCacheDiskUsage")
-  private BuildCacheDiskUsage buildCacheDiskUsage = null;
+  @JsonProperty("Volumes")
+  private List<Volume> volumes = null;
 
-  public SystemDataUsageResponse imagesDiskUsage(ImagesDiskUsage imagesDiskUsage) {
-    this.imagesDiskUsage = imagesDiskUsage;
+  @JsonProperty("BuildCache")
+  private List<BuildCache> buildCache = null;
+
+  public SystemDataUsageResponse layersSize(Long layersSize) {
+    this.layersSize = layersSize;
     return this;
   }
 
    /**
-   * Get imagesDiskUsage
-   * @return imagesDiskUsage
+   * Get layersSize
+   * @return layersSize
   **/
   @ApiModelProperty(value = "")
-  public ImagesDiskUsage getImagesDiskUsage() {
-    return imagesDiskUsage;
+  public Long getLayersSize() {
+    return layersSize;
   }
 
-  public void setImagesDiskUsage(ImagesDiskUsage imagesDiskUsage) {
-    this.imagesDiskUsage = imagesDiskUsage;
+  public void setLayersSize(Long layersSize) {
+    this.layersSize = layersSize;
   }
 
-  public SystemDataUsageResponse containersDiskUsage(ContainersDiskUsage containersDiskUsage) {
-    this.containersDiskUsage = containersDiskUsage;
+  public SystemDataUsageResponse images(List<ImageSummary> images) {
+    this.images = images;
+    return this;
+  }
+
+  public SystemDataUsageResponse addImagesItem(ImageSummary imagesItem) {
+    if (this.images == null) {
+      this.images = new ArrayList<>();
+    }
+    this.images.add(imagesItem);
     return this;
   }
 
    /**
-   * Get containersDiskUsage
-   * @return containersDiskUsage
+   * Get images
+   * @return images
   **/
   @ApiModelProperty(value = "")
-  public ContainersDiskUsage getContainersDiskUsage() {
-    return containersDiskUsage;
+  public List<ImageSummary> getImages() {
+    return images;
   }
 
-  public void setContainersDiskUsage(ContainersDiskUsage containersDiskUsage) {
-    this.containersDiskUsage = containersDiskUsage;
+  public void setImages(List<ImageSummary> images) {
+    this.images = images;
   }
 
-  public SystemDataUsageResponse volumesDiskUsage(VolumesDiskUsage volumesDiskUsage) {
-    this.volumesDiskUsage = volumesDiskUsage;
+  public SystemDataUsageResponse containers(List<ContainerSummary> containers) {
+    this.containers = containers;
+    return this;
+  }
+
+  public SystemDataUsageResponse addContainersItem(ContainerSummary containersItem) {
+    if (this.containers == null) {
+      this.containers = new ArrayList<>();
+    }
+    this.containers.add(containersItem);
     return this;
   }
 
    /**
-   * Get volumesDiskUsage
-   * @return volumesDiskUsage
+   * Get containers
+   * @return containers
   **/
   @ApiModelProperty(value = "")
-  public VolumesDiskUsage getVolumesDiskUsage() {
-    return volumesDiskUsage;
+  public List<ContainerSummary> getContainers() {
+    return containers;
   }
 
-  public void setVolumesDiskUsage(VolumesDiskUsage volumesDiskUsage) {
-    this.volumesDiskUsage = volumesDiskUsage;
+  public void setContainers(List<ContainerSummary> containers) {
+    this.containers = containers;
   }
 
-  public SystemDataUsageResponse buildCacheDiskUsage(BuildCacheDiskUsage buildCacheDiskUsage) {
-    this.buildCacheDiskUsage = buildCacheDiskUsage;
+  public SystemDataUsageResponse volumes(List<Volume> volumes) {
+    this.volumes = volumes;
+    return this;
+  }
+
+  public SystemDataUsageResponse addVolumesItem(Volume volumesItem) {
+    if (this.volumes == null) {
+      this.volumes = new ArrayList<>();
+    }
+    this.volumes.add(volumesItem);
     return this;
   }
 
    /**
-   * Get buildCacheDiskUsage
-   * @return buildCacheDiskUsage
+   * Get volumes
+   * @return volumes
   **/
   @ApiModelProperty(value = "")
-  public BuildCacheDiskUsage getBuildCacheDiskUsage() {
-    return buildCacheDiskUsage;
+  public List<Volume> getVolumes() {
+    return volumes;
   }
 
-  public void setBuildCacheDiskUsage(BuildCacheDiskUsage buildCacheDiskUsage) {
-    this.buildCacheDiskUsage = buildCacheDiskUsage;
+  public void setVolumes(List<Volume> volumes) {
+    this.volumes = volumes;
+  }
+
+  public SystemDataUsageResponse buildCache(List<BuildCache> buildCache) {
+    this.buildCache = buildCache;
+    return this;
+  }
+
+  public SystemDataUsageResponse addBuildCacheItem(BuildCache buildCacheItem) {
+    if (this.buildCache == null) {
+      this.buildCache = new ArrayList<>();
+    }
+    this.buildCache.add(buildCacheItem);
+    return this;
+  }
+
+   /**
+   * Get buildCache
+   * @return buildCache
+  **/
+  @ApiModelProperty(value = "")
+  public List<BuildCache> getBuildCache() {
+    return buildCache;
+  }
+
+  public void setBuildCache(List<BuildCache> buildCache) {
+    this.buildCache = buildCache;
   }
 
 
@@ -124,15 +179,16 @@ public class SystemDataUsageResponse {
       return false;
     }
     SystemDataUsageResponse systemDataUsageResponse = (SystemDataUsageResponse) o;
-    return Objects.equals(this.imagesDiskUsage, systemDataUsageResponse.imagesDiskUsage) &&
-        Objects.equals(this.containersDiskUsage, systemDataUsageResponse.containersDiskUsage) &&
-        Objects.equals(this.volumesDiskUsage, systemDataUsageResponse.volumesDiskUsage) &&
-        Objects.equals(this.buildCacheDiskUsage, systemDataUsageResponse.buildCacheDiskUsage);
+    return Objects.equals(this.layersSize, systemDataUsageResponse.layersSize) &&
+        Objects.equals(this.images, systemDataUsageResponse.images) &&
+        Objects.equals(this.containers, systemDataUsageResponse.containers) &&
+        Objects.equals(this.volumes, systemDataUsageResponse.volumes) &&
+        Objects.equals(this.buildCache, systemDataUsageResponse.buildCache);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(imagesDiskUsage, containersDiskUsage, volumesDiskUsage, buildCacheDiskUsage);
+    return Objects.hash(layersSize, images, containers, volumes, buildCache);
   }
 
 
@@ -141,10 +197,11 @@ public class SystemDataUsageResponse {
     StringBuilder sb = new StringBuilder();
     sb.append("class SystemDataUsageResponse {\n");
     
-    sb.append("    imagesDiskUsage: ").append(toIndentedString(imagesDiskUsage)).append("\n");
-    sb.append("    containersDiskUsage: ").append(toIndentedString(containersDiskUsage)).append("\n");
-    sb.append("    volumesDiskUsage: ").append(toIndentedString(volumesDiskUsage)).append("\n");
-    sb.append("    buildCacheDiskUsage: ").append(toIndentedString(buildCacheDiskUsage)).append("\n");
+    sb.append("    layersSize: ").append(toIndentedString(layersSize)).append("\n");
+    sb.append("    images: ").append(toIndentedString(images)).append("\n");
+    sb.append("    containers: ").append(toIndentedString(containers)).append("\n");
+    sb.append("    volumes: ").append(toIndentedString(volumes)).append("\n");
+    sb.append("    buildCache: ").append(toIndentedString(buildCache)).append("\n");
     sb.append("}");
     return sb.toString();
   }

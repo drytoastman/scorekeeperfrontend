@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -22,11 +22,10 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * contains network resources allocated and used for a container in a network. 
+ * NetworkContainer
  */
-@ApiModel(description = "contains network resources allocated and used for a container in a network. ")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
-public class EndpointResource {
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
+public class NetworkContainer {
   @JsonProperty("Name")
   private String name = null;
 
@@ -42,7 +41,7 @@ public class EndpointResource {
   @JsonProperty("IPv6Address")
   private String ipv6Address = null;
 
-  public EndpointResource name(String name) {
+  public NetworkContainer name(String name) {
     this.name = name;
     return this;
   }
@@ -60,7 +59,7 @@ public class EndpointResource {
     this.name = name;
   }
 
-  public EndpointResource endpointID(String endpointID) {
+  public NetworkContainer endpointID(String endpointID) {
     this.endpointID = endpointID;
     return this;
   }
@@ -78,7 +77,7 @@ public class EndpointResource {
     this.endpointID = endpointID;
   }
 
-  public EndpointResource macAddress(String macAddress) {
+  public NetworkContainer macAddress(String macAddress) {
     this.macAddress = macAddress;
     return this;
   }
@@ -96,7 +95,7 @@ public class EndpointResource {
     this.macAddress = macAddress;
   }
 
-  public EndpointResource ipv4Address(String ipv4Address) {
+  public NetworkContainer ipv4Address(String ipv4Address) {
     this.ipv4Address = ipv4Address;
     return this;
   }
@@ -114,7 +113,7 @@ public class EndpointResource {
     this.ipv4Address = ipv4Address;
   }
 
-  public EndpointResource ipv6Address(String ipv6Address) {
+  public NetworkContainer ipv6Address(String ipv6Address) {
     this.ipv6Address = ipv6Address;
     return this;
   }
@@ -141,12 +140,12 @@ public class EndpointResource {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EndpointResource endpointResource = (EndpointResource) o;
-    return Objects.equals(this.name, endpointResource.name) &&
-        Objects.equals(this.endpointID, endpointResource.endpointID) &&
-        Objects.equals(this.macAddress, endpointResource.macAddress) &&
-        Objects.equals(this.ipv4Address, endpointResource.ipv4Address) &&
-        Objects.equals(this.ipv6Address, endpointResource.ipv6Address);
+    NetworkContainer networkContainer = (NetworkContainer) o;
+    return Objects.equals(this.name, networkContainer.name) &&
+        Objects.equals(this.endpointID, networkContainer.endpointID) &&
+        Objects.equals(this.macAddress, networkContainer.macAddress) &&
+        Objects.equals(this.ipv4Address, networkContainer.ipv4Address) &&
+        Objects.equals(this.ipv6Address, networkContainer.ipv6Address);
   }
 
   @Override
@@ -158,7 +157,7 @@ public class EndpointResource {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class EndpointResource {\n");
+    sb.append("class NetworkContainer {\n");
     
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    endpointID: ").append(toIndentedString(endpointID)).append("\n");

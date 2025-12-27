@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -24,17 +24,15 @@ import java.util.ArrayList;
 import java.util.List;
 import org.wwscc.system.docker.models.ContainerConfig;
 import org.wwscc.system.docker.models.ContainerState;
-import org.wwscc.system.docker.models.DriverData;
+import org.wwscc.system.docker.models.GraphDriverData;
 import org.wwscc.system.docker.models.HostConfig;
 import org.wwscc.system.docker.models.MountPoint;
 import org.wwscc.system.docker.models.NetworkSettings;
-import org.wwscc.system.docker.models.OCIDescriptor;
-import org.wwscc.system.docker.models.Storage;
 
 /**
  * ContainerInspectResponse
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class ContainerInspectResponse {
   @JsonProperty("Id")
   private String id = null;
@@ -78,9 +76,6 @@ public class ContainerInspectResponse {
   @JsonProperty("Platform")
   private String platform = null;
 
-  @JsonProperty("ImageManifestDescriptor")
-  private OCIDescriptor imageManifestDescriptor = null;
-
   @JsonProperty("MountLabel")
   private String mountLabel = null;
 
@@ -97,10 +92,7 @@ public class ContainerInspectResponse {
   private HostConfig hostConfig = null;
 
   @JsonProperty("GraphDriver")
-  private DriverData graphDriver = null;
-
-  @JsonProperty("Storage")
-  private Storage storage = null;
+  private GraphDriverData graphDriver = null;
 
   @JsonProperty("SizeRw")
   private Long sizeRw = null;
@@ -123,10 +115,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The ID of this container as a 128-bit (64-character) hexadecimal string (32 bytes).
+   * The ID of the container
    * @return id
   **/
-  @ApiModelProperty(example = "aa86eacfb3b3ed4cd362c1e88fc89a53908ad05fb3a4103bca3f9b28292d14bf", value = "The ID of this container as a 128-bit (64-character) hexadecimal string (32 bytes).")
+  @ApiModelProperty(value = "The ID of the container")
   public String getId() {
     return id;
   }
@@ -141,10 +133,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Date and time at which the container was created, formatted in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.
+   * The time the container was created
    * @return created
   **/
-  @ApiModelProperty(example = "2025-02-17T17:43:39.64001363Z", value = "Date and time at which the container was created, formatted in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.")
+  @ApiModelProperty(value = "The time the container was created")
   public String getCreated() {
     return created;
   }
@@ -162,7 +154,7 @@ public class ContainerInspectResponse {
    * The path to the command being run
    * @return path
   **/
-  @ApiModelProperty(example = "/bin/sh", value = "The path to the command being run")
+  @ApiModelProperty(value = "The path to the command being run")
   public String getPath() {
     return path;
   }
@@ -188,7 +180,7 @@ public class ContainerInspectResponse {
    * The arguments to the command being run
    * @return args
   **/
-  @ApiModelProperty(example = "[\"-c\",\"exit 9\"]", value = "The arguments to the command being run")
+  @ApiModelProperty(value = "The arguments to the command being run")
   public List<String> getArgs() {
     return args;
   }
@@ -221,10 +213,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The ID (digest) of the image that this container was created from.
+   * The container&#39;s image ID
    * @return image
   **/
-  @ApiModelProperty(example = "sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782", value = "The ID (digest) of the image that this container was created from.")
+  @ApiModelProperty(value = "The container's image ID")
   public String getImage() {
     return image;
   }
@@ -239,10 +231,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Location of the &#x60;/etc/resolv.conf&#x60; generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.
+   * Get resolvConfPath
    * @return resolvConfPath
   **/
-  @ApiModelProperty(example = "/var/lib/docker/containers/aa86eacfb3b3ed4cd362c1e88fc89a53908ad05fb3a4103bca3f9b28292d14bf/resolv.conf", value = "Location of the `/etc/resolv.conf` generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.")
+  @ApiModelProperty(value = "")
   public String getResolvConfPath() {
     return resolvConfPath;
   }
@@ -257,10 +249,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Location of the &#x60;/etc/hostname&#x60; generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.
+   * Get hostnamePath
    * @return hostnamePath
   **/
-  @ApiModelProperty(example = "/var/lib/docker/containers/aa86eacfb3b3ed4cd362c1e88fc89a53908ad05fb3a4103bca3f9b28292d14bf/hostname", value = "Location of the `/etc/hostname` generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.")
+  @ApiModelProperty(value = "")
   public String getHostnamePath() {
     return hostnamePath;
   }
@@ -275,10 +267,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Location of the &#x60;/etc/hosts&#x60; generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.
+   * Get hostsPath
    * @return hostsPath
   **/
-  @ApiModelProperty(example = "/var/lib/docker/containers/aa86eacfb3b3ed4cd362c1e88fc89a53908ad05fb3a4103bca3f9b28292d14bf/hosts", value = "Location of the `/etc/hosts` generated for the container on the host.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.")
+  @ApiModelProperty(value = "")
   public String getHostsPath() {
     return hostsPath;
   }
@@ -293,10 +285,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Location of the file used to buffer the container&#39;s logs. Depending on the logging-driver used for the container, this field may be omitted.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.
+   * Get logPath
    * @return logPath
   **/
-  @ApiModelProperty(example = "/var/lib/docker/containers/5b7c7e2b992aa426584ce6c47452756066be0e503a08b4516a433a54d2f69e59/5b7c7e2b992aa426584ce6c47452756066be0e503a08b4516a433a54d2f69e59-json.log", value = "Location of the file used to buffer the container's logs. Depending on the logging-driver used for the container, this field may be omitted.  This file is managed through the docker daemon, and should not be accessed or modified by other tools.")
+  @ApiModelProperty(value = "")
   public String getLogPath() {
     return logPath;
   }
@@ -311,10 +303,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The name associated with this container.  For historic reasons, the name may be prefixed with a forward-slash (&#x60;/&#x60;).
+   * Get name
    * @return name
   **/
-  @ApiModelProperty(example = "/funny_chatelet", value = "The name associated with this container.  For historic reasons, the name may be prefixed with a forward-slash (`/`).")
+  @ApiModelProperty(value = "")
   public String getName() {
     return name;
   }
@@ -329,10 +321,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * Number of times the container was restarted since it was created, or since daemon was started.
+   * Get restartCount
    * @return restartCount
   **/
-  @ApiModelProperty(example = "0", value = "Number of times the container was restarted since it was created, or since daemon was started.")
+  @ApiModelProperty(value = "")
   public Integer getRestartCount() {
     return restartCount;
   }
@@ -347,10 +339,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The storage-driver used for the container&#39;s filesystem (graph-driver or snapshotter).
+   * Get driver
    * @return driver
   **/
-  @ApiModelProperty(example = "overlayfs", value = "The storage-driver used for the container's filesystem (graph-driver or snapshotter).")
+  @ApiModelProperty(value = "")
   public String getDriver() {
     return driver;
   }
@@ -365,10 +357,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The platform (operating system) for which the container was created.  This field was introduced for the experimental \&quot;LCOW\&quot; (Linux Containers On Windows) features, which has been removed. In most cases, this field is equal to the host&#39;s operating system (&#x60;linux&#x60; or &#x60;windows&#x60;).
+   * Get platform
    * @return platform
   **/
-  @ApiModelProperty(example = "linux", value = "The platform (operating system) for which the container was created.  This field was introduced for the experimental \"LCOW\" (Linux Containers On Windows) features, which has been removed. In most cases, this field is equal to the host's operating system (`linux` or `windows`).")
+  @ApiModelProperty(value = "")
   public String getPlatform() {
     return platform;
   }
@@ -377,34 +369,16 @@ public class ContainerInspectResponse {
     this.platform = platform;
   }
 
-  public ContainerInspectResponse imageManifestDescriptor(OCIDescriptor imageManifestDescriptor) {
-    this.imageManifestDescriptor = imageManifestDescriptor;
-    return this;
-  }
-
-   /**
-   * OCI descriptor of the platform-specific manifest of the image the container was created from.  Note: Only available if the daemon provides a multi-platform image store.
-   * @return imageManifestDescriptor
-  **/
-  @ApiModelProperty(value = "OCI descriptor of the platform-specific manifest of the image the container was created from.  Note: Only available if the daemon provides a multi-platform image store.")
-  public OCIDescriptor getImageManifestDescriptor() {
-    return imageManifestDescriptor;
-  }
-
-  public void setImageManifestDescriptor(OCIDescriptor imageManifestDescriptor) {
-    this.imageManifestDescriptor = imageManifestDescriptor;
-  }
-
   public ContainerInspectResponse mountLabel(String mountLabel) {
     this.mountLabel = mountLabel;
     return this;
   }
 
    /**
-   * SELinux mount label set for the container.
+   * Get mountLabel
    * @return mountLabel
   **/
-  @ApiModelProperty(example = "", value = "SELinux mount label set for the container.")
+  @ApiModelProperty(value = "")
   public String getMountLabel() {
     return mountLabel;
   }
@@ -419,10 +393,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * SELinux process label set for the container.
+   * Get processLabel
    * @return processLabel
   **/
-  @ApiModelProperty(example = "", value = "SELinux process label set for the container.")
+  @ApiModelProperty(value = "")
   public String getProcessLabel() {
     return processLabel;
   }
@@ -437,10 +411,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The AppArmor profile set for the container.
+   * Get appArmorProfile
    * @return appArmorProfile
   **/
-  @ApiModelProperty(example = "", value = "The AppArmor profile set for the container.")
+  @ApiModelProperty(value = "")
   public String getAppArmorProfile() {
     return appArmorProfile;
   }
@@ -466,7 +440,7 @@ public class ContainerInspectResponse {
    * IDs of exec instances that are running in the container.
    * @return execIDs
   **/
-  @ApiModelProperty(example = "[\"b35395de42bc8abd327f9dd65d913b9ba28c74d2f0734eeeae84fa1c616a0fca\",\"3fc1232e5cd20c8de182ed81178503dc6437f4e7ef12b52cc5e8de020652f1c4\"]", value = "IDs of exec instances that are running in the container.")
+  @ApiModelProperty(value = "IDs of exec instances that are running in the container.")
   public List<String> getExecIDs() {
     return execIDs;
   }
@@ -493,7 +467,7 @@ public class ContainerInspectResponse {
     this.hostConfig = hostConfig;
   }
 
-  public ContainerInspectResponse graphDriver(DriverData graphDriver) {
+  public ContainerInspectResponse graphDriver(GraphDriverData graphDriver) {
     this.graphDriver = graphDriver;
     return this;
   }
@@ -503,30 +477,12 @@ public class ContainerInspectResponse {
    * @return graphDriver
   **/
   @ApiModelProperty(value = "")
-  public DriverData getGraphDriver() {
+  public GraphDriverData getGraphDriver() {
     return graphDriver;
   }
 
-  public void setGraphDriver(DriverData graphDriver) {
+  public void setGraphDriver(GraphDriverData graphDriver) {
     this.graphDriver = graphDriver;
-  }
-
-  public ContainerInspectResponse storage(Storage storage) {
-    this.storage = storage;
-    return this;
-  }
-
-   /**
-   * Get storage
-   * @return storage
-  **/
-  @ApiModelProperty(value = "")
-  public Storage getStorage() {
-    return storage;
-  }
-
-  public void setStorage(Storage storage) {
-    this.storage = storage;
   }
 
   public ContainerInspectResponse sizeRw(Long sizeRw) {
@@ -535,10 +491,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The size of files that have been created or changed by this container.  This field is omitted by default, and only set when size is requested in the API request.
+   * The size of files that have been created or changed by this container. 
    * @return sizeRw
   **/
-  @ApiModelProperty(example = "122880", value = "The size of files that have been created or changed by this container.  This field is omitted by default, and only set when size is requested in the API request.")
+  @ApiModelProperty(value = "The size of files that have been created or changed by this container. ")
   public Long getSizeRw() {
     return sizeRw;
   }
@@ -553,10 +509,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * The total size of all files in the read-only layers from the image that the container uses. These layers can be shared between containers.  This field is omitted by default, and only set when size is requested in the API request.
+   * The total size of all the files in this container.
    * @return sizeRootFs
   **/
-  @ApiModelProperty(example = "1653948416", value = "The total size of all files in the read-only layers from the image that the container uses. These layers can be shared between containers.  This field is omitted by default, and only set when size is requested in the API request.")
+  @ApiModelProperty(value = "The total size of all the files in this container.")
   public Long getSizeRootFs() {
     return sizeRootFs;
   }
@@ -579,10 +535,10 @@ public class ContainerInspectResponse {
   }
 
    /**
-   * List of mounts used by the container.
+   * Get mounts
    * @return mounts
   **/
-  @ApiModelProperty(value = "List of mounts used by the container.")
+  @ApiModelProperty(value = "")
   public List<MountPoint> getMounts() {
     return mounts;
   }
@@ -651,14 +607,12 @@ public class ContainerInspectResponse {
         Objects.equals(this.restartCount, containerInspectResponse.restartCount) &&
         Objects.equals(this.driver, containerInspectResponse.driver) &&
         Objects.equals(this.platform, containerInspectResponse.platform) &&
-        Objects.equals(this.imageManifestDescriptor, containerInspectResponse.imageManifestDescriptor) &&
         Objects.equals(this.mountLabel, containerInspectResponse.mountLabel) &&
         Objects.equals(this.processLabel, containerInspectResponse.processLabel) &&
         Objects.equals(this.appArmorProfile, containerInspectResponse.appArmorProfile) &&
         Objects.equals(this.execIDs, containerInspectResponse.execIDs) &&
         Objects.equals(this.hostConfig, containerInspectResponse.hostConfig) &&
         Objects.equals(this.graphDriver, containerInspectResponse.graphDriver) &&
-        Objects.equals(this.storage, containerInspectResponse.storage) &&
         Objects.equals(this.sizeRw, containerInspectResponse.sizeRw) &&
         Objects.equals(this.sizeRootFs, containerInspectResponse.sizeRootFs) &&
         Objects.equals(this.mounts, containerInspectResponse.mounts) &&
@@ -668,7 +622,7 @@ public class ContainerInspectResponse {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, created, path, args, state, image, resolvConfPath, hostnamePath, hostsPath, logPath, name, restartCount, driver, platform, imageManifestDescriptor, mountLabel, processLabel, appArmorProfile, execIDs, hostConfig, graphDriver, storage, sizeRw, sizeRootFs, mounts, config, networkSettings);
+    return Objects.hash(id, created, path, args, state, image, resolvConfPath, hostnamePath, hostsPath, logPath, name, restartCount, driver, platform, mountLabel, processLabel, appArmorProfile, execIDs, hostConfig, graphDriver, sizeRw, sizeRootFs, mounts, config, networkSettings);
   }
 
 
@@ -691,14 +645,12 @@ public class ContainerInspectResponse {
     sb.append("    restartCount: ").append(toIndentedString(restartCount)).append("\n");
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
     sb.append("    platform: ").append(toIndentedString(platform)).append("\n");
-    sb.append("    imageManifestDescriptor: ").append(toIndentedString(imageManifestDescriptor)).append("\n");
     sb.append("    mountLabel: ").append(toIndentedString(mountLabel)).append("\n");
     sb.append("    processLabel: ").append(toIndentedString(processLabel)).append("\n");
     sb.append("    appArmorProfile: ").append(toIndentedString(appArmorProfile)).append("\n");
     sb.append("    execIDs: ").append(toIndentedString(execIDs)).append("\n");
     sb.append("    hostConfig: ").append(toIndentedString(hostConfig)).append("\n");
     sb.append("    graphDriver: ").append(toIndentedString(graphDriver)).append("\n");
-    sb.append("    storage: ").append(toIndentedString(storage)).append("\n");
     sb.append("    sizeRw: ").append(toIndentedString(sizeRw)).append("\n");
     sb.append("    sizeRootFs: ").append(toIndentedString(sizeRootFs)).append("\n");
     sb.append("    mounts: ").append(toIndentedString(mounts)).append("\n");

@@ -20,64 +20,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
- * The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. 
+ * Response to an API call that returns just an Id
  */
-@ApiModel(description = "The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. ")
+@ApiModel(description = "Response to an API call that returns just an Id")
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
-public class SwarmSpecTaskDefaultsLogDriver {
-  @JsonProperty("Name")
-  private String name = null;
+public class IdResponse {
+  @JsonProperty("Id")
+  private String id = null;
 
-  @JsonProperty("Options")
-  private Map<String, String> options = null;
-
-  public SwarmSpecTaskDefaultsLogDriver name(String name) {
-    this.name = name;
+  public IdResponse id(String id) {
+    this.id = id;
     return this;
   }
 
    /**
-   * The log driver to use as a default for new tasks. 
-   * @return name
+   * The id of the newly created object.
+   * @return id
   **/
-  @ApiModelProperty(example = "json-file", value = "The log driver to use as a default for new tasks. ")
-  public String getName() {
-    return name;
+  @ApiModelProperty(required = true, value = "The id of the newly created object.")
+  public String getId() {
+    return id;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public SwarmSpecTaskDefaultsLogDriver options(Map<String, String> options) {
-    this.options = options;
-    return this;
-  }
-
-  public SwarmSpecTaskDefaultsLogDriver putOptionsItem(String key, String optionsItem) {
-    if (this.options == null) {
-      this.options = new HashMap<>();
-    }
-    this.options.put(key, optionsItem);
-    return this;
-  }
-
-   /**
-   * Driver-specific options for the selected log driver, specified as key/value pairs. 
-   * @return options
-  **/
-  @ApiModelProperty(example = "{\"max-file\":\"10\",\"max-size\":\"100m\"}", value = "Driver-specific options for the selected log driver, specified as key/value pairs. ")
-  public Map<String, String> getOptions() {
-    return options;
-  }
-
-  public void setOptions(Map<String, String> options) {
-    this.options = options;
+  public void setId(String id) {
+    this.id = id;
   }
 
 
@@ -89,24 +57,22 @@ public class SwarmSpecTaskDefaultsLogDriver {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SwarmSpecTaskDefaultsLogDriver swarmSpecTaskDefaultsLogDriver = (SwarmSpecTaskDefaultsLogDriver) o;
-    return Objects.equals(this.name, swarmSpecTaskDefaultsLogDriver.name) &&
-        Objects.equals(this.options, swarmSpecTaskDefaultsLogDriver.options);
+    IdResponse idResponse = (IdResponse) o;
+    return Objects.equals(this.id, idResponse.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, options);
+    return Objects.hash(id);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SwarmSpecTaskDefaultsLogDriver {\n");
+    sb.append("class IdResponse {\n");
     
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    options: ").append(toIndentedString(options)).append("\n");
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("}");
     return sb.toString();
   }

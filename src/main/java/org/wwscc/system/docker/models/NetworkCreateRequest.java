@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -29,10 +29,13 @@ import org.wwscc.system.docker.models.IPAM;
 /**
  * NetworkCreateRequest
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class NetworkCreateRequest {
   @JsonProperty("Name")
   private String name = null;
+
+  @JsonProperty("CheckDuplicate")
+  private Boolean checkDuplicate = null;
 
   @JsonProperty("Driver")
   private String driver = "bridge";
@@ -57,9 +60,6 @@ public class NetworkCreateRequest {
 
   @JsonProperty("IPAM")
   private IPAM IPAM = null;
-
-  @JsonProperty("EnableIPv4")
-  private Boolean enableIPv4 = null;
 
   @JsonProperty("EnableIPv6")
   private Boolean enableIPv6 = null;
@@ -86,6 +86,24 @@ public class NetworkCreateRequest {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public NetworkCreateRequest checkDuplicate(Boolean checkDuplicate) {
+    this.checkDuplicate = checkDuplicate;
+    return this;
+  }
+
+   /**
+   * Deprecated: CheckDuplicate is now always enabled. 
+   * @return checkDuplicate
+  **/
+  @ApiModelProperty(example = "true", value = "Deprecated: CheckDuplicate is now always enabled. ")
+  public Boolean isCheckDuplicate() {
+    return checkDuplicate;
+  }
+
+  public void setCheckDuplicate(Boolean checkDuplicate) {
+    this.checkDuplicate = checkDuplicate;
   }
 
   public NetworkCreateRequest driver(String driver) {
@@ -232,24 +250,6 @@ public class NetworkCreateRequest {
     this.IPAM = IPAM;
   }
 
-  public NetworkCreateRequest enableIPv4(Boolean enableIPv4) {
-    this.enableIPv4 = enableIPv4;
-    return this;
-  }
-
-   /**
-   * Enable IPv4 on the network.
-   * @return enableIPv4
-  **/
-  @ApiModelProperty(example = "true", value = "Enable IPv4 on the network.")
-  public Boolean isEnableIPv4() {
-    return enableIPv4;
-  }
-
-  public void setEnableIPv4(Boolean enableIPv4) {
-    this.enableIPv4 = enableIPv4;
-  }
-
   public NetworkCreateRequest enableIPv6(Boolean enableIPv6) {
     this.enableIPv6 = enableIPv6;
     return this;
@@ -331,6 +331,7 @@ public class NetworkCreateRequest {
     }
     NetworkCreateRequest networkCreateRequest = (NetworkCreateRequest) o;
     return Objects.equals(this.name, networkCreateRequest.name) &&
+        Objects.equals(this.checkDuplicate, networkCreateRequest.checkDuplicate) &&
         Objects.equals(this.driver, networkCreateRequest.driver) &&
         Objects.equals(this.scope, networkCreateRequest.scope) &&
         Objects.equals(this.internal, networkCreateRequest.internal) &&
@@ -339,7 +340,6 @@ public class NetworkCreateRequest {
         Objects.equals(this.configOnly, networkCreateRequest.configOnly) &&
         Objects.equals(this.configFrom, networkCreateRequest.configFrom) &&
         Objects.equals(this.IPAM, networkCreateRequest.IPAM) &&
-        Objects.equals(this.enableIPv4, networkCreateRequest.enableIPv4) &&
         Objects.equals(this.enableIPv6, networkCreateRequest.enableIPv6) &&
         Objects.equals(this.options, networkCreateRequest.options) &&
         Objects.equals(this.labels, networkCreateRequest.labels);
@@ -347,7 +347,7 @@ public class NetworkCreateRequest {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, driver, scope, internal, attachable, ingress, configOnly, configFrom, IPAM, enableIPv4, enableIPv6, options, labels);
+    return Objects.hash(name, checkDuplicate, driver, scope, internal, attachable, ingress, configOnly, configFrom, IPAM, enableIPv6, options, labels);
   }
 
 
@@ -357,6 +357,7 @@ public class NetworkCreateRequest {
     sb.append("class NetworkCreateRequest {\n");
     
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    checkDuplicate: ").append(toIndentedString(checkDuplicate)).append("\n");
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
     sb.append("    scope: ").append(toIndentedString(scope)).append("\n");
     sb.append("    internal: ").append(toIndentedString(internal)).append("\n");
@@ -365,7 +366,6 @@ public class NetworkCreateRequest {
     sb.append("    configOnly: ").append(toIndentedString(configOnly)).append("\n");
     sb.append("    configFrom: ").append(toIndentedString(configFrom)).append("\n");
     sb.append("    IPAM: ").append(toIndentedString(IPAM)).append("\n");
-    sb.append("    enableIPv4: ").append(toIndentedString(enableIPv4)).append("\n");
     sb.append("    enableIPv6: ").append(toIndentedString(enableIPv6)).append("\n");
     sb.append("    options: ").append(toIndentedString(options)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");

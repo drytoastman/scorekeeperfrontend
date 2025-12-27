@@ -20,64 +20,52 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
- * The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. 
+ * SystemAuthResponse
  */
-@ApiModel(description = "The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. ")
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
-public class SwarmSpecTaskDefaultsLogDriver {
-  @JsonProperty("Name")
-  private String name = null;
+public class SystemAuthResponse {
+  @JsonProperty("Status")
+  private String status = null;
 
-  @JsonProperty("Options")
-  private Map<String, String> options = null;
+  @JsonProperty("IdentityToken")
+  private String identityToken = null;
 
-  public SwarmSpecTaskDefaultsLogDriver name(String name) {
-    this.name = name;
+  public SystemAuthResponse status(String status) {
+    this.status = status;
     return this;
   }
 
    /**
-   * The log driver to use as a default for new tasks. 
-   * @return name
+   * The status of the authentication
+   * @return status
   **/
-  @ApiModelProperty(example = "json-file", value = "The log driver to use as a default for new tasks. ")
-  public String getName() {
-    return name;
+  @ApiModelProperty(required = true, value = "The status of the authentication")
+  public String getStatus() {
+    return status;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setStatus(String status) {
+    this.status = status;
   }
 
-  public SwarmSpecTaskDefaultsLogDriver options(Map<String, String> options) {
-    this.options = options;
-    return this;
-  }
-
-  public SwarmSpecTaskDefaultsLogDriver putOptionsItem(String key, String optionsItem) {
-    if (this.options == null) {
-      this.options = new HashMap<>();
-    }
-    this.options.put(key, optionsItem);
+  public SystemAuthResponse identityToken(String identityToken) {
+    this.identityToken = identityToken;
     return this;
   }
 
    /**
-   * Driver-specific options for the selected log driver, specified as key/value pairs. 
-   * @return options
+   * An opaque token used to authenticate a user after a successful login
+   * @return identityToken
   **/
-  @ApiModelProperty(example = "{\"max-file\":\"10\",\"max-size\":\"100m\"}", value = "Driver-specific options for the selected log driver, specified as key/value pairs. ")
-  public Map<String, String> getOptions() {
-    return options;
+  @ApiModelProperty(value = "An opaque token used to authenticate a user after a successful login")
+  public String getIdentityToken() {
+    return identityToken;
   }
 
-  public void setOptions(Map<String, String> options) {
-    this.options = options;
+  public void setIdentityToken(String identityToken) {
+    this.identityToken = identityToken;
   }
 
 
@@ -89,24 +77,24 @@ public class SwarmSpecTaskDefaultsLogDriver {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SwarmSpecTaskDefaultsLogDriver swarmSpecTaskDefaultsLogDriver = (SwarmSpecTaskDefaultsLogDriver) o;
-    return Objects.equals(this.name, swarmSpecTaskDefaultsLogDriver.name) &&
-        Objects.equals(this.options, swarmSpecTaskDefaultsLogDriver.options);
+    SystemAuthResponse systemAuthResponse = (SystemAuthResponse) o;
+    return Objects.equals(this.status, systemAuthResponse.status) &&
+        Objects.equals(this.identityToken, systemAuthResponse.identityToken);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, options);
+    return Objects.hash(status, identityToken);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SwarmSpecTaskDefaultsLogDriver {\n");
+    sb.append("class SystemAuthResponse {\n");
     
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    options: ").append(toIndentedString(options)).append("\n");
+    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    identityToken: ").append(toIndentedString(identityToken)).append("\n");
     sb.append("}");
     return sb.toString();
   }

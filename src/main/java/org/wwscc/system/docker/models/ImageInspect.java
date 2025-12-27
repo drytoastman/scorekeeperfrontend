@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -22,27 +22,20 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.wwscc.system.docker.models.DriverData;
+import org.wwscc.system.docker.models.ContainerConfig;
+import org.wwscc.system.docker.models.GraphDriverData;
 import org.wwscc.system.docker.models.ImageConfig;
 import org.wwscc.system.docker.models.ImageInspectMetadata;
 import org.wwscc.system.docker.models.ImageInspectRootFS;
-import org.wwscc.system.docker.models.ImageManifestSummary;
-import org.wwscc.system.docker.models.OCIDescriptor;
 
 /**
  * Information about an image in the local image cache. 
  */
 @ApiModel(description = "Information about an image in the local image cache. ")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class ImageInspect {
   @JsonProperty("Id")
   private String id = null;
-
-  @JsonProperty("Descriptor")
-  private OCIDescriptor descriptor = null;
-
-  @JsonProperty("Manifests")
-  private List<ImageManifestSummary> manifests = null;
 
   @JsonProperty("RepoTags")
   private List<String> repoTags = null;
@@ -50,11 +43,23 @@ public class ImageInspect {
   @JsonProperty("RepoDigests")
   private List<String> repoDigests = null;
 
+  @JsonProperty("Parent")
+  private String parent = null;
+
   @JsonProperty("Comment")
   private String comment = null;
 
   @JsonProperty("Created")
   private String created = null;
+
+  @JsonProperty("Container")
+  private String container = null;
+
+  @JsonProperty("ContainerConfig")
+  private ContainerConfig containerConfig = null;
+
+  @JsonProperty("DockerVersion")
+  private String dockerVersion = null;
 
   @JsonProperty("Author")
   private String author = null;
@@ -78,7 +83,7 @@ public class ImageInspect {
   private Long size = null;
 
   @JsonProperty("GraphDriver")
-  private DriverData graphDriver = null;
+  private GraphDriverData graphDriver = null;
 
   @JsonProperty("RootFS")
   private ImageInspectRootFS rootFS = null;
@@ -102,50 +107,6 @@ public class ImageInspect {
 
   public void setId(String id) {
     this.id = id;
-  }
-
-  public ImageInspect descriptor(OCIDescriptor descriptor) {
-    this.descriptor = descriptor;
-    return this;
-  }
-
-   /**
-   * Descriptor is an OCI descriptor of the image target. In case of a multi-platform image, this descriptor points to the OCI index or a manifest list.  This field is only present if the daemon provides a multi-platform image store.  WARNING: This is experimental and may change at any time without any backward compatibility. 
-   * @return descriptor
-  **/
-  @ApiModelProperty(value = "Descriptor is an OCI descriptor of the image target. In case of a multi-platform image, this descriptor points to the OCI index or a manifest list.  This field is only present if the daemon provides a multi-platform image store.  WARNING: This is experimental and may change at any time without any backward compatibility. ")
-  public OCIDescriptor getDescriptor() {
-    return descriptor;
-  }
-
-  public void setDescriptor(OCIDescriptor descriptor) {
-    this.descriptor = descriptor;
-  }
-
-  public ImageInspect manifests(List<ImageManifestSummary> manifests) {
-    this.manifests = manifests;
-    return this;
-  }
-
-  public ImageInspect addManifestsItem(ImageManifestSummary manifestsItem) {
-    if (this.manifests == null) {
-      this.manifests = new ArrayList<>();
-    }
-    this.manifests.add(manifestsItem);
-    return this;
-  }
-
-   /**
-   * Manifests is a list of image manifests available in this image. It provides a more detailed view of the platform-specific image manifests or other image-attached data like build attestations.  Only available if the daemon provides a multi-platform image store and the &#x60;manifests&#x60; option is set in the inspect request.  WARNING: This is experimental and may change at any time without any backward compatibility. 
-   * @return manifests
-  **/
-  @ApiModelProperty(value = "Manifests is a list of image manifests available in this image. It provides a more detailed view of the platform-specific image manifests or other image-attached data like build attestations.  Only available if the daemon provides a multi-platform image store and the `manifests` option is set in the inspect request.  WARNING: This is experimental and may change at any time without any backward compatibility. ")
-  public List<ImageManifestSummary> getManifests() {
-    return manifests;
-  }
-
-  public void setManifests(List<ImageManifestSummary> manifests) {
-    this.manifests = manifests;
   }
 
   public ImageInspect repoTags(List<String> repoTags) {
@@ -200,6 +161,24 @@ public class ImageInspect {
     this.repoDigests = repoDigests;
   }
 
+  public ImageInspect parent(String parent) {
+    this.parent = parent;
+    return this;
+  }
+
+   /**
+   * ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. 
+   * @return parent
+  **/
+  @ApiModelProperty(example = "", value = "ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. ")
+  public String getParent() {
+    return parent;
+  }
+
+  public void setParent(String parent) {
+    this.parent = parent;
+  }
+
   public ImageInspect comment(String comment) {
     this.comment = comment;
     return this;
@@ -234,6 +213,60 @@ public class ImageInspect {
 
   public void setCreated(String created) {
     this.created = created;
+  }
+
+  public ImageInspect container(String container) {
+    this.container = container;
+    return this;
+  }
+
+   /**
+   * The ID of the container that was used to create the image.  Depending on how the image was created, this field may be empty.  **Deprecated**: this field is kept for backward compatibility, but will be removed in API v1.45. 
+   * @return container
+  **/
+  @ApiModelProperty(example = "65974bc86f1770ae4bff79f651ebdbce166ae9aada632ee3fa9af3a264911735", value = "The ID of the container that was used to create the image.  Depending on how the image was created, this field may be empty.  **Deprecated**: this field is kept for backward compatibility, but will be removed in API v1.45. ")
+  public String getContainer() {
+    return container;
+  }
+
+  public void setContainer(String container) {
+    this.container = container;
+  }
+
+  public ImageInspect containerConfig(ContainerConfig containerConfig) {
+    this.containerConfig = containerConfig;
+    return this;
+  }
+
+   /**
+   * **Deprecated**: this field is kept for backward compatibility, but will be removed in API v1.45. 
+   * @return containerConfig
+  **/
+  @ApiModelProperty(value = "**Deprecated**: this field is kept for backward compatibility, but will be removed in API v1.45. ")
+  public ContainerConfig getContainerConfig() {
+    return containerConfig;
+  }
+
+  public void setContainerConfig(ContainerConfig containerConfig) {
+    this.containerConfig = containerConfig;
+  }
+
+  public ImageInspect dockerVersion(String dockerVersion) {
+    this.dockerVersion = dockerVersion;
+    return this;
+  }
+
+   /**
+   * The version of Docker that was used to build the image.  Depending on how the image was created, this field may be empty. 
+   * @return dockerVersion
+  **/
+  @ApiModelProperty(example = "20.10.7", value = "The version of Docker that was used to build the image.  Depending on how the image was created, this field may be empty. ")
+  public String getDockerVersion() {
+    return dockerVersion;
+  }
+
+  public void setDockerVersion(String dockerVersion) {
+    this.dockerVersion = dockerVersion;
   }
 
   public ImageInspect author(String author) {
@@ -362,7 +395,7 @@ public class ImageInspect {
     this.size = size;
   }
 
-  public ImageInspect graphDriver(DriverData graphDriver) {
+  public ImageInspect graphDriver(GraphDriverData graphDriver) {
     this.graphDriver = graphDriver;
     return this;
   }
@@ -372,11 +405,11 @@ public class ImageInspect {
    * @return graphDriver
   **/
   @ApiModelProperty(value = "")
-  public DriverData getGraphDriver() {
+  public GraphDriverData getGraphDriver() {
     return graphDriver;
   }
 
-  public void setGraphDriver(DriverData graphDriver) {
+  public void setGraphDriver(GraphDriverData graphDriver) {
     this.graphDriver = graphDriver;
   }
 
@@ -427,12 +460,14 @@ public class ImageInspect {
     }
     ImageInspect imageInspect = (ImageInspect) o;
     return Objects.equals(this.id, imageInspect.id) &&
-        Objects.equals(this.descriptor, imageInspect.descriptor) &&
-        Objects.equals(this.manifests, imageInspect.manifests) &&
         Objects.equals(this.repoTags, imageInspect.repoTags) &&
         Objects.equals(this.repoDigests, imageInspect.repoDigests) &&
+        Objects.equals(this.parent, imageInspect.parent) &&
         Objects.equals(this.comment, imageInspect.comment) &&
         Objects.equals(this.created, imageInspect.created) &&
+        Objects.equals(this.container, imageInspect.container) &&
+        Objects.equals(this.containerConfig, imageInspect.containerConfig) &&
+        Objects.equals(this.dockerVersion, imageInspect.dockerVersion) &&
         Objects.equals(this.author, imageInspect.author) &&
         Objects.equals(this.config, imageInspect.config) &&
         Objects.equals(this.architecture, imageInspect.architecture) &&
@@ -447,7 +482,7 @@ public class ImageInspect {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, descriptor, manifests, repoTags, repoDigests, comment, created, author, config, architecture, variant, os, osVersion, size, graphDriver, rootFS, metadata);
+    return Objects.hash(id, repoTags, repoDigests, parent, comment, created, container, containerConfig, dockerVersion, author, config, architecture, variant, os, osVersion, size, graphDriver, rootFS, metadata);
   }
 
 
@@ -457,12 +492,14 @@ public class ImageInspect {
     sb.append("class ImageInspect {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    descriptor: ").append(toIndentedString(descriptor)).append("\n");
-    sb.append("    manifests: ").append(toIndentedString(manifests)).append("\n");
     sb.append("    repoTags: ").append(toIndentedString(repoTags)).append("\n");
     sb.append("    repoDigests: ").append(toIndentedString(repoDigests)).append("\n");
+    sb.append("    parent: ").append(toIndentedString(parent)).append("\n");
     sb.append("    comment: ").append(toIndentedString(comment)).append("\n");
     sb.append("    created: ").append(toIndentedString(created)).append("\n");
+    sb.append("    container: ").append(toIndentedString(container)).append("\n");
+    sb.append("    containerConfig: ").append(toIndentedString(containerConfig)).append("\n");
+    sb.append("    dockerVersion: ").append(toIndentedString(dockerVersion)).append("\n");
     sb.append("    author: ").append(toIndentedString(author)).append("\n");
     sb.append("    config: ").append(toIndentedString(config)).append("\n");
     sb.append("    architecture: ").append(toIndentedString(architecture)).append("\n");

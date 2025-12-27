@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -20,17 +20,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.wwscc.system.docker.models.OCIPlatform;
 
 /**
  * A descriptor struct containing digest, media type, and size, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md). 
  */
 @ApiModel(description = "A descriptor struct containing digest, media type, and size, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md). ")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class OCIDescriptor {
   @JsonProperty("mediaType")
   private String mediaType = null;
@@ -41,21 +36,6 @@ public class OCIDescriptor {
   @JsonProperty("size")
   private Long size = null;
 
-  @JsonProperty("urls")
-  private List<String> urls = null;
-
-  @JsonProperty("annotations")
-  private Map<String, String> annotations = null;
-
-  @JsonProperty("data")
-  private String data = null;
-
-  @JsonProperty("platform")
-  private OCIPlatform platform = null;
-
-  @JsonProperty("artifactType")
-  private String artifactType = null;
-
   public OCIDescriptor mediaType(String mediaType) {
     this.mediaType = mediaType;
     return this;
@@ -65,7 +45,7 @@ public class OCIDescriptor {
    * The media type of the object this schema refers to. 
    * @return mediaType
   **/
-  @ApiModelProperty(example = "application/vnd.oci.image.manifest.v1+json", value = "The media type of the object this schema refers to. ")
+  @ApiModelProperty(example = "application/vnd.docker.distribution.manifest.v2+json", value = "The media type of the object this schema refers to. ")
   public String getMediaType() {
     return mediaType;
   }
@@ -101,119 +81,13 @@ public class OCIDescriptor {
    * The size in bytes of the blob. 
    * @return size
   **/
-  @ApiModelProperty(example = "424", value = "The size in bytes of the blob. ")
+  @ApiModelProperty(example = "3987495", value = "The size in bytes of the blob. ")
   public Long getSize() {
     return size;
   }
 
   public void setSize(Long size) {
     this.size = size;
-  }
-
-  public OCIDescriptor urls(List<String> urls) {
-    this.urls = urls;
-    return this;
-  }
-
-  public OCIDescriptor addUrlsItem(String urlsItem) {
-    if (this.urls == null) {
-      this.urls = new ArrayList<>();
-    }
-    this.urls.add(urlsItem);
-    return this;
-  }
-
-   /**
-   * List of URLs from which this object MAY be downloaded.
-   * @return urls
-  **/
-  @ApiModelProperty(value = "List of URLs from which this object MAY be downloaded.")
-  public List<String> getUrls() {
-    return urls;
-  }
-
-  public void setUrls(List<String> urls) {
-    this.urls = urls;
-  }
-
-  public OCIDescriptor annotations(Map<String, String> annotations) {
-    this.annotations = annotations;
-    return this;
-  }
-
-  public OCIDescriptor putAnnotationsItem(String key, String annotationsItem) {
-    if (this.annotations == null) {
-      this.annotations = new HashMap<>();
-    }
-    this.annotations.put(key, annotationsItem);
-    return this;
-  }
-
-   /**
-   * Arbitrary metadata relating to the targeted content.
-   * @return annotations
-  **/
-  @ApiModelProperty(example = "{\"com.docker.official-images.bashbrew.arch\":\"amd64\",\"org.opencontainers.image.base.digest\":\"sha256:0d0ef5c914d3ea700147da1bd050c59edb8bb12ca312f3800b29d7c8087eabd8\",\"org.opencontainers.image.base.name\":\"scratch\",\"org.opencontainers.image.created\":\"2025-01-27T00:00:00Z\",\"org.opencontainers.image.revision\":\"9fabb4bad5138435b01857e2fe9363e2dc5f6a79\",\"org.opencontainers.image.source\":\"https://git.launchpad.net/cloud-images/+oci/ubuntu-base\",\"org.opencontainers.image.url\":\"https://hub.docker.com/_/ubuntu\",\"org.opencontainers.image.version\":\"24.04\"}", value = "Arbitrary metadata relating to the targeted content.")
-  public Map<String, String> getAnnotations() {
-    return annotations;
-  }
-
-  public void setAnnotations(Map<String, String> annotations) {
-    this.annotations = annotations;
-  }
-
-  public OCIDescriptor data(String data) {
-    this.data = data;
-    return this;
-  }
-
-   /**
-   * Data is an embedding of the targeted content. This is encoded as a base64 string when marshalled to JSON (automatically, by encoding/json). If present, Data can be used directly to avoid fetching the targeted content.
-   * @return data
-  **/
-  @ApiModelProperty(value = "Data is an embedding of the targeted content. This is encoded as a base64 string when marshalled to JSON (automatically, by encoding/json). If present, Data can be used directly to avoid fetching the targeted content.")
-  public String getData() {
-    return data;
-  }
-
-  public void setData(String data) {
-    this.data = data;
-  }
-
-  public OCIDescriptor platform(OCIPlatform platform) {
-    this.platform = platform;
-    return this;
-  }
-
-   /**
-   * Get platform
-   * @return platform
-  **/
-  @ApiModelProperty(value = "")
-  public OCIPlatform getPlatform() {
-    return platform;
-  }
-
-  public void setPlatform(OCIPlatform platform) {
-    this.platform = platform;
-  }
-
-  public OCIDescriptor artifactType(String artifactType) {
-    this.artifactType = artifactType;
-    return this;
-  }
-
-   /**
-   * ArtifactType is the IANA media type of this artifact.
-   * @return artifactType
-  **/
-  @ApiModelProperty(value = "ArtifactType is the IANA media type of this artifact.")
-  public String getArtifactType() {
-    return artifactType;
-  }
-
-  public void setArtifactType(String artifactType) {
-    this.artifactType = artifactType;
   }
 
 
@@ -228,17 +102,12 @@ public class OCIDescriptor {
     OCIDescriptor ocIDescriptor = (OCIDescriptor) o;
     return Objects.equals(this.mediaType, ocIDescriptor.mediaType) &&
         Objects.equals(this.digest, ocIDescriptor.digest) &&
-        Objects.equals(this.size, ocIDescriptor.size) &&
-        Objects.equals(this.urls, ocIDescriptor.urls) &&
-        Objects.equals(this.annotations, ocIDescriptor.annotations) &&
-        Objects.equals(this.data, ocIDescriptor.data) &&
-        Objects.equals(this.platform, ocIDescriptor.platform) &&
-        Objects.equals(this.artifactType, ocIDescriptor.artifactType);
+        Objects.equals(this.size, ocIDescriptor.size);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mediaType, digest, size, urls, annotations, data, platform, artifactType);
+    return Objects.hash(mediaType, digest, size);
   }
 
 
@@ -250,11 +119,6 @@ public class OCIDescriptor {
     sb.append("    mediaType: ").append(toIndentedString(mediaType)).append("\n");
     sb.append("    digest: ").append(toIndentedString(digest)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    urls: ").append(toIndentedString(urls)).append("\n");
-    sb.append("    annotations: ").append(toIndentedString(annotations)).append("\n");
-    sb.append("    data: ").append(toIndentedString(data)).append("\n");
-    sb.append("    platform: ").append(toIndentedString(platform)).append("\n");
-    sb.append("    artifactType: ").append(toIndentedString(artifactType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -20,64 +20,73 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
- * The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. 
+ * PluginInterfaceType
  */
-@ApiModel(description = "The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. ")
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
-public class SwarmSpecTaskDefaultsLogDriver {
-  @JsonProperty("Name")
-  private String name = null;
+public class PluginInterfaceType {
+  @JsonProperty("Prefix")
+  private String prefix = null;
 
-  @JsonProperty("Options")
-  private Map<String, String> options = null;
+  @JsonProperty("Capability")
+  private String capability = null;
 
-  public SwarmSpecTaskDefaultsLogDriver name(String name) {
-    this.name = name;
+  @JsonProperty("Version")
+  private String version = null;
+
+  public PluginInterfaceType prefix(String prefix) {
+    this.prefix = prefix;
     return this;
   }
 
    /**
-   * The log driver to use as a default for new tasks. 
-   * @return name
+   * Get prefix
+   * @return prefix
   **/
-  @ApiModelProperty(example = "json-file", value = "The log driver to use as a default for new tasks. ")
-  public String getName() {
-    return name;
+  @ApiModelProperty(required = true, value = "")
+  public String getPrefix() {
+    return prefix;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setPrefix(String prefix) {
+    this.prefix = prefix;
   }
 
-  public SwarmSpecTaskDefaultsLogDriver options(Map<String, String> options) {
-    this.options = options;
-    return this;
-  }
-
-  public SwarmSpecTaskDefaultsLogDriver putOptionsItem(String key, String optionsItem) {
-    if (this.options == null) {
-      this.options = new HashMap<>();
-    }
-    this.options.put(key, optionsItem);
+  public PluginInterfaceType capability(String capability) {
+    this.capability = capability;
     return this;
   }
 
    /**
-   * Driver-specific options for the selected log driver, specified as key/value pairs. 
-   * @return options
+   * Get capability
+   * @return capability
   **/
-  @ApiModelProperty(example = "{\"max-file\":\"10\",\"max-size\":\"100m\"}", value = "Driver-specific options for the selected log driver, specified as key/value pairs. ")
-  public Map<String, String> getOptions() {
-    return options;
+  @ApiModelProperty(required = true, value = "")
+  public String getCapability() {
+    return capability;
   }
 
-  public void setOptions(Map<String, String> options) {
-    this.options = options;
+  public void setCapability(String capability) {
+    this.capability = capability;
+  }
+
+  public PluginInterfaceType version(String version) {
+    this.version = version;
+    return this;
+  }
+
+   /**
+   * Get version
+   * @return version
+  **/
+  @ApiModelProperty(required = true, value = "")
+  public String getVersion() {
+    return version;
+  }
+
+  public void setVersion(String version) {
+    this.version = version;
   }
 
 
@@ -89,24 +98,26 @@ public class SwarmSpecTaskDefaultsLogDriver {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SwarmSpecTaskDefaultsLogDriver swarmSpecTaskDefaultsLogDriver = (SwarmSpecTaskDefaultsLogDriver) o;
-    return Objects.equals(this.name, swarmSpecTaskDefaultsLogDriver.name) &&
-        Objects.equals(this.options, swarmSpecTaskDefaultsLogDriver.options);
+    PluginInterfaceType pluginInterfaceType = (PluginInterfaceType) o;
+    return Objects.equals(this.prefix, pluginInterfaceType.prefix) &&
+        Objects.equals(this.capability, pluginInterfaceType.capability) &&
+        Objects.equals(this.version, pluginInterfaceType.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, options);
+    return Objects.hash(prefix, capability, version);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SwarmSpecTaskDefaultsLogDriver {\n");
+    sb.append("class PluginInterfaceType {\n");
     
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    options: ").append(toIndentedString(options)).append("\n");
+    sb.append("    prefix: ").append(toIndentedString(prefix)).append("\n");
+    sb.append("    capability: ").append(toIndentedString(capability)).append("\n");
+    sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("}");
     return sb.toString();
   }

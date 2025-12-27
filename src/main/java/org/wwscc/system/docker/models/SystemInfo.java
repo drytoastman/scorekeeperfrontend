@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -25,9 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.wwscc.system.docker.models.Commit;
-import org.wwscc.system.docker.models.ContainerdInfo;
-import org.wwscc.system.docker.models.DeviceInfo;
-import org.wwscc.system.docker.models.FirewallInfo;
 import org.wwscc.system.docker.models.GenericResources;
 import org.wwscc.system.docker.models.PluginsInfo;
 import org.wwscc.system.docker.models.RegistryServiceConfig;
@@ -38,7 +35,7 @@ import org.wwscc.system.docker.models.SystemInfoDefaultAddressPools;
 /**
  * SystemInfo
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class SystemInfo {
   @JsonProperty("ID")
   private String ID = null;
@@ -76,6 +73,9 @@ public class SystemInfo {
   @JsonProperty("SwapLimit")
   private Boolean swapLimit = null;
 
+  @JsonProperty("KernelMemoryTCP")
+  private Boolean kernelMemoryTCP = null;
+
   @JsonProperty("CpuCfsPeriod")
   private Boolean cpuCfsPeriod = null;
 
@@ -96,6 +96,12 @@ public class SystemInfo {
 
   @JsonProperty("IPv4Forwarding")
   private Boolean ipv4Forwarding = null;
+
+  @JsonProperty("BridgeNfIptables")
+  private Boolean bridgeNfIptables = null;
+
+  @JsonProperty("BridgeNfIp6tables")
+  private Boolean bridgeNfIp6tables = null;
 
   @JsonProperty("Debug")
   private Boolean debug = null;
@@ -319,20 +325,11 @@ public class SystemInfo {
   @JsonProperty("DefaultAddressPools")
   private List<SystemInfoDefaultAddressPools> defaultAddressPools = null;
 
-  @JsonProperty("FirewallBackend")
-  private FirewallInfo firewallBackend = null;
-
-  @JsonProperty("DiscoveredDevices")
-  private List<DeviceInfo> discoveredDevices = null;
-
   @JsonProperty("Warnings")
   private List<String> warnings = null;
 
   @JsonProperty("CDISpecDirs")
   private List<String> cdISpecDirs = null;
-
-  @JsonProperty("Containerd")
-  private ContainerdInfo containerd = null;
 
   public SystemInfo ID(String ID) {
     this.ID = ID;
@@ -558,6 +555,24 @@ public class SystemInfo {
     this.swapLimit = swapLimit;
   }
 
+  public SystemInfo kernelMemoryTCP(Boolean kernelMemoryTCP) {
+    this.kernelMemoryTCP = kernelMemoryTCP;
+    return this;
+  }
+
+   /**
+   * Indicates if the host has kernel memory TCP limit support enabled. This field is omitted if not supported.  Kernel memory TCP limits are not supported when using cgroups v2, which does not support the corresponding &#x60;memory.kmem.tcp.limit_in_bytes&#x60; cgroup. 
+   * @return kernelMemoryTCP
+  **/
+  @ApiModelProperty(example = "true", value = "Indicates if the host has kernel memory TCP limit support enabled. This field is omitted if not supported.  Kernel memory TCP limits are not supported when using cgroups v2, which does not support the corresponding `memory.kmem.tcp.limit_in_bytes` cgroup. ")
+  public Boolean isKernelMemoryTCP() {
+    return kernelMemoryTCP;
+  }
+
+  public void setKernelMemoryTCP(Boolean kernelMemoryTCP) {
+    this.kernelMemoryTCP = kernelMemoryTCP;
+  }
+
   public SystemInfo cpuCfsPeriod(Boolean cpuCfsPeriod) {
     this.cpuCfsPeriod = cpuCfsPeriod;
     return this;
@@ -682,6 +697,42 @@ public class SystemInfo {
 
   public void setIpv4Forwarding(Boolean ipv4Forwarding) {
     this.ipv4Forwarding = ipv4Forwarding;
+  }
+
+  public SystemInfo bridgeNfIptables(Boolean bridgeNfIptables) {
+    this.bridgeNfIptables = bridgeNfIptables;
+    return this;
+  }
+
+   /**
+   * Indicates if &#x60;bridge-nf-call-iptables&#x60; is available on the host.
+   * @return bridgeNfIptables
+  **/
+  @ApiModelProperty(example = "true", value = "Indicates if `bridge-nf-call-iptables` is available on the host.")
+  public Boolean isBridgeNfIptables() {
+    return bridgeNfIptables;
+  }
+
+  public void setBridgeNfIptables(Boolean bridgeNfIptables) {
+    this.bridgeNfIptables = bridgeNfIptables;
+  }
+
+  public SystemInfo bridgeNfIp6tables(Boolean bridgeNfIp6tables) {
+    this.bridgeNfIp6tables = bridgeNfIp6tables;
+    return this;
+  }
+
+   /**
+   * Indicates if &#x60;bridge-nf-call-ip6tables&#x60; is available on the host.
+   * @return bridgeNfIp6tables
+  **/
+  @ApiModelProperty(example = "true", value = "Indicates if `bridge-nf-call-ip6tables` is available on the host.")
+  public Boolean isBridgeNfIp6tables() {
+    return bridgeNfIp6tables;
+  }
+
+  public void setBridgeNfIp6tables(Boolean bridgeNfIp6tables) {
+    this.bridgeNfIp6tables = bridgeNfIp6tables;
   }
 
   public SystemInfo debug(Boolean debug) {
@@ -837,7 +888,7 @@ public class SystemInfo {
    * Kernel version of the host.  On Linux, this information obtained from &#x60;uname&#x60;. On Windows this information is queried from the &lt;kbd&gt;HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\\&lt;/kbd&gt; registry value, for example _\&quot;10.0 14393 (14393.1198.amd64fre.rs1_release_sec.170427-1353)\&quot;_. 
    * @return kernelVersion
   **/
-  @ApiModelProperty(example = "6.8.0-31-generic", value = "Kernel version of the host.  On Linux, this information obtained from `uname`. On Windows this information is queried from the <kbd>HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\\</kbd> registry value, for example _\"10.0 14393 (14393.1198.amd64fre.rs1_release_sec.170427-1353)\"_. ")
+  @ApiModelProperty(example = "4.9.38-moby", value = "Kernel version of the host.  On Linux, this information obtained from `uname`. On Windows this information is queried from the <kbd>HKEY_LOCAL_MACHINE\\\\SOFTWARE\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\\</kbd> registry value, for example _\"10.0 14393 (14393.1198.amd64fre.rs1_release_sec.170427-1353)\"_. ")
   public String getKernelVersion() {
     return kernelVersion;
   }
@@ -852,10 +903,10 @@ public class SystemInfo {
   }
 
    /**
-   * Name of the host&#39;s operating system, for example: \&quot;Ubuntu 24.04 LTS\&quot; or \&quot;Windows Server 2016 Datacenter\&quot; 
+   * Name of the host&#39;s operating system, for example: \&quot;Ubuntu 16.04.2 LTS\&quot; or \&quot;Windows Server 2016 Datacenter\&quot; 
    * @return operatingSystem
   **/
-  @ApiModelProperty(example = "Ubuntu 24.04 LTS", value = "Name of the host's operating system, for example: \"Ubuntu 24.04 LTS\" or \"Windows Server 2016 Datacenter\" ")
+  @ApiModelProperty(example = "Alpine Linux v3.5", value = "Name of the host's operating system, for example: \"Ubuntu 16.04.2 LTS\" or \"Windows Server 2016 Datacenter\" ")
   public String getOperatingSystem() {
     return operatingSystem;
   }
@@ -873,7 +924,7 @@ public class SystemInfo {
    * Version of the host&#39;s operating system  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: The information returned in this field, including its &gt; very existence, and the formatting of values, should not be considered &gt; stable, and may change without notice. 
    * @return osVersion
   **/
-  @ApiModelProperty(example = "24.04", value = "Version of the host's operating system  <p><br /></p>  > **Note**: The information returned in this field, including its > very existence, and the formatting of values, should not be considered > stable, and may change without notice. ")
+  @ApiModelProperty(example = "16.04", value = "Version of the host's operating system  <p><br /></p>  > **Note**: The information returned in this field, including its > very existence, and the formatting of values, should not be considered > stable, and may change without notice. ")
   public String getOsVersion() {
     return osVersion;
   }
@@ -1133,7 +1184,7 @@ public class SystemInfo {
    * Version string of the daemon. 
    * @return serverVersion
   **/
-  @ApiModelProperty(example = "27.0.1", value = "Version string of the daemon. ")
+  @ApiModelProperty(example = "24.0.2", value = "Version string of the daemon. ")
   public String getServerVersion() {
     return serverVersion;
   }
@@ -1382,50 +1433,6 @@ public class SystemInfo {
     this.defaultAddressPools = defaultAddressPools;
   }
 
-  public SystemInfo firewallBackend(FirewallInfo firewallBackend) {
-    this.firewallBackend = firewallBackend;
-    return this;
-  }
-
-   /**
-   * Get firewallBackend
-   * @return firewallBackend
-  **/
-  @ApiModelProperty(value = "")
-  public FirewallInfo getFirewallBackend() {
-    return firewallBackend;
-  }
-
-  public void setFirewallBackend(FirewallInfo firewallBackend) {
-    this.firewallBackend = firewallBackend;
-  }
-
-  public SystemInfo discoveredDevices(List<DeviceInfo> discoveredDevices) {
-    this.discoveredDevices = discoveredDevices;
-    return this;
-  }
-
-  public SystemInfo addDiscoveredDevicesItem(DeviceInfo discoveredDevicesItem) {
-    if (this.discoveredDevices == null) {
-      this.discoveredDevices = new ArrayList<>();
-    }
-    this.discoveredDevices.add(discoveredDevicesItem);
-    return this;
-  }
-
-   /**
-   * List of devices discovered by device drivers.  Each device includes information about its source driver, kind, name, and additional driver-specific attributes. 
-   * @return discoveredDevices
-  **/
-  @ApiModelProperty(value = "List of devices discovered by device drivers.  Each device includes information about its source driver, kind, name, and additional driver-specific attributes. ")
-  public List<DeviceInfo> getDiscoveredDevices() {
-    return discoveredDevices;
-  }
-
-  public void setDiscoveredDevices(List<DeviceInfo> discoveredDevices) {
-    this.discoveredDevices = discoveredDevices;
-  }
-
   public SystemInfo warnings(List<String> warnings) {
     this.warnings = warnings;
     return this;
@@ -1478,24 +1485,6 @@ public class SystemInfo {
     this.cdISpecDirs = cdISpecDirs;
   }
 
-  public SystemInfo containerd(ContainerdInfo containerd) {
-    this.containerd = containerd;
-    return this;
-  }
-
-   /**
-   * Get containerd
-   * @return containerd
-  **/
-  @ApiModelProperty(value = "")
-  public ContainerdInfo getContainerd() {
-    return containerd;
-  }
-
-  public void setContainerd(ContainerdInfo containerd) {
-    this.containerd = containerd;
-  }
-
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -1518,6 +1507,7 @@ public class SystemInfo {
         Objects.equals(this.plugins, systemInfo.plugins) &&
         Objects.equals(this.memoryLimit, systemInfo.memoryLimit) &&
         Objects.equals(this.swapLimit, systemInfo.swapLimit) &&
+        Objects.equals(this.kernelMemoryTCP, systemInfo.kernelMemoryTCP) &&
         Objects.equals(this.cpuCfsPeriod, systemInfo.cpuCfsPeriod) &&
         Objects.equals(this.cpuCfsQuota, systemInfo.cpuCfsQuota) &&
         Objects.equals(this.cpUShares, systemInfo.cpUShares) &&
@@ -1525,6 +1515,8 @@ public class SystemInfo {
         Objects.equals(this.pidsLimit, systemInfo.pidsLimit) &&
         Objects.equals(this.oomKillDisable, systemInfo.oomKillDisable) &&
         Objects.equals(this.ipv4Forwarding, systemInfo.ipv4Forwarding) &&
+        Objects.equals(this.bridgeNfIptables, systemInfo.bridgeNfIptables) &&
+        Objects.equals(this.bridgeNfIp6tables, systemInfo.bridgeNfIp6tables) &&
         Objects.equals(this.debug, systemInfo.debug) &&
         Objects.equals(this.nfd, systemInfo.nfd) &&
         Objects.equals(this.ngoroutines, systemInfo.ngoroutines) &&
@@ -1562,16 +1554,13 @@ public class SystemInfo {
         Objects.equals(this.securityOptions, systemInfo.securityOptions) &&
         Objects.equals(this.productLicense, systemInfo.productLicense) &&
         Objects.equals(this.defaultAddressPools, systemInfo.defaultAddressPools) &&
-        Objects.equals(this.firewallBackend, systemInfo.firewallBackend) &&
-        Objects.equals(this.discoveredDevices, systemInfo.discoveredDevices) &&
         Objects.equals(this.warnings, systemInfo.warnings) &&
-        Objects.equals(this.cdISpecDirs, systemInfo.cdISpecDirs) &&
-        Objects.equals(this.containerd, systemInfo.containerd);
+        Objects.equals(this.cdISpecDirs, systemInfo.cdISpecDirs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ID, containers, containersRunning, containersPaused, containersStopped, images, driver, driverStatus, dockerRootDir, plugins, memoryLimit, swapLimit, cpuCfsPeriod, cpuCfsQuota, cpUShares, cpUSet, pidsLimit, oomKillDisable, ipv4Forwarding, debug, nfd, ngoroutines, systemTime, loggingDriver, cgroupDriver, cgroupVersion, neventsListener, kernelVersion, operatingSystem, osVersion, osType, architecture, NCPU, memTotal, indexServerAddress, registryConfig, genericResources, httpProxy, httpsProxy, noProxy, name, labels, experimentalBuild, serverVersion, runtimes, defaultRuntime, swarm, liveRestoreEnabled, isolation, initBinary, containerdCommit, runcCommit, initCommit, securityOptions, productLicense, defaultAddressPools, firewallBackend, discoveredDevices, warnings, cdISpecDirs, containerd);
+    return Objects.hash(ID, containers, containersRunning, containersPaused, containersStopped, images, driver, driverStatus, dockerRootDir, plugins, memoryLimit, swapLimit, kernelMemoryTCP, cpuCfsPeriod, cpuCfsQuota, cpUShares, cpUSet, pidsLimit, oomKillDisable, ipv4Forwarding, bridgeNfIptables, bridgeNfIp6tables, debug, nfd, ngoroutines, systemTime, loggingDriver, cgroupDriver, cgroupVersion, neventsListener, kernelVersion, operatingSystem, osVersion, osType, architecture, NCPU, memTotal, indexServerAddress, registryConfig, genericResources, httpProxy, httpsProxy, noProxy, name, labels, experimentalBuild, serverVersion, runtimes, defaultRuntime, swarm, liveRestoreEnabled, isolation, initBinary, containerdCommit, runcCommit, initCommit, securityOptions, productLicense, defaultAddressPools, warnings, cdISpecDirs);
   }
 
 
@@ -1592,6 +1581,7 @@ public class SystemInfo {
     sb.append("    plugins: ").append(toIndentedString(plugins)).append("\n");
     sb.append("    memoryLimit: ").append(toIndentedString(memoryLimit)).append("\n");
     sb.append("    swapLimit: ").append(toIndentedString(swapLimit)).append("\n");
+    sb.append("    kernelMemoryTCP: ").append(toIndentedString(kernelMemoryTCP)).append("\n");
     sb.append("    cpuCfsPeriod: ").append(toIndentedString(cpuCfsPeriod)).append("\n");
     sb.append("    cpuCfsQuota: ").append(toIndentedString(cpuCfsQuota)).append("\n");
     sb.append("    cpUShares: ").append(toIndentedString(cpUShares)).append("\n");
@@ -1599,6 +1589,8 @@ public class SystemInfo {
     sb.append("    pidsLimit: ").append(toIndentedString(pidsLimit)).append("\n");
     sb.append("    oomKillDisable: ").append(toIndentedString(oomKillDisable)).append("\n");
     sb.append("    ipv4Forwarding: ").append(toIndentedString(ipv4Forwarding)).append("\n");
+    sb.append("    bridgeNfIptables: ").append(toIndentedString(bridgeNfIptables)).append("\n");
+    sb.append("    bridgeNfIp6tables: ").append(toIndentedString(bridgeNfIp6tables)).append("\n");
     sb.append("    debug: ").append(toIndentedString(debug)).append("\n");
     sb.append("    nfd: ").append(toIndentedString(nfd)).append("\n");
     sb.append("    ngoroutines: ").append(toIndentedString(ngoroutines)).append("\n");
@@ -1636,11 +1628,8 @@ public class SystemInfo {
     sb.append("    securityOptions: ").append(toIndentedString(securityOptions)).append("\n");
     sb.append("    productLicense: ").append(toIndentedString(productLicense)).append("\n");
     sb.append("    defaultAddressPools: ").append(toIndentedString(defaultAddressPools)).append("\n");
-    sb.append("    firewallBackend: ").append(toIndentedString(firewallBackend)).append("\n");
-    sb.append("    discoveredDevices: ").append(toIndentedString(discoveredDevices)).append("\n");
     sb.append("    warnings: ").append(toIndentedString(warnings)).append("\n");
     sb.append("    cdISpecDirs: ").append(toIndentedString(cdISpecDirs)).append("\n");
-    sb.append("    containerd: ").append(toIndentedString(containerd)).append("\n");
     sb.append("}");
     return sb.toString();
   }

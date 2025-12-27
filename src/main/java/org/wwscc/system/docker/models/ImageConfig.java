@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.44) is used. For example, calling `/info` is the same as calling `/v1.44/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.52
+ * OpenAPI spec version: 1.44
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -30,13 +30,37 @@ import org.wwscc.system.docker.models.HealthConfig;
  * Configuration of the image. These fields are used as defaults when starting a container from the image. 
  */
 @ApiModel(description = "Configuration of the image. These fields are used as defaults when starting a container from the image. ")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-27T04:16:08.747Z")
 public class ImageConfig {
+  @JsonProperty("Hostname")
+  private String hostname = null;
+
+  @JsonProperty("Domainname")
+  private String domainname = null;
+
   @JsonProperty("User")
   private String user = null;
 
+  @JsonProperty("AttachStdin")
+  private Boolean attachStdin = false;
+
+  @JsonProperty("AttachStdout")
+  private Boolean attachStdout = false;
+
+  @JsonProperty("AttachStderr")
+  private Boolean attachStderr = false;
+
   @JsonProperty("ExposedPorts")
   private Map<String, Object> exposedPorts = null;
+
+  @JsonProperty("Tty")
+  private Boolean tty = false;
+
+  @JsonProperty("OpenStdin")
+  private Boolean openStdin = false;
+
+  @JsonProperty("StdinOnce")
+  private Boolean stdinOnce = false;
 
   @JsonProperty("Env")
   private List<String> env = null;
@@ -50,6 +74,9 @@ public class ImageConfig {
   @JsonProperty("ArgsEscaped")
   private Boolean argsEscaped = false;
 
+  @JsonProperty("Image")
+  private String image = "";
+
   @JsonProperty("Volumes")
   private Map<String, Object> volumes = null;
 
@@ -58,6 +85,12 @@ public class ImageConfig {
 
   @JsonProperty("Entrypoint")
   private List<String> entrypoint = null;
+
+  @JsonProperty("NetworkDisabled")
+  private Boolean networkDisabled = false;
+
+  @JsonProperty("MacAddress")
+  private String macAddress = "";
 
   @JsonProperty("OnBuild")
   private List<String> onBuild = null;
@@ -68,8 +101,47 @@ public class ImageConfig {
   @JsonProperty("StopSignal")
   private String stopSignal = null;
 
+  @JsonProperty("StopTimeout")
+  private Integer stopTimeout = null;
+
   @JsonProperty("Shell")
   private List<String> shell = null;
+
+  public ImageConfig hostname(String hostname) {
+    this.hostname = hostname;
+    return this;
+  }
+
+   /**
+   * The hostname to use for the container, as a valid RFC 1123 hostname.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always empty and must not be used. 
+   * @return hostname
+  **/
+  @ApiModelProperty(example = "", value = "The hostname to use for the container, as a valid RFC 1123 hostname.  <p><br /></p>  > **Note**: this field is always empty and must not be used. ")
+  public String getHostname() {
+    return hostname;
+  }
+
+  public void setHostname(String hostname) {
+    this.hostname = hostname;
+  }
+
+  public ImageConfig domainname(String domainname) {
+    this.domainname = domainname;
+    return this;
+  }
+
+   /**
+   * The domain name to use for the container.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always empty and must not be used. 
+   * @return domainname
+  **/
+  @ApiModelProperty(example = "", value = "The domain name to use for the container.  <p><br /></p>  > **Note**: this field is always empty and must not be used. ")
+  public String getDomainname() {
+    return domainname;
+  }
+
+  public void setDomainname(String domainname) {
+    this.domainname = domainname;
+  }
 
   public ImageConfig user(String user) {
     this.user = user;
@@ -87,6 +159,60 @@ public class ImageConfig {
 
   public void setUser(String user) {
     this.user = user;
+  }
+
+  public ImageConfig attachStdin(Boolean attachStdin) {
+    this.attachStdin = attachStdin;
+    return this;
+  }
+
+   /**
+   * Whether to attach to &#x60;stdin&#x60;.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return attachStdin
+  **/
+  @ApiModelProperty(example = "false", value = "Whether to attach to `stdin`.  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isAttachStdin() {
+    return attachStdin;
+  }
+
+  public void setAttachStdin(Boolean attachStdin) {
+    this.attachStdin = attachStdin;
+  }
+
+  public ImageConfig attachStdout(Boolean attachStdout) {
+    this.attachStdout = attachStdout;
+    return this;
+  }
+
+   /**
+   * Whether to attach to &#x60;stdout&#x60;.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return attachStdout
+  **/
+  @ApiModelProperty(example = "false", value = "Whether to attach to `stdout`.  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isAttachStdout() {
+    return attachStdout;
+  }
+
+  public void setAttachStdout(Boolean attachStdout) {
+    this.attachStdout = attachStdout;
+  }
+
+  public ImageConfig attachStderr(Boolean attachStderr) {
+    this.attachStderr = attachStderr;
+    return this;
+  }
+
+   /**
+   * Whether to attach to &#x60;stderr&#x60;.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return attachStderr
+  **/
+  @ApiModelProperty(example = "false", value = "Whether to attach to `stderr`.  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isAttachStderr() {
+    return attachStderr;
+  }
+
+  public void setAttachStderr(Boolean attachStderr) {
+    this.attachStderr = attachStderr;
   }
 
   public ImageConfig exposedPorts(Map<String, Object> exposedPorts) {
@@ -113,6 +239,60 @@ public class ImageConfig {
 
   public void setExposedPorts(Map<String, Object> exposedPorts) {
     this.exposedPorts = exposedPorts;
+  }
+
+  public ImageConfig tty(Boolean tty) {
+    this.tty = tty;
+    return this;
+  }
+
+   /**
+   * Attach standard streams to a TTY, including &#x60;stdin&#x60; if it is not closed.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return tty
+  **/
+  @ApiModelProperty(example = "false", value = "Attach standard streams to a TTY, including `stdin` if it is not closed.  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isTty() {
+    return tty;
+  }
+
+  public void setTty(Boolean tty) {
+    this.tty = tty;
+  }
+
+  public ImageConfig openStdin(Boolean openStdin) {
+    this.openStdin = openStdin;
+    return this;
+  }
+
+   /**
+   * Open &#x60;stdin&#x60;  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return openStdin
+  **/
+  @ApiModelProperty(example = "false", value = "Open `stdin`  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isOpenStdin() {
+    return openStdin;
+  }
+
+  public void setOpenStdin(Boolean openStdin) {
+    this.openStdin = openStdin;
+  }
+
+  public ImageConfig stdinOnce(Boolean stdinOnce) {
+    this.stdinOnce = stdinOnce;
+    return this;
+  }
+
+   /**
+   * Close &#x60;stdin&#x60; after one attached client disconnects.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always false and must not be used. 
+   * @return stdinOnce
+  **/
+  @ApiModelProperty(example = "false", value = "Close `stdin` after one attached client disconnects.  <p><br /></p>  > **Note**: this field is always false and must not be used. ")
+  public Boolean isStdinOnce() {
+    return stdinOnce;
+  }
+
+  public void setStdinOnce(Boolean stdinOnce) {
+    this.stdinOnce = stdinOnce;
   }
 
   public ImageConfig env(List<String> env) {
@@ -203,6 +383,24 @@ public class ImageConfig {
     this.argsEscaped = argsEscaped;
   }
 
+  public ImageConfig image(String image) {
+    this.image = image;
+    return this;
+  }
+
+   /**
+   * The name (or reference) of the image to use when creating the container, or which was used when the container was created.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always empty and must not be used. 
+   * @return image
+  **/
+  @ApiModelProperty(example = "", value = "The name (or reference) of the image to use when creating the container, or which was used when the container was created.  <p><br /></p>  > **Note**: this field is always empty and must not be used. ")
+  public String getImage() {
+    return image;
+  }
+
+  public void setImage(String image) {
+    this.image = image;
+  }
+
   public ImageConfig volumes(Map<String, Object> volumes) {
     this.volumes = volumes;
     return this;
@@ -271,6 +469,42 @@ public class ImageConfig {
 
   public void setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
+  }
+
+  public ImageConfig networkDisabled(Boolean networkDisabled) {
+    this.networkDisabled = networkDisabled;
+    return this;
+  }
+
+   /**
+   * Disable networking for the container.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always omitted and must not be used. 
+   * @return networkDisabled
+  **/
+  @ApiModelProperty(example = "false", value = "Disable networking for the container.  <p><br /></p>  > **Note**: this field is always omitted and must not be used. ")
+  public Boolean isNetworkDisabled() {
+    return networkDisabled;
+  }
+
+  public void setNetworkDisabled(Boolean networkDisabled) {
+    this.networkDisabled = networkDisabled;
+  }
+
+  public ImageConfig macAddress(String macAddress) {
+    this.macAddress = macAddress;
+    return this;
+  }
+
+   /**
+   * MAC address of the container.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Deprecated**: this field is deprecated in API v1.44 and up. It is always omitted. 
+   * @return macAddress
+  **/
+  @ApiModelProperty(example = "", value = "MAC address of the container.  <p><br /></p>  > **Deprecated**: this field is deprecated in API v1.44 and up. It is always omitted. ")
+  public String getMacAddress() {
+    return macAddress;
+  }
+
+  public void setMacAddress(String macAddress) {
+    this.macAddress = macAddress;
   }
 
   public ImageConfig onBuild(List<String> onBuild) {
@@ -343,6 +577,24 @@ public class ImageConfig {
     this.stopSignal = stopSignal;
   }
 
+  public ImageConfig stopTimeout(Integer stopTimeout) {
+    this.stopTimeout = stopTimeout;
+    return this;
+  }
+
+   /**
+   * Timeout to stop a container in seconds.  &lt;p&gt;&lt;br /&gt;&lt;/p&gt;  &gt; **Note**: this field is always omitted and must not be used. 
+   * @return stopTimeout
+  **/
+  @ApiModelProperty(value = "Timeout to stop a container in seconds.  <p><br /></p>  > **Note**: this field is always omitted and must not be used. ")
+  public Integer getStopTimeout() {
+    return stopTimeout;
+  }
+
+  public void setStopTimeout(Integer stopTimeout) {
+    this.stopTimeout = stopTimeout;
+  }
+
   public ImageConfig shell(List<String> shell) {
     this.shell = shell;
     return this;
@@ -379,24 +631,36 @@ public class ImageConfig {
       return false;
     }
     ImageConfig imageConfig = (ImageConfig) o;
-    return Objects.equals(this.user, imageConfig.user) &&
+    return Objects.equals(this.hostname, imageConfig.hostname) &&
+        Objects.equals(this.domainname, imageConfig.domainname) &&
+        Objects.equals(this.user, imageConfig.user) &&
+        Objects.equals(this.attachStdin, imageConfig.attachStdin) &&
+        Objects.equals(this.attachStdout, imageConfig.attachStdout) &&
+        Objects.equals(this.attachStderr, imageConfig.attachStderr) &&
         Objects.equals(this.exposedPorts, imageConfig.exposedPorts) &&
+        Objects.equals(this.tty, imageConfig.tty) &&
+        Objects.equals(this.openStdin, imageConfig.openStdin) &&
+        Objects.equals(this.stdinOnce, imageConfig.stdinOnce) &&
         Objects.equals(this.env, imageConfig.env) &&
         Objects.equals(this.cmd, imageConfig.cmd) &&
         Objects.equals(this.healthcheck, imageConfig.healthcheck) &&
         Objects.equals(this.argsEscaped, imageConfig.argsEscaped) &&
+        Objects.equals(this.image, imageConfig.image) &&
         Objects.equals(this.volumes, imageConfig.volumes) &&
         Objects.equals(this.workingDir, imageConfig.workingDir) &&
         Objects.equals(this.entrypoint, imageConfig.entrypoint) &&
+        Objects.equals(this.networkDisabled, imageConfig.networkDisabled) &&
+        Objects.equals(this.macAddress, imageConfig.macAddress) &&
         Objects.equals(this.onBuild, imageConfig.onBuild) &&
         Objects.equals(this.labels, imageConfig.labels) &&
         Objects.equals(this.stopSignal, imageConfig.stopSignal) &&
+        Objects.equals(this.stopTimeout, imageConfig.stopTimeout) &&
         Objects.equals(this.shell, imageConfig.shell);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(user, exposedPorts, env, cmd, healthcheck, argsEscaped, volumes, workingDir, entrypoint, onBuild, labels, stopSignal, shell);
+    return Objects.hash(hostname, domainname, user, attachStdin, attachStdout, attachStderr, exposedPorts, tty, openStdin, stdinOnce, env, cmd, healthcheck, argsEscaped, image, volumes, workingDir, entrypoint, networkDisabled, macAddress, onBuild, labels, stopSignal, stopTimeout, shell);
   }
 
 
@@ -405,18 +669,30 @@ public class ImageConfig {
     StringBuilder sb = new StringBuilder();
     sb.append("class ImageConfig {\n");
     
+    sb.append("    hostname: ").append(toIndentedString(hostname)).append("\n");
+    sb.append("    domainname: ").append(toIndentedString(domainname)).append("\n");
     sb.append("    user: ").append(toIndentedString(user)).append("\n");
+    sb.append("    attachStdin: ").append(toIndentedString(attachStdin)).append("\n");
+    sb.append("    attachStdout: ").append(toIndentedString(attachStdout)).append("\n");
+    sb.append("    attachStderr: ").append(toIndentedString(attachStderr)).append("\n");
     sb.append("    exposedPorts: ").append(toIndentedString(exposedPorts)).append("\n");
+    sb.append("    tty: ").append(toIndentedString(tty)).append("\n");
+    sb.append("    openStdin: ").append(toIndentedString(openStdin)).append("\n");
+    sb.append("    stdinOnce: ").append(toIndentedString(stdinOnce)).append("\n");
     sb.append("    env: ").append(toIndentedString(env)).append("\n");
     sb.append("    cmd: ").append(toIndentedString(cmd)).append("\n");
     sb.append("    healthcheck: ").append(toIndentedString(healthcheck)).append("\n");
     sb.append("    argsEscaped: ").append(toIndentedString(argsEscaped)).append("\n");
+    sb.append("    image: ").append(toIndentedString(image)).append("\n");
     sb.append("    volumes: ").append(toIndentedString(volumes)).append("\n");
     sb.append("    workingDir: ").append(toIndentedString(workingDir)).append("\n");
     sb.append("    entrypoint: ").append(toIndentedString(entrypoint)).append("\n");
+    sb.append("    networkDisabled: ").append(toIndentedString(networkDisabled)).append("\n");
+    sb.append("    macAddress: ").append(toIndentedString(macAddress)).append("\n");
     sb.append("    onBuild: ").append(toIndentedString(onBuild)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    stopSignal: ").append(toIndentedString(stopSignal)).append("\n");
+    sb.append("    stopTimeout: ").append(toIndentedString(stopTimeout)).append("\n");
     sb.append("    shell: ").append(toIndentedString(shell)).append("\n");
     sb.append("}");
     return sb.toString();
