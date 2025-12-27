@@ -25,10 +25,10 @@ import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.wwscc.system.docker.models.ContainerSummary;
 import org.wwscc.system.docker.models.ExecConfig;
-import org.wwscc.system.docker.models.ExecStatus;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
-import org.wwscc.system.docker.models.VolumesResponse;
+import org.wwscc.system.docker.models.NetworkInspect;
+import org.wwscc.system.docker.models.VolumeListResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,11 +38,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Requests
 {
-    public static final String API_VER = "/v1.35";
+    public static final String API_VER = "/v1.52";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /*
-     *  models dir data created swagger-codegen using docker API v1.35 swagger.yaml:
+     *  models dir data created swagger-codegen using docker API v1.52 swagger.yaml:
      *  swagger-codegen-cli:v2.3.1 generate -i /local/swagger.yaml -o /local/out -ljava
      *     -Dlibrary=feign -Dmodels -Djava8 -DdateLibrary=java8 -DmodelPackage=org.wwscc.system.docker.models
      */
@@ -106,9 +106,9 @@ public class Requests
         }
     }
 
-    static class GetContainers extends Wrapper<ContainerSummary> {
+    static class GetContainers extends Wrapper<ContainerSummary[]> {
         public GetContainers() {
-            super(new HttpGet(API_VER+"/containers/json?all=true"), ContainerSummary.class);
+            super(new HttpGet(API_VER+"/containers/json?all=true"), ContainerSummary[].class);
     }}
 
     static class GetImages extends Wrapper<ImageSummary[]> {
@@ -116,9 +116,9 @@ public class Requests
             super(new HttpGet(API_VER+"/images/json"), ImageSummary[].class);
     }}
 
-    static class GetVolumes extends Wrapper<VolumesResponse> {
+    static class GetVolumes extends Wrapper<VolumeListResponse> {
         public GetVolumes() {
-            super(new HttpGet(API_VER+"/volumes"), VolumesResponse.class);
+            super(new HttpGet(API_VER+"/volumes"), VolumeListResponse.class);
     }}
 
     static class GetNetworks extends Wrapper<Network[]> {
@@ -131,9 +131,9 @@ public class Requests
             super(new HttpPost(API_VER+"/images/create?fromImage="+name), InputStream.class);
     }}
 
-    static class GetNetwork extends Wrapper<Network> {
+    static class GetNetwork extends Wrapper<NetworkInspect> {
         public GetNetwork(String name) {
-            super(new HttpGet(API_VER+"/networks/"+name), Network.class);
+            super(new HttpGet(API_VER+"/networks/"+name), NetworkInspect.class);
     }}
 
     static class DeleteNetwork extends Wrapper<Void> {
@@ -193,9 +193,10 @@ public class Requests
             ((HttpPost)request).setEntity(new StringEntity(mapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
     }}
 
-    static class GetExecStatus extends Wrapper<ExecStatus> {
+    @SuppressWarnings("rawtypes")
+    static class GetExecStatus extends Wrapper<Map> {
         public GetExecStatus(String id) {
-            super(new HttpGet(API_VER+"/exec/"+id+"/json"), ExecStatus.class);
+            super(new HttpGet(API_VER+"/exec/"+id+"/json"), Map.class);
         }
     }
 }

@@ -67,15 +67,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.wwscc.system.docker.SocketFactories.UnixSocketFactory;
 import org.wwscc.system.docker.SocketFactories.WindowsPipeFactory;
-import org.wwscc.system.docker.models.ContainerSummaryInner;
+import org.wwscc.system.docker.models.ContainerSummary;
+import org.wwscc.system.docker.models.EndpointResource;
 import org.wwscc.system.docker.models.ErrorResponse;
 import org.wwscc.system.docker.models.ExecConfig;
-import org.wwscc.system.docker.models.ExecStatus;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
-import org.wwscc.system.docker.models.NetworkContainer;
+import org.wwscc.system.docker.models.NetworkInspect;
 import org.wwscc.system.docker.models.Volume;
-import org.wwscc.system.docker.models.VolumesResponse;
+import org.wwscc.system.docker.models.VolumeListResponse;
 import org.wwscc.util.AppSetup;
 import org.wwscc.util.Prefs;
 
@@ -229,7 +229,7 @@ public class DockerAPI
             }
 
             w.write("\n=== Docker containers ===\n");
-            for (ContainerSummaryInner s : request(new Requests.GetContainers())) {
+            for (ContainerSummary s : request(new Requests.GetContainers())) {
                 w.write(s.toString());
                 w.write("\n");
             }
@@ -252,12 +252,12 @@ public class DockerAPI
             c.setState(null);
         }
 
-        for (ContainerSummaryInner info : request(new Requests.GetContainers()))
+        for (ContainerSummary info : request(new Requests.GetContainers()))
         {
             for (DockerContainer c : search) {
                 if (info.getNames().contains("/"+c.getName())) {
                     log.finer(c.getName() + " state = " + info.getState());
-                    c.setState(info.getState());
+                    c.setState(info.getState().toString());
                 }
             }
         }
@@ -267,11 +267,11 @@ public class DockerAPI
     public boolean networkUp(String name)
     {
         try {
-            Network net = null;
+            NetworkInspect net = null;
             try { net = request(new Requests.GetNetwork(name)); } catch (IOException ioe) {}
 
             if (net != null) { // found a network matching the name
-                for (NetworkContainer nc : net.getContainers().values())
+                for (EndpointResource nc : net.getContainers().values())
                     request(new Requests.DisconnectContainer(name, nc.getName()));
                 request(new Requests.DeleteNetwork(name));
             }
@@ -359,7 +359,7 @@ public class DockerAPI
         {
             imagesDownload(containers, listener);
 
-            VolumesResponse volumes = request(new Requests.GetVolumes());
+            VolumeListResponse volumes = request(new Requests.GetVolumes());
             if (volumes.getVolumes() == null)
                 volumes.setVolumes(new ArrayList<Volume>());
 
@@ -457,7 +457,7 @@ public class DockerAPI
 
         listener.status("Check cert status");
         ImageSummary[] islist = request(new Requests.GetImages());
-        VolumesResponse volumes = request(new Requests.GetVolumes());
+        VolumeListResponse volumes = request(new Requests.GetVolumes());
 
         listener.status("Download alpine"); // ensure image is available
         if ((islist == null) || !Arrays.asList(islist).stream().anyMatch(is -> is.getRepoTags().contains(image))) {
@@ -492,9 +492,11 @@ public class DockerAPI
             long deadline = System.currentTimeMillis() + 45000;
             while (true)
             {
-                ExecStatus status = request(new Requests.GetExecStatus(id));
-                if ((status != null) && (status.getExitCode() != null))
-                    return status.getExitCode();
+                //ExitCode
+                @SuppressWarnings("unchecked")
+                Map<String,Object> status = request(new Requests.GetExecStatus(id));
+                if ((status != null) && (status.get("ExitCode") != null))
+                    return (Integer)status.get("ExitCode");
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {}
