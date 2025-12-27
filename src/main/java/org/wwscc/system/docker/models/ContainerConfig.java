@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,19 +14,23 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.HealthConfig;
 
 /**
- * Configuration for a container that is portable between hosts
+ * Configuration for a container that is portable between hosts. 
  */
-@ApiModel(description = "Configuration for a container that is portable between hosts")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@ApiModel(description = "Configuration for a container that is portable between hosts. ")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class ContainerConfig {
   @JsonProperty("Hostname")
   private String hostname = null;
@@ -68,13 +72,13 @@ public class ContainerConfig {
   private HealthConfig healthcheck = null;
 
   @JsonProperty("ArgsEscaped")
-  private Boolean argsEscaped = null;
+  private Boolean argsEscaped = false;
 
   @JsonProperty("Image")
   private String image = null;
 
   @JsonProperty("Volumes")
-  private ContainerConfigVolumes volumes = null;
+  private Map<String, Object> volumes = null;
 
   @JsonProperty("WorkingDir")
   private String workingDir = null;
@@ -85,9 +89,6 @@ public class ContainerConfig {
   @JsonProperty("NetworkDisabled")
   private Boolean networkDisabled = null;
 
-  @JsonProperty("MacAddress")
-  private String macAddress = null;
-
   @JsonProperty("OnBuild")
   private List<String> onBuild = null;
 
@@ -95,7 +96,7 @@ public class ContainerConfig {
   private Map<String, String> labels = null;
 
   @JsonProperty("StopSignal")
-  private String stopSignal = "SIGTERM";
+  private String stopSignal = null;
 
   @JsonProperty("StopTimeout")
   private Integer stopTimeout = null;
@@ -109,10 +110,10 @@ public class ContainerConfig {
   }
 
    /**
-   * The hostname to use for the container, as a valid RFC 1123 hostname.
+   * The hostname to use for the container, as a valid RFC 1123 hostname. 
    * @return hostname
   **/
-  @ApiModelProperty(value = "The hostname to use for the container, as a valid RFC 1123 hostname.")
+  @ApiModelProperty(example = "439f4e91bd1d", value = "The hostname to use for the container, as a valid RFC 1123 hostname. ")
   public String getHostname() {
     return hostname;
   }
@@ -127,10 +128,10 @@ public class ContainerConfig {
   }
 
    /**
-   * The domain name to use for the container.
+   * The domain name to use for the container. 
    * @return domainname
   **/
-  @ApiModelProperty(value = "The domain name to use for the container.")
+  @ApiModelProperty(value = "The domain name to use for the container. ")
   public String getDomainname() {
     return domainname;
   }
@@ -145,10 +146,10 @@ public class ContainerConfig {
   }
 
    /**
-   * The user that commands are run as inside the container.
+   * Commands run as this user inside the container. If omitted, commands run as the user specified in the image the container was started from.  Can be either user-name or UID, and optional group-name or GID, separated by a colon (&#x60;&lt;user-name|UID&gt;[&lt;:group-name|GID&gt;]&#x60;).
    * @return user
   **/
-  @ApiModelProperty(value = "The user that commands are run as inside the container.")
+  @ApiModelProperty(example = "123:456", value = "Commands run as this user inside the container. If omitted, commands run as the user specified in the image the container was started from.  Can be either user-name or UID, and optional group-name or GID, separated by a colon (`<user-name|UID>[<:group-name|GID>]`).")
   public String getUser() {
     return user;
   }
@@ -225,10 +226,10 @@ public class ContainerConfig {
   }
 
    /**
-   * An object mapping ports to an empty object in the form:  &#x60;{\&quot;&lt;port&gt;/&lt;tcp|udp&gt;\&quot;: {}}&#x60;
+   * An object mapping ports to an empty object in the form:  &#x60;{\&quot;&lt;port&gt;/&lt;tcp|udp|sctp&gt;\&quot;: {}}&#x60; 
    * @return exposedPorts
   **/
-  @ApiModelProperty(value = "An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp>\": {}}` ")
+  @ApiModelProperty(example = "{\"80/tcp\":{},\"443/tcp\":{}}", value = "An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp|sctp>\": {}}` ")
   public Map<String, Object> getExposedPorts() {
     return exposedPorts;
   }
@@ -243,10 +244,10 @@ public class ContainerConfig {
   }
 
    /**
-   * Attach standard streams to a TTY, including &#x60;stdin&#x60; if it is not closed.
+   * Attach standard streams to a TTY, including &#x60;stdin&#x60; if it is not closed. 
    * @return tty
   **/
-  @ApiModelProperty(value = "Attach standard streams to a TTY, including `stdin` if it is not closed.")
+  @ApiModelProperty(value = "Attach standard streams to a TTY, including `stdin` if it is not closed. ")
   public Boolean isTty() {
     return tty;
   }
@@ -305,10 +306,10 @@ public class ContainerConfig {
   }
 
    /**
-   * A list of environment variables to set inside the container in the form &#x60;[\&quot;VAR&#x3D;value\&quot;, ...]&#x60;. A variable without &#x60;&#x3D;&#x60; is removed from the environment, rather than to have an empty value.
+   * A list of environment variables to set inside the container in the form &#x60;[\&quot;VAR&#x3D;value\&quot;, ...]&#x60;. A variable without &#x60;&#x3D;&#x60; is removed from the environment, rather than to have an empty value. 
    * @return env
   **/
-  @ApiModelProperty(value = "A list of environment variables to set inside the container in the form `[\"VAR=value\", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value. ")
+  @ApiModelProperty(example = "[\"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\"]", value = "A list of environment variables to set inside the container in the form `[\"VAR=value\", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value. ")
   public List<String> getEnv() {
     return env;
   }
@@ -331,10 +332,10 @@ public class ContainerConfig {
   }
 
    /**
-   * Command to run specified as a string or an array of strings.
+   * Command to run specified as a string or an array of strings. 
    * @return cmd
   **/
-  @ApiModelProperty(value = "Command to run specified as a string or an array of strings.")
+  @ApiModelProperty(example = "[\"/bin/sh\"]", value = "Command to run specified as a string or an array of strings. ")
   public List<String> getCmd() {
     return cmd;
   }
@@ -370,7 +371,7 @@ public class ContainerConfig {
    * Command is already escaped (Windows only)
    * @return argsEscaped
   **/
-  @ApiModelProperty(value = "Command is already escaped (Windows only)")
+  @ApiModelProperty(example = "false", value = "Command is already escaped (Windows only)")
   public Boolean isArgsEscaped() {
     return argsEscaped;
   }
@@ -385,10 +386,10 @@ public class ContainerConfig {
   }
 
    /**
-   * The name of the image to use when creating the container
+   * The name (or reference) of the image to use when creating the container, or which was used when the container was created. 
    * @return image
   **/
-  @ApiModelProperty(value = "The name of the image to use when creating the container")
+  @ApiModelProperty(example = "example-image:1.0", value = "The name (or reference) of the image to use when creating the container, or which was used when the container was created. ")
   public String getImage() {
     return image;
   }
@@ -397,21 +398,29 @@ public class ContainerConfig {
     this.image = image;
   }
 
-  public ContainerConfig volumes(ContainerConfigVolumes volumes) {
+  public ContainerConfig volumes(Map<String, Object> volumes) {
     this.volumes = volumes;
     return this;
   }
 
+  public ContainerConfig putVolumesItem(String key, Object volumesItem) {
+    if (this.volumes == null) {
+      this.volumes = new HashMap<>();
+    }
+    this.volumes.put(key, volumesItem);
+    return this;
+  }
+
    /**
-   * Get volumes
+   * An object mapping mount point paths inside the container to empty objects. 
    * @return volumes
   **/
-  @ApiModelProperty(value = "")
-  public ContainerConfigVolumes getVolumes() {
+  @ApiModelProperty(value = "An object mapping mount point paths inside the container to empty objects. ")
+  public Map<String, Object> getVolumes() {
     return volumes;
   }
 
-  public void setVolumes(ContainerConfigVolumes volumes) {
+  public void setVolumes(Map<String, Object> volumes) {
     this.volumes = volumes;
   }
 
@@ -424,7 +433,7 @@ public class ContainerConfig {
    * The working directory for commands to run in.
    * @return workingDir
   **/
-  @ApiModelProperty(value = "The working directory for commands to run in.")
+  @ApiModelProperty(example = "/public/", value = "The working directory for commands to run in.")
   public String getWorkingDir() {
     return workingDir;
   }
@@ -447,10 +456,10 @@ public class ContainerConfig {
   }
 
    /**
-   * The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (&#x60;[\&quot;\&quot;]&#x60;) then the entry point is reset to system default (i.e., the entry point used by docker when there is no &#x60;ENTRYPOINT&#x60; instruction in the &#x60;Dockerfile&#x60;).
+   * The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (&#x60;[\&quot;\&quot;]&#x60;) then the entry point is reset to system default (i.e., the entry point used by docker when there is no &#x60;ENTRYPOINT&#x60; instruction in the &#x60;Dockerfile&#x60;). 
    * @return entrypoint
   **/
-  @ApiModelProperty(value = "The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (`[\"\"]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`). ")
+  @ApiModelProperty(example = "[]", value = "The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (`[\"\"]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`). ")
   public List<String> getEntrypoint() {
     return entrypoint;
   }
@@ -477,24 +486,6 @@ public class ContainerConfig {
     this.networkDisabled = networkDisabled;
   }
 
-  public ContainerConfig macAddress(String macAddress) {
-    this.macAddress = macAddress;
-    return this;
-  }
-
-   /**
-   * MAC address of the container.
-   * @return macAddress
-  **/
-  @ApiModelProperty(value = "MAC address of the container.")
-  public String getMacAddress() {
-    return macAddress;
-  }
-
-  public void setMacAddress(String macAddress) {
-    this.macAddress = macAddress;
-  }
-
   public ContainerConfig onBuild(List<String> onBuild) {
     this.onBuild = onBuild;
     return this;
@@ -509,10 +500,10 @@ public class ContainerConfig {
   }
 
    /**
-   * &#x60;ONBUILD&#x60; metadata that were defined in the image&#39;s &#x60;Dockerfile&#x60;.
+   * &#x60;ONBUILD&#x60; metadata that were defined in the image&#39;s &#x60;Dockerfile&#x60;. 
    * @return onBuild
   **/
-  @ApiModelProperty(value = "`ONBUILD` metadata that were defined in the image's `Dockerfile`.")
+  @ApiModelProperty(example = "[]", value = "`ONBUILD` metadata that were defined in the image's `Dockerfile`. ")
   public List<String> getOnBuild() {
     return onBuild;
   }
@@ -538,7 +529,7 @@ public class ContainerConfig {
    * User-defined key/value metadata.
    * @return labels
   **/
-  @ApiModelProperty(value = "User-defined key/value metadata.")
+  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", value = "User-defined key/value metadata.")
   public Map<String, String> getLabels() {
     return labels;
   }
@@ -553,10 +544,10 @@ public class ContainerConfig {
   }
 
    /**
-   * Signal to stop a container as a string or unsigned integer.
+   * Signal to stop a container as a string or unsigned integer. 
    * @return stopSignal
   **/
-  @ApiModelProperty(value = "Signal to stop a container as a string or unsigned integer.")
+  @ApiModelProperty(example = "SIGTERM", value = "Signal to stop a container as a string or unsigned integer. ")
   public String getStopSignal() {
     return stopSignal;
   }
@@ -597,10 +588,10 @@ public class ContainerConfig {
   }
 
    /**
-   * Shell for when &#x60;RUN&#x60;, &#x60;CMD&#x60;, and &#x60;ENTRYPOINT&#x60; uses a shell.
+   * Shell for when &#x60;RUN&#x60;, &#x60;CMD&#x60;, and &#x60;ENTRYPOINT&#x60; uses a shell. 
    * @return shell
   **/
-  @ApiModelProperty(value = "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell.")
+  @ApiModelProperty(example = "[\"/bin/sh\",\"-c\"]", value = "Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell. ")
   public List<String> getShell() {
     return shell;
   }
@@ -638,7 +629,6 @@ public class ContainerConfig {
         Objects.equals(this.workingDir, containerConfig.workingDir) &&
         Objects.equals(this.entrypoint, containerConfig.entrypoint) &&
         Objects.equals(this.networkDisabled, containerConfig.networkDisabled) &&
-        Objects.equals(this.macAddress, containerConfig.macAddress) &&
         Objects.equals(this.onBuild, containerConfig.onBuild) &&
         Objects.equals(this.labels, containerConfig.labels) &&
         Objects.equals(this.stopSignal, containerConfig.stopSignal) &&
@@ -648,7 +638,7 @@ public class ContainerConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(hostname, domainname, user, attachStdin, attachStdout, attachStderr, exposedPorts, tty, openStdin, stdinOnce, env, cmd, healthcheck, argsEscaped, image, volumes, workingDir, entrypoint, networkDisabled, macAddress, onBuild, labels, stopSignal, stopTimeout, shell);
+    return Objects.hash(hostname, domainname, user, attachStdin, attachStdout, attachStderr, exposedPorts, tty, openStdin, stdinOnce, env, cmd, healthcheck, argsEscaped, image, volumes, workingDir, entrypoint, networkDisabled, onBuild, labels, stopSignal, stopTimeout, shell);
   }
 
 
@@ -656,7 +646,7 @@ public class ContainerConfig {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ContainerConfig {\n");
-
+    
     sb.append("    hostname: ").append(toIndentedString(hostname)).append("\n");
     sb.append("    domainname: ").append(toIndentedString(domainname)).append("\n");
     sb.append("    user: ").append(toIndentedString(user)).append("\n");
@@ -676,7 +666,6 @@ public class ContainerConfig {
     sb.append("    workingDir: ").append(toIndentedString(workingDir)).append("\n");
     sb.append("    entrypoint: ").append(toIndentedString(entrypoint)).append("\n");
     sb.append("    networkDisabled: ").append(toIndentedString(networkDisabled)).append("\n");
-    sb.append("    macAddress: ").append(toIndentedString(macAddress)).append("\n");
     sb.append("    onBuild: ").append(toIndentedString(onBuild)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    stopSignal: ").append(toIndentedString(stopSignal)).append("\n");

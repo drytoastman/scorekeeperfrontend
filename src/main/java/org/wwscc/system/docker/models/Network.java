@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,15 +14,24 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.ConfigReference;
+import org.wwscc.system.docker.models.IPAM;
+import org.wwscc.system.docker.models.PeerInfo;
 
 /**
  * Network
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class Network {
   @JsonProperty("Name")
   private String name = null;
@@ -39,6 +48,9 @@ public class Network {
   @JsonProperty("Driver")
   private String driver = null;
 
+  @JsonProperty("EnableIPv4")
+  private Boolean enableIPv4 = null;
+
   @JsonProperty("EnableIPv6")
   private Boolean enableIPv6 = null;
 
@@ -46,16 +58,19 @@ public class Network {
   private IPAM IPAM = null;
 
   @JsonProperty("Internal")
-  private Boolean internal = null;
+  private Boolean internal = false;
 
   @JsonProperty("Attachable")
-  private Boolean attachable = null;
+  private Boolean attachable = false;
 
   @JsonProperty("Ingress")
-  private Boolean ingress = null;
+  private Boolean ingress = false;
 
-  @JsonProperty("Containers")
-  private Map<String, NetworkContainer> containers = null;
+  @JsonProperty("ConfigFrom")
+  private ConfigReference configFrom = null;
+
+  @JsonProperty("ConfigOnly")
+  private Boolean configOnly = false;
 
   @JsonProperty("Options")
   private Map<String, String> options = null;
@@ -63,16 +78,19 @@ public class Network {
   @JsonProperty("Labels")
   private Map<String, String> labels = null;
 
+  @JsonProperty("Peers")
+  private List<PeerInfo> peers = null;
+
   public Network name(String name) {
     this.name = name;
     return this;
   }
 
    /**
-   * Get name
+   * Name of the network. 
    * @return name
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "my_network", value = "Name of the network. ")
   public String getName() {
     return name;
   }
@@ -87,10 +105,10 @@ public class Network {
   }
 
    /**
-   * Get id
+   * ID that uniquely identifies a network on a single machine. 
    * @return id
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "7d86d31b1478e7cca9ebed7e73aa0fdeec46c5ca29497431d3007d2d9e15ed99", value = "ID that uniquely identifies a network on a single machine. ")
   public String getId() {
     return id;
   }
@@ -105,10 +123,10 @@ public class Network {
   }
 
    /**
-   * Get created
+   * Date and time at which the network was created in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. 
    * @return created
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "2016-10-19T04:33:30.360899459Z", value = "Date and time at which the network was created in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. ")
   public String getCreated() {
     return created;
   }
@@ -123,10 +141,10 @@ public class Network {
   }
 
    /**
-   * Get scope
+   * The level at which the network exists (e.g. &#x60;swarm&#x60; for cluster-wide or &#x60;local&#x60; for machine level) 
    * @return scope
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "local", value = "The level at which the network exists (e.g. `swarm` for cluster-wide or `local` for machine level) ")
   public String getScope() {
     return scope;
   }
@@ -141,10 +159,10 @@ public class Network {
   }
 
    /**
-   * Get driver
+   * The name of the driver used to create the network (e.g. &#x60;bridge&#x60;, &#x60;overlay&#x60;). 
    * @return driver
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "overlay", value = "The name of the driver used to create the network (e.g. `bridge`, `overlay`). ")
   public String getDriver() {
     return driver;
   }
@@ -153,16 +171,34 @@ public class Network {
     this.driver = driver;
   }
 
+  public Network enableIPv4(Boolean enableIPv4) {
+    this.enableIPv4 = enableIPv4;
+    return this;
+  }
+
+   /**
+   * Whether the network was created with IPv4 enabled. 
+   * @return enableIPv4
+  **/
+  @ApiModelProperty(example = "true", value = "Whether the network was created with IPv4 enabled. ")
+  public Boolean isEnableIPv4() {
+    return enableIPv4;
+  }
+
+  public void setEnableIPv4(Boolean enableIPv4) {
+    this.enableIPv4 = enableIPv4;
+  }
+
   public Network enableIPv6(Boolean enableIPv6) {
     this.enableIPv6 = enableIPv6;
     return this;
   }
 
    /**
-   * Get enableIPv6
+   * Whether the network was created with IPv6 enabled. 
    * @return enableIPv6
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "false", value = "Whether the network was created with IPv6 enabled. ")
   public Boolean isEnableIPv6() {
     return enableIPv6;
   }
@@ -177,10 +213,10 @@ public class Network {
   }
 
    /**
-   * Get IPAM
+   * The network&#39;s IP Address Management. 
    * @return IPAM
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "The network's IP Address Management. ")
   public IPAM getIPAM() {
     return IPAM;
   }
@@ -195,10 +231,10 @@ public class Network {
   }
 
    /**
-   * Get internal
+   * Whether the network is created to only allow internal networking connectivity. 
    * @return internal
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "false", value = "Whether the network is created to only allow internal networking connectivity. ")
   public Boolean isInternal() {
     return internal;
   }
@@ -213,10 +249,10 @@ public class Network {
   }
 
    /**
-   * Get attachable
+   * Whether a global / swarm scope network is manually attachable by regular containers from workers in swarm mode. 
    * @return attachable
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "false", value = "Whether a global / swarm scope network is manually attachable by regular containers from workers in swarm mode. ")
   public Boolean isAttachable() {
     return attachable;
   }
@@ -231,10 +267,10 @@ public class Network {
   }
 
    /**
-   * Get ingress
+   * Whether the network is providing the routing-mesh for the swarm cluster. 
    * @return ingress
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "false", value = "Whether the network is providing the routing-mesh for the swarm cluster. ")
   public Boolean isIngress() {
     return ingress;
   }
@@ -243,30 +279,40 @@ public class Network {
     this.ingress = ingress;
   }
 
-  public Network containers(Map<String, NetworkContainer> containers) {
-    this.containers = containers;
-    return this;
-  }
-
-  public Network putContainersItem(String key, NetworkContainer containersItem) {
-    if (this.containers == null) {
-      this.containers = new HashMap<>();
-    }
-    this.containers.put(key, containersItem);
+  public Network configFrom(ConfigReference configFrom) {
+    this.configFrom = configFrom;
     return this;
   }
 
    /**
-   * Get containers
-   * @return containers
+   * Get configFrom
+   * @return configFrom
   **/
   @ApiModelProperty(value = "")
-  public Map<String, NetworkContainer> getContainers() {
-    return containers;
+  public ConfigReference getConfigFrom() {
+    return configFrom;
   }
 
-  public void setContainers(Map<String, NetworkContainer> containers) {
-    this.containers = containers;
+  public void setConfigFrom(ConfigReference configFrom) {
+    this.configFrom = configFrom;
+  }
+
+  public Network configOnly(Boolean configOnly) {
+    this.configOnly = configOnly;
+    return this;
+  }
+
+   /**
+   * Whether the network is a config-only network. Config-only networks are placeholder networks for network configurations to be used by other networks. Config-only networks cannot be used directly to run containers or services. 
+   * @return configOnly
+  **/
+  @ApiModelProperty(value = "Whether the network is a config-only network. Config-only networks are placeholder networks for network configurations to be used by other networks. Config-only networks cannot be used directly to run containers or services. ")
+  public Boolean isConfigOnly() {
+    return configOnly;
+  }
+
+  public void setConfigOnly(Boolean configOnly) {
+    this.configOnly = configOnly;
   }
 
   public Network options(Map<String, String> options) {
@@ -283,10 +329,10 @@ public class Network {
   }
 
    /**
-   * Get options
+   * Network-specific options uses when creating the network. 
    * @return options
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "{\"com.docker.network.bridge.default_bridge\":\"true\",\"com.docker.network.bridge.enable_icc\":\"true\",\"com.docker.network.bridge.enable_ip_masquerade\":\"true\",\"com.docker.network.bridge.host_binding_ipv4\":\"0.0.0.0\",\"com.docker.network.bridge.name\":\"docker0\",\"com.docker.network.driver.mtu\":\"1500\"}", value = "Network-specific options uses when creating the network. ")
   public Map<String, String> getOptions() {
     return options;
   }
@@ -309,16 +355,42 @@ public class Network {
   }
 
    /**
-   * Get labels
+   * Metadata specific to the network being created. 
    * @return labels
   **/
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", value = "Metadata specific to the network being created. ")
   public Map<String, String> getLabels() {
     return labels;
   }
 
   public void setLabels(Map<String, String> labels) {
     this.labels = labels;
+  }
+
+  public Network peers(List<PeerInfo> peers) {
+    this.peers = peers;
+    return this;
+  }
+
+  public Network addPeersItem(PeerInfo peersItem) {
+    if (this.peers == null) {
+      this.peers = new ArrayList<>();
+    }
+    this.peers.add(peersItem);
+    return this;
+  }
+
+   /**
+   * List of peer nodes for an overlay network. This field is only present for overlay networks, and omitted for other network types. 
+   * @return peers
+  **/
+  @ApiModelProperty(value = "List of peer nodes for an overlay network. This field is only present for overlay networks, and omitted for other network types. ")
+  public List<PeerInfo> getPeers() {
+    return peers;
+  }
+
+  public void setPeers(List<PeerInfo> peers) {
+    this.peers = peers;
   }
 
 
@@ -336,19 +408,22 @@ public class Network {
         Objects.equals(this.created, network.created) &&
         Objects.equals(this.scope, network.scope) &&
         Objects.equals(this.driver, network.driver) &&
+        Objects.equals(this.enableIPv4, network.enableIPv4) &&
         Objects.equals(this.enableIPv6, network.enableIPv6) &&
         Objects.equals(this.IPAM, network.IPAM) &&
         Objects.equals(this.internal, network.internal) &&
         Objects.equals(this.attachable, network.attachable) &&
         Objects.equals(this.ingress, network.ingress) &&
-        Objects.equals(this.containers, network.containers) &&
+        Objects.equals(this.configFrom, network.configFrom) &&
+        Objects.equals(this.configOnly, network.configOnly) &&
         Objects.equals(this.options, network.options) &&
-        Objects.equals(this.labels, network.labels);
+        Objects.equals(this.labels, network.labels) &&
+        Objects.equals(this.peers, network.peers);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, id, created, scope, driver, enableIPv6, IPAM, internal, attachable, ingress, containers, options, labels);
+    return Objects.hash(name, id, created, scope, driver, enableIPv4, enableIPv6, IPAM, internal, attachable, ingress, configFrom, configOnly, options, labels, peers);
   }
 
 
@@ -356,20 +431,23 @@ public class Network {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Network {\n");
-
+    
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    created: ").append(toIndentedString(created)).append("\n");
     sb.append("    scope: ").append(toIndentedString(scope)).append("\n");
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
+    sb.append("    enableIPv4: ").append(toIndentedString(enableIPv4)).append("\n");
     sb.append("    enableIPv6: ").append(toIndentedString(enableIPv6)).append("\n");
     sb.append("    IPAM: ").append(toIndentedString(IPAM)).append("\n");
     sb.append("    internal: ").append(toIndentedString(internal)).append("\n");
     sb.append("    attachable: ").append(toIndentedString(attachable)).append("\n");
     sb.append("    ingress: ").append(toIndentedString(ingress)).append("\n");
-    sb.append("    containers: ").append(toIndentedString(containers)).append("\n");
+    sb.append("    configFrom: ").append(toIndentedString(configFrom)).append("\n");
+    sb.append("    configOnly: ").append(toIndentedString(configOnly)).append("\n");
     sb.append("    options: ").append(toIndentedString(options)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
+    sb.append("    peers: ").append(toIndentedString(peers)).append("\n");
     sb.append("}");
     return sb.toString();
   }

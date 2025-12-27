@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,15 +14,21 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import org.wwscc.system.docker.models.MountBindOptions;
+import org.wwscc.system.docker.models.MountImageOptions;
+import org.wwscc.system.docker.models.MountTmpfsOptions;
+import org.wwscc.system.docker.models.MountVolumeOptions;
 
 /**
  * Mount
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class Mount {
   @JsonProperty("Target")
   private String target = null;
@@ -31,14 +37,20 @@ public class Mount {
   private String source = null;
 
   /**
-   * The mount type. Available types:  - &#x60;bind&#x60; Mounts a file or directory from the host into the container. Must exist prior to creating the container. - &#x60;volume&#x60; Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - &#x60;tmpfs&#x60; Create a tmpfs with the given options. The mount source cannot be specified for tmpfs.
+   * The mount type. Available types:  - &#x60;bind&#x60; Mounts a file or directory from the host into the container. Must exist prior to creating the container. - &#x60;volume&#x60; Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - &#x60;image&#x60; Mounts an image. - &#x60;tmpfs&#x60; Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - &#x60;npipe&#x60; Mounts a named pipe from the host into the container. Must exist prior to creating the container. - &#x60;cluster&#x60; a Swarm cluster volume 
    */
   public enum TypeEnum {
     BIND("bind"),
-
+    
     VOLUME("volume"),
-
-    TMPFS("tmpfs");
+    
+    IMAGE("image"),
+    
+    TMPFS("tmpfs"),
+    
+    NPIPE("npipe"),
+    
+    CLUSTER("cluster");
 
     private String value;
 
@@ -57,9 +69,9 @@ public class Mount {
     }
 
     @JsonCreator
-    public static TypeEnum fromValue(String text) {
+    public static TypeEnum fromValue(String value) {
       for (TypeEnum b : TypeEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(value)) {
           return b;
         }
       }
@@ -81,6 +93,9 @@ public class Mount {
 
   @JsonProperty("VolumeOptions")
   private MountVolumeOptions volumeOptions = null;
+
+  @JsonProperty("ImageOptions")
+  private MountImageOptions imageOptions = null;
 
   @JsonProperty("TmpfsOptions")
   private MountTmpfsOptions tmpfsOptions = null;
@@ -127,10 +142,10 @@ public class Mount {
   }
 
    /**
-   * The mount type. Available types:  - &#x60;bind&#x60; Mounts a file or directory from the host into the container. Must exist prior to creating the container. - &#x60;volume&#x60; Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - &#x60;tmpfs&#x60; Create a tmpfs with the given options. The mount source cannot be specified for tmpfs.
+   * The mount type. Available types:  - &#x60;bind&#x60; Mounts a file or directory from the host into the container. Must exist prior to creating the container. - &#x60;volume&#x60; Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - &#x60;image&#x60; Mounts an image. - &#x60;tmpfs&#x60; Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - &#x60;npipe&#x60; Mounts a named pipe from the host into the container. Must exist prior to creating the container. - &#x60;cluster&#x60; a Swarm cluster volume 
    * @return type
   **/
-  @ApiModelProperty(value = "The mount type. Available types:  - `bind` Mounts a file or directory from the host into the container. Must exist prior to creating the container. - `volume` Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. ")
+  @ApiModelProperty(value = "The mount type. Available types:  - `bind` Mounts a file or directory from the host into the container. Must exist prior to creating the container. - `volume` Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - `image` Mounts an image. - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - `npipe` Mounts a named pipe from the host into the container. Must exist prior to creating the container. - `cluster` a Swarm cluster volume ")
   public TypeEnum getType() {
     return type;
   }
@@ -211,6 +226,24 @@ public class Mount {
     this.volumeOptions = volumeOptions;
   }
 
+  public Mount imageOptions(MountImageOptions imageOptions) {
+    this.imageOptions = imageOptions;
+    return this;
+  }
+
+   /**
+   * Get imageOptions
+   * @return imageOptions
+  **/
+  @ApiModelProperty(value = "")
+  public MountImageOptions getImageOptions() {
+    return imageOptions;
+  }
+
+  public void setImageOptions(MountImageOptions imageOptions) {
+    this.imageOptions = imageOptions;
+  }
+
   public Mount tmpfsOptions(MountTmpfsOptions tmpfsOptions) {
     this.tmpfsOptions = tmpfsOptions;
     return this;
@@ -246,12 +279,13 @@ public class Mount {
         Objects.equals(this.consistency, mount.consistency) &&
         Objects.equals(this.bindOptions, mount.bindOptions) &&
         Objects.equals(this.volumeOptions, mount.volumeOptions) &&
+        Objects.equals(this.imageOptions, mount.imageOptions) &&
         Objects.equals(this.tmpfsOptions, mount.tmpfsOptions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(target, source, type, readOnly, consistency, bindOptions, volumeOptions, tmpfsOptions);
+    return Objects.hash(target, source, type, readOnly, consistency, bindOptions, volumeOptions, imageOptions, tmpfsOptions);
   }
 
 
@@ -259,7 +293,7 @@ public class Mount {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Mount {\n");
-
+    
     sb.append("    target: ").append(toIndentedString(target)).append("\n");
     sb.append("    source: ").append(toIndentedString(source)).append("\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
@@ -267,6 +301,7 @@ public class Mount {
     sb.append("    consistency: ").append(toIndentedString(consistency)).append("\n");
     sb.append("    bindOptions: ").append(toIndentedString(bindOptions)).append("\n");
     sb.append("    volumeOptions: ").append(toIndentedString(volumeOptions)).append("\n");
+    sb.append("    imageOptions: ").append(toIndentedString(imageOptions)).append("\n");
     sb.append("    tmpfsOptions: ").append(toIndentedString(tmpfsOptions)).append("\n");
     sb.append("}");
     return sb.toString();

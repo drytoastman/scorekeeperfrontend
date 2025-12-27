@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,17 +14,23 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.ImageManifestSummary;
+import org.wwscc.system.docker.models.OCIDescriptor;
 
 /**
  * ImageSummary
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class ImageSummary {
   @JsonProperty("Id")
   private String id = null;
@@ -47,14 +53,17 @@ public class ImageSummary {
   @JsonProperty("SharedSize")
   private Long sharedSize = null;
 
-  @JsonProperty("VirtualSize")
-  private Long virtualSize = null;
-
   @JsonProperty("Labels")
   private Map<String, String> labels = new HashMap<>();
 
   @JsonProperty("Containers")
   private Integer containers = null;
+
+  @JsonProperty("Manifests")
+  private List<ImageManifestSummary> manifests = null;
+
+  @JsonProperty("Descriptor")
+  private OCIDescriptor descriptor = null;
 
   public ImageSummary id(String id) {
     this.id = id;
@@ -62,10 +71,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get id
+   * ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image&#39;s configuration (which includes the digests of layers used by the image).  Note that this digest differs from the &#x60;RepoDigests&#x60; below, which holds digests of image manifests that reference the image. 
    * @return id
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "sha256:ec3f0931a6e6b6855d76b2d7b0be30e81860baccd891b2e243280bf1cd8ad710", required = true, value = "ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. ")
   public String getId() {
     return id;
   }
@@ -80,10 +89,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get parentId
+   * ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. 
    * @return parentId
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "", required = true, value = "ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. ")
   public String getParentId() {
     return parentId;
   }
@@ -103,19 +112,16 @@ public class ImageSummary {
   }
 
    /**
-   * Get repoTags
+   * List of image names/tags in the local image cache that reference this image.  Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is \&quot;untagged\&quot;, in which case it can still be referenced by its ID. 
    * @return repoTags
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "[\"example:1.0\",\"example:latest\",\"example:stable\",\"internal.registry.example.com:5000/example:1.0\"]", required = true, value = "List of image names/tags in the local image cache that reference this image.  Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is \"untagged\", in which case it can still be referenced by its ID. ")
   public List<String> getRepoTags() {
     return repoTags;
   }
 
   public void setRepoTags(List<String> repoTags) {
-    if (repoTags != null)
-        this.repoTags = repoTags;
-    else
-        this.repoTags = new ArrayList<>();
+    this.repoTags = repoTags;
   }
 
   public ImageSummary repoDigests(List<String> repoDigests) {
@@ -129,10 +135,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get repoDigests
+   * List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.  These digests are usually only available if the image was either pulled from a registry, or if the image was pushed to a registry, which is when the manifest is generated and its digest calculated. 
    * @return repoDigests
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "[\"example@sha256:afcc7f1ac1b49db317a7196c902e61c6c3c4607d63599ee1a82d702d249a0ccb\",\"internal.registry.example.com:5000/example@sha256:b69959407d21e8a062e0416bf13405bb2b71ed7a84dde4158ebafacfa06f5578\"]", required = true, value = "List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.  These digests are usually only available if the image was either pulled from a registry, or if the image was pushed to a registry, which is when the manifest is generated and its digest calculated. ")
   public List<String> getRepoDigests() {
     return repoDigests;
   }
@@ -147,10 +153,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get created
+   * Date and time at which the image was created as a Unix timestamp (number of seconds since EPOCH). 
    * @return created
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "1644009612", required = true, value = "Date and time at which the image was created as a Unix timestamp (number of seconds since EPOCH). ")
   public Integer getCreated() {
     return created;
   }
@@ -165,10 +171,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get size
+   * Total size of the image including all layers it is composed of. 
    * @return size
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "172064416", required = true, value = "Total size of the image including all layers it is composed of. ")
   public Long getSize() {
     return size;
   }
@@ -183,34 +189,16 @@ public class ImageSummary {
   }
 
    /**
-   * Get sharedSize
+   * Total size of image layers that are shared between this image and other images.  This size is not calculated by default. &#x60;-1&#x60; indicates that the value has not been set / calculated. 
    * @return sharedSize
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "1239828", required = true, value = "Total size of image layers that are shared between this image and other images.  This size is not calculated by default. `-1` indicates that the value has not been set / calculated. ")
   public Long getSharedSize() {
     return sharedSize;
   }
 
   public void setSharedSize(Long sharedSize) {
     this.sharedSize = sharedSize;
-  }
-
-  public ImageSummary virtualSize(Long virtualSize) {
-    this.virtualSize = virtualSize;
-    return this;
-  }
-
-   /**
-   * Get virtualSize
-   * @return virtualSize
-  **/
-  @ApiModelProperty(required = true, value = "")
-  public Long getVirtualSize() {
-    return virtualSize;
-  }
-
-  public void setVirtualSize(Long virtualSize) {
-    this.virtualSize = virtualSize;
   }
 
   public ImageSummary labels(Map<String, String> labels) {
@@ -224,10 +212,10 @@ public class ImageSummary {
   }
 
    /**
-   * Get labels
+   * User-defined key/value metadata.
    * @return labels
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", required = true, value = "User-defined key/value metadata.")
   public Map<String, String> getLabels() {
     return labels;
   }
@@ -242,16 +230,60 @@ public class ImageSummary {
   }
 
    /**
-   * Get containers
+   * Number of containers using this image. Includes both stopped and running containers.  &#x60;-1&#x60; indicates that the value has not been set / calculated. 
    * @return containers
   **/
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(example = "2", required = true, value = "Number of containers using this image. Includes both stopped and running containers.  `-1` indicates that the value has not been set / calculated. ")
   public Integer getContainers() {
     return containers;
   }
 
   public void setContainers(Integer containers) {
     this.containers = containers;
+  }
+
+  public ImageSummary manifests(List<ImageManifestSummary> manifests) {
+    this.manifests = manifests;
+    return this;
+  }
+
+  public ImageSummary addManifestsItem(ImageManifestSummary manifestsItem) {
+    if (this.manifests == null) {
+      this.manifests = new ArrayList<>();
+    }
+    this.manifests.add(manifestsItem);
+    return this;
+  }
+
+   /**
+   * Manifests is a list of manifests available in this image. It provides a more detailed view of the platform-specific image manifests or other image-attached data like build attestations.  WARNING: This is experimental and may change at any time without any backward compatibility. 
+   * @return manifests
+  **/
+  @ApiModelProperty(value = "Manifests is a list of manifests available in this image. It provides a more detailed view of the platform-specific image manifests or other image-attached data like build attestations.  WARNING: This is experimental and may change at any time without any backward compatibility. ")
+  public List<ImageManifestSummary> getManifests() {
+    return manifests;
+  }
+
+  public void setManifests(List<ImageManifestSummary> manifests) {
+    this.manifests = manifests;
+  }
+
+  public ImageSummary descriptor(OCIDescriptor descriptor) {
+    this.descriptor = descriptor;
+    return this;
+  }
+
+   /**
+   * Descriptor is an OCI descriptor of the image target. In case of a multi-platform image, this descriptor points to the OCI index or a manifest list.  This field is only present if the daemon provides a multi-platform image store.  WARNING: This is experimental and may change at any time without any backward compatibility. 
+   * @return descriptor
+  **/
+  @ApiModelProperty(value = "Descriptor is an OCI descriptor of the image target. In case of a multi-platform image, this descriptor points to the OCI index or a manifest list.  This field is only present if the daemon provides a multi-platform image store.  WARNING: This is experimental and may change at any time without any backward compatibility. ")
+  public OCIDescriptor getDescriptor() {
+    return descriptor;
+  }
+
+  public void setDescriptor(OCIDescriptor descriptor) {
+    this.descriptor = descriptor;
   }
 
 
@@ -271,14 +303,15 @@ public class ImageSummary {
         Objects.equals(this.created, imageSummary.created) &&
         Objects.equals(this.size, imageSummary.size) &&
         Objects.equals(this.sharedSize, imageSummary.sharedSize) &&
-        Objects.equals(this.virtualSize, imageSummary.virtualSize) &&
         Objects.equals(this.labels, imageSummary.labels) &&
-        Objects.equals(this.containers, imageSummary.containers);
+        Objects.equals(this.containers, imageSummary.containers) &&
+        Objects.equals(this.manifests, imageSummary.manifests) &&
+        Objects.equals(this.descriptor, imageSummary.descriptor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, parentId, repoTags, repoDigests, created, size, sharedSize, virtualSize, labels, containers);
+    return Objects.hash(id, parentId, repoTags, repoDigests, created, size, sharedSize, labels, containers, manifests, descriptor);
   }
 
 
@@ -286,7 +319,7 @@ public class ImageSummary {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ImageSummary {\n");
-
+    
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    parentId: ").append(toIndentedString(parentId)).append("\n");
     sb.append("    repoTags: ").append(toIndentedString(repoTags)).append("\n");
@@ -294,9 +327,10 @@ public class ImageSummary {
     sb.append("    created: ").append(toIndentedString(created)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    sharedSize: ").append(toIndentedString(sharedSize)).append("\n");
-    sb.append("    virtualSize: ").append(toIndentedString(virtualSize)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    containers: ").append(toIndentedString(containers)).append("\n");
+    sb.append("    manifests: ").append(toIndentedString(manifests)).append("\n");
+    sb.append("    descriptor: ").append(toIndentedString(descriptor)).append("\n");
     sb.append("}");
     return sb.toString();
   }

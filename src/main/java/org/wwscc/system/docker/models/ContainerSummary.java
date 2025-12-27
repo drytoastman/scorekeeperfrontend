@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,13 +14,462 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.wwscc.system.docker.models.ContainerSummaryHealth;
+import org.wwscc.system.docker.models.ContainerSummaryHostConfig;
+import org.wwscc.system.docker.models.ContainerSummaryNetworkSettings;
+import org.wwscc.system.docker.models.MountPoint;
+import org.wwscc.system.docker.models.OCIDescriptor;
+import org.wwscc.system.docker.models.PortSummary;
 
 /**
  * ContainerSummary
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
-public class ContainerSummary extends ArrayList<ContainerSummaryInner> {
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+public class ContainerSummary {
+  @JsonProperty("Id")
+  private String id = null;
+
+  @JsonProperty("Names")
+  private List<String> names = null;
+
+  @JsonProperty("Image")
+  private String image = null;
+
+  @JsonProperty("ImageID")
+  private String imageID = null;
+
+  @JsonProperty("ImageManifestDescriptor")
+  private OCIDescriptor imageManifestDescriptor = null;
+
+  @JsonProperty("Command")
+  private String command = null;
+
+  @JsonProperty("Created")
+  private Long created = null;
+
+  @JsonProperty("Ports")
+  private List<PortSummary> ports = null;
+
+  @JsonProperty("SizeRw")
+  private Long sizeRw = null;
+
+  @JsonProperty("SizeRootFs")
+  private Long sizeRootFs = null;
+
+  @JsonProperty("Labels")
+  private Map<String, String> labels = null;
+
+  /**
+   * The state of this container. 
+   */
+  public enum StateEnum {
+    CREATED("created"),
+    
+    RUNNING("running"),
+    
+    PAUSED("paused"),
+    
+    RESTARTING("restarting"),
+    
+    EXITED("exited"),
+    
+    REMOVING("removing"),
+    
+    DEAD("dead");
+
+    private String value;
+
+    StateEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static StateEnum fromValue(String value) {
+      for (StateEnum b : StateEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      return null;
+    }
+  }
+
+  @JsonProperty("State")
+  private StateEnum state = null;
+
+  @JsonProperty("Status")
+  private String status = null;
+
+  @JsonProperty("HostConfig")
+  private ContainerSummaryHostConfig hostConfig = null;
+
+  @JsonProperty("NetworkSettings")
+  private ContainerSummaryNetworkSettings networkSettings = null;
+
+  @JsonProperty("Mounts")
+  private List<MountPoint> mounts = null;
+
+  @JsonProperty("Health")
+  private ContainerSummaryHealth health = null;
+
+  public ContainerSummary id(String id) {
+    this.id = id;
+    return this;
+  }
+
+   /**
+   * The ID of this container as a 128-bit (64-character) hexadecimal string (32 bytes).
+   * @return id
+  **/
+  @ApiModelProperty(example = "aa86eacfb3b3ed4cd362c1e88fc89a53908ad05fb3a4103bca3f9b28292d14bf", value = "The ID of this container as a 128-bit (64-character) hexadecimal string (32 bytes).")
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public ContainerSummary names(List<String> names) {
+    this.names = names;
+    return this;
+  }
+
+  public ContainerSummary addNamesItem(String namesItem) {
+    if (this.names == null) {
+      this.names = new ArrayList<>();
+    }
+    this.names.add(namesItem);
+    return this;
+  }
+
+   /**
+   * The names associated with this container. Most containers have a single name, but when using legacy \&quot;links\&quot;, the container can have multiple names.  For historic reasons, names are prefixed with a forward-slash (&#x60;/&#x60;).
+   * @return names
+  **/
+  @ApiModelProperty(example = "[\"/funny_chatelet\"]", value = "The names associated with this container. Most containers have a single name, but when using legacy \"links\", the container can have multiple names.  For historic reasons, names are prefixed with a forward-slash (`/`).")
+  public List<String> getNames() {
+    return names;
+  }
+
+  public void setNames(List<String> names) {
+    this.names = names;
+  }
+
+  public ContainerSummary image(String image) {
+    this.image = image;
+    return this;
+  }
+
+   /**
+   * The name or ID of the image used to create the container.  This field shows the image reference as was specified when creating the container, which can be in its canonical form (e.g., &#x60;docker.io/library/ubuntu:latest&#x60; or &#x60;docker.io/library/ubuntu@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782&#x60;), short form (e.g., &#x60;ubuntu:latest&#x60;)), or the ID(-prefix) of the image (e.g., &#x60;72297848456d&#x60;).  The content of this field can be updated at runtime if the image used to create the container is untagged, in which case the field is updated to contain the the image ID (digest) it was resolved to in its canonical, non-truncated form (e.g., &#x60;sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782&#x60;).
+   * @return image
+  **/
+  @ApiModelProperty(example = "docker.io/library/ubuntu:latest", value = "The name or ID of the image used to create the container.  This field shows the image reference as was specified when creating the container, which can be in its canonical form (e.g., `docker.io/library/ubuntu:latest` or `docker.io/library/ubuntu@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782`), short form (e.g., `ubuntu:latest`)), or the ID(-prefix) of the image (e.g., `72297848456d`).  The content of this field can be updated at runtime if the image used to create the container is untagged, in which case the field is updated to contain the the image ID (digest) it was resolved to in its canonical, non-truncated form (e.g., `sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782`).")
+  public String getImage() {
+    return image;
+  }
+
+  public void setImage(String image) {
+    this.image = image;
+  }
+
+  public ContainerSummary imageID(String imageID) {
+    this.imageID = imageID;
+    return this;
+  }
+
+   /**
+   * The ID (digest) of the image that this container was created from.
+   * @return imageID
+  **/
+  @ApiModelProperty(example = "sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782", value = "The ID (digest) of the image that this container was created from.")
+  public String getImageID() {
+    return imageID;
+  }
+
+  public void setImageID(String imageID) {
+    this.imageID = imageID;
+  }
+
+  public ContainerSummary imageManifestDescriptor(OCIDescriptor imageManifestDescriptor) {
+    this.imageManifestDescriptor = imageManifestDescriptor;
+    return this;
+  }
+
+   /**
+   * OCI descriptor of the platform-specific manifest of the image the container was created from.  Note: Only available if the daemon provides a multi-platform image store.  This field is not populated in the &#x60;GET /system/df&#x60; endpoint. 
+   * @return imageManifestDescriptor
+  **/
+  @ApiModelProperty(value = "OCI descriptor of the platform-specific manifest of the image the container was created from.  Note: Only available if the daemon provides a multi-platform image store.  This field is not populated in the `GET /system/df` endpoint. ")
+  public OCIDescriptor getImageManifestDescriptor() {
+    return imageManifestDescriptor;
+  }
+
+  public void setImageManifestDescriptor(OCIDescriptor imageManifestDescriptor) {
+    this.imageManifestDescriptor = imageManifestDescriptor;
+  }
+
+  public ContainerSummary command(String command) {
+    this.command = command;
+    return this;
+  }
+
+   /**
+   * Command to run when starting the container
+   * @return command
+  **/
+  @ApiModelProperty(example = "/bin/bash", value = "Command to run when starting the container")
+  public String getCommand() {
+    return command;
+  }
+
+  public void setCommand(String command) {
+    this.command = command;
+  }
+
+  public ContainerSummary created(Long created) {
+    this.created = created;
+    return this;
+  }
+
+   /**
+   * Date and time at which the container was created as a Unix timestamp (number of seconds since EPOCH).
+   * @return created
+  **/
+  @ApiModelProperty(example = "1739811096", value = "Date and time at which the container was created as a Unix timestamp (number of seconds since EPOCH).")
+  public Long getCreated() {
+    return created;
+  }
+
+  public void setCreated(Long created) {
+    this.created = created;
+  }
+
+  public ContainerSummary ports(List<PortSummary> ports) {
+    this.ports = ports;
+    return this;
+  }
+
+  public ContainerSummary addPortsItem(PortSummary portsItem) {
+    if (this.ports == null) {
+      this.ports = new ArrayList<>();
+    }
+    this.ports.add(portsItem);
+    return this;
+  }
+
+   /**
+   * Port-mappings for the container.
+   * @return ports
+  **/
+  @ApiModelProperty(value = "Port-mappings for the container.")
+  public List<PortSummary> getPorts() {
+    return ports;
+  }
+
+  public void setPorts(List<PortSummary> ports) {
+    this.ports = ports;
+  }
+
+  public ContainerSummary sizeRw(Long sizeRw) {
+    this.sizeRw = sizeRw;
+    return this;
+  }
+
+   /**
+   * The size of files that have been created or changed by this container.  This field is omitted by default, and only set when size is requested in the API request.
+   * @return sizeRw
+  **/
+  @ApiModelProperty(example = "122880", value = "The size of files that have been created or changed by this container.  This field is omitted by default, and only set when size is requested in the API request.")
+  public Long getSizeRw() {
+    return sizeRw;
+  }
+
+  public void setSizeRw(Long sizeRw) {
+    this.sizeRw = sizeRw;
+  }
+
+  public ContainerSummary sizeRootFs(Long sizeRootFs) {
+    this.sizeRootFs = sizeRootFs;
+    return this;
+  }
+
+   /**
+   * The total size of all files in the read-only layers from the image that the container uses. These layers can be shared between containers.  This field is omitted by default, and only set when size is requested in the API request.
+   * @return sizeRootFs
+  **/
+  @ApiModelProperty(example = "1653948416", value = "The total size of all files in the read-only layers from the image that the container uses. These layers can be shared between containers.  This field is omitted by default, and only set when size is requested in the API request.")
+  public Long getSizeRootFs() {
+    return sizeRootFs;
+  }
+
+  public void setSizeRootFs(Long sizeRootFs) {
+    this.sizeRootFs = sizeRootFs;
+  }
+
+  public ContainerSummary labels(Map<String, String> labels) {
+    this.labels = labels;
+    return this;
+  }
+
+  public ContainerSummary putLabelsItem(String key, String labelsItem) {
+    if (this.labels == null) {
+      this.labels = new HashMap<>();
+    }
+    this.labels.put(key, labelsItem);
+    return this;
+  }
+
+   /**
+   * User-defined key/value metadata.
+   * @return labels
+  **/
+  @ApiModelProperty(example = "{\"com.example.vendor\":\"Acme\",\"com.example.license\":\"GPL\",\"com.example.version\":\"1.0\"}", value = "User-defined key/value metadata.")
+  public Map<String, String> getLabels() {
+    return labels;
+  }
+
+  public void setLabels(Map<String, String> labels) {
+    this.labels = labels;
+  }
+
+  public ContainerSummary state(StateEnum state) {
+    this.state = state;
+    return this;
+  }
+
+   /**
+   * The state of this container. 
+   * @return state
+  **/
+  @ApiModelProperty(example = "running", value = "The state of this container. ")
+  public StateEnum getState() {
+    return state;
+  }
+
+  public void setState(StateEnum state) {
+    this.state = state;
+  }
+
+  public ContainerSummary status(String status) {
+    this.status = status;
+    return this;
+  }
+
+   /**
+   * Additional human-readable status of this container (e.g. &#x60;Exit 0&#x60;)
+   * @return status
+  **/
+  @ApiModelProperty(example = "Up 4 days", value = "Additional human-readable status of this container (e.g. `Exit 0`)")
+  public String getStatus() {
+    return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
+  public ContainerSummary hostConfig(ContainerSummaryHostConfig hostConfig) {
+    this.hostConfig = hostConfig;
+    return this;
+  }
+
+   /**
+   * Get hostConfig
+   * @return hostConfig
+  **/
+  @ApiModelProperty(value = "")
+  public ContainerSummaryHostConfig getHostConfig() {
+    return hostConfig;
+  }
+
+  public void setHostConfig(ContainerSummaryHostConfig hostConfig) {
+    this.hostConfig = hostConfig;
+  }
+
+  public ContainerSummary networkSettings(ContainerSummaryNetworkSettings networkSettings) {
+    this.networkSettings = networkSettings;
+    return this;
+  }
+
+   /**
+   * Get networkSettings
+   * @return networkSettings
+  **/
+  @ApiModelProperty(value = "")
+  public ContainerSummaryNetworkSettings getNetworkSettings() {
+    return networkSettings;
+  }
+
+  public void setNetworkSettings(ContainerSummaryNetworkSettings networkSettings) {
+    this.networkSettings = networkSettings;
+  }
+
+  public ContainerSummary mounts(List<MountPoint> mounts) {
+    this.mounts = mounts;
+    return this;
+  }
+
+  public ContainerSummary addMountsItem(MountPoint mountsItem) {
+    if (this.mounts == null) {
+      this.mounts = new ArrayList<>();
+    }
+    this.mounts.add(mountsItem);
+    return this;
+  }
+
+   /**
+   * List of mounts used by the container.
+   * @return mounts
+  **/
+  @ApiModelProperty(value = "List of mounts used by the container.")
+  public List<MountPoint> getMounts() {
+    return mounts;
+  }
+
+  public void setMounts(List<MountPoint> mounts) {
+    this.mounts = mounts;
+  }
+
+  public ContainerSummary health(ContainerSummaryHealth health) {
+    this.health = health;
+    return this;
+  }
+
+   /**
+   * Get health
+   * @return health
+  **/
+  @ApiModelProperty(value = "")
+  public ContainerSummaryHealth getHealth() {
+    return health;
+  }
+
+  public void setHealth(ContainerSummaryHealth health) {
+    this.health = health;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -30,12 +479,29 @@ public class ContainerSummary extends ArrayList<ContainerSummaryInner> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    return super.equals(o);
+    ContainerSummary containerSummary = (ContainerSummary) o;
+    return Objects.equals(this.id, containerSummary.id) &&
+        Objects.equals(this.names, containerSummary.names) &&
+        Objects.equals(this.image, containerSummary.image) &&
+        Objects.equals(this.imageID, containerSummary.imageID) &&
+        Objects.equals(this.imageManifestDescriptor, containerSummary.imageManifestDescriptor) &&
+        Objects.equals(this.command, containerSummary.command) &&
+        Objects.equals(this.created, containerSummary.created) &&
+        Objects.equals(this.ports, containerSummary.ports) &&
+        Objects.equals(this.sizeRw, containerSummary.sizeRw) &&
+        Objects.equals(this.sizeRootFs, containerSummary.sizeRootFs) &&
+        Objects.equals(this.labels, containerSummary.labels) &&
+        Objects.equals(this.state, containerSummary.state) &&
+        Objects.equals(this.status, containerSummary.status) &&
+        Objects.equals(this.hostConfig, containerSummary.hostConfig) &&
+        Objects.equals(this.networkSettings, containerSummary.networkSettings) &&
+        Objects.equals(this.mounts, containerSummary.mounts) &&
+        Objects.equals(this.health, containerSummary.health);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode());
+    return Objects.hash(id, names, image, imageID, imageManifestDescriptor, command, created, ports, sizeRw, sizeRootFs, labels, state, status, hostConfig, networkSettings, mounts, health);
   }
 
 
@@ -43,7 +509,24 @@ public class ContainerSummary extends ArrayList<ContainerSummaryInner> {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ContainerSummary {\n");
-    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
+    
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    names: ").append(toIndentedString(names)).append("\n");
+    sb.append("    image: ").append(toIndentedString(image)).append("\n");
+    sb.append("    imageID: ").append(toIndentedString(imageID)).append("\n");
+    sb.append("    imageManifestDescriptor: ").append(toIndentedString(imageManifestDescriptor)).append("\n");
+    sb.append("    command: ").append(toIndentedString(command)).append("\n");
+    sb.append("    created: ").append(toIndentedString(created)).append("\n");
+    sb.append("    ports: ").append(toIndentedString(ports)).append("\n");
+    sb.append("    sizeRw: ").append(toIndentedString(sizeRw)).append("\n");
+    sb.append("    sizeRootFs: ").append(toIndentedString(sizeRootFs)).append("\n");
+    sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
+    sb.append("    state: ").append(toIndentedString(state)).append("\n");
+    sb.append("    status: ").append(toIndentedString(status)).append("\n");
+    sb.append("    hostConfig: ").append(toIndentedString(hostConfig)).append("\n");
+    sb.append("    networkSettings: ").append(toIndentedString(networkSettings)).append("\n");
+    sb.append("    mounts: ").append(toIndentedString(mounts)).append("\n");
+    sb.append("    health: ").append(toIndentedString(health)).append("\n");
     sb.append("}");
     return sb.toString();
   }

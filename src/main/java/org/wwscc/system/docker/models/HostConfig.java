@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,6 +14,7 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -23,103 +24,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.DeviceMapping;
+import org.wwscc.system.docker.models.DeviceRequest;
+import org.wwscc.system.docker.models.HostConfigLogConfig;
+import org.wwscc.system.docker.models.Mount;
+import org.wwscc.system.docker.models.PortMap;
+import org.wwscc.system.docker.models.Resources;
+import org.wwscc.system.docker.models.ResourcesBlkioWeightDevice;
+import org.wwscc.system.docker.models.ResourcesUlimits;
+import org.wwscc.system.docker.models.RestartPolicy;
+import org.wwscc.system.docker.models.ThrottleDevice;
 
 /**
  * Container configuration that depends on the host we are running on
  */
 @ApiModel(description = "Container configuration that depends on the host we are running on")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
-public class HostConfig {
-  @JsonProperty("CpuShares")
-  private Integer cpuShares = null;
-
-  @JsonProperty("Memory")
-  private Long memory = 0l;
-
-  @JsonProperty("CgroupParent")
-  private String cgroupParent = null;
-
-  @JsonProperty("BlkioWeight")
-  private Integer blkioWeight = null;
-
-  @JsonProperty("BlkioWeightDevice")
-  private List<ResourcesBlkioWeightDevice> blkioWeightDevice = null;
-
-  @JsonProperty("BlkioDeviceReadBps")
-  private List<ThrottleDevice> blkioDeviceReadBps = null;
-
-  @JsonProperty("BlkioDeviceWriteBps")
-  private List<ThrottleDevice> blkioDeviceWriteBps = null;
-
-  @JsonProperty("BlkioDeviceReadIOps")
-  private List<ThrottleDevice> blkioDeviceReadIOps = null;
-
-  @JsonProperty("BlkioDeviceWriteIOps")
-  private List<ThrottleDevice> blkioDeviceWriteIOps = null;
-
-  @JsonProperty("CpuPeriod")
-  private Long cpuPeriod = null;
-
-  @JsonProperty("CpuQuota")
-  private Long cpuQuota = null;
-
-  @JsonProperty("CpuRealtimePeriod")
-  private Long cpuRealtimePeriod = null;
-
-  @JsonProperty("CpuRealtimeRuntime")
-  private Long cpuRealtimeRuntime = null;
-
-  @JsonProperty("CpusetCpus")
-  private String cpusetCpus = null;
-
-  @JsonProperty("CpusetMems")
-  private String cpusetMems = null;
-
-  @JsonProperty("Devices")
-  private List<DeviceMapping> devices = null;
-
-  @JsonProperty("DeviceCgroupRules")
-  private List<String> deviceCgroupRules = null;
-
-  @JsonProperty("DiskQuota")
-  private Long diskQuota = null;
-
-  @JsonProperty("KernelMemory")
-  private Long kernelMemory = null;
-
-  @JsonProperty("MemoryReservation")
-  private Long memoryReservation = null;
-
-  @JsonProperty("MemorySwap")
-  private Long memorySwap = null;
-
-  @JsonProperty("MemorySwappiness")
-  private Long memorySwappiness = null;
-
-  @JsonProperty("NanoCPUs")
-  private Long nanoCPUs = null;
-
-  @JsonProperty("OomKillDisable")
-  private Boolean oomKillDisable = null;
-
-  @JsonProperty("PidsLimit")
-  private Long pidsLimit = null;
-
-  @JsonProperty("Ulimits")
-  private List<ResourcesUlimits> ulimits = null;
-
-  @JsonProperty("CpuCount")
-  private Long cpuCount = null;
-
-  @JsonProperty("CpuPercent")
-  private Long cpuPercent = null;
-
-  @JsonProperty("IOMaximumIOps")
-  private Long ioMaximumIOps = null;
-
-  @JsonProperty("IOMaximumBandwidth")
-  private Long ioMaximumBandwidth = null;
-
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
+public class HostConfig extends Resources {
   @JsonProperty("Binds")
   private List<String> binds = null;
 
@@ -150,11 +71,55 @@ public class HostConfig {
   @JsonProperty("Mounts")
   private List<Mount> mounts = null;
 
+  @JsonProperty("ConsoleSize")
+  private List<Integer> consoleSize = null;
+
+  @JsonProperty("Annotations")
+  private Map<String, String> annotations = null;
+
   @JsonProperty("CapAdd")
   private List<String> capAdd = null;
 
   @JsonProperty("CapDrop")
   private List<String> capDrop = null;
+
+  /**
+   * cgroup namespace mode for the container. Possible values are:  - &#x60;\&quot;private\&quot;&#x60;: the container runs in its own private cgroup namespace - &#x60;\&quot;host\&quot;&#x60;: use the host system&#39;s cgroup namespace  If not specified, the daemon default is used, which can either be &#x60;\&quot;private\&quot;&#x60; or &#x60;\&quot;host\&quot;&#x60;, depending on daemon version, kernel support and configuration. 
+   */
+  public enum CgroupnsModeEnum {
+    PRIVATE("private"),
+    
+    HOST("host");
+
+    private String value;
+
+    CgroupnsModeEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static CgroupnsModeEnum fromValue(String value) {
+      for (CgroupnsModeEnum b : CgroupnsModeEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      return null;
+    }
+  }
+
+  @JsonProperty("CgroupnsMode")
+  private CgroupnsModeEnum cgroupnsMode = null;
 
   @JsonProperty("Dns")
   private List<String> dns = null;
@@ -211,7 +176,7 @@ public class HostConfig {
   private String usernsMode = null;
 
   @JsonProperty("ShmSize")
-  private Integer shmSize = null;
+  private Long shmSize = null;
 
   @JsonProperty("Sysctls")
   private Map<String, String> sysctls = null;
@@ -219,18 +184,17 @@ public class HostConfig {
   @JsonProperty("Runtime")
   private String runtime = null;
 
-  @JsonProperty("ConsoleSize")
-  private List<Integer> consoleSize = null;
-
   /**
-   * Isolation technology of the container. (Windows only)
+   * Isolation technology of the container. (Windows only) 
    */
   public enum IsolationEnum {
     DEFAULT("default"),
-
+    
     PROCESS("process"),
-
-    HYPERV("hyperv");
+    
+    HYPERV("hyperv"),
+    
+    EMPTY("");
 
     private String value;
 
@@ -249,9 +213,9 @@ public class HostConfig {
     }
 
     @JsonCreator
-    public static IsolationEnum fromValue(String text) {
+    public static IsolationEnum fromValue(String value) {
       for (IsolationEnum b : IsolationEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(value)) {
           return b;
         }
       }
@@ -262,613 +226,11 @@ public class HostConfig {
   @JsonProperty("Isolation")
   private IsolationEnum isolation = null;
 
-  public HostConfig cpuShares(Integer cpuShares) {
-    this.cpuShares = cpuShares;
-    return this;
-  }
-
-   /**
-   * An integer value representing this container&#39;s relative CPU weight versus other containers.
-   * @return cpuShares
-  **/
-  @ApiModelProperty(value = "An integer value representing this container's relative CPU weight versus other containers.")
-  public Integer getCpuShares() {
-    return cpuShares;
-  }
-
-  public void setCpuShares(Integer cpuShares) {
-    this.cpuShares = cpuShares;
-  }
-
-  public HostConfig memory(Long memory) {
-    this.memory = memory;
-    return this;
-  }
-
-   /**
-   * Memory limit in bytes.
-   * @return memory
-  **/
-  @ApiModelProperty(value = "Memory limit in bytes.")
-  public Long getMemory() {
-    return memory;
-  }
-
-  public void setMemory(Long memory) {
-    this.memory = memory;
-  }
-
-  public HostConfig cgroupParent(String cgroupParent) {
-    this.cgroupParent = cgroupParent;
-    return this;
-  }
-
-   /**
-   * Path to &#x60;cgroups&#x60; under which the container&#39;s &#x60;cgroup&#x60; is created. If the path is not absolute, the path is considered to be relative to the &#x60;cgroups&#x60; path of the init process. Cgroups are created if they do not already exist.
-   * @return cgroupParent
-  **/
-  @ApiModelProperty(value = "Path to `cgroups` under which the container's `cgroup` is created. If the path is not absolute, the path is considered to be relative to the `cgroups` path of the init process. Cgroups are created if they do not already exist.")
-  public String getCgroupParent() {
-    return cgroupParent;
-  }
-
-  public void setCgroupParent(String cgroupParent) {
-    this.cgroupParent = cgroupParent;
-  }
-
-  public HostConfig blkioWeight(Integer blkioWeight) {
-    this.blkioWeight = blkioWeight;
-    return this;
-  }
-
-   /**
-   * Block IO weight (relative weight).
-   * minimum: 0
-   * maximum: 1000
-   * @return blkioWeight
-  **/
-  @ApiModelProperty(value = "Block IO weight (relative weight).")
-  public Integer getBlkioWeight() {
-    return blkioWeight;
-  }
-
-  public void setBlkioWeight(Integer blkioWeight) {
-    this.blkioWeight = blkioWeight;
-  }
-
-  public HostConfig blkioWeightDevice(List<ResourcesBlkioWeightDevice> blkioWeightDevice) {
-    this.blkioWeightDevice = blkioWeightDevice;
-    return this;
-  }
-
-  public HostConfig addBlkioWeightDeviceItem(ResourcesBlkioWeightDevice blkioWeightDeviceItem) {
-    if (this.blkioWeightDevice == null) {
-      this.blkioWeightDevice = new ArrayList<>();
-    }
-    this.blkioWeightDevice.add(blkioWeightDeviceItem);
-    return this;
-  }
-
-   /**
-   * Block IO weight (relative device weight) in the form &#x60;[{\&quot;Path\&quot;: \&quot;device_path\&quot;, \&quot;Weight\&quot;: weight}]&#x60;.
-   * @return blkioWeightDevice
-  **/
-  @ApiModelProperty(value = "Block IO weight (relative device weight) in the form `[{\"Path\": \"device_path\", \"Weight\": weight}]`. ")
-  public List<ResourcesBlkioWeightDevice> getBlkioWeightDevice() {
-    return blkioWeightDevice;
-  }
-
-  public void setBlkioWeightDevice(List<ResourcesBlkioWeightDevice> blkioWeightDevice) {
-    this.blkioWeightDevice = blkioWeightDevice;
-  }
-
-  public HostConfig blkioDeviceReadBps(List<ThrottleDevice> blkioDeviceReadBps) {
-    this.blkioDeviceReadBps = blkioDeviceReadBps;
-    return this;
-  }
-
-  public HostConfig addBlkioDeviceReadBpsItem(ThrottleDevice blkioDeviceReadBpsItem) {
-    if (this.blkioDeviceReadBps == null) {
-      this.blkioDeviceReadBps = new ArrayList<>();
-    }
-    this.blkioDeviceReadBps.add(blkioDeviceReadBpsItem);
-    return this;
-  }
-
-   /**
-   * Limit read rate (bytes per second) from a device, in the form &#x60;[{\&quot;Path\&quot;: \&quot;device_path\&quot;, \&quot;Rate\&quot;: rate}]&#x60;.
-   * @return blkioDeviceReadBps
-  **/
-  @ApiModelProperty(value = "Limit read rate (bytes per second) from a device, in the form `[{\"Path\": \"device_path\", \"Rate\": rate}]`. ")
-  public List<ThrottleDevice> getBlkioDeviceReadBps() {
-    return blkioDeviceReadBps;
-  }
-
-  public void setBlkioDeviceReadBps(List<ThrottleDevice> blkioDeviceReadBps) {
-    this.blkioDeviceReadBps = blkioDeviceReadBps;
-  }
-
-  public HostConfig blkioDeviceWriteBps(List<ThrottleDevice> blkioDeviceWriteBps) {
-    this.blkioDeviceWriteBps = blkioDeviceWriteBps;
-    return this;
-  }
-
-  public HostConfig addBlkioDeviceWriteBpsItem(ThrottleDevice blkioDeviceWriteBpsItem) {
-    if (this.blkioDeviceWriteBps == null) {
-      this.blkioDeviceWriteBps = new ArrayList<>();
-    }
-    this.blkioDeviceWriteBps.add(blkioDeviceWriteBpsItem);
-    return this;
-  }
-
-   /**
-   * Limit write rate (bytes per second) to a device, in the form &#x60;[{\&quot;Path\&quot;: \&quot;device_path\&quot;, \&quot;Rate\&quot;: rate}]&#x60;.
-   * @return blkioDeviceWriteBps
-  **/
-  @ApiModelProperty(value = "Limit write rate (bytes per second) to a device, in the form `[{\"Path\": \"device_path\", \"Rate\": rate}]`. ")
-  public List<ThrottleDevice> getBlkioDeviceWriteBps() {
-    return blkioDeviceWriteBps;
-  }
-
-  public void setBlkioDeviceWriteBps(List<ThrottleDevice> blkioDeviceWriteBps) {
-    this.blkioDeviceWriteBps = blkioDeviceWriteBps;
-  }
-
-  public HostConfig blkioDeviceReadIOps(List<ThrottleDevice> blkioDeviceReadIOps) {
-    this.blkioDeviceReadIOps = blkioDeviceReadIOps;
-    return this;
-  }
-
-  public HostConfig addBlkioDeviceReadIOpsItem(ThrottleDevice blkioDeviceReadIOpsItem) {
-    if (this.blkioDeviceReadIOps == null) {
-      this.blkioDeviceReadIOps = new ArrayList<>();
-    }
-    this.blkioDeviceReadIOps.add(blkioDeviceReadIOpsItem);
-    return this;
-  }
-
-   /**
-   * Limit read rate (IO per second) from a device, in the form &#x60;[{\&quot;Path\&quot;: \&quot;device_path\&quot;, \&quot;Rate\&quot;: rate}]&#x60;.
-   * @return blkioDeviceReadIOps
-  **/
-  @ApiModelProperty(value = "Limit read rate (IO per second) from a device, in the form `[{\"Path\": \"device_path\", \"Rate\": rate}]`. ")
-  public List<ThrottleDevice> getBlkioDeviceReadIOps() {
-    return blkioDeviceReadIOps;
-  }
-
-  public void setBlkioDeviceReadIOps(List<ThrottleDevice> blkioDeviceReadIOps) {
-    this.blkioDeviceReadIOps = blkioDeviceReadIOps;
-  }
-
-  public HostConfig blkioDeviceWriteIOps(List<ThrottleDevice> blkioDeviceWriteIOps) {
-    this.blkioDeviceWriteIOps = blkioDeviceWriteIOps;
-    return this;
-  }
-
-  public HostConfig addBlkioDeviceWriteIOpsItem(ThrottleDevice blkioDeviceWriteIOpsItem) {
-    if (this.blkioDeviceWriteIOps == null) {
-      this.blkioDeviceWriteIOps = new ArrayList<>();
-    }
-    this.blkioDeviceWriteIOps.add(blkioDeviceWriteIOpsItem);
-    return this;
-  }
-
-   /**
-   * Limit write rate (IO per second) to a device, in the form &#x60;[{\&quot;Path\&quot;: \&quot;device_path\&quot;, \&quot;Rate\&quot;: rate}]&#x60;.
-   * @return blkioDeviceWriteIOps
-  **/
-  @ApiModelProperty(value = "Limit write rate (IO per second) to a device, in the form `[{\"Path\": \"device_path\", \"Rate\": rate}]`. ")
-  public List<ThrottleDevice> getBlkioDeviceWriteIOps() {
-    return blkioDeviceWriteIOps;
-  }
-
-  public void setBlkioDeviceWriteIOps(List<ThrottleDevice> blkioDeviceWriteIOps) {
-    this.blkioDeviceWriteIOps = blkioDeviceWriteIOps;
-  }
-
-  public HostConfig cpuPeriod(Long cpuPeriod) {
-    this.cpuPeriod = cpuPeriod;
-    return this;
-  }
-
-   /**
-   * The length of a CPU period in microseconds.
-   * @return cpuPeriod
-  **/
-  @ApiModelProperty(value = "The length of a CPU period in microseconds.")
-  public Long getCpuPeriod() {
-    return cpuPeriod;
-  }
-
-  public void setCpuPeriod(Long cpuPeriod) {
-    this.cpuPeriod = cpuPeriod;
-  }
-
-  public HostConfig cpuQuota(Long cpuQuota) {
-    this.cpuQuota = cpuQuota;
-    return this;
-  }
-
-   /**
-   * Microseconds of CPU time that the container can get in a CPU period.
-   * @return cpuQuota
-  **/
-  @ApiModelProperty(value = "Microseconds of CPU time that the container can get in a CPU period.")
-  public Long getCpuQuota() {
-    return cpuQuota;
-  }
-
-  public void setCpuQuota(Long cpuQuota) {
-    this.cpuQuota = cpuQuota;
-  }
-
-  public HostConfig cpuRealtimePeriod(Long cpuRealtimePeriod) {
-    this.cpuRealtimePeriod = cpuRealtimePeriod;
-    return this;
-  }
-
-   /**
-   * The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
-   * @return cpuRealtimePeriod
-  **/
-  @ApiModelProperty(value = "The length of a CPU real-time period in microseconds. Set to 0 to allocate no time allocated to real-time tasks.")
-  public Long getCpuRealtimePeriod() {
-    return cpuRealtimePeriod;
-  }
-
-  public void setCpuRealtimePeriod(Long cpuRealtimePeriod) {
-    this.cpuRealtimePeriod = cpuRealtimePeriod;
-  }
-
-  public HostConfig cpuRealtimeRuntime(Long cpuRealtimeRuntime) {
-    this.cpuRealtimeRuntime = cpuRealtimeRuntime;
-    return this;
-  }
-
-   /**
-   * The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.
-   * @return cpuRealtimeRuntime
-  **/
-  @ApiModelProperty(value = "The length of a CPU real-time runtime in microseconds. Set to 0 to allocate no time allocated to real-time tasks.")
-  public Long getCpuRealtimeRuntime() {
-    return cpuRealtimeRuntime;
-  }
-
-  public void setCpuRealtimeRuntime(Long cpuRealtimeRuntime) {
-    this.cpuRealtimeRuntime = cpuRealtimeRuntime;
-  }
-
-  public HostConfig cpusetCpus(String cpusetCpus) {
-    this.cpusetCpus = cpusetCpus;
-    return this;
-  }
-
-   /**
-   * CPUs in which to allow execution (e.g., &#x60;0-3&#x60;, &#x60;0,1&#x60;)
-   * @return cpusetCpus
-  **/
-  @ApiModelProperty(example = "0-3", value = "CPUs in which to allow execution (e.g., `0-3`, `0,1`)")
-  public String getCpusetCpus() {
-    return cpusetCpus;
-  }
-
-  public void setCpusetCpus(String cpusetCpus) {
-    this.cpusetCpus = cpusetCpus;
-  }
-
-  public HostConfig cpusetMems(String cpusetMems) {
-    this.cpusetMems = cpusetMems;
-    return this;
-  }
-
-   /**
-   * Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.
-   * @return cpusetMems
-  **/
-  @ApiModelProperty(value = "Memory nodes (MEMs) in which to allow execution (0-3, 0,1). Only effective on NUMA systems.")
-  public String getCpusetMems() {
-    return cpusetMems;
-  }
-
-  public void setCpusetMems(String cpusetMems) {
-    this.cpusetMems = cpusetMems;
-  }
-
-  public HostConfig devices(List<DeviceMapping> devices) {
-    this.devices = devices;
-    return this;
-  }
-
-  public HostConfig addDevicesItem(DeviceMapping devicesItem) {
-    if (this.devices == null) {
-      this.devices = new ArrayList<>();
-    }
-    this.devices.add(devicesItem);
-    return this;
-  }
-
-   /**
-   * A list of devices to add to the container.
-   * @return devices
-  **/
-  @ApiModelProperty(value = "A list of devices to add to the container.")
-  public List<DeviceMapping> getDevices() {
-    return devices;
-  }
-
-  public void setDevices(List<DeviceMapping> devices) {
-    this.devices = devices;
-  }
-
-  public HostConfig deviceCgroupRules(List<String> deviceCgroupRules) {
-    this.deviceCgroupRules = deviceCgroupRules;
-    return this;
-  }
-
-  public HostConfig addDeviceCgroupRulesItem(String deviceCgroupRulesItem) {
-    if (this.deviceCgroupRules == null) {
-      this.deviceCgroupRules = new ArrayList<>();
-    }
-    this.deviceCgroupRules.add(deviceCgroupRulesItem);
-    return this;
-  }
-
-   /**
-   * a list of cgroup rules to apply to the container
-   * @return deviceCgroupRules
-  **/
-  @ApiModelProperty(value = "a list of cgroup rules to apply to the container")
-  public List<String> getDeviceCgroupRules() {
-    return deviceCgroupRules;
-  }
-
-  public void setDeviceCgroupRules(List<String> deviceCgroupRules) {
-    this.deviceCgroupRules = deviceCgroupRules;
-  }
-
-  public HostConfig diskQuota(Long diskQuota) {
-    this.diskQuota = diskQuota;
-    return this;
-  }
-
-   /**
-   * Disk limit (in bytes).
-   * @return diskQuota
-  **/
-  @ApiModelProperty(value = "Disk limit (in bytes).")
-  public Long getDiskQuota() {
-    return diskQuota;
-  }
-
-  public void setDiskQuota(Long diskQuota) {
-    this.diskQuota = diskQuota;
-  }
-
-  public HostConfig kernelMemory(Long kernelMemory) {
-    this.kernelMemory = kernelMemory;
-    return this;
-  }
-
-   /**
-   * Kernel memory limit in bytes.
-   * @return kernelMemory
-  **/
-  @ApiModelProperty(value = "Kernel memory limit in bytes.")
-  public Long getKernelMemory() {
-    return kernelMemory;
-  }
-
-  public void setKernelMemory(Long kernelMemory) {
-    this.kernelMemory = kernelMemory;
-  }
-
-  public HostConfig memoryReservation(Long memoryReservation) {
-    this.memoryReservation = memoryReservation;
-    return this;
-  }
-
-   /**
-   * Memory soft limit in bytes.
-   * @return memoryReservation
-  **/
-  @ApiModelProperty(value = "Memory soft limit in bytes.")
-  public Long getMemoryReservation() {
-    return memoryReservation;
-  }
-
-  public void setMemoryReservation(Long memoryReservation) {
-    this.memoryReservation = memoryReservation;
-  }
-
-  public HostConfig memorySwap(Long memorySwap) {
-    this.memorySwap = memorySwap;
-    return this;
-  }
-
-   /**
-   * Total memory limit (memory + swap). Set as &#x60;-1&#x60; to enable unlimited swap.
-   * @return memorySwap
-  **/
-  @ApiModelProperty(value = "Total memory limit (memory + swap). Set as `-1` to enable unlimited swap.")
-  public Long getMemorySwap() {
-    return memorySwap;
-  }
-
-  public void setMemorySwap(Long memorySwap) {
-    this.memorySwap = memorySwap;
-  }
-
-  public HostConfig memorySwappiness(Long memorySwappiness) {
-    this.memorySwappiness = memorySwappiness;
-    return this;
-  }
-
-   /**
-   * Tune a container&#39;s memory swappiness behavior. Accepts an integer between 0 and 100.
-   * minimum: 0
-   * maximum: 100
-   * @return memorySwappiness
-  **/
-  @ApiModelProperty(value = "Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.")
-  public Long getMemorySwappiness() {
-    return memorySwappiness;
-  }
-
-  public void setMemorySwappiness(Long memorySwappiness) {
-    this.memorySwappiness = memorySwappiness;
-  }
-
-  public HostConfig nanoCPUs(Long nanoCPUs) {
-    this.nanoCPUs = nanoCPUs;
-    return this;
-  }
-
-   /**
-   * CPU quota in units of 10&lt;sup&gt;-9&lt;/sup&gt; CPUs.
-   * @return nanoCPUs
-  **/
-  @ApiModelProperty(value = "CPU quota in units of 10<sup>-9</sup> CPUs.")
-  public Long getNanoCPUs() {
-    return nanoCPUs;
-  }
-
-  public void setNanoCPUs(Long nanoCPUs) {
-    this.nanoCPUs = nanoCPUs;
-  }
-
-  public HostConfig oomKillDisable(Boolean oomKillDisable) {
-    this.oomKillDisable = oomKillDisable;
-    return this;
-  }
-
-   /**
-   * Disable OOM Killer for the container.
-   * @return oomKillDisable
-  **/
-  @ApiModelProperty(value = "Disable OOM Killer for the container.")
-  public Boolean isOomKillDisable() {
-    return oomKillDisable;
-  }
-
-  public void setOomKillDisable(Boolean oomKillDisable) {
-    this.oomKillDisable = oomKillDisable;
-  }
-
-  public HostConfig pidsLimit(Long pidsLimit) {
-    this.pidsLimit = pidsLimit;
-    return this;
-  }
-
-   /**
-   * Tune a container&#39;s pids limit. Set -1 for unlimited.
-   * @return pidsLimit
-  **/
-  @ApiModelProperty(value = "Tune a container's pids limit. Set -1 for unlimited.")
-  public Long getPidsLimit() {
-    return pidsLimit;
-  }
-
-  public void setPidsLimit(Long pidsLimit) {
-    this.pidsLimit = pidsLimit;
-  }
-
-  public HostConfig ulimits(List<ResourcesUlimits> ulimits) {
-    this.ulimits = ulimits;
-    return this;
-  }
-
-  public HostConfig addUlimitsItem(ResourcesUlimits ulimitsItem) {
-    if (this.ulimits == null) {
-      this.ulimits = new ArrayList<>();
-    }
-    this.ulimits.add(ulimitsItem);
-    return this;
-  }
-
-   /**
-   * A list of resource limits to set in the container. For example: &#x60;{\&quot;Name\&quot;: \&quot;nofile\&quot;, \&quot;Soft\&quot;: 1024, \&quot;Hard\&quot;: 2048}&#x60;\&quot;
-   * @return ulimits
-  **/
-  @ApiModelProperty(value = "A list of resource limits to set in the container. For example: `{\"Name\": \"nofile\", \"Soft\": 1024, \"Hard\": 2048}`\" ")
-  public List<ResourcesUlimits> getUlimits() {
-    return ulimits;
-  }
-
-  public void setUlimits(List<ResourcesUlimits> ulimits) {
-    this.ulimits = ulimits;
-  }
-
-  public HostConfig cpuCount(Long cpuCount) {
-    this.cpuCount = cpuCount;
-    return this;
-  }
-
-   /**
-   * The number of usable CPUs (Windows only).  On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is &#x60;CPUCount&#x60; first, then &#x60;CPUShares&#x60;, and &#x60;CPUPercent&#x60; last.
-   * @return cpuCount
-  **/
-  @ApiModelProperty(value = "The number of usable CPUs (Windows only).  On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last. ")
-  public Long getCpuCount() {
-    return cpuCount;
-  }
-
-  public void setCpuCount(Long cpuCount) {
-    this.cpuCount = cpuCount;
-  }
-
-  public HostConfig cpuPercent(Long cpuPercent) {
-    this.cpuPercent = cpuPercent;
-    return this;
-  }
-
-   /**
-   * The usable percentage of the available CPUs (Windows only).  On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is &#x60;CPUCount&#x60; first, then &#x60;CPUShares&#x60;, and &#x60;CPUPercent&#x60; last.
-   * @return cpuPercent
-  **/
-  @ApiModelProperty(value = "The usable percentage of the available CPUs (Windows only).  On Windows Server containers, the processor resource controls are mutually exclusive. The order of precedence is `CPUCount` first, then `CPUShares`, and `CPUPercent` last. ")
-  public Long getCpuPercent() {
-    return cpuPercent;
-  }
-
-  public void setCpuPercent(Long cpuPercent) {
-    this.cpuPercent = cpuPercent;
-  }
-
-  public HostConfig ioMaximumIOps(Long ioMaximumIOps) {
-    this.ioMaximumIOps = ioMaximumIOps;
-    return this;
-  }
-
-   /**
-   * Maximum IOps for the container system drive (Windows only)
-   * @return ioMaximumIOps
-  **/
-  @ApiModelProperty(value = "Maximum IOps for the container system drive (Windows only)")
-  public Long getIoMaximumIOps() {
-    return ioMaximumIOps;
-  }
-
-  public void setIoMaximumIOps(Long ioMaximumIOps) {
-    this.ioMaximumIOps = ioMaximumIOps;
-  }
-
-  public HostConfig ioMaximumBandwidth(Long ioMaximumBandwidth) {
-    this.ioMaximumBandwidth = ioMaximumBandwidth;
-    return this;
-  }
-
-   /**
-   * Maximum IO in bytes per second for the container system drive (Windows only)
-   * @return ioMaximumBandwidth
-  **/
-  @ApiModelProperty(value = "Maximum IO in bytes per second for the container system drive (Windows only)")
-  public Long getIoMaximumBandwidth() {
-    return ioMaximumBandwidth;
-  }
-
-  public void setIoMaximumBandwidth(Long ioMaximumBandwidth) {
-    this.ioMaximumBandwidth = ioMaximumBandwidth;
-  }
+  @JsonProperty("MaskedPaths")
+  private List<String> maskedPaths = null;
+
+  @JsonProperty("ReadonlyPaths")
+  private List<String> readonlyPaths = null;
 
   public HostConfig binds(List<String> binds) {
     this.binds = binds;
@@ -884,10 +246,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of volume bindings for this container. Each volume binding is a string in one of these forms:  - &#x60;host-src:container-dest&#x60; to bind-mount a host path into the container. Both &#x60;host-src&#x60;, and &#x60;container-dest&#x60; must be an _absolute_ path. - &#x60;host-src:container-dest:ro&#x60; to make the bind mount read-only inside the container. Both &#x60;host-src&#x60;, and &#x60;container-dest&#x60; must be an _absolute_ path. - &#x60;volume-name:container-dest&#x60; to bind-mount a volume managed by a volume driver into the container. &#x60;container-dest&#x60; must be an _absolute_ path. - &#x60;volume-name:container-dest:ro&#x60; to mount the volume read-only inside the container.  &#x60;container-dest&#x60; must be an _absolute_ path.
+   * A list of volume bindings for this container. Each volume binding is a string in one of these forms:  - &#x60;host-src:container-dest[:options]&#x60; to bind-mount a host path   into the container. Both &#x60;host-src&#x60;, and &#x60;container-dest&#x60; must   be an _absolute_ path. - &#x60;volume-name:container-dest[:options]&#x60; to bind-mount a volume   managed by a volume driver into the container. &#x60;container-dest&#x60;   must be an _absolute_ path.  &#x60;options&#x60; is an optional, comma-delimited list of:  - &#x60;nocopy&#x60; disables automatic copying of data from the container   path to the volume. The &#x60;nocopy&#x60; flag only applies to named volumes. - &#x60;[ro|rw]&#x60; mounts a volume read-only or read-write, respectively.   If omitted or set to &#x60;rw&#x60;, volumes are mounted read-write. - &#x60;[z|Z]&#x60; applies SELinux labels to allow or deny multiple containers   to read and write to the same volume.     - &#x60;z&#x60;: a _shared_ content label is applied to the content. This       label indicates that multiple containers can share the volume       content, for both reading and writing.     - &#x60;Z&#x60;: a _private unshared_ label is applied to the content.       This label indicates that only the current container can use       a private volume. Labeling systems such as SELinux require       proper labels to be placed on volume content that is mounted       into a container. Without a label, the security system can       prevent a container&#39;s processes from using the content. By       default, the labels set by the host operating system are not       modified. - &#x60;[[r]shared|[r]slave|[r]private]&#x60; specifies mount   [propagation behavior](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt).   This only applies to bind-mounted volumes, not internal volumes   or named volumes. Mount propagation requires the source mount   point (the location where the source directory is mounted in the   host operating system) to have the correct propagation properties.   For shared volumes, the source mount point must be set to &#x60;shared&#x60;.   For slave volumes, the mount must be set to either &#x60;shared&#x60; or   &#x60;slave&#x60;. 
    * @return binds
   **/
-  @ApiModelProperty(value = "A list of volume bindings for this container. Each volume binding is a string in one of these forms:  - `host-src:container-dest` to bind-mount a host path into the container. Both `host-src`, and `container-dest` must be an _absolute_ path. - `host-src:container-dest:ro` to make the bind mount read-only inside the container. Both `host-src`, and `container-dest` must be an _absolute_ path. - `volume-name:container-dest` to bind-mount a volume managed by a volume driver into the container. `container-dest` must be an _absolute_ path. - `volume-name:container-dest:ro` to mount the volume read-only inside the container.  `container-dest` must be an _absolute_ path. ")
+  @ApiModelProperty(value = "A list of volume bindings for this container. Each volume binding is a string in one of these forms:  - `host-src:container-dest[:options]` to bind-mount a host path   into the container. Both `host-src`, and `container-dest` must   be an _absolute_ path. - `volume-name:container-dest[:options]` to bind-mount a volume   managed by a volume driver into the container. `container-dest`   must be an _absolute_ path.  `options` is an optional, comma-delimited list of:  - `nocopy` disables automatic copying of data from the container   path to the volume. The `nocopy` flag only applies to named volumes. - `[ro|rw]` mounts a volume read-only or read-write, respectively.   If omitted or set to `rw`, volumes are mounted read-write. - `[z|Z]` applies SELinux labels to allow or deny multiple containers   to read and write to the same volume.     - `z`: a _shared_ content label is applied to the content. This       label indicates that multiple containers can share the volume       content, for both reading and writing.     - `Z`: a _private unshared_ label is applied to the content.       This label indicates that only the current container can use       a private volume. Labeling systems such as SELinux require       proper labels to be placed on volume content that is mounted       into a container. Without a label, the security system can       prevent a container's processes from using the content. By       default, the labels set by the host operating system are not       modified. - `[[r]shared|[r]slave|[r]private]` specifies mount   [propagation behavior](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt).   This only applies to bind-mounted volumes, not internal volumes   or named volumes. Mount propagation requires the source mount   point (the location where the source directory is mounted in the   host operating system) to have the correct propagation properties.   For shared volumes, the source mount point must be set to `shared`.   For slave volumes, the mount must be set to either `shared` or   `slave`. ")
   public List<String> getBinds() {
     return binds;
   }
@@ -905,7 +267,7 @@ public class HostConfig {
    * Path to a file where the container ID is written
    * @return containerIDFile
   **/
-  @ApiModelProperty(value = "Path to a file where the container ID is written")
+  @ApiModelProperty(example = "", value = "Path to a file where the container ID is written")
   public String getContainerIDFile() {
     return containerIDFile;
   }
@@ -938,10 +300,10 @@ public class HostConfig {
   }
 
    /**
-   * Network mode to use for this container. Supported standard values are: &#x60;bridge&#x60;, &#x60;host&#x60;, &#x60;none&#x60;, and &#x60;container:&lt;name|id&gt;&#x60;. Any other value is taken as a custom network&#39;s name to which this container should connect to.
+   * Network mode to use for this container. Supported standard values are: &#x60;bridge&#x60;, &#x60;host&#x60;, &#x60;none&#x60;, and &#x60;container:&lt;name|id&gt;&#x60;. Any other value is taken as a custom network&#39;s name to which this container should connect to. 
    * @return networkMode
   **/
-  @ApiModelProperty(value = "Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to.")
+  @ApiModelProperty(value = "Network mode to use for this container. Supported standard values are: `bridge`, `host`, `none`, and `container:<name|id>`. Any other value is taken as a custom network's name to which this container should connect to. ")
   public String getNetworkMode() {
     return networkMode;
   }
@@ -992,10 +354,10 @@ public class HostConfig {
   }
 
    /**
-   * Automatically remove the container when the container&#39;s process exits. This has no effect if &#x60;RestartPolicy&#x60; is set.
+   * Automatically remove the container when the container&#39;s process exits. This has no effect if &#x60;RestartPolicy&#x60; is set. 
    * @return autoRemove
   **/
-  @ApiModelProperty(value = "Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set.")
+  @ApiModelProperty(value = "Automatically remove the container when the container's process exits. This has no effect if `RestartPolicy` is set. ")
   public Boolean isAutoRemove() {
     return autoRemove;
   }
@@ -1036,10 +398,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of volumes to inherit from another container, specified in the form &#x60;&lt;container name&gt;[:&lt;ro|rw&gt;]&#x60;.
+   * A list of volumes to inherit from another container, specified in the form &#x60;&lt;container name&gt;[:&lt;ro|rw&gt;]&#x60;. 
    * @return volumesFrom
   **/
-  @ApiModelProperty(value = "A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`.")
+  @ApiModelProperty(value = "A list of volumes to inherit from another container, specified in the form `<container name>[:<ro|rw>]`. ")
   public List<String> getVolumesFrom() {
     return volumesFrom;
   }
@@ -1062,16 +424,68 @@ public class HostConfig {
   }
 
    /**
-   * Specification for mounts to be added to the container.
+   * Specification for mounts to be added to the container. 
    * @return mounts
   **/
-  @ApiModelProperty(value = "Specification for mounts to be added to the container.")
+  @ApiModelProperty(value = "Specification for mounts to be added to the container. ")
   public List<Mount> getMounts() {
     return mounts;
   }
 
   public void setMounts(List<Mount> mounts) {
     this.mounts = mounts;
+  }
+
+  public HostConfig consoleSize(List<Integer> consoleSize) {
+    this.consoleSize = consoleSize;
+    return this;
+  }
+
+  public HostConfig addConsoleSizeItem(Integer consoleSizeItem) {
+    if (this.consoleSize == null) {
+      this.consoleSize = new ArrayList<>();
+    }
+    this.consoleSize.add(consoleSizeItem);
+    return this;
+  }
+
+   /**
+   * Initial console size, as an &#x60;[height, width]&#x60; array. 
+   * @return consoleSize
+  **/
+  @ApiModelProperty(example = "[80,64]", value = "Initial console size, as an `[height, width]` array. ")
+  public List<Integer> getConsoleSize() {
+    return consoleSize;
+  }
+
+  public void setConsoleSize(List<Integer> consoleSize) {
+    this.consoleSize = consoleSize;
+  }
+
+  public HostConfig annotations(Map<String, String> annotations) {
+    this.annotations = annotations;
+    return this;
+  }
+
+  public HostConfig putAnnotationsItem(String key, String annotationsItem) {
+    if (this.annotations == null) {
+      this.annotations = new HashMap<>();
+    }
+    this.annotations.put(key, annotationsItem);
+    return this;
+  }
+
+   /**
+   * Arbitrary non-identifying metadata attached to container and provided to the runtime when the container is started. 
+   * @return annotations
+  **/
+  @ApiModelProperty(value = "Arbitrary non-identifying metadata attached to container and provided to the runtime when the container is started. ")
+  public Map<String, String> getAnnotations() {
+    return annotations;
+  }
+
+  public void setAnnotations(Map<String, String> annotations) {
+    this.annotations = annotations;
   }
 
   public HostConfig capAdd(List<String> capAdd) {
@@ -1088,10 +502,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of kernel capabilities to add to the container.
+   * A list of kernel capabilities to add to the container. Conflicts with option &#39;Capabilities&#39;. 
    * @return capAdd
   **/
-  @ApiModelProperty(value = "A list of kernel capabilities to add to the container.")
+  @ApiModelProperty(value = "A list of kernel capabilities to add to the container. Conflicts with option 'Capabilities'. ")
   public List<String> getCapAdd() {
     return capAdd;
   }
@@ -1114,16 +528,34 @@ public class HostConfig {
   }
 
    /**
-   * A list of kernel capabilities to drop from the container.
+   * A list of kernel capabilities to drop from the container. Conflicts with option &#39;Capabilities&#39;. 
    * @return capDrop
   **/
-  @ApiModelProperty(value = "A list of kernel capabilities to drop from the container.")
+  @ApiModelProperty(value = "A list of kernel capabilities to drop from the container. Conflicts with option 'Capabilities'. ")
   public List<String> getCapDrop() {
     return capDrop;
   }
 
   public void setCapDrop(List<String> capDrop) {
     this.capDrop = capDrop;
+  }
+
+  public HostConfig cgroupnsMode(CgroupnsModeEnum cgroupnsMode) {
+    this.cgroupnsMode = cgroupnsMode;
+    return this;
+  }
+
+   /**
+   * cgroup namespace mode for the container. Possible values are:  - &#x60;\&quot;private\&quot;&#x60;: the container runs in its own private cgroup namespace - &#x60;\&quot;host\&quot;&#x60;: use the host system&#39;s cgroup namespace  If not specified, the daemon default is used, which can either be &#x60;\&quot;private\&quot;&#x60; or &#x60;\&quot;host\&quot;&#x60;, depending on daemon version, kernel support and configuration. 
+   * @return cgroupnsMode
+  **/
+  @ApiModelProperty(value = "cgroup namespace mode for the container. Possible values are:  - `\"private\"`: the container runs in its own private cgroup namespace - `\"host\"`: use the host system's cgroup namespace  If not specified, the daemon default is used, which can either be `\"private\"` or `\"host\"`, depending on daemon version, kernel support and configuration. ")
+  public CgroupnsModeEnum getCgroupnsMode() {
+    return cgroupnsMode;
+  }
+
+  public void setCgroupnsMode(CgroupnsModeEnum cgroupnsMode) {
+    this.cgroupnsMode = cgroupnsMode;
   }
 
   public HostConfig dns(List<String> dns) {
@@ -1218,7 +650,7 @@ public class HostConfig {
   }
 
    /**
-   * A list of hostnames/IP mappings to add to the container&#39;s &#x60;/etc/hosts&#x60; file. Specified in the form &#x60;[\&quot;hostname:IP\&quot;]&#x60;.
+   * A list of hostnames/IP mappings to add to the container&#39;s &#x60;/etc/hosts&#x60; file. Specified in the form &#x60;[\&quot;hostname:IP\&quot;]&#x60;. 
    * @return extraHosts
   **/
   @ApiModelProperty(value = "A list of hostnames/IP mappings to add to the container's `/etc/hosts` file. Specified in the form `[\"hostname:IP\"]`. ")
@@ -1244,10 +676,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of additional groups that the container process will run as.
+   * A list of additional groups that the container process will run as. 
    * @return groupAdd
   **/
-  @ApiModelProperty(value = "A list of additional groups that the container process will run as.")
+  @ApiModelProperty(value = "A list of additional groups that the container process will run as. ")
   public List<String> getGroupAdd() {
     return groupAdd;
   }
@@ -1262,7 +694,7 @@ public class HostConfig {
   }
 
    /**
-   * IPC sharing mode for the container. Possible values are:  - &#x60;\&quot;none\&quot;&#x60;: own private IPC namespace, with /dev/shm not mounted - &#x60;\&quot;private\&quot;&#x60;: own private IPC namespace - &#x60;\&quot;shareable\&quot;&#x60;: own private IPC namespace, with a possibility to share it with other containers - &#x60;\&quot;container:&lt;name|id&gt;\&quot;&#x60;: join another (shareable) container&#39;s IPC namespace - &#x60;\&quot;host\&quot;&#x60;: use the host system&#39;s IPC namespace  If not specified, daemon default is used, which can either be &#x60;\&quot;private\&quot;&#x60; or &#x60;\&quot;shareable\&quot;&#x60;, depending on daemon version and configuration.
+   * IPC sharing mode for the container. Possible values are:  - &#x60;\&quot;none\&quot;&#x60;: own private IPC namespace, with /dev/shm not mounted - &#x60;\&quot;private\&quot;&#x60;: own private IPC namespace - &#x60;\&quot;shareable\&quot;&#x60;: own private IPC namespace, with a possibility to share it with other containers - &#x60;\&quot;container:&lt;name|id&gt;\&quot;&#x60;: join another (shareable) container&#39;s IPC namespace - &#x60;\&quot;host\&quot;&#x60;: use the host system&#39;s IPC namespace  If not specified, daemon default is used, which can either be &#x60;\&quot;private\&quot;&#x60; or &#x60;\&quot;shareable\&quot;&#x60;, depending on daemon version and configuration. 
    * @return ipcMode
   **/
   @ApiModelProperty(value = "IPC sharing mode for the container. Possible values are:  - `\"none\"`: own private IPC namespace, with /dev/shm not mounted - `\"private\"`: own private IPC namespace - `\"shareable\"`: own private IPC namespace, with a possibility to share it with other containers - `\"container:<name|id>\"`: join another (shareable) container's IPC namespace - `\"host\"`: use the host system's IPC namespace  If not specified, daemon default is used, which can either be `\"private\"` or `\"shareable\"`, depending on daemon version and configuration. ")
@@ -1306,10 +738,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of links for the container in the form &#x60;container_name:alias&#x60;.
+   * A list of links for the container in the form &#x60;container_name:alias&#x60;. 
    * @return links
   **/
-  @ApiModelProperty(value = "A list of links for the container in the form `container_name:alias`.")
+  @ApiModelProperty(value = "A list of links for the container in the form `container_name:alias`. ")
   public List<String> getLinks() {
     return links;
   }
@@ -1324,10 +756,10 @@ public class HostConfig {
   }
 
    /**
-   * An integer value containing the score given to the container in order to tune OOM killer preferences.
+   * An integer value containing the score given to the container in order to tune OOM killer preferences. 
    * @return oomScoreAdj
   **/
-  @ApiModelProperty(example = "500", value = "An integer value containing the score given to the container in order to tune OOM killer preferences.")
+  @ApiModelProperty(example = "500", value = "An integer value containing the score given to the container in order to tune OOM killer preferences. ")
   public Integer getOomScoreAdj() {
     return oomScoreAdj;
   }
@@ -1342,7 +774,7 @@ public class HostConfig {
   }
 
    /**
-   * Set the PID (Process) Namespace mode for the container. It can be either:  - &#x60;\&quot;container:&lt;name|id&gt;\&quot;&#x60;: joins another container&#39;s PID namespace - &#x60;\&quot;host\&quot;&#x60;: use the host&#39;s PID namespace inside the container
+   * Set the PID (Process) Namespace mode for the container. It can be either:  - &#x60;\&quot;container:&lt;name|id&gt;\&quot;&#x60;: joins another container&#39;s PID namespace - &#x60;\&quot;host\&quot;&#x60;: use the host&#39;s PID namespace inside the container 
    * @return pidMode
   **/
   @ApiModelProperty(value = "Set the PID (Process) Namespace mode for the container. It can be either:  - `\"container:<name|id>\"`: joins another container's PID namespace - `\"host\"`: use the host's PID namespace inside the container ")
@@ -1378,7 +810,7 @@ public class HostConfig {
   }
 
    /**
-   * Allocates an ephemeral host port for all of a container&#39;s exposed ports.  Ports are de-allocated when the container stops and allocated when the container starts. The allocated port might be changed when restarting the container.  The port is selected from the ephemeral port range that depends on the kernel. For example, on Linux the range is defined by &#x60;/proc/sys/net/ipv4/ip_local_port_range&#x60;.
+   * Allocates an ephemeral host port for all of a container&#39;s exposed ports.  Ports are de-allocated when the container stops and allocated when the container starts. The allocated port might be changed when restarting the container.  The port is selected from the ephemeral port range that depends on the kernel. For example, on Linux the range is defined by &#x60;/proc/sys/net/ipv4/ip_local_port_range&#x60;. 
    * @return publishAllPorts
   **/
   @ApiModelProperty(value = "Allocates an ephemeral host port for all of a container's exposed ports.  Ports are de-allocated when the container stops and allocated when the container starts. The allocated port might be changed when restarting the container.  The port is selected from the ephemeral port range that depends on the kernel. For example, on Linux the range is defined by `/proc/sys/net/ipv4/ip_local_port_range`. ")
@@ -1422,10 +854,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of string values to customize labels for MLS systems, such as SELinux.
+   * A list of string values to customize labels for MLS systems, such as SELinux. 
    * @return securityOpt
   **/
-  @ApiModelProperty(value = "A list of string values to customize labels for MLS systems, such as SELinux.")
+  @ApiModelProperty(value = "A list of string values to customize labels for MLS systems, such as SELinux. ")
   public List<String> getSecurityOpt() {
     return securityOpt;
   }
@@ -1448,7 +880,7 @@ public class HostConfig {
   }
 
    /**
-   * Storage driver options for this container, in the form &#x60;{\&quot;size\&quot;: \&quot;120G\&quot;}&#x60;.
+   * Storage driver options for this container, in the form &#x60;{\&quot;size\&quot;: \&quot;120G\&quot;}&#x60;. 
    * @return storageOpt
   **/
   @ApiModelProperty(value = "Storage driver options for this container, in the form `{\"size\": \"120G\"}`. ")
@@ -1474,10 +906,10 @@ public class HostConfig {
   }
 
    /**
-   * A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example: &#x60;{ \&quot;/run\&quot;: \&quot;rw,noexec,nosuid,size&#x3D;65536k\&quot; }&#x60;.
+   * A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example:  &#x60;&#x60;&#x60; { \&quot;/run\&quot;: \&quot;rw,noexec,nosuid,size&#x3D;65536k\&quot; } &#x60;&#x60;&#x60; 
    * @return tmpfs
   **/
-  @ApiModelProperty(value = "A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example: `{ \"/run\": \"rw,noexec,nosuid,size=65536k\" }`. ")
+  @ApiModelProperty(value = "A map of container directories which should be replaced by tmpfs mounts, and their corresponding mount options. For example:  ``` { \"/run\": \"rw,noexec,nosuid,size=65536k\" } ``` ")
   public Map<String, String> getTmpfs() {
     return tmpfs;
   }
@@ -1510,10 +942,10 @@ public class HostConfig {
   }
 
    /**
-   * Sets the usernamespace mode for the container when usernamespace remapping option is enabled.
+   * Sets the usernamespace mode for the container when usernamespace remapping option is enabled. 
    * @return usernsMode
   **/
-  @ApiModelProperty(value = "Sets the usernamespace mode for the container when usernamespace remapping option is enabled.")
+  @ApiModelProperty(value = "Sets the usernamespace mode for the container when usernamespace remapping option is enabled. ")
   public String getUsernsMode() {
     return usernsMode;
   }
@@ -1522,22 +954,22 @@ public class HostConfig {
     this.usernsMode = usernsMode;
   }
 
-  public HostConfig shmSize(Integer shmSize) {
+  public HostConfig shmSize(Long shmSize) {
     this.shmSize = shmSize;
     return this;
   }
 
    /**
-   * Size of &#x60;/dev/shm&#x60; in bytes. If omitted, the system uses 64MB.
+   * Size of &#x60;/dev/shm&#x60; in bytes. If omitted, the system uses 64MB. 
    * minimum: 0
    * @return shmSize
   **/
-  @ApiModelProperty(value = "Size of `/dev/shm` in bytes. If omitted, the system uses 64MB.")
-  public Integer getShmSize() {
+  @ApiModelProperty(value = "Size of `/dev/shm` in bytes. If omitted, the system uses 64MB. ")
+  public Long getShmSize() {
     return shmSize;
   }
 
-  public void setShmSize(Integer shmSize) {
+  public void setShmSize(Long shmSize) {
     this.shmSize = shmSize;
   }
 
@@ -1555,10 +987,10 @@ public class HostConfig {
   }
 
    /**
-   * A list of kernel parameters (sysctls) to set in the container. For example: &#x60;{\&quot;net.ipv4.ip_forward\&quot;: \&quot;1\&quot;}&#x60;
+   * A list of kernel parameters (sysctls) to set in the container.  This field is omitted if not set.
    * @return sysctls
   **/
-  @ApiModelProperty(value = "A list of kernel parameters (sysctls) to set in the container. For example: `{\"net.ipv4.ip_forward\": \"1\"}` ")
+  @ApiModelProperty(example = "{\"net.ipv4.ip_forward\":\"1\"}", value = "A list of kernel parameters (sysctls) to set in the container.  This field is omitted if not set.")
   public Map<String, String> getSysctls() {
     return sysctls;
   }
@@ -1585,48 +1017,74 @@ public class HostConfig {
     this.runtime = runtime;
   }
 
-  public HostConfig consoleSize(List<Integer> consoleSize) {
-    this.consoleSize = consoleSize;
-    return this;
-  }
-
-  public HostConfig addConsoleSizeItem(Integer consoleSizeItem) {
-    if (this.consoleSize == null) {
-      this.consoleSize = new ArrayList<>();
-    }
-    this.consoleSize.add(consoleSizeItem);
-    return this;
-  }
-
-   /**
-   * Initial console size, as an &#x60;[height, width]&#x60; array. (Windows only)
-   * @return consoleSize
-  **/
-  @ApiModelProperty(value = "Initial console size, as an `[height, width]` array. (Windows only)")
-  public List<Integer> getConsoleSize() {
-    return consoleSize;
-  }
-
-  public void setConsoleSize(List<Integer> consoleSize) {
-    this.consoleSize = consoleSize;
-  }
-
   public HostConfig isolation(IsolationEnum isolation) {
     this.isolation = isolation;
     return this;
   }
 
    /**
-   * Isolation technology of the container. (Windows only)
+   * Isolation technology of the container. (Windows only) 
    * @return isolation
   **/
-  @ApiModelProperty(value = "Isolation technology of the container. (Windows only)")
+  @ApiModelProperty(value = "Isolation technology of the container. (Windows only) ")
   public IsolationEnum getIsolation() {
     return isolation;
   }
 
   public void setIsolation(IsolationEnum isolation) {
     this.isolation = isolation;
+  }
+
+  public HostConfig maskedPaths(List<String> maskedPaths) {
+    this.maskedPaths = maskedPaths;
+    return this;
+  }
+
+  public HostConfig addMaskedPathsItem(String maskedPathsItem) {
+    if (this.maskedPaths == null) {
+      this.maskedPaths = new ArrayList<>();
+    }
+    this.maskedPaths.add(maskedPathsItem);
+    return this;
+  }
+
+   /**
+   * The list of paths to be masked inside the container (this overrides the default set of paths). 
+   * @return maskedPaths
+  **/
+  @ApiModelProperty(example = "[\"/proc/asound\",\"/proc/acpi\",\"/proc/kcore\",\"/proc/keys\",\"/proc/latency_stats\",\"/proc/timer_list\",\"/proc/timer_stats\",\"/proc/sched_debug\",\"/proc/scsi\",\"/sys/firmware\",\"/sys/devices/virtual/powercap\"]", value = "The list of paths to be masked inside the container (this overrides the default set of paths). ")
+  public List<String> getMaskedPaths() {
+    return maskedPaths;
+  }
+
+  public void setMaskedPaths(List<String> maskedPaths) {
+    this.maskedPaths = maskedPaths;
+  }
+
+  public HostConfig readonlyPaths(List<String> readonlyPaths) {
+    this.readonlyPaths = readonlyPaths;
+    return this;
+  }
+
+  public HostConfig addReadonlyPathsItem(String readonlyPathsItem) {
+    if (this.readonlyPaths == null) {
+      this.readonlyPaths = new ArrayList<>();
+    }
+    this.readonlyPaths.add(readonlyPathsItem);
+    return this;
+  }
+
+   /**
+   * The list of paths to be set as read-only inside the container (this overrides the default set of paths). 
+   * @return readonlyPaths
+  **/
+  @ApiModelProperty(example = "[\"/proc/bus\",\"/proc/fs\",\"/proc/irq\",\"/proc/sys\",\"/proc/sysrq-trigger\"]", value = "The list of paths to be set as read-only inside the container (this overrides the default set of paths). ")
+  public List<String> getReadonlyPaths() {
+    return readonlyPaths;
+  }
+
+  public void setReadonlyPaths(List<String> readonlyPaths) {
+    this.readonlyPaths = readonlyPaths;
   }
 
 
@@ -1639,37 +1097,7 @@ public class HostConfig {
       return false;
     }
     HostConfig hostConfig = (HostConfig) o;
-    return Objects.equals(this.cpuShares, hostConfig.cpuShares) &&
-        Objects.equals(this.memory, hostConfig.memory) &&
-        Objects.equals(this.cgroupParent, hostConfig.cgroupParent) &&
-        Objects.equals(this.blkioWeight, hostConfig.blkioWeight) &&
-        Objects.equals(this.blkioWeightDevice, hostConfig.blkioWeightDevice) &&
-        Objects.equals(this.blkioDeviceReadBps, hostConfig.blkioDeviceReadBps) &&
-        Objects.equals(this.blkioDeviceWriteBps, hostConfig.blkioDeviceWriteBps) &&
-        Objects.equals(this.blkioDeviceReadIOps, hostConfig.blkioDeviceReadIOps) &&
-        Objects.equals(this.blkioDeviceWriteIOps, hostConfig.blkioDeviceWriteIOps) &&
-        Objects.equals(this.cpuPeriod, hostConfig.cpuPeriod) &&
-        Objects.equals(this.cpuQuota, hostConfig.cpuQuota) &&
-        Objects.equals(this.cpuRealtimePeriod, hostConfig.cpuRealtimePeriod) &&
-        Objects.equals(this.cpuRealtimeRuntime, hostConfig.cpuRealtimeRuntime) &&
-        Objects.equals(this.cpusetCpus, hostConfig.cpusetCpus) &&
-        Objects.equals(this.cpusetMems, hostConfig.cpusetMems) &&
-        Objects.equals(this.devices, hostConfig.devices) &&
-        Objects.equals(this.deviceCgroupRules, hostConfig.deviceCgroupRules) &&
-        Objects.equals(this.diskQuota, hostConfig.diskQuota) &&
-        Objects.equals(this.kernelMemory, hostConfig.kernelMemory) &&
-        Objects.equals(this.memoryReservation, hostConfig.memoryReservation) &&
-        Objects.equals(this.memorySwap, hostConfig.memorySwap) &&
-        Objects.equals(this.memorySwappiness, hostConfig.memorySwappiness) &&
-        Objects.equals(this.nanoCPUs, hostConfig.nanoCPUs) &&
-        Objects.equals(this.oomKillDisable, hostConfig.oomKillDisable) &&
-        Objects.equals(this.pidsLimit, hostConfig.pidsLimit) &&
-        Objects.equals(this.ulimits, hostConfig.ulimits) &&
-        Objects.equals(this.cpuCount, hostConfig.cpuCount) &&
-        Objects.equals(this.cpuPercent, hostConfig.cpuPercent) &&
-        Objects.equals(this.ioMaximumIOps, hostConfig.ioMaximumIOps) &&
-        Objects.equals(this.ioMaximumBandwidth, hostConfig.ioMaximumBandwidth) &&
-        Objects.equals(this.binds, hostConfig.binds) &&
+    return Objects.equals(this.binds, hostConfig.binds) &&
         Objects.equals(this.containerIDFile, hostConfig.containerIDFile) &&
         Objects.equals(this.logConfig, hostConfig.logConfig) &&
         Objects.equals(this.networkMode, hostConfig.networkMode) &&
@@ -1679,8 +1107,11 @@ public class HostConfig {
         Objects.equals(this.volumeDriver, hostConfig.volumeDriver) &&
         Objects.equals(this.volumesFrom, hostConfig.volumesFrom) &&
         Objects.equals(this.mounts, hostConfig.mounts) &&
+        Objects.equals(this.consoleSize, hostConfig.consoleSize) &&
+        Objects.equals(this.annotations, hostConfig.annotations) &&
         Objects.equals(this.capAdd, hostConfig.capAdd) &&
         Objects.equals(this.capDrop, hostConfig.capDrop) &&
+        Objects.equals(this.cgroupnsMode, hostConfig.cgroupnsMode) &&
         Objects.equals(this.dns, hostConfig.dns) &&
         Objects.equals(this.dnsOptions, hostConfig.dnsOptions) &&
         Objects.equals(this.dnsSearch, hostConfig.dnsSearch) &&
@@ -1702,13 +1133,15 @@ public class HostConfig {
         Objects.equals(this.shmSize, hostConfig.shmSize) &&
         Objects.equals(this.sysctls, hostConfig.sysctls) &&
         Objects.equals(this.runtime, hostConfig.runtime) &&
-        Objects.equals(this.consoleSize, hostConfig.consoleSize) &&
-        Objects.equals(this.isolation, hostConfig.isolation);
+        Objects.equals(this.isolation, hostConfig.isolation) &&
+        Objects.equals(this.maskedPaths, hostConfig.maskedPaths) &&
+        Objects.equals(this.readonlyPaths, hostConfig.readonlyPaths) &&
+        super.equals(o);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(cpuShares, memory, cgroupParent, blkioWeight, blkioWeightDevice, blkioDeviceReadBps, blkioDeviceWriteBps, blkioDeviceReadIOps, blkioDeviceWriteIOps, cpuPeriod, cpuQuota, cpuRealtimePeriod, cpuRealtimeRuntime, cpusetCpus, cpusetMems, devices, deviceCgroupRules, diskQuota, kernelMemory, memoryReservation, memorySwap, memorySwappiness, nanoCPUs, oomKillDisable, pidsLimit, ulimits, cpuCount, cpuPercent, ioMaximumIOps, ioMaximumBandwidth, binds, containerIDFile, logConfig, networkMode, portBindings, restartPolicy, autoRemove, volumeDriver, volumesFrom, mounts, capAdd, capDrop, dns, dnsOptions, dnsSearch, extraHosts, groupAdd, ipcMode, cgroup, links, oomScoreAdj, pidMode, privileged, publishAllPorts, readonlyRootfs, securityOpt, storageOpt, tmpfs, utSMode, usernsMode, shmSize, sysctls, runtime, consoleSize, isolation);
+    return Objects.hash(binds, containerIDFile, logConfig, networkMode, portBindings, restartPolicy, autoRemove, volumeDriver, volumesFrom, mounts, consoleSize, annotations, capAdd, capDrop, cgroupnsMode, dns, dnsOptions, dnsSearch, extraHosts, groupAdd, ipcMode, cgroup, links, oomScoreAdj, pidMode, privileged, publishAllPorts, readonlyRootfs, securityOpt, storageOpt, tmpfs, utSMode, usernsMode, shmSize, sysctls, runtime, isolation, maskedPaths, readonlyPaths, super.hashCode());
   }
 
 
@@ -1716,37 +1149,7 @@ public class HostConfig {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class HostConfig {\n");
-
-    sb.append("    cpuShares: ").append(toIndentedString(cpuShares)).append("\n");
-    sb.append("    memory: ").append(toIndentedString(memory)).append("\n");
-    sb.append("    cgroupParent: ").append(toIndentedString(cgroupParent)).append("\n");
-    sb.append("    blkioWeight: ").append(toIndentedString(blkioWeight)).append("\n");
-    sb.append("    blkioWeightDevice: ").append(toIndentedString(blkioWeightDevice)).append("\n");
-    sb.append("    blkioDeviceReadBps: ").append(toIndentedString(blkioDeviceReadBps)).append("\n");
-    sb.append("    blkioDeviceWriteBps: ").append(toIndentedString(blkioDeviceWriteBps)).append("\n");
-    sb.append("    blkioDeviceReadIOps: ").append(toIndentedString(blkioDeviceReadIOps)).append("\n");
-    sb.append("    blkioDeviceWriteIOps: ").append(toIndentedString(blkioDeviceWriteIOps)).append("\n");
-    sb.append("    cpuPeriod: ").append(toIndentedString(cpuPeriod)).append("\n");
-    sb.append("    cpuQuota: ").append(toIndentedString(cpuQuota)).append("\n");
-    sb.append("    cpuRealtimePeriod: ").append(toIndentedString(cpuRealtimePeriod)).append("\n");
-    sb.append("    cpuRealtimeRuntime: ").append(toIndentedString(cpuRealtimeRuntime)).append("\n");
-    sb.append("    cpusetCpus: ").append(toIndentedString(cpusetCpus)).append("\n");
-    sb.append("    cpusetMems: ").append(toIndentedString(cpusetMems)).append("\n");
-    sb.append("    devices: ").append(toIndentedString(devices)).append("\n");
-    sb.append("    deviceCgroupRules: ").append(toIndentedString(deviceCgroupRules)).append("\n");
-    sb.append("    diskQuota: ").append(toIndentedString(diskQuota)).append("\n");
-    sb.append("    kernelMemory: ").append(toIndentedString(kernelMemory)).append("\n");
-    sb.append("    memoryReservation: ").append(toIndentedString(memoryReservation)).append("\n");
-    sb.append("    memorySwap: ").append(toIndentedString(memorySwap)).append("\n");
-    sb.append("    memorySwappiness: ").append(toIndentedString(memorySwappiness)).append("\n");
-    sb.append("    nanoCPUs: ").append(toIndentedString(nanoCPUs)).append("\n");
-    sb.append("    oomKillDisable: ").append(toIndentedString(oomKillDisable)).append("\n");
-    sb.append("    pidsLimit: ").append(toIndentedString(pidsLimit)).append("\n");
-    sb.append("    ulimits: ").append(toIndentedString(ulimits)).append("\n");
-    sb.append("    cpuCount: ").append(toIndentedString(cpuCount)).append("\n");
-    sb.append("    cpuPercent: ").append(toIndentedString(cpuPercent)).append("\n");
-    sb.append("    ioMaximumIOps: ").append(toIndentedString(ioMaximumIOps)).append("\n");
-    sb.append("    ioMaximumBandwidth: ").append(toIndentedString(ioMaximumBandwidth)).append("\n");
+    sb.append("    ").append(toIndentedString(super.toString())).append("\n");
     sb.append("    binds: ").append(toIndentedString(binds)).append("\n");
     sb.append("    containerIDFile: ").append(toIndentedString(containerIDFile)).append("\n");
     sb.append("    logConfig: ").append(toIndentedString(logConfig)).append("\n");
@@ -1757,8 +1160,11 @@ public class HostConfig {
     sb.append("    volumeDriver: ").append(toIndentedString(volumeDriver)).append("\n");
     sb.append("    volumesFrom: ").append(toIndentedString(volumesFrom)).append("\n");
     sb.append("    mounts: ").append(toIndentedString(mounts)).append("\n");
+    sb.append("    consoleSize: ").append(toIndentedString(consoleSize)).append("\n");
+    sb.append("    annotations: ").append(toIndentedString(annotations)).append("\n");
     sb.append("    capAdd: ").append(toIndentedString(capAdd)).append("\n");
     sb.append("    capDrop: ").append(toIndentedString(capDrop)).append("\n");
+    sb.append("    cgroupnsMode: ").append(toIndentedString(cgroupnsMode)).append("\n");
     sb.append("    dns: ").append(toIndentedString(dns)).append("\n");
     sb.append("    dnsOptions: ").append(toIndentedString(dnsOptions)).append("\n");
     sb.append("    dnsSearch: ").append(toIndentedString(dnsSearch)).append("\n");
@@ -1780,8 +1186,9 @@ public class HostConfig {
     sb.append("    shmSize: ").append(toIndentedString(shmSize)).append("\n");
     sb.append("    sysctls: ").append(toIndentedString(sysctls)).append("\n");
     sb.append("    runtime: ").append(toIndentedString(runtime)).append("\n");
-    sb.append("    consoleSize: ").append(toIndentedString(consoleSize)).append("\n");
     sb.append("    isolation: ").append(toIndentedString(isolation)).append("\n");
+    sb.append("    maskedPaths: ").append(toIndentedString(maskedPaths)).append("\n");
+    sb.append("    readonlyPaths: ").append(toIndentedString(readonlyPaths)).append("\n");
     sb.append("}");
     return sb.toString();
   }

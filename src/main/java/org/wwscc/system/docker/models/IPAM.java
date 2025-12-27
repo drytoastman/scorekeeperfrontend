@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,25 +14,31 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.IPAMConfig;
 
 /**
  * IPAM
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class IPAM {
   @JsonProperty("Driver")
   private String driver = "default";
 
   @JsonProperty("Config")
-  private List<Map<String, String>> config = null;
+  private List<IPAMConfig> config = null;
 
-  // BMW: remove this fixes issue deserializing 'null' @JsonProperty("Options")
-  private List<Map<String, String>> options = null;
+  @JsonProperty("Options")
+  private Map<String, String> options = null;
 
   public IPAM driver(String driver) {
     this.driver = driver;
@@ -43,7 +49,7 @@ public class IPAM {
    * Name of the IPAM driver to use.
    * @return driver
   **/
-  @ApiModelProperty(value = "Name of the IPAM driver to use.")
+  @ApiModelProperty(example = "default", value = "Name of the IPAM driver to use.")
   public String getDriver() {
     return driver;
   }
@@ -52,12 +58,12 @@ public class IPAM {
     this.driver = driver;
   }
 
-  public IPAM config(List<Map<String, String>> config) {
+  public IPAM config(List<IPAMConfig> config) {
     this.config = config;
     return this;
   }
 
-  public IPAM addConfigItem(Map<String, String> configItem) {
+  public IPAM addConfigItem(IPAMConfig configItem) {
     if (this.config == null) {
       this.config = new ArrayList<>();
     }
@@ -66,28 +72,28 @@ public class IPAM {
   }
 
    /**
-   * List of IPAM configuration options, specified as a map: &#x60;{\&quot;Subnet\&quot;: &lt;CIDR&gt;, \&quot;IPRange\&quot;: &lt;CIDR&gt;, \&quot;Gateway\&quot;: &lt;IP address&gt;, \&quot;AuxAddress\&quot;: &lt;device_name:IP address&gt;}&#x60;
+   * List of IPAM configuration options, specified as a map:  &#x60;&#x60;&#x60; {\&quot;Subnet\&quot;: &lt;CIDR&gt;, \&quot;IPRange\&quot;: &lt;CIDR&gt;, \&quot;Gateway\&quot;: &lt;IP address&gt;, \&quot;AuxAddress\&quot;: &lt;device_name:IP address&gt;} &#x60;&#x60;&#x60; 
    * @return config
   **/
-  @ApiModelProperty(value = "List of IPAM configuration options, specified as a map: `{\"Subnet\": <CIDR>, \"IPRange\": <CIDR>, \"Gateway\": <IP address>, \"AuxAddress\": <device_name:IP address>}`")
-  public List<Map<String, String>> getConfig() {
+  @ApiModelProperty(value = "List of IPAM configuration options, specified as a map:  ``` {\"Subnet\": <CIDR>, \"IPRange\": <CIDR>, \"Gateway\": <IP address>, \"AuxAddress\": <device_name:IP address>} ``` ")
+  public List<IPAMConfig> getConfig() {
     return config;
   }
 
-  public void setConfig(List<Map<String, String>> config) {
+  public void setConfig(List<IPAMConfig> config) {
     this.config = config;
   }
 
-  public IPAM options(List<Map<String, String>> options) {
+  public IPAM options(Map<String, String> options) {
     this.options = options;
     return this;
   }
 
-  public IPAM addOptionsItem(Map<String, String> optionsItem) {
+  public IPAM putOptionsItem(String key, String optionsItem) {
     if (this.options == null) {
-      this.options = new ArrayList<>();
+      this.options = new HashMap<>();
     }
-    this.options.add(optionsItem);
+    this.options.put(key, optionsItem);
     return this;
   }
 
@@ -95,12 +101,12 @@ public class IPAM {
    * Driver-specific options, specified as a map.
    * @return options
   **/
-  @ApiModelProperty(value = "Driver-specific options, specified as a map.")
-  public List<Map<String, String>> getOptions() {
+  @ApiModelProperty(example = "{\"foo\":\"bar\"}", value = "Driver-specific options, specified as a map.")
+  public Map<String, String> getOptions() {
     return options;
   }
 
-  public void setOptions(List<Map<String, String>> options) {
+  public void setOptions(Map<String, String> options) {
     this.options = options;
   }
 
@@ -129,7 +135,7 @@ public class IPAM {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class IPAM {\n");
-
+    
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
     sb.append("    config: ").append(toIndentedString(config)).append("\n");
     sb.append("    options: ").append(toIndentedString(options)).append("\n");

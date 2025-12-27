@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,7 +14,11 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +26,7 @@ import java.util.List;
 /**
  * ExecConfig
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class ExecConfig {
   @JsonProperty("AttachStdin")
   private Boolean attachStdin = null;
@@ -32,6 +36,9 @@ public class ExecConfig {
 
   @JsonProperty("AttachStderr")
   private Boolean attachStderr = null;
+
+  @JsonProperty("ConsoleSize")
+  private List<Integer> consoleSize = null;
 
   @JsonProperty("DetachKeys")
   private String detachKeys = null;
@@ -108,16 +115,42 @@ public class ExecConfig {
     this.attachStderr = attachStderr;
   }
 
+  public ExecConfig consoleSize(List<Integer> consoleSize) {
+    this.consoleSize = consoleSize;
+    return this;
+  }
+
+  public ExecConfig addConsoleSizeItem(Integer consoleSizeItem) {
+    if (this.consoleSize == null) {
+      this.consoleSize = new ArrayList<>();
+    }
+    this.consoleSize.add(consoleSizeItem);
+    return this;
+  }
+
+   /**
+   * Initial console size, as an &#x60;[height, width]&#x60; array.
+   * @return consoleSize
+  **/
+  @ApiModelProperty(example = "[80,64]", value = "Initial console size, as an `[height, width]` array.")
+  public List<Integer> getConsoleSize() {
+    return consoleSize;
+  }
+
+  public void setConsoleSize(List<Integer> consoleSize) {
+    this.consoleSize = consoleSize;
+  }
+
   public ExecConfig detachKeys(String detachKeys) {
     this.detachKeys = detachKeys;
     return this;
   }
 
    /**
-   * Override the key sequence for detaching a container. Format is a single character &#x60;[a-Z]&#x60; or &#x60;ctrl-&lt;value&gt;&#x60; where &#x60;&lt;value&gt;&#x60; is one of: &#x60;a-z&#x60;, &#x60;@&#x60;, &#x60;^&#x60;, &#x60;[&#x60;, &#x60;,&#x60; or &#x60;_&#x60;.
+   * Override the key sequence for detaching a container. Format is a single character &#x60;[a-Z]&#x60; or &#x60;ctrl-&lt;value&gt;&#x60; where &#x60;&lt;value&gt;&#x60; is one of: &#x60;a-z&#x60;, &#x60;@&#x60;, &#x60;^&#x60;, &#x60;[&#x60;, &#x60;,&#x60; or &#x60;_&#x60;. 
    * @return detachKeys
   **/
-  @ApiModelProperty(value = "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`.")
+  @ApiModelProperty(value = "Override the key sequence for detaching a container. Format is a single character `[a-Z]` or `ctrl-<value>` where `<value>` is one of: `a-z`, `@`, `^`, `[`, `,` or `_`. ")
   public String getDetachKeys() {
     return detachKeys;
   }
@@ -158,10 +191,10 @@ public class ExecConfig {
   }
 
    /**
-   * A list of environment variables in the form &#x60;[\&quot;VAR&#x3D;value\&quot;, ...]&#x60;.
+   * A list of environment variables in the form &#x60;[\&quot;VAR&#x3D;value\&quot;, ...]&#x60;. 
    * @return env
   **/
-  @ApiModelProperty(value = "A list of environment variables in the form `[\"VAR=value\", ...]`.")
+  @ApiModelProperty(value = "A list of environment variables in the form `[\"VAR=value\", ...]`. ")
   public List<String> getEnv() {
     return env;
   }
@@ -220,10 +253,10 @@ public class ExecConfig {
   }
 
    /**
-   * The user, and optionally, group to run the exec process inside the container. Format is one of: &#x60;user&#x60;, &#x60;user:group&#x60;, &#x60;uid&#x60;, or &#x60;uid:gid&#x60;.
+   * The user, and optionally, group to run the exec process inside the container. Format is one of: &#x60;user&#x60;, &#x60;user:group&#x60;, &#x60;uid&#x60;, or &#x60;uid:gid&#x60;. 
    * @return user
   **/
-  @ApiModelProperty(value = "The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`.")
+  @ApiModelProperty(value = "The user, and optionally, group to run the exec process inside the container. Format is one of: `user`, `user:group`, `uid`, or `uid:gid`. ")
   public String getUser() {
     return user;
   }
@@ -238,10 +271,10 @@ public class ExecConfig {
   }
 
    /**
-   * The working directory for the exec process inside the container.
+   * The working directory for the exec process inside the container. 
    * @return workingDir
   **/
-  @ApiModelProperty(value = "The working directory for the exec process inside the container.")
+  @ApiModelProperty(value = "The working directory for the exec process inside the container. ")
   public String getWorkingDir() {
     return workingDir;
   }
@@ -263,6 +296,7 @@ public class ExecConfig {
     return Objects.equals(this.attachStdin, execConfig.attachStdin) &&
         Objects.equals(this.attachStdout, execConfig.attachStdout) &&
         Objects.equals(this.attachStderr, execConfig.attachStderr) &&
+        Objects.equals(this.consoleSize, execConfig.consoleSize) &&
         Objects.equals(this.detachKeys, execConfig.detachKeys) &&
         Objects.equals(this.tty, execConfig.tty) &&
         Objects.equals(this.env, execConfig.env) &&
@@ -274,7 +308,7 @@ public class ExecConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(attachStdin, attachStdout, attachStderr, detachKeys, tty, env, cmd, privileged, user, workingDir);
+    return Objects.hash(attachStdin, attachStdout, attachStderr, consoleSize, detachKeys, tty, env, cmd, privileged, user, workingDir);
   }
 
 
@@ -282,10 +316,11 @@ public class ExecConfig {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ExecConfig {\n");
-
+    
     sb.append("    attachStdin: ").append(toIndentedString(attachStdin)).append("\n");
     sb.append("    attachStdout: ").append(toIndentedString(attachStdout)).append("\n");
     sb.append("    attachStderr: ").append(toIndentedString(attachStderr)).append("\n");
+    sb.append("    consoleSize: ").append(toIndentedString(consoleSize)).append("\n");
     sb.append("    detachKeys: ").append(toIndentedString(detachKeys)).append("\n");
     sb.append("    tty: ").append(toIndentedString(tty)).append("\n");
     sb.append("    env: ").append(toIndentedString(env)).append("\n");

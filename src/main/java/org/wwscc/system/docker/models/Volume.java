@@ -1,9 +1,9 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ```
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
- *
+ * OpenAPI spec version: 1.52
+ * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
  * https://github.com/swagger-api/swagger-codegen.git
@@ -14,17 +14,22 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.wwscc.system.docker.models.ClusterVolume;
+import org.wwscc.system.docker.models.VolumeUsageData;
 
 /**
  * Volume
  */
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class Volume {
   @JsonProperty("Name")
   private String name = null;
@@ -45,11 +50,11 @@ public class Volume {
   private Map<String, String> labels = new HashMap<>();
 
   /**
-   * The level at which the volume exists. Either &#x60;global&#x60; for cluster-wide, or &#x60;local&#x60; for machine level.
+   * The level at which the volume exists. Either &#x60;global&#x60; for cluster-wide, or &#x60;local&#x60; for machine level. 
    */
   public enum ScopeEnum {
     LOCAL("local"),
-
+    
     GLOBAL("global");
 
     private String value;
@@ -69,9 +74,9 @@ public class Volume {
     }
 
     @JsonCreator
-    public static ScopeEnum fromValue(String text) {
+    public static ScopeEnum fromValue(String value) {
       for (ScopeEnum b : ScopeEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(value)) {
           return b;
         }
       }
@@ -81,6 +86,9 @@ public class Volume {
 
   @JsonProperty("Scope")
   private ScopeEnum scope = ScopeEnum.LOCAL;
+
+  @JsonProperty("ClusterVolume")
+  private ClusterVolume clusterVolume = null;
 
   @JsonProperty("Options")
   private Map<String, String> options = new HashMap<>();
@@ -97,7 +105,7 @@ public class Volume {
    * Name of the volume.
    * @return name
   **/
-  @ApiModelProperty(required = true, value = "Name of the volume.")
+  @ApiModelProperty(example = "tardis", required = true, value = "Name of the volume.")
   public String getName() {
     return name;
   }
@@ -115,7 +123,7 @@ public class Volume {
    * Name of the volume driver used by the volume.
    * @return driver
   **/
-  @ApiModelProperty(required = true, value = "Name of the volume driver used by the volume.")
+  @ApiModelProperty(example = "custom", required = true, value = "Name of the volume driver used by the volume.")
   public String getDriver() {
     return driver;
   }
@@ -133,7 +141,7 @@ public class Volume {
    * Mount path of the volume on the host.
    * @return mountpoint
   **/
-  @ApiModelProperty(required = true, value = "Mount path of the volume on the host.")
+  @ApiModelProperty(example = "/var/lib/docker/volumes/tardis", required = true, value = "Mount path of the volume on the host.")
   public String getMountpoint() {
     return mountpoint;
   }
@@ -151,7 +159,7 @@ public class Volume {
    * Date/Time the volume was created.
    * @return createdAt
   **/
-  @ApiModelProperty(value = "Date/Time the volume was created.")
+  @ApiModelProperty(example = "2016-06-07T20:31:11.853781916Z", value = "Date/Time the volume was created.")
   public String getCreatedAt() {
     return createdAt;
   }
@@ -174,10 +182,10 @@ public class Volume {
   }
 
    /**
-   * Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: &#x60;{\&quot;key\&quot;:\&quot;value\&quot;,\&quot;key2\&quot;:\&quot;value2\&quot;}&#x60;.  The &#x60;Status&#x60; field is optional, and is omitted if the volume driver does not support this feature.
+   * Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: &#x60;{\&quot;key\&quot;:\&quot;value\&quot;,\&quot;key2\&quot;:\&quot;value2\&quot;}&#x60;.  The &#x60;Status&#x60; field is optional, and is omitted if the volume driver does not support this feature. 
    * @return status
   **/
-  @ApiModelProperty(value = "Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. ")
+  @ApiModelProperty(example = "{\"hello\":\"world\"}", value = "Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. ")
   public Map<String, Object> getStatus() {
     return status;
   }
@@ -200,7 +208,7 @@ public class Volume {
    * User-defined key/value metadata.
    * @return labels
   **/
-  @ApiModelProperty(required = true, value = "User-defined key/value metadata.")
+  @ApiModelProperty(example = "{\"com.example.some-label\":\"some-value\",\"com.example.some-other-label\":\"some-other-value\"}", required = true, value = "User-defined key/value metadata.")
   public Map<String, String> getLabels() {
     return labels;
   }
@@ -215,16 +223,34 @@ public class Volume {
   }
 
    /**
-   * The level at which the volume exists. Either &#x60;global&#x60; for cluster-wide, or &#x60;local&#x60; for machine level.
+   * The level at which the volume exists. Either &#x60;global&#x60; for cluster-wide, or &#x60;local&#x60; for machine level. 
    * @return scope
   **/
-  @ApiModelProperty(required = true, value = "The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level.")
+  @ApiModelProperty(example = "local", required = true, value = "The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. ")
   public ScopeEnum getScope() {
     return scope;
   }
 
   public void setScope(ScopeEnum scope) {
     this.scope = scope;
+  }
+
+  public Volume clusterVolume(ClusterVolume clusterVolume) {
+    this.clusterVolume = clusterVolume;
+    return this;
+  }
+
+   /**
+   * Get clusterVolume
+   * @return clusterVolume
+  **/
+  @ApiModelProperty(value = "")
+  public ClusterVolume getClusterVolume() {
+    return clusterVolume;
+  }
+
+  public void setClusterVolume(ClusterVolume clusterVolume) {
+    this.clusterVolume = clusterVolume;
   }
 
   public Volume options(Map<String, String> options) {
@@ -238,10 +264,10 @@ public class Volume {
   }
 
    /**
-   * The driver specific options used when creating the volume.
+   * The driver specific options used when creating the volume. 
    * @return options
   **/
-  @ApiModelProperty(required = true, value = "The driver specific options used when creating the volume.")
+  @ApiModelProperty(example = "{\"device\":\"tmpfs\",\"o\":\"size=100m,uid=1000\",\"type\":\"tmpfs\"}", required = true, value = "The driver specific options used when creating the volume. ")
   public Map<String, String> getOptions() {
     return options;
   }
@@ -285,13 +311,14 @@ public class Volume {
         Objects.equals(this.status, volume.status) &&
         Objects.equals(this.labels, volume.labels) &&
         Objects.equals(this.scope, volume.scope) &&
+        Objects.equals(this.clusterVolume, volume.clusterVolume) &&
         Objects.equals(this.options, volume.options) &&
         Objects.equals(this.usageData, volume.usageData);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, driver, mountpoint, createdAt, status, labels, scope, options, usageData);
+    return Objects.hash(name, driver, mountpoint, createdAt, status, labels, scope, clusterVolume, options, usageData);
   }
 
 
@@ -299,7 +326,7 @@ public class Volume {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Volume {\n");
-
+    
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    driver: ").append(toIndentedString(driver)).append("\n");
     sb.append("    mountpoint: ").append(toIndentedString(mountpoint)).append("\n");
@@ -307,6 +334,7 @@ public class Volume {
     sb.append("    status: ").append(toIndentedString(status)).append("\n");
     sb.append("    labels: ").append(toIndentedString(labels)).append("\n");
     sb.append("    scope: ").append(toIndentedString(scope)).append("\n");
+    sb.append("    clusterVolume: ").append(toIndentedString(clusterVolume)).append("\n");
     sb.append("    options: ").append(toIndentedString(options)).append("\n");
     sb.append("    usageData: ").append(toIndentedString(usageData)).append("\n");
     sb.append("}");

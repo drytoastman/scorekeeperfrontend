@@ -1,8 +1,8 @@
 /*
  * Docker Engine API
- * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.35) is used. For example, calling `/info` is the same as calling `/v1.35/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a Base64 encoded (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"email\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
+ * The Engine API is an HTTP API served by Docker Engine. It is the API the Docker client uses to communicate with the Engine, so everything the Docker client can do can be done with the API.  Most of the client's commands map directly to API endpoints (e.g. `docker ps` is `GET /containers/json`). The notable exception is running containers, which consists of several API calls.  # Errors  The API uses standard HTTP status codes to indicate the success or failure of the API call. The body of the response will be JSON in the following format:  ``` {   \"message\": \"page not found\" } ```  # Versioning  The API is usually changed in each release, so API calls are versioned to ensure that clients don't break. To lock to a specific version of the API, you prefix the URL with its version, for example, call `/v1.30/info` to use the v1.30 version of the `/info` endpoint. If the API version specified in the URL is not supported by the daemon, a HTTP `400 Bad Request` error message is returned.  If you omit the version-prefix, the current version of the API (v1.50) is used. For example, calling `/info` is the same as calling `/v1.52/info`. Using the API without a version-prefix is deprecated and will be removed in a future release.  Engine releases in the near future should support this version of the API, so your client will continue to work even if it is talking to a newer Engine.  The API uses an open schema model, which means the server may add extra properties to responses. Likewise, the server will ignore any extra query parameters and request body properties. When you write clients, you need to ignore additional properties in responses to ensure they do not break when talking to newer daemons.   # Authentication  Authentication for registries is handled client side. The client has to send authentication details to various endpoints that need to communicate with registries, such as `POST /images/(name)/push`. These are sent as `X-Registry-Auth` header as a [base64url encoded](https://tools.ietf.org/html/rfc4648#section-5) (JSON) string with the following structure:  ``` {   \"username\": \"string\",   \"password\": \"string\",   \"serveraddress\": \"string\" } ```  The `serveraddress` is a domain/IP without a protocol. Throughout this structure, double quotes are required.  If you have already got an identity token from the [`/auth` endpoint](#operation/SystemAuth), you can just pass this instead of credentials:  ``` {   \"identitytoken\": \"9cbaf023786cd7...\" } ``` 
  *
- * OpenAPI spec version: 1.35
+ * OpenAPI spec version: 1.52
  * 
  *
  * NOTE: This class is auto generated by the swagger code generator program.
@@ -14,6 +14,7 @@
 package org.wwscc.system.docker.models;
 
 import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -24,7 +25,7 @@ import io.swagger.annotations.ApiModelProperty;
  * Optional configuration for the &#x60;bind&#x60; type.
  */
 @ApiModel(description = "Optional configuration for the `bind` type.")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2018-03-20T16:57:44.859Z")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2025-12-26T07:26:55.525Z")
 public class MountBindOptions {
   /**
    * A propagation mode with the value &#x60;[r]private&#x60;, &#x60;[r]shared&#x60;, or &#x60;[r]slave&#x60;.
@@ -59,9 +60,9 @@ public class MountBindOptions {
     }
 
     @JsonCreator
-    public static PropagationEnum fromValue(String text) {
+    public static PropagationEnum fromValue(String value) {
       for (PropagationEnum b : PropagationEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(value)) {
           return b;
         }
       }
@@ -71,6 +72,18 @@ public class MountBindOptions {
 
   @JsonProperty("Propagation")
   private PropagationEnum propagation = null;
+
+  @JsonProperty("NonRecursive")
+  private Boolean nonRecursive = false;
+
+  @JsonProperty("CreateMountpoint")
+  private Boolean createMountpoint = false;
+
+  @JsonProperty("ReadOnlyNonRecursive")
+  private Boolean readOnlyNonRecursive = false;
+
+  @JsonProperty("ReadOnlyForceRecursive")
+  private Boolean readOnlyForceRecursive = false;
 
   public MountBindOptions propagation(PropagationEnum propagation) {
     this.propagation = propagation;
@@ -90,6 +103,78 @@ public class MountBindOptions {
     this.propagation = propagation;
   }
 
+  public MountBindOptions nonRecursive(Boolean nonRecursive) {
+    this.nonRecursive = nonRecursive;
+    return this;
+  }
+
+   /**
+   * Disable recursive bind mount.
+   * @return nonRecursive
+  **/
+  @ApiModelProperty(value = "Disable recursive bind mount.")
+  public Boolean isNonRecursive() {
+    return nonRecursive;
+  }
+
+  public void setNonRecursive(Boolean nonRecursive) {
+    this.nonRecursive = nonRecursive;
+  }
+
+  public MountBindOptions createMountpoint(Boolean createMountpoint) {
+    this.createMountpoint = createMountpoint;
+    return this;
+  }
+
+   /**
+   * Create mount point on host if missing
+   * @return createMountpoint
+  **/
+  @ApiModelProperty(value = "Create mount point on host if missing")
+  public Boolean isCreateMountpoint() {
+    return createMountpoint;
+  }
+
+  public void setCreateMountpoint(Boolean createMountpoint) {
+    this.createMountpoint = createMountpoint;
+  }
+
+  public MountBindOptions readOnlyNonRecursive(Boolean readOnlyNonRecursive) {
+    this.readOnlyNonRecursive = readOnlyNonRecursive;
+    return this;
+  }
+
+   /**
+   * Make the mount non-recursively read-only, but still leave the mount recursive (unless NonRecursive is set to &#x60;true&#x60; in conjunction).  Added in v1.44, before that version all read-only mounts were non-recursive by default. To match the previous behaviour this will default to &#x60;true&#x60; for clients on versions prior to v1.44. 
+   * @return readOnlyNonRecursive
+  **/
+  @ApiModelProperty(value = "Make the mount non-recursively read-only, but still leave the mount recursive (unless NonRecursive is set to `true` in conjunction).  Added in v1.44, before that version all read-only mounts were non-recursive by default. To match the previous behaviour this will default to `true` for clients on versions prior to v1.44. ")
+  public Boolean isReadOnlyNonRecursive() {
+    return readOnlyNonRecursive;
+  }
+
+  public void setReadOnlyNonRecursive(Boolean readOnlyNonRecursive) {
+    this.readOnlyNonRecursive = readOnlyNonRecursive;
+  }
+
+  public MountBindOptions readOnlyForceRecursive(Boolean readOnlyForceRecursive) {
+    this.readOnlyForceRecursive = readOnlyForceRecursive;
+    return this;
+  }
+
+   /**
+   * Raise an error if the mount cannot be made recursively read-only.
+   * @return readOnlyForceRecursive
+  **/
+  @ApiModelProperty(value = "Raise an error if the mount cannot be made recursively read-only.")
+  public Boolean isReadOnlyForceRecursive() {
+    return readOnlyForceRecursive;
+  }
+
+  public void setReadOnlyForceRecursive(Boolean readOnlyForceRecursive) {
+    this.readOnlyForceRecursive = readOnlyForceRecursive;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -100,12 +185,16 @@ public class MountBindOptions {
       return false;
     }
     MountBindOptions mountBindOptions = (MountBindOptions) o;
-    return Objects.equals(this.propagation, mountBindOptions.propagation);
+    return Objects.equals(this.propagation, mountBindOptions.propagation) &&
+        Objects.equals(this.nonRecursive, mountBindOptions.nonRecursive) &&
+        Objects.equals(this.createMountpoint, mountBindOptions.createMountpoint) &&
+        Objects.equals(this.readOnlyNonRecursive, mountBindOptions.readOnlyNonRecursive) &&
+        Objects.equals(this.readOnlyForceRecursive, mountBindOptions.readOnlyForceRecursive);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(propagation);
+    return Objects.hash(propagation, nonRecursive, createMountpoint, readOnlyNonRecursive, readOnlyForceRecursive);
   }
 
 
@@ -115,6 +204,10 @@ public class MountBindOptions {
     sb.append("class MountBindOptions {\n");
     
     sb.append("    propagation: ").append(toIndentedString(propagation)).append("\n");
+    sb.append("    nonRecursive: ").append(toIndentedString(nonRecursive)).append("\n");
+    sb.append("    createMountpoint: ").append(toIndentedString(createMountpoint)).append("\n");
+    sb.append("    readOnlyNonRecursive: ").append(toIndentedString(readOnlyNonRecursive)).append("\n");
+    sb.append("    readOnlyForceRecursive: ").append(toIndentedString(readOnlyForceRecursive)).append("\n");
     sb.append("}");
     return sb.toString();
   }
