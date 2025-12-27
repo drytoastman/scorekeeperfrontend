@@ -68,12 +68,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.wwscc.system.docker.SocketFactories.UnixSocketFactory;
 import org.wwscc.system.docker.SocketFactories.WindowsPipeFactory;
 import org.wwscc.system.docker.models.ContainerSummary;
-import org.wwscc.system.docker.models.EndpointResource;
 import org.wwscc.system.docker.models.ErrorResponse;
 import org.wwscc.system.docker.models.ExecConfig;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
-import org.wwscc.system.docker.models.NetworkInspect;
+import org.wwscc.system.docker.models.NetworkContainer;
 import org.wwscc.system.docker.models.Volume;
 import org.wwscc.system.docker.models.VolumeListResponse;
 import org.wwscc.util.AppSetup;
@@ -267,11 +266,11 @@ public class DockerAPI
     public boolean networkUp(String name)
     {
         try {
-            NetworkInspect net = null;
+            Network net = null;
             try { net = request(new Requests.GetNetwork(name)); } catch (IOException ioe) {}
 
             if (net != null) { // found a network matching the name
-                for (EndpointResource nc : net.getContainers().values())
+                for (NetworkContainer nc : net.getContainers().values())
                     request(new Requests.DisconnectContainer(name, nc.getName()));
                 request(new Requests.DeleteNetwork(name));
             }

@@ -27,7 +27,6 @@ import org.wwscc.system.docker.models.ContainerSummary;
 import org.wwscc.system.docker.models.ExecConfig;
 import org.wwscc.system.docker.models.ImageSummary;
 import org.wwscc.system.docker.models.Network;
-import org.wwscc.system.docker.models.NetworkInspect;
 import org.wwscc.system.docker.models.VolumeListResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Requests
 {
-    public static final String API_VER = "/v1.52";
+    public static final String API_VER = "/v1.44";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /*
@@ -131,9 +130,9 @@ public class Requests
             super(new HttpPost(API_VER+"/images/create?fromImage="+name), InputStream.class);
     }}
 
-    static class GetNetwork extends Wrapper<NetworkInspect> {
+    static class GetNetwork extends Wrapper<Network> {
         public GetNetwork(String name) {
-            super(new HttpGet(API_VER+"/networks/"+name), NetworkInspect.class);
+            super(new HttpGet(API_VER+"/networks/"+name), Network.class);
     }}
 
     static class DeleteNetwork extends Wrapper<Void> {
